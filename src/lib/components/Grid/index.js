@@ -10,9 +10,11 @@ import {
     GRID_CHECKBOX_SELECTION_COL_DEF,
 } from '@mui/x-data-grid-premium';
 import DeleteIcon from '@mui/icons-material/Delete';
+import UnfoldMoreTwoToneIcon from '@mui/icons-material/UnfoldMoreTwoTone';
 import CopyIcon from '@mui/icons-material/FileCopy';
 import EditIcon from '@mui/icons-material/Edit';
 import FilterListOffIcon from '@mui/icons-material/FilterListOff';
+import MoreVertTwoToneIcon from '@mui/icons-material/MoreVertTwoTone';
 import {
     GridActionsCellItem,
     useGridApiRef
@@ -154,7 +156,8 @@ const GridBase = memo(({
     onAssignChange,
     customStyle,
     onCellClick,
-    showRowsSelected
+    showRowsSelected,
+    gridFooter = model.gridFooter || Footer
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState({ recordCount: 0, records: [], lookups: {} });
@@ -231,7 +234,7 @@ const GridBase = memo(({
 
         const auditColumns = model.standard === true;
 
-        if (auditColumns && model?.addCreatedModifiedColumns !== false) {
+        if (auditColumns && model?.addCreatedModifiedColumns !== false && model?.addHeaderFilters !== false) {
             finalColumns.push(
                 {
                     field: "CreatedOn", type: "dateTime", headerName: "Created On", width: 200, filterOperators: getGridDateOperators()
@@ -245,26 +248,37 @@ const GridBase = memo(({
         }
 
         if (!forAssignment && !isReadOnly) {
-            const actions = [];
-            if (model.addEdit && permissions.edit) {
-                actions.push(<GridActionsCellItem icon={<EditIcon />} data-action={actionTypes.Edit} label="Edit" />);
-            }
-            if (model.addCopy && permissions.add) {
-                actions.push(<GridActionsCellItem icon={<CopyIcon />} data-action={actionTypes.Copy} label="Copy" />);
-            }
-            if (model.delete && permissions.delete) {
-                actions.push(<GridActionsCellItem icon={<DeleteIcon />} data-action={actionTypes.Delete} label="Delete" />);
-            }
-            if (actions.length > 0) {
+            const showActions = model?.addHeaderFilters !== false;
+            if (showActions) {
+                const actions = [];
+                if (model.addEdit && permissions.edit) {
+                    actions.push(<GridActionsCellItem icon={<EditIcon />} data-action={actionTypes.Edit} label="Edit" />);
+                }
+                if (model.addCopy && permissions.add) {
+                    actions.push(<GridActionsCellItem icon={<CopyIcon />} data-action={actionTypes.Copy} label="Copy" />);
+                }
+                if (model.delete && permissions.delete) {
+                    actions.push(<GridActionsCellItem icon={<DeleteIcon />} data-action={actionTypes.Delete} label="Delete" />);
+                }
+                if (actions.length > 0) {
+                    finalColumns.push({
+                        field: 'actions',
+                        type: 'actions',
+                        label: '',
+                        width: actions.length * 50,
+                        getActions: () => actions,
+                    });
+                }
+                pinnedColumns.right.push('actions');
+            } else {
                 finalColumns.push({
-                    field: 'actions',
-                    type: 'actions',
-                    label: '',
-                    width: actions.length * 50,
-                    getActions: () => actions,
+                    field: 'options',
+                    width: 2,
+                    renderCell: () => (
+                        <MoreVertTwoToneIcon />
+                    ),
                 });
             }
-            pinnedColumns.right.push('actions');
         }
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment]);
@@ -478,7 +492,8 @@ const GridBase = memo(({
     return (
         <div style={customStyle}>
             <DataGridPremium
-                unstable_headerFilters
+                disableColumnMenu={!model.addHeaderFilters}
+                unstable_headerFilters={model.addHeaderFilters !== false}
                 checkboxSelection={forAssignment}
                 loading={isLoading}
                 className="pagination-fix"
@@ -503,9 +518,13 @@ const GridBase = memo(({
                 filterModel={filterModel}
                 getRowId={getGridRowId}
                 slots={{
-                    headerFilterMenu: false,
-                    toolbar: CustomToolbar,
-                    footer: Footer
+                    headerFilterMenu: model.addHeaderFilters !== false ? false : null,
+                    columnMenu: model.addHeaderFilters ? undefined : () => null,
+                    columnSortedDescendingIcon: model.addHeaderFilters ? UnfoldMoreTwoToneIcon : () => null,
+                    columnSortedAscendingIcon: model.addHeaderFilters ? UnfoldMoreTwoToneIcon : () => null,
+                    columnUnsortedIcon: model.addHeaderFilters ? UnfoldMoreTwoToneIcon : () => null,
+                    footer: gridFooter,
+                    ...(model.addHeaderFilters ? { toolbar: CustomToolbar } : {})
                 }}
                 slotProps={{
                     footer: {
@@ -517,7 +536,7 @@ const GridBase = memo(({
                     },
                 }}
                 hideFooterSelectedRowCount={rowsSelected}
-                density="compact"
+                density={model.addHeaderFilters ? "compact" : "standard"}
                 disableDensitySelector={true}
                 apiRef={apiRef}
                 disableAggregation={true}
