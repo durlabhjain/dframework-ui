@@ -22,9 +22,11 @@ var _Button = _interopRequireDefault(require("@mui/material/Button"));
 var _react = _interopRequireWildcard(require("react"));
 var _xDataGridPremium = require("@mui/x-data-grid-premium");
 var _Delete = _interopRequireDefault(require("@mui/icons-material/Delete"));
+var _UnfoldMoreTwoTone = _interopRequireDefault(require("@mui/icons-material/UnfoldMoreTwoTone"));
 var _FileCopy = _interopRequireDefault(require("@mui/icons-material/FileCopy"));
 var _Edit = _interopRequireDefault(require("@mui/icons-material/Edit"));
 var _FilterListOff = _interopRequireDefault(require("@mui/icons-material/FilterListOff"));
+var _MoreVertTwoTone = _interopRequireDefault(require("@mui/icons-material/MoreVertTwoTone"));
 var _Add = _interopRequireDefault(require("@mui/icons-material/Add"));
 var _Remove = _interopRequireDefault(require("@mui/icons-material/Remove"));
 var _Typography = _interopRequireDefault(require("@mui/material/Typography"));
@@ -194,7 +196,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     onAssignChange,
     customStyle,
     onCellClick,
-    showRowsSelected
+    showRowsSelected,
+    gridFooter = model.gridFooter || _footer.Footer
   } = _ref2;
   const [paginationModel, setPaginationModel] = (0, _react.useState)({
     pageSize: defaultPageSize,
@@ -303,7 +306,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       column.label = column === null || column === void 0 ? void 0 : column.label;
     }
     const auditColumns = model.standard === true;
-    if (auditColumns && (model === null || model === void 0 ? void 0 : model.addCreatedModifiedColumns) !== false) {
+    if (auditColumns && (model === null || model === void 0 ? void 0 : model.addCreatedModifiedColumns) !== false && (model === null || model === void 0 ? void 0 : model.addHeaderFilters) !== false) {
       finalColumns.push({
         field: "CreatedOn",
         type: "dateTime",
@@ -329,38 +332,47 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       });
     }
     if (!forAssignment && !isReadOnly) {
-      const actions = [];
-      if (model.addEdit && permissions.edit) {
-        actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
-          icon: /*#__PURE__*/_react.default.createElement(_Edit.default, null),
-          "data-action": actionTypes.Edit,
-          label: "Edit"
-        }));
-      }
-      if (model.addCopy && permissions.add) {
-        actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
-          icon: /*#__PURE__*/_react.default.createElement(_FileCopy.default, null),
-          "data-action": actionTypes.Copy,
-          label: "Copy"
-        }));
-      }
-      if (model.delete && permissions.delete) {
-        actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
-          icon: /*#__PURE__*/_react.default.createElement(_Delete.default, null),
-          "data-action": actionTypes.Delete,
-          label: "Delete"
-        }));
-      }
-      if (actions.length > 0) {
+      const showActions = (model === null || model === void 0 ? void 0 : model.addHeaderFilters) !== false;
+      if (showActions) {
+        const actions = [];
+        if (model.addEdit && permissions.edit) {
+          actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
+            icon: /*#__PURE__*/_react.default.createElement(_Edit.default, null),
+            "data-action": actionTypes.Edit,
+            label: "Edit"
+          }));
+        }
+        if (model.addCopy && permissions.add) {
+          actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
+            icon: /*#__PURE__*/_react.default.createElement(_FileCopy.default, null),
+            "data-action": actionTypes.Copy,
+            label: "Copy"
+          }));
+        }
+        if (model.delete && permissions.delete) {
+          actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
+            icon: /*#__PURE__*/_react.default.createElement(_Delete.default, null),
+            "data-action": actionTypes.Delete,
+            label: "Delete"
+          }));
+        }
+        if (actions.length > 0) {
+          finalColumns.push({
+            field: 'actions',
+            type: 'actions',
+            label: '',
+            width: actions.length * 50,
+            getActions: () => actions
+          });
+        }
+        pinnedColumns.right.push('actions');
+      } else {
         finalColumns.push({
-          field: 'actions',
-          type: 'actions',
-          label: '',
-          width: actions.length * 50,
-          getActions: () => actions
+          field: 'options',
+          width: 2,
+          renderCell: () => /*#__PURE__*/_react.default.createElement(_MoreVertTwoTone.default, null)
         });
       }
-      pinnedColumns.right.push('actions');
     }
     return {
       gridColumns: finalColumns,
@@ -632,7 +644,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   return /*#__PURE__*/_react.default.createElement("div", {
     style: customStyle
   }, /*#__PURE__*/_react.default.createElement(_xDataGridPremium.DataGridPremium, {
-    unstable_headerFilters: true,
+    disableColumnMenu: !model.addHeaderFilters,
+    unstable_headerFilters: model.addHeaderFilters !== false,
     checkboxSelection: forAssignment,
     loading: isLoading,
     className: "pagination-fix",
@@ -656,11 +669,16 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     onRowSelectionModelChange: setSelection,
     filterModel: filterModel,
     getRowId: getGridRowId,
-    slots: {
-      headerFilterMenu: false,
-      toolbar: CustomToolbar,
-      footer: _footer.Footer
-    },
+    slots: _objectSpread({
+      headerFilterMenu: model.addHeaderFilters !== false ? false : null,
+      columnMenu: model.addHeaderFilters ? undefined : () => null,
+      columnSortedDescendingIcon: model.addHeaderFilters ? _UnfoldMoreTwoTone.default : () => null,
+      columnSortedAscendingIcon: model.addHeaderFilters ? _UnfoldMoreTwoTone.default : () => null,
+      columnUnsortedIcon: model.addHeaderFilters ? _UnfoldMoreTwoTone.default : () => null,
+      footer: gridFooter
+    }, model.addHeaderFilters ? {
+      toolbar: CustomToolbar
+    } : {}),
     slotProps: {
       footer: {
         pagination: true,
@@ -671,7 +689,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       }
     },
     hideFooterSelectedRowCount: rowsSelected,
-    density: "compact",
+    density: model.addHeaderFilters ? "compact" : "standard",
     disableDensitySelector: true,
     apiRef: apiRef,
     disableAggregation: true,
