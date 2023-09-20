@@ -529,7 +529,9 @@ const GridBase = memo(({
                 slotProps={{
                     footer: {
                         pagination: true,
-                        apiRef
+                        apiRef,
+                        rowCount:data.recordCount
+
                     },
                     panel: {
                         placement: "bottom-end"

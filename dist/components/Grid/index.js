@@ -682,7 +682,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     slotProps: {
       footer: {
         pagination: true,
-        apiRef
+        apiRef,
+        rowCount: data.recordCount
       },
       panel: {
         placement: "bottom-end"
