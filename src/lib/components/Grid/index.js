@@ -273,7 +273,7 @@ const GridBase = memo(({
             } else {
                 finalColumns.push({
                     field: 'options',
-                    width: 2,
+                    width: 1,
                     renderCell: () => (
                         <MoreVertTwoToneIcon />
                     ),
@@ -488,9 +488,16 @@ const GridBase = memo(({
     //         pageBackButton: { status: true, backRoute: backRoute },
     //     });
     // }, []);
-
+    const customStyles = {
+        '.MuiDataGrid-root.no-hover .MuiDataGrid-row:hover': {
+            backgroundColor: 'transparent !important',
+        },
+        '.custom-data-grid .MuiDataGrid-mainGrid': {
+            overflow: 'hidden !important'
+          }
+    };
     return (
-        <div style={customStyle}>
+        <div style={customStyles}>
             <DataGridPremium
                 disableColumnMenu={!model.addHeaderFilters}
                 unstable_headerFilters={model.addHeaderFilters !== false}

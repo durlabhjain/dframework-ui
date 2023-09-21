@@ -369,7 +369,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       } else {
         finalColumns.push({
           field: 'options',
-          width: 2,
+          width: 1,
           renderCell: () => /*#__PURE__*/_react.default.createElement(_MoreVertTwoTone.default, null)
         });
       }
@@ -640,9 +640,16 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   //         pageBackButton: { status: true, backRoute: backRoute },
   //     });
   // }, []);
-
+  const customStyles = {
+    '.MuiDataGrid-root.no-hover .MuiDataGrid-row:hover': {
+      backgroundColor: 'transparent !important'
+    },
+    '.custom-data-grid .MuiDataGrid-mainGrid': {
+      overflow: 'hidden !important'
+    }
+  };
   return /*#__PURE__*/_react.default.createElement("div", {
-    style: customStyle
+    style: customStyles
   }, /*#__PURE__*/_react.default.createElement(_xDataGridPremium.DataGridPremium, {
     disableColumnMenu: !model.addHeaderFilters,
     unstable_headerFilters: model.addHeaderFilters !== false,
