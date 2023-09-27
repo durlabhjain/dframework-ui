@@ -14,5 +14,4 @@ const useRouter = () => {
   return (0, _react.useContext)(RouterContext);
 };
 exports.useRouter = useRouter;
-const RouterProvider = RouterContext.Provider;
-exports.RouterProvider = RouterProvider;
+const RouterProvider = exports.RouterProvider = RouterContext.Provider;

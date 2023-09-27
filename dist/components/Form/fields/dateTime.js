@@ -54,5 +54,4 @@ const field = _ref => {
     }
   })));
 };
-var _default = field;
-exports.default = _default;
+var _default = exports.default = field;

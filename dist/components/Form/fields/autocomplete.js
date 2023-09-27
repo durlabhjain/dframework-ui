@@ -58,5 +58,4 @@ const Field = _ref => {
     disabled: isDisabled
   })), formik.touched[field] && formik.errors[field] && /*#__PURE__*/React.createElement(_material.FormHelperText, null, formik.errors[field]));
 };
-var _default = Field;
-exports.default = _default;
+var _default = exports.default = Field;

@@ -6,7 +6,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 
-const DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText, cancelText, yesNo = false, hideButtons = false, children }) => {
+const DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText, cancelText, yesNo = false, hideButtons = true, children }) => {
     okText = okText ? okText : (yesNo ? 'Yes' : 'Ok');
     cancelText = cancelText ? cancelText : (yesNo ? 'No' : 'Cancel');
     return (

@@ -202,5 +202,4 @@ const Form = _ref => {
     title: "Confirm Delete"
   }, "Are you sure you want to delete ".concat(data === null || data === void 0 ? void 0 : data.GroupName, "?"))));
 };
-var _default = Form;
-exports.default = _default;
+var _default = exports.default = Form;

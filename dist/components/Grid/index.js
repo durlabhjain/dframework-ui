@@ -732,5 +732,4 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     title: "Confirm Delete"
   }, " ", 'Are you sure you want to delete'.concat(" ", record === null || record === void 0 ? void 0 : record.name, "?")));
 }, areEqual);
-var _default = GridBase;
-exports.default = _default;
+var _default = exports.default = GridBase;

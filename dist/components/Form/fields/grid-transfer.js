@@ -57,5 +57,4 @@ const TransferField = _ref => {
     onAssignChange: onAssignChange
   }));
 };
-var _default = TransferField;
-exports.default = _default;
+var _default = exports.default = TransferField;

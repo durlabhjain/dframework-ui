@@ -21,7 +21,7 @@ const DialogComponent = _ref => {
     okText,
     cancelText,
     yesNo = false,
-    hideButtons = false,
+    hideButtons = true,
     children
   } = _ref;
   okText = okText ? okText : yesNo ? 'Yes' : 'Ok';

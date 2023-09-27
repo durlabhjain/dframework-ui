@@ -43,7 +43,7 @@ const days = [{
   value: 6,
   display: 'S'
 }];
-const CustomAvator = (0, _material.styled)(_material.Avatar)(_ref => {
+const CustomAvator = exports.CustomAvator = (0, _material.styled)(_material.Avatar)(_ref => {
   let {
     backgroundColor
   } = _ref;
@@ -55,7 +55,6 @@ const CustomAvator = (0, _material.styled)(_material.Avatar)(_ref => {
     backgroundColor: backgroundColor
   };
 });
-exports.CustomAvator = CustomAvator;
 const DayAvatar = _ref2 => {
   let {
     day,
@@ -163,5 +162,4 @@ const DaySelection = _ref3 => {
     }
   }, formik.errors[field]));
 };
-var _default = DaySelection;
-exports.default = _default;
+var _default = exports.default = DaySelection;

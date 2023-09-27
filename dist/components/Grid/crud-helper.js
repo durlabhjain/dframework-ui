@@ -224,7 +224,7 @@ const getRecord = async _ref3 => {
   }
 };
 exports.getRecord = getRecord;
-const deleteRecord = async function deleteRecord(_ref4) {
+const deleteRecord = exports.deleteRecord = async function deleteRecord(_ref4) {
   let {
     id,
     api,
@@ -250,8 +250,7 @@ const deleteRecord = async function deleteRecord(_ref4) {
     setIsLoading(false);
   }
 };
-exports.deleteRecord = deleteRecord;
-const saveRecord = async function saveRecord(_ref5) {
+const saveRecord = exports.saveRecord = async function saveRecord(_ref5) {
   let {
     id,
     api,
@@ -305,4 +304,3 @@ const saveRecord = async function saveRecord(_ref5) {
   }
   return false;
 };
-exports.saveRecord = saveRecord;

@@ -25,18 +25,16 @@ function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key i
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return typeof key === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (typeof input !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (typeof res !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
 let pendingRequests = 0;
-const transport = _axios.default.create({
+const transport = exports.transport = _axios.default.create({
   withCredentials: true
 });
-exports.transport = transport;
-const HTTP_STATUS_CODES = {
+const HTTP_STATUS_CODES = exports.HTTP_STATUS_CODES = {
   OK: 200,
   UNAUTHORIZED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   INTERNAL_SERVER_ERROR: 500
 };
-exports.HTTP_STATUS_CODES = HTTP_STATUS_CODES;
 const getFormData = props => {
   let formData = new FormData();
   for (let key in props) {
@@ -122,5 +120,4 @@ const request = async _ref => {
   }
   return /*#__PURE__*/_react.default.createElement(_react.default.Fragment, null);
 };
-var _default = request;
-exports.default = _default;
+var _default = exports.default = request;

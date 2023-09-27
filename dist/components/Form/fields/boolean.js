@@ -39,5 +39,4 @@ const field = _ref => {
     label: fieldLabel
   }), /*#__PURE__*/_react.default.createElement(_material.FormHelperText, null, formik.touched[field] && formik.errors[field]));
 };
-var _default = field;
-exports.default = _default;
+var _default = exports.default = field;
