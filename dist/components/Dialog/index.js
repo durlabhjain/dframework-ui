@@ -21,6 +21,7 @@ const DialogComponent = _ref => {
     okText,
     cancelText,
     yesNo = false,
+    hideButtons = false,
     children
   } = _ref;
   okText = okText ? okText : yesNo ? 'Yes' : 'Ok';
@@ -32,7 +33,7 @@ const DialogComponent = _ref => {
     "aria-describedby": "alert-dialog-description"
   }, /*#__PURE__*/_react.default.createElement(_DialogTitle.default, {
     id: "alert-dialog-title"
-  }, title), /*#__PURE__*/_react.default.createElement(_DialogContent.default, null, /*#__PURE__*/_react.default.createElement(_DialogContentText.default, null, children)), /*#__PURE__*/_react.default.createElement(_DialogActions.default, null, /*#__PURE__*/_react.default.createElement(_Button.default, {
+  }, title), /*#__PURE__*/_react.default.createElement(_DialogContent.default, null, /*#__PURE__*/_react.default.createElement(_DialogContentText.default, null, children)), !hideButtons && /*#__PURE__*/_react.default.createElement(_DialogActions.default, null, /*#__PURE__*/_react.default.createElement(_Button.default, {
     onClick: onCancel
   }, cancelText), /*#__PURE__*/_react.default.createElement(_Button.default, {
     onClick: onConfirm,
