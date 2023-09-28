@@ -5,8 +5,11 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 
-const DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText, cancelText, yesNo = false, hideButtons = true, children }) => {
+
+const DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText, cancelText, yesNo = false, hideButtons, children }) => {
     okText = okText ? okText : (yesNo ? 'Yes' : 'Ok');
     cancelText = cancelText ? cancelText : (yesNo ? 'No' : 'Cancel');
     return (
@@ -16,11 +19,20 @@ const DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText,
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
         >
-            <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
+            <DialogTitle id="alert-dialog-title">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    {title}
+                    {hideButtons && (
+                    <IconButton edge="end" color="inherit" onClick={onCancel} aria-label="close">
+                        <CloseIcon />
+                    </IconButton>
+                    )}
+                </div>
+            </DialogTitle>
             <DialogContent>
                 <DialogContentText>{children}</DialogContentText>
             </DialogContent>
-            {!hideButtons && ( 
+            {!hideButtons && (
                 <DialogActions>
                     <Button onClick={onCancel}>{cancelText}</Button>
                     <Button onClick={onConfirm} autoFocus>{okText}</Button>

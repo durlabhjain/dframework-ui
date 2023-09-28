@@ -124,26 +124,49 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
     if (!formElements?.length) {
         return null;
     }
-    return (
-        <>
-            {
-                formElements.map(({ Component, column, field, fieldLabel, otherProps }, key) => {
-                    let isGridComponent = typeof column.relation === 'function';
-                    return (
-                        <Grid container spacing={2} key={key} className={classes.root} alignItems={isGridComponent ? "flex-start" : "center"}>
-                            <Grid item xs={1} className={classes.childStyles}>
-                                <Typography sx={{ fontSize: '16px', fontWeight: isGridComponent ? 'bold' : 'normal' }}> {column.label}: </Typography>
+
+    if (!model.addHeaderFilters) {
+        return (
+            <Grid container sx={{ width: '53rem', display: 'flex', justifyContent: 'space-between' }} spacing={1}>
+                {
+                    formElements.map(({ Component, column, field, fieldLabel, otherProps }, key) => {
+                        let isGridComponent = typeof column.relation === 'function';
+                        return (
+                            <Grid item xs={5} key={key}>
+                                <Grid container alignItems={isGridComponent ? "flex-start" : "center"}>
+                                    <Grid item xs={9} className={classes.childStyles}>
+                                        <Component model={model} fieldConfigs={fieldConfigs[field]} column={column} field={field} fieldLabel={fieldLabel} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} {...otherProps} />
+                                    </Grid>
+                                </Grid>
                             </Grid>
-                            <Grid item xs={isGridComponent ? 12 : 11} className={classes.childStyles}>
-                                <Component model={model} fieldConfigs={fieldConfigs[field]} column={column} field={field} fieldLabel={fieldLabel} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} {...otherProps} />
+                        );
+                    })
+                }
+            </Grid>
+        );
+    } else {
+        return (
+            <>
+                {
+                    formElements.map(({ Component, column, field, fieldLabel, otherProps }, key) => {
+                        let isGridComponent = typeof column.relation === 'function';
+                        return (
+                            <Grid container spacing={2} key={key} className={classes.root} alignItems={isGridComponent ? "flex-start" : "center"}>
+                                <Grid item xs={1} className={classes.childStyles}>
+                                    <Typography sx={{ fontSize: '16px', fontWeight: isGridComponent ? 'bold' : 'normal' }}> {column.label}: </Typography>
+                                </Grid>
+                                <Grid item xs={isGridComponent ? 12 : 11} className={classes.childStyles}>
+                                    <Component model={model} fieldConfigs={fieldConfigs[field]} column={column} field={field} fieldLabel={fieldLabel} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} {...otherProps} />
+                                </Grid>
                             </Grid>
-                        </Grid >
-                    )
-                })
-            }
-        </>
-    )
+                        )
+                    })
+                }
+            </>
+        )
+    }
 }
+
 
 const getFormConfig = function ({ columns, tabs = {} }) {
     const formElements = [], tabColumns = {};
@@ -180,8 +203,9 @@ const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displa
         const { formElements, tabColumns } = getFormConfig({ columns: model.columns, tabs: showTabs ? model.tabs : {} });
         return { formElements, tabColumns, showTabs: showTabs && tabColumns.length > 0 };
     }, [model]);
+    const wrapperStyle = model.addheaderFilters === false ? { width: "52.313rem" } : {};
     return (
-        <div>
+        <div style={wrapperStyle}>
             <RenderColumns formElements={formElements} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} />
             <RenderSteps tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} />
         </div>
