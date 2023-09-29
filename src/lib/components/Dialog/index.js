@@ -19,15 +19,15 @@ const DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText,
             aria-labelledby="alert-dialog-title"
             aria-describedby="alert-dialog-description"
         >
-            <DialogTitle id="alert-dialog-title">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    {title}
-                    {hideButtons && (
+            <DialogTitle id="alert-dialog-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {title}
+
+                {hideButtons && (
                     <IconButton edge="end" color="inherit" onClick={onCancel} aria-label="close">
                         <CloseIcon />
                     </IconButton>
-                    )}
-                </div>
+                )}
+
             </DialogTitle>
             <DialogContent>
                 <DialogContentText>{children}</DialogContentText>

@@ -34,8 +34,7 @@ const DialogComponent = _ref => {
     "aria-labelledby": "alert-dialog-title",
     "aria-describedby": "alert-dialog-description"
   }, /*#__PURE__*/_react.default.createElement(_DialogTitle.default, {
-    id: "alert-dialog-title"
-  }, /*#__PURE__*/_react.default.createElement("div", {
+    id: "alert-dialog-title",
     style: {
       display: 'flex',
       justifyContent: 'space-between',
@@ -46,7 +45,7 @@ const DialogComponent = _ref => {
     color: "inherit",
     onClick: onCancel,
     "aria-label": "close"
-  }, /*#__PURE__*/_react.default.createElement(_Close.default, null)))), /*#__PURE__*/_react.default.createElement(_DialogContent.default, null, /*#__PURE__*/_react.default.createElement(_DialogContentText.default, null, children)), !hideButtons && /*#__PURE__*/_react.default.createElement(_DialogActions.default, null, /*#__PURE__*/_react.default.createElement(_Button.default, {
+  }, /*#__PURE__*/_react.default.createElement(_Close.default, null))), /*#__PURE__*/_react.default.createElement(_DialogContent.default, null, /*#__PURE__*/_react.default.createElement(_DialogContentText.default, null, children)), !hideButtons && /*#__PURE__*/_react.default.createElement(_DialogActions.default, null, /*#__PURE__*/_react.default.createElement(_Button.default, {
     onClick: onCancel
   }, cancelText), /*#__PURE__*/_react.default.createElement(_Button.default, {
     onClick: onConfirm,
