@@ -16,6 +16,7 @@ var _formik = require("formik");
 var _crudHelper = require("../Grid/crud-helper");
 var _Button = _interopRequireDefault(require("@mui/material/Button"));
 var _Paper = _interopRequireDefault(require("@mui/material/Paper"));
+var _material = require("@mui/material");
 var _Stack = _interopRequireDefault(require("@mui/material/Stack"));
 var _fieldMapper = _interopRequireDefault(require("./field-mapper"));
 var _SnackBar = require("../SnackBar");
@@ -38,8 +39,12 @@ const Form = _ref => {
       export: true,
       delete: true
     },
-    Layout = _fieldMapper.default
+    Layout = _fieldMapper.default,
+    ids
   } = _ref;
+  const {
+    id: idFromProps
+  } = ids || {};
   const {
     navigate,
     getParams
@@ -47,8 +52,8 @@ const Form = _ref => {
   const defaultFieldConfigs = {};
   const {
     id: idWithOptions
-  } = getParams;
-  const id = idWithOptions === null || idWithOptions === void 0 ? void 0 : idWithOptions.split('-')[0];
+  } = getParams || idFromProps;
+  const id = (idWithOptions === null || idWithOptions === void 0 ? void 0 : idWithOptions.split('-')[0]) || idFromProps;
   const [isLoading, setIsLoading] = (0, _react.useState)(true);
   const [data, setData] = (0, _react.useState)(null);
   const [lookups, setLookups] = (0, _react.useState)(null);
@@ -65,10 +70,14 @@ const Form = _ref => {
       id,
       snackbar
     }));
-    const options = idWithOptions === null || idWithOptions === void 0 ? void 0 : idWithOptions.split('-');
+    const options = (idWithOptions === null || idWithOptions === void 0 ? void 0 : idWithOptions.split('-')) || {
+      idFromProps
+    };
+    console.log("new id", id);
+    console.log("option", options[0]);
     try {
       (0, _crudHelper.getRecord)({
-        id: options.length > 1 ? options[1] : options[0],
+        id: options.length > 1 ? options[1] : options[0] || idFromProps,
         modelConfig: model,
         setIsLoading,
         setError: errorOnLoad,
@@ -163,26 +172,31 @@ const Form = _ref => {
     gridData[name] = value;
     setData(gridData);
   };
-  return /*#__PURE__*/_react.default.createElement(_react.default.Fragment, null, /*#__PURE__*/_react.default.createElement(_Paper.default, {
-    sx: {
-      padding: 2
-    }
-  }, /*#__PURE__*/_react.default.createElement("form", null, /*#__PURE__*/_react.default.createElement(_Stack.default, {
+  const actionButtons = [{
+    text: 'Reset',
+    variant: 'outlined',
+    color: 'primary'
+  }, {
+    text: 'Add',
+    variant: 'contained',
+    color: 'success'
+  }];
+  const content = /*#__PURE__*/_react.default.createElement(_react.default.Fragment, null, /*#__PURE__*/_react.default.createElement("form", null, /*#__PURE__*/_react.default.createElement(_Stack.default, {
     direction: "row",
     spacing: 2,
     justifyContent: "flex-end",
     mb: 1
-  }, permissions.edit && /*#__PURE__*/_react.default.createElement(_Button.default, {
+  }, permissions.edit && model.addHeaderFilters !== false && /*#__PURE__*/_react.default.createElement(_Button.default, {
     variant: "contained",
     type: "submit",
     color: "success",
     onClick: formik.handleSubmit
-  }, "Save"), /*#__PURE__*/_react.default.createElement(_Button.default, {
+  }, "Save"), model.addHeaderFilters !== false && /*#__PURE__*/_react.default.createElement(_Button.default, {
     variant: "contained",
     type: "cancel",
     color: "error",
     onClick: handleFormCancel
-  }, "Cancel"), permissions.delete && /*#__PURE__*/_react.default.createElement(_Button.default, {
+  }, "Cancel"), permissions.delete && model.addHeaderFilters !== false && /*#__PURE__*/_react.default.createElement(_Button.default, {
     variant: "contained",
     color: "error",
     onClick: () => setIsDeleting(true)
@@ -195,11 +209,36 @@ const Form = _ref => {
     onChange: handleChange,
     lookups: lookups,
     id: id
-  })), /*#__PURE__*/_react.default.createElement(_Dialog.DialogComponent, {
+  }), /*#__PURE__*/_react.default.createElement(_material.Box, {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    display: "flex",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    marginBottom: '1.5rem',
+    marginTop: '10rem',
+    marginRight: '2.5rem'
+  }, actionButtons.map((button, index) => {
+    return /*#__PURE__*/_react.default.createElement(_material.Box, {
+      key: index,
+      ml: 2,
+      mt: 4
+    }, /*#__PURE__*/_react.default.createElement(model.CustomButton, {
+      buttonText: button.text,
+      variant: button.variant,
+      color: button.color
+    }));
+  }))), /*#__PURE__*/_react.default.createElement(_Dialog.DialogComponent, {
     open: isDeleting,
     onConfirm: handleDelete,
     onCancel: () => setIsDeleting(false),
     title: "Confirm Delete"
-  }, "Are you sure you want to delete ".concat(data === null || data === void 0 ? void 0 : data.GroupName, "?"))));
+  }, "Are you sure you want to delete ".concat(data === null || data === void 0 ? void 0 : data.GroupName, "?")));
+  return model.addHeaderFilters !== false ? /*#__PURE__*/_react.default.createElement(_Paper.default, {
+    sx: {
+      padding: 2
+    }
+  }, content) : content;
 };
 var _default = exports.default = Form;

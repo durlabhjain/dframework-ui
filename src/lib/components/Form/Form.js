@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { getRecord, saveRecord, deleteRecord } from '../Grid/crud-helper';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
+import { Box } from "@mui/material";
 import Stack from '@mui/material/Stack';
 import FormLayout from './field-mapper';
 import { useSnackbar } from '../SnackBar';
@@ -15,11 +16,13 @@ const Form = ({
     api,
     permissions = { edit: true, export: true, delete: true },
     Layout = FormLayout,
+    ids
 }) => {
+    const { id: idFromProps } = ids || {}; 
     const { navigate, getParams } = useRouter()
     const defaultFieldConfigs = {}
-    const { id: idWithOptions } = getParams;
-    const id = idWithOptions?.split('-')[0];
+    const { id: idWithOptions } = getParams || idFromProps;
+    const id = idWithOptions?.split('-')[0] || idFromProps;
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState(null);
     const [lookups, setLookups] = useState(null);
@@ -32,10 +35,12 @@ const Form = ({
 
     useEffect(() => {
         setValidationSchema(model.getValidationSchema({ id, snackbar }));
-        const options = idWithOptions?.split('-');
+        const options = idWithOptions?.split('-') || { idFromProps };
+        console.log("new id", id);
+        console.log("option", options[0]);
         try {
             getRecord({
-                id: options.length > 1 ? options[1] : options[0],
+                id: options.length > 1 ? options[1] : options[0] || idFromProps,
                 modelConfig: model,
                 setIsLoading,
                 setError: errorOnLoad,
@@ -119,20 +124,49 @@ const Form = ({
         gridData[name] = value;
         setData(gridData);
     }
-    return (
+    const actionButtons = [{ text: 'Reset', variant: 'outlined', color: 'primary' }, { text: 'Add', variant: 'contained', color: 'success' }]
+    const content = (
         <>
-            <Paper sx={{ padding: 2 }}>
-                <form>
-                    <Stack direction="row" spacing={2} justifyContent="flex-end" mb={1}>
-                        {permissions.edit && <Button variant="contained" type="submit" color="success" onClick={formik.handleSubmit}>Save</Button>}
-                        <Button variant="contained" type="cancel" color="error" onClick={handleFormCancel}>Cancel</Button>
-                        {permissions.delete && <Button variant="contained" color="error" onClick={() => setIsDeleting(true)}>Delete</Button>}
-                    </Stack>
-                    <Layout model={model} formik={formik} data={data} fieldConfigs={fieldConfigs} combos={combos} onChange={handleChange} lookups={lookups} id={id} />
-                </form>
-                <DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete">{`Are you sure you want to delete ${data?.GroupName}?`}</DialogComponent>
-            </Paper>
+            <form>
+                <Stack direction="row" spacing={2} justifyContent="flex-end" mb={1}>
+                    {permissions.edit && model.addHeaderFilters !== false && (
+                        <Button variant="contained" type="submit" color="success" onClick={formik.handleSubmit}>
+                            Save
+                        </Button>
+                    )}
+                    {model.addHeaderFilters !== false && (
+                        <Button variant="contained" type="cancel" color="error" onClick={handleFormCancel}>
+                            Cancel
+                        </Button>
+                    )}
+                    {permissions.delete && model.addHeaderFilters !== false && (
+                        <Button variant="contained" color="error" onClick={() => setIsDeleting(true)}>
+                            Delete
+                        </Button>
+                    )}
+                </Stack>
+                <Layout model={model} formik={formik} data={data} fieldConfigs={fieldConfigs} combos={combos} onChange={handleChange} lookups={lookups} id={id} />
+                <Box position='absolute' bottom={0} right={0} display='flex' justifyContent='flex-end' alignItems='center' marginBottom={'1.5rem'} marginTop={'10rem'} marginRight={'2.5rem'}>
+                    {actionButtons.map((button, index) => {
+                        return (
+                            <Box key={index} ml={2} mt={4} >
+                                <model.CustomButton buttonText={button.text} variant={button.variant} color={button.color} />
+                            </Box>
+                        )
+                    })}
+                </Box>
+            </form>
+            <DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete">
+                {`Are you sure you want to delete ${data?.GroupName}?`}
+            </DialogComponent>
         </>
-    )
+    );
+    return model.addHeaderFilters !== false ? (
+        <Paper sx={{ padding: 2 }}>
+            {content}
+        </Paper>
+    ) : content;
+
+
 }
 export default Form;

@@ -99,7 +99,8 @@ const fieldMappers = exports.fieldMappers = {
 const useStyles = (0, _core.makeStyles)({
   root: {
     marginTop: "1rem",
-    marginBottom: "1rem"
+    marginBottom: "1rem",
+    width: "58.59rem"
   },
   childStyles: {
     paddingTop: "2.5px",
@@ -218,7 +219,8 @@ const RenderColumns = _ref3 => {
     return /*#__PURE__*/React.createElement(_Grid.default, {
       container: true,
       sx: {
-        width: '53rem',
+        width: '52rem',
+        height: '37.125rem',
         display: 'flex',
         justifyContent: 'space-between'
       },

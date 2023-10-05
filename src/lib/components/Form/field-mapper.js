@@ -18,7 +18,7 @@ import StepLabel from '@mui/material/StepLabel';
 import Button from '@mui/material/Button';
 import DaySelection from './fields/dayRadio';
 import { makeStyles } from '@material-ui/core';
-import { Typography } from '@mui/material';
+import { Typography, Container } from '@mui/material';
 
 const fieldMappers = {
     "boolean": BooleanField,
@@ -39,7 +39,8 @@ const fieldMappers = {
 const useStyles = makeStyles({
     root: {
         marginTop: "1rem",
-        marginBottom: "1rem"
+        marginBottom: "1rem",
+        width: "58.59rem"
     },
     childStyles: {
         paddingTop: "2.5px",
@@ -127,7 +128,7 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
 
     if (!model.addHeaderFilters) {
         return (
-            <Grid container sx={{ width: '53rem', display: 'flex', justifyContent: 'space-between' }} spacing={1}>
+            <Grid container sx={{ width: '52rem', height: '37.125rem', display: 'flex', justifyContent: 'space-between' }} spacing={1}>
                 {
                     formElements.map(({ Component, column, field, fieldLabel, otherProps }, key) => {
                         let isGridComponent = typeof column.relation === 'function';

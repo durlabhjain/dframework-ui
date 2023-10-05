@@ -1,5 +1,5 @@
 import Button from '@mui/material/Button';
-import React from 'react';
+import React, { useMemo, useEffect, memo, useRef, useState } from 'react';
 import {
     DataGridPremium,
     GridToolbarContainer,
@@ -8,6 +8,8 @@ import {
     GridToolbarExportContainer,
     getGridDateOperators,
     GRID_CHECKBOX_SELECTION_COL_DEF,
+    GridActionsCellItem,
+    useGridApiRef
 } from '@mui/x-data-grid-premium';
 import DeleteIcon from '@mui/icons-material/Delete';
 import UnfoldMoreTwoToneIcon from '@mui/icons-material/UnfoldMoreTwoTone';
@@ -15,18 +17,12 @@ import CopyIcon from '@mui/icons-material/FileCopy';
 import EditIcon from '@mui/icons-material/Edit';
 import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import MoreVertTwoToneIcon from '@mui/icons-material/MoreVertTwoTone';
-import {
-    GridActionsCellItem,
-    useGridApiRef
-} from '@mui/x-data-grid-premium';
-
-import { useMemo, useEffect, memo, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
-import { useSnackbar } from '@durlabh/dfamework-ui';
-import { DialogComponent } from '@durlabh/dfamework-ui';
+import { useSnackbar, DialogComponent } from '@durlabh/dfamework-ui';
+import Menu from '@mui/material/Menu';
 import { getList, getRecord, deleteRecord } from './crud-helper';
 import PropTypes from 'prop-types';
 import { Footer } from './footer';
@@ -169,7 +165,9 @@ const GridBase = memo(({
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [visibilityModel, setVisibilityModel] = useState({ CreatedOn: false, CreatedByUser: false, ...model?.columnVisibilityModel });
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isEdit, setIsEdit] = useState(false);
     const [record, setRecord] = useState(null);
+    const [selectedRecord, setSelectedRecord] = useState(null);
     const snackbar = useSnackbar()
     const isClient = model.isClient === true ? 'client' : 'server';
     const [errorMessage, setErrorMessage] = useState('');
@@ -187,6 +185,14 @@ const GridBase = memo(({
     const { idProperty = "id" } = model;
     const isReadOnly = model.readOnly === true;
     const dataRef = useRef(data);
+    const [anchorEl, setAnchorEl] = React.useState(null);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const open = Boolean(anchorEl);
+    const router = useRouter();
     useEffect(() => {
         dataRef.current = data;
     }, [data]);
@@ -272,10 +278,15 @@ const GridBase = memo(({
                 pinnedColumns.right.push('actions');
             } else {
                 finalColumns.push({
-                    field: 'options',
+                    field: 'actions',
                     width: 1,
-                    renderCell: () => (
-                        <MoreVertTwoToneIcon />
+                    renderCell: (cellParams) => (
+                        <>
+                            <MoreVertTwoToneIcon onClick={(event) => {
+                                setSelectedRecord(cellParams.row);
+                                handleClick(event);
+                            }} />
+                        </>
                     ),
                 });
             }
@@ -360,6 +371,11 @@ const GridBase = memo(({
             }
         }
     };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
     const handleDelete = async function () {
         const result = await deleteRecord({ id: record?.id, api: api || model?.api, setIsLoading, setError: snackbar.showError, setErrorMessage });
         if (result === true) {
@@ -387,7 +403,7 @@ const GridBase = memo(({
             const { row } = event;
             setSelectedOrder(row);
         } else {
-            if (!isReadOnly) {
+            if (!isReadOnly && model.addHeaderFilters !== false) {
                 const { row: record } = event;
                 openForm(record[idProperty]);
             }
@@ -496,6 +512,17 @@ const GridBase = memo(({
             overflow: 'hidden !important'
           }
     };
+
+    const handleDeletes = (record) => {
+        setIsDeleting(true);
+        setRecord({ name: record[model?.linkColumn], id: record[idProperty] });
+    };
+
+    const handleEdits = (record) => {
+        setIsEdit(true);
+        setRecord({ name: record[model?.linkColumn], id: record[idProperty] });
+    };
+
     return (
         <div style={customStyles}>
             <DataGridPremium
@@ -537,7 +564,7 @@ const GridBase = memo(({
                     footer: {
                         pagination: true,
                         apiRef,
-                        rowCount:data.recordCount
+                        rowCount: data.recordCount
 
                     },
                     panel: {
@@ -574,6 +601,54 @@ const GridBase = memo(({
             {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
             }
             {isDeleting && !errorMessage && (<DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete"> {`${'Are you sure you want to delete'} ${record?.name}?`}</DialogComponent>)}
+            {isEdit && (<DialogComponent open={isEdit} onConfirm={handleDelete} onCancel={() => setIsEdit(false)} title="Edit Case" hideButtons={true}><model.EditForm id={selectedRecord.id} /></DialogComponent>)}
+            <Menu
+                anchorEl={anchorEl}
+                id="account-menu"
+                open={open}
+                onClose={handleClose}
+                onClick={handleClose}
+                PaperProps={{
+                    elevation: 0,
+                    sx: {
+                        overflow: 'visible',
+                        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                        marginLeft: '-30px',
+                        marginTop: '-40px',
+                        backgroundColor: '#5460B4',
+                        color: '#FFFFFF',
+                        '& .MuiAvatar-root': {
+                            width: 35,
+                            height: 35,
+                            ml: -0.5,
+                            mr: 1,
+                        },
+                        '&:before': {
+                            content: '""',
+                            display: 'block',
+                            position: 'absolute',
+                            right: 0,
+                            top: 35,
+                            width: 12,
+                            height: 12,
+                            bgcolor: '#5460B4',
+                            transform: 'translateX(50%) rotate(45deg)',
+                            zIndex: 0,
+                        },
+                    },
+                }}
+                transformOrigin={{ horizontal: 'right', vertical: 'center' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'center' }}
+            >
+                <MenuItem className="actionMenuItem" data-action={actionTypes.Edit} onClick={() => handleEdits(selectedRecord)}>
+                    Edit
+                </MenuItem>
+                <MenuItem className="actionMenuItem" data-action={actionTypes.Delete} onClick={() => handleDeletes(selectedRecord)}>
+                    Delete
+                </MenuItem>
+            </Menu>
+
+
         </div >
     );
 }, areEqual);

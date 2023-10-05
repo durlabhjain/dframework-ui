@@ -32,6 +32,7 @@ var _Remove = _interopRequireDefault(require("@mui/icons-material/Remove"));
 var _Typography = _interopRequireDefault(require("@mui/material/Typography"));
 var _MenuItem = _interopRequireDefault(require("@mui/material/MenuItem"));
 var _dfameworkUi = require("@durlabh/dfamework-ui");
+var _Menu = _interopRequireDefault(require("@mui/material/Menu"));
 var _crudHelper = require("./crud-helper");
 var _propTypes = _interopRequireDefault(require("prop-types"));
 var _footer = require("./footer");
@@ -219,7 +220,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     CreatedByUser: false
   }, model === null || model === void 0 ? void 0 : model.columnVisibilityModel));
   const [isDeleting, setIsDeleting] = (0, _react.useState)(false);
+  const [isEdit, setIsEdit] = (0, _react.useState)(false);
   const [record, setRecord] = (0, _react.useState)(null);
+  const [selectedRecord, setSelectedRecord] = (0, _react.useState)(null);
   const snackbar = (0, _dfameworkUi.useSnackbar)();
   const isClient = model.isClient === true ? 'client' : 'server';
   const [errorMessage, setErrorMessage] = (0, _react.useState)('');
@@ -247,6 +250,12 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   } = model;
   const isReadOnly = model.readOnly === true;
   const dataRef = (0, _react.useRef)(data);
+  const [anchorEl, setAnchorEl] = _react.default.useState(null);
+  const handleClick = event => {
+    setAnchorEl(event.currentTarget);
+  };
+  const open = Boolean(anchorEl);
+  const router = (0, _useRouter.useRouter)();
   (0, _react.useEffect)(() => {
     dataRef.current = data;
   }, [data]);
@@ -368,9 +377,14 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
         pinnedColumns.right.push('actions');
       } else {
         finalColumns.push({
-          field: 'options',
+          field: 'actions',
           width: 1,
-          renderCell: () => /*#__PURE__*/_react.default.createElement(_MoreVertTwoTone.default, null)
+          renderCell: cellParams => /*#__PURE__*/_react.default.createElement(_react.default.Fragment, null, /*#__PURE__*/_react.default.createElement(_MoreVertTwoTone.default, {
+            onClick: event => {
+              setSelectedRecord(cellParams.row);
+              handleClick(event);
+            }
+          }))
         });
       }
     }
@@ -487,6 +501,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       }
     }
   };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
   const handleDelete = async function handleDelete() {
     const result = await (0, _crudHelper.deleteRecord)({
       id: record === null || record === void 0 ? void 0 : record.id,
@@ -522,7 +539,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       } = event;
       setSelectedOrder(row);
     } else {
-      if (!isReadOnly) {
+      if (!isReadOnly && model.addHeaderFilters !== false) {
         const {
           row: record
         } = event;
@@ -648,6 +665,20 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       overflow: 'hidden !important'
     }
   };
+  const handleDeletes = record => {
+    setIsDeleting(true);
+    setRecord({
+      name: record[model === null || model === void 0 ? void 0 : model.linkColumn],
+      id: record[idProperty]
+    });
+  };
+  const handleEdits = record => {
+    setIsEdit(true);
+    setRecord({
+      name: record[model === null || model === void 0 ? void 0 : model.linkColumn],
+      id: record[idProperty]
+    });
+  };
   return /*#__PURE__*/_react.default.createElement("div", {
     style: customStyles
   }, /*#__PURE__*/_react.default.createElement(_xDataGridPremium.DataGridPremium, {
@@ -730,6 +761,65 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     onConfirm: handleDelete,
     onCancel: () => setIsDeleting(false),
     title: "Confirm Delete"
-  }, " ", 'Are you sure you want to delete'.concat(" ", record === null || record === void 0 ? void 0 : record.name, "?")));
+  }, " ", 'Are you sure you want to delete'.concat(" ", record === null || record === void 0 ? void 0 : record.name, "?")), isEdit && /*#__PURE__*/_react.default.createElement(_dfameworkUi.DialogComponent, {
+    open: isEdit,
+    onConfirm: handleDelete,
+    onCancel: () => setIsEdit(false),
+    title: "Edit Case",
+    hideButtons: true
+  }, /*#__PURE__*/_react.default.createElement(model.EditForm, {
+    id: selectedRecord.id
+  })), /*#__PURE__*/_react.default.createElement(_Menu.default, {
+    anchorEl: anchorEl,
+    id: "account-menu",
+    open: open,
+    onClose: handleClose,
+    onClick: handleClose,
+    PaperProps: {
+      elevation: 0,
+      sx: {
+        overflow: 'visible',
+        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+        marginLeft: '-30px',
+        marginTop: '-40px',
+        backgroundColor: '#5460B4',
+        color: '#FFFFFF',
+        '& .MuiAvatar-root': {
+          width: 35,
+          height: 35,
+          ml: -0.5,
+          mr: 1
+        },
+        '&:before': {
+          content: '""',
+          display: 'block',
+          position: 'absolute',
+          right: 0,
+          top: 35,
+          width: 12,
+          height: 12,
+          bgcolor: '#5460B4',
+          transform: 'translateX(50%) rotate(45deg)',
+          zIndex: 0
+        }
+      }
+    },
+    transformOrigin: {
+      horizontal: 'right',
+      vertical: 'center'
+    },
+    anchorOrigin: {
+      horizontal: 'right',
+      vertical: 'center'
+    }
+  }, /*#__PURE__*/_react.default.createElement(_MenuItem.default, {
+    className: "actionMenuItem",
+    "data-action": actionTypes.Edit,
+    onClick: () => handleEdits(selectedRecord)
+  }, "Edit"), /*#__PURE__*/_react.default.createElement(_MenuItem.default, {
+    className: "actionMenuItem",
+    "data-action": actionTypes.Delete,
+    onClick: () => handleDeletes(selectedRecord)
+  }, "Delete")));
 }, areEqual);
 var _default = exports.default = GridBase;
