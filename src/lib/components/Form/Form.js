@@ -36,8 +36,6 @@ const Form = ({
     useEffect(() => {
         setValidationSchema(model.getValidationSchema({ id, snackbar }));
         const options = idWithOptions?.split('-') || { idFromProps };
-        console.log("new id", id);
-        console.log("option", options[0]);
         try {
             getRecord({
                 id: options.length > 1 ? options[1] : options[0] || idFromProps,
@@ -48,7 +46,7 @@ const Form = ({
             })
         } catch (error) {
             snackbar?.showMessage('An error occured, please try after some time.');
-            navigate('./');
+            // navigate('./');
         }
     }, [id, idWithOptions, model]);
 
@@ -69,7 +67,7 @@ const Form = ({
                 .then(success => {
                     if (success) {
                         snackbar?.showMessage('Record Updated Successfully.');
-                        navigate('./');
+                        // navigate('./');
                     }
                 })
                 .finally(() => setIsLoading(false));
@@ -78,7 +76,7 @@ const Form = ({
 
     const errorOnLoad = function (title, error) {
         snackbar?.showError(title, error);
-        navigate('./');
+        // navigate('./');
     }
 
     const setActiveRecord = function ({ id, title, record, lookups }) {

@@ -73,8 +73,6 @@ const Form = _ref => {
     const options = (idWithOptions === null || idWithOptions === void 0 ? void 0 : idWithOptions.split('-')) || {
       idFromProps
     };
-    console.log("new id", id);
-    console.log("option", options[0]);
     try {
       (0, _crudHelper.getRecord)({
         id: options.length > 1 ? options[1] : options[0] || idFromProps,
@@ -85,7 +83,7 @@ const Form = _ref => {
       });
     } catch (error) {
       snackbar === null || snackbar === void 0 || snackbar.showMessage('An error occured, please try after some time.');
-      navigate('./');
+      // navigate('./');
     }
   }, [id, idWithOptions, model]);
   const formik = (0, _formik.useFormik)({
@@ -107,15 +105,16 @@ const Form = _ref => {
       }).then(success => {
         if (success) {
           snackbar === null || snackbar === void 0 || snackbar.showMessage('Record Updated Successfully.');
-          navigate('./');
+          // navigate('./');
         }
       }).finally(() => setIsLoading(false));
     }
   });
   const errorOnLoad = function errorOnLoad(title, error) {
     snackbar === null || snackbar === void 0 || snackbar.showError(title, error);
-    navigate('./');
+    // navigate('./');
   };
+
   const setActiveRecord = function setActiveRecord(_ref3) {
     let {
       id,
