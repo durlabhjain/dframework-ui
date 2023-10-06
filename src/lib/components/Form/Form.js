@@ -148,7 +148,7 @@ const Form = ({
                     {actionButtons.map((button, index) => {
                         return (
                             <Box key={index} ml={2} mt={4} >
-                                <model.CustomButton buttonText={button.text} variant={button.variant} color={button.color} />
+                                <model.CustomButton buttonFunction={button.text === 'Add' ? formik.handleSubmit : handleFormCancel} buttonText={button.text} variant={button.variant} color={button.color} />
                             </Box>
                         )
                     })}

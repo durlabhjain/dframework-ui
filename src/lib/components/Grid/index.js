@@ -153,7 +153,8 @@ const GridBase = memo(({
     customStyle,
     onCellClick,
     showRowsSelected,
-    gridFooter = model.gridFooter || Footer
+    gridFooter = model.gridFooter || Footer,
+    advanceFilter
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState({ recordCount: 0, records: [], lookups: {} });
@@ -297,6 +298,9 @@ const GridBase = memo(({
         const { pageSize, page } = paginationModel;
         if (assigned || available) {
             extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
+        }
+        if(advanceFilter) {
+            extraParams["advanceFilter"] = advanceFilter;
         }
         getList({
             action,
@@ -479,7 +483,7 @@ const GridBase = memo(({
 
     useEffect(
         fetchData,
-        [paginationModel, sortModel, filterModel, isLoading]
+        [paginationModel, sortModel, filterModel, isLoading,advanceFilter]
     );
 
     // useEffect(

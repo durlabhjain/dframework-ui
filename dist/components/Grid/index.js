@@ -198,7 +198,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     customStyle,
     onCellClick,
     showRowsSelected,
-    gridFooter = model.gridFooter || _footer.Footer
+    gridFooter = model.gridFooter || _footer.Footer,
+    advanceFilter
   } = _ref2;
   const [paginationModel, setPaginationModel] = (0, _react.useState)({
     pageSize: defaultPageSize,
@@ -405,6 +406,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     } = paginationModel;
     if (assigned || available) {
       extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
+    }
+    if (advanceFilter) {
+      extraParams["advanceFilter"] = advanceFilter;
     }
     (0, _crudHelper.getList)({
       action,
@@ -633,7 +637,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     });
     fetchData(undefined, undefined, e.target.dataset.contentType, columns);
   };
-  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, filterModel, isLoading]);
+  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, filterModel, isLoading, advanceFilter]);
 
   // useEffect(
   //     fetchData,

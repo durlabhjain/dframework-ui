@@ -224,6 +224,7 @@ const Form = _ref => {
       ml: 2,
       mt: 4
     }, /*#__PURE__*/_react.default.createElement(model.CustomButton, {
+      buttonFunction: button.text === 'Add' ? formik.handleSubmit : handleFormCancel,
       buttonText: button.text,
       variant: button.variant,
       color: button.color
