@@ -407,9 +407,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     if (assigned || available) {
       extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
     }
-    if (advanceFilter) {
-      extraParams["advanceFilter"] = advanceFilter;
-    }
+    // if(advanceFilter) {
+    //     extraParams["advanceFilter"] = advanceFilter;
+    // }
     (0, _crudHelper.getList)({
       action,
       page: !contentType ? page : 0,
@@ -637,7 +637,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     });
     fetchData(undefined, undefined, e.target.dataset.contentType, columns);
   };
-  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, isLoading, advanceFilter]);
+  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, filterModel]);
 
   // useEffect(
   //     fetchData,
