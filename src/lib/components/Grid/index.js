@@ -193,7 +193,7 @@ const GridBase = memo(({
     };
 
     const open = Boolean(anchorEl);
-    const router = useRouter();
+    
     useEffect(() => {
         dataRef.current = data;
     }, [data]);
@@ -299,9 +299,9 @@ const GridBase = memo(({
         if (assigned || available) {
             extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
         }
-        // if(advanceFilter) {
-        //     extraParams["advanceFilter"] = advanceFilter;
-        // }
+        if(advanceFilter) {
+            extraParams["advanceFilter"] = advanceFilter;
+        }
         getList({
             action,
             page: !contentType ? page : 0,
@@ -483,7 +483,7 @@ const GridBase = memo(({
 
     useEffect(
         fetchData,
-        [paginationModel, sortModel,filterModel]
+        [paginationModel, sortModel,filterModel,advanceFilter]
     );
 
     // useEffect(

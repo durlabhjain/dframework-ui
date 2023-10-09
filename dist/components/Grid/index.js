@@ -256,7 +256,6 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     setAnchorEl(event.currentTarget);
   };
   const open = Boolean(anchorEl);
-  const router = (0, _useRouter.useRouter)();
   (0, _react.useEffect)(() => {
     dataRef.current = data;
   }, [data]);
@@ -407,9 +406,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     if (assigned || available) {
       extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
     }
-    // if(advanceFilter) {
-    //     extraParams["advanceFilter"] = advanceFilter;
-    // }
+    if (advanceFilter) {
+      extraParams["advanceFilter"] = advanceFilter;
+    }
     (0, _crudHelper.getList)({
       action,
       page: !contentType ? page : 0,
@@ -637,7 +636,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     });
     fetchData(undefined, undefined, e.target.dataset.contentType, columns);
   };
-  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, filterModel]);
+  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, filterModel, advanceFilter]);
 
   // useEffect(
   //     fetchData,
