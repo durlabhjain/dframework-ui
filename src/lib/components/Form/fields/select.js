@@ -32,7 +32,15 @@ const Field = ({ column, field, fieldLabel, formik, activeRecord, otherProps, cl
                     readOnly={column.readOnly === true}
                     value={inputValue}
                     renderValue={selected => {
-                        return selected || 'Select';
+                        if (Array.isArray(selected)) {
+                            return selected.map(value => {
+                                const option = options.find(option => option.value === value);
+                                return option ? option.label : null;
+                            }).join(', ');
+                        } else {
+                            const selectedOption = options.find(option => option.value === selected);
+                            return selectedOption ? selectedOption.label : 'Select';
+                        }
                     }}
                     sx={{ width: '337px', backgroundColor: '#364072 !important', paddingTop: '.9rem', height: '3.313rem' }}
                     onChange={formik.handleChange}
