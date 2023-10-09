@@ -18,11 +18,11 @@ const Form = ({
     Layout = FormLayout,
     ids
 }) => {
-    const { id: idFromProps } = ids || {}; 
     const { navigate, getParams } = useRouter()
-    const defaultFieldConfigs = {}
-    const { id: idWithOptions } = getParams || idFromProps;
-    const id = idWithOptions?.split('-')[0] || idFromProps;
+    const defaultFieldConfigs = {} 
+    const { id: idFromQuery } = getParams;
+    const idWithOptions = idFromQuery || ids;
+    const id = idWithOptions?.split('-')[0]
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState(null);
     const [lookups, setLookups] = useState(null);
@@ -35,10 +35,10 @@ const Form = ({
 
     useEffect(() => {
         setValidationSchema(model.getValidationSchema({ id, snackbar }));
-        const options = idWithOptions?.split('-') || { idFromProps };
+        const options = idWithOptions?.split('-');
         try {
             getRecord({
-                id: options.length > 1 ? options[1] : options[0] || idFromProps,
+                id: options.length > 1 ? options[1] : options[0],
                 modelConfig: model,
                 setIsLoading,
                 setError: errorOnLoad,

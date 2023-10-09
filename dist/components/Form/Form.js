@@ -43,17 +43,15 @@ const Form = _ref => {
     ids
   } = _ref;
   const {
-    id: idFromProps
-  } = ids || {};
-  const {
     navigate,
     getParams
   } = (0, _useRouter.useRouter)();
   const defaultFieldConfigs = {};
   const {
-    id: idWithOptions
-  } = getParams || idFromProps;
-  const id = (idWithOptions === null || idWithOptions === void 0 ? void 0 : idWithOptions.split('-')[0]) || idFromProps;
+    id: idFromQuery
+  } = getParams;
+  const idWithOptions = idFromQuery || ids;
+  const id = idWithOptions === null || idWithOptions === void 0 ? void 0 : idWithOptions.split('-')[0];
   const [isLoading, setIsLoading] = (0, _react.useState)(true);
   const [data, setData] = (0, _react.useState)(null);
   const [lookups, setLookups] = (0, _react.useState)(null);
@@ -70,12 +68,10 @@ const Form = _ref => {
       id,
       snackbar
     }));
-    const options = (idWithOptions === null || idWithOptions === void 0 ? void 0 : idWithOptions.split('-')) || {
-      idFromProps
-    };
+    const options = idWithOptions === null || idWithOptions === void 0 ? void 0 : idWithOptions.split('-');
     try {
       (0, _crudHelper.getRecord)({
-        id: options.length > 1 ? options[1] : options[0] || idFromProps,
+        id: options.length > 1 ? options[1] : options[0],
         modelConfig: model,
         setIsLoading,
         setError: errorOnLoad,

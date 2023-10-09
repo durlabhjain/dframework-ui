@@ -36,7 +36,7 @@ const field = _ref => {
       onChange: handleChange,
       onBlur: formik.handleBlur
     })),
-    label: fieldLabel
+    label: fieldLabel || column.label
   }), /*#__PURE__*/_react.default.createElement(_material.FormHelperText, null, formik.touched[field] && formik.errors[field]));
 };
 var _default = exports.default = field;
