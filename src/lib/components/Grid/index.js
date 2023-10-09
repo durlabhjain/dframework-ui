@@ -605,7 +605,7 @@ const GridBase = memo(({
             {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
             }
             {isDeleting && !errorMessage && (<DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete"> {`${'Are you sure you want to delete'} ${record?.name}?`}</DialogComponent>)}
-            {isEdit && (<DialogComponent open={isEdit} onConfirm={handleDelete} onCancel={() => setIsEdit(false)} title="Edit Case" hideButtons={true}><model.EditForm id={selectedRecord.id} /></DialogComponent>)}
+            {isEdit && (<DialogComponent open={isEdit} onConfirm={handleDelete} onCancel={() => setIsEdit(false)} title="Edit Case" hideButtons={true}><model.Form ids={String(record.id)} /></DialogComponent>)}
             <Menu
                 anchorEl={anchorEl}
                 id="account-menu"

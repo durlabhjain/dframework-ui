@@ -771,8 +771,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     onCancel: () => setIsEdit(false),
     title: "Edit Case",
     hideButtons: true
-  }, /*#__PURE__*/_react.default.createElement(model.EditForm, {
-    id: selectedRecord.id
+  }, /*#__PURE__*/_react.default.createElement(model.Form, {
+    ids: String(record.id)
   })), /*#__PURE__*/_react.default.createElement(_Menu.default, {
     anchorEl: anchorEl,
     id: "account-menu",
