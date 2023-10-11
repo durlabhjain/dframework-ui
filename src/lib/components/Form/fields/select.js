@@ -4,7 +4,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 const Field = ({ column, field, fieldLabel, formik, activeRecord, otherProps, classes, onChange, lookups }) => {
     const options = lookups ? lookups[column?.lookup] : [];
-    let inputValue = Number(formik.values[field]);
+    let inputValue = formik.values[field];
 
     if (column.multiSelect) {
         if (!inputValue || inputValue.length === 0) {
@@ -35,14 +35,14 @@ const Field = ({ column, field, fieldLabel, formik, activeRecord, otherProps, cl
                         if (Array.isArray(selected)) {
                             return selected.map(value => {
                                 const option = options.find(option => option.value === value);
-                                return option ? option.label : null;
+                                return option ? option.label : 'Select';
                             }).join(', ');
                         } else {
                             const selectedOption = options.find(option => option.value === selected);
                             return selectedOption ? selectedOption.label : 'Select';
                         }
                     }}
-                    sx={{ width: '337px', backgroundColor: '#364072 !important', paddingTop: '.9rem', height: '3.313rem' }}
+                    sx={{ width: '337px', backgroundColor: 'transparent !important', paddingTop: '.9rem', height: '3.313rem' }}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                 >

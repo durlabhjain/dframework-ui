@@ -25,7 +25,7 @@ const Field = _ref => {
     lookups
   } = _ref;
   const options = lookups ? lookups[column === null || column === void 0 ? void 0 : column.lookup] : [];
-  let inputValue = Number(formik.values[field]);
+  let inputValue = formik.values[field];
   if (column.multiSelect) {
     if (!inputValue || inputValue.length === 0) {
       inputValue = [];
@@ -61,7 +61,7 @@ const Field = _ref => {
         if (Array.isArray(selected)) {
           return selected.map(value => {
             const option = options.find(option => option.value === value);
-            return option ? option.label : null;
+            return option ? option.label : 'Select';
           }).join(', ');
         } else {
           const selectedOption = options.find(option => option.value === selected);
@@ -70,7 +70,7 @@ const Field = _ref => {
       },
       sx: {
         width: '337px',
-        backgroundColor: '#364072 !important',
+        backgroundColor: 'transparent !important',
         paddingTop: '.9rem',
         height: '3.313rem'
       },
