@@ -4,7 +4,7 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 const Field = ({ column, field, fieldLabel, formik, activeRecord, otherProps, classes, onChange, lookups }) => {
     const options = lookups ? lookups[column?.lookup] : [];
-    let inputValue = formik.values[field];
+    let inputValue = String(formik.values[field]);
 
     if (column.multiSelect) {
         if (!inputValue || inputValue.length === 0) {

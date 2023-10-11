@@ -25,7 +25,7 @@ const Field = _ref => {
     lookups
   } = _ref;
   const options = lookups ? lookups[column === null || column === void 0 ? void 0 : column.lookup] : [];
-  let inputValue = formik.values[field];
+  let inputValue = String(formik.values[field]);
   if (column.multiSelect) {
     if (!inputValue || inputValue.length === 0) {
       inputValue = [];
