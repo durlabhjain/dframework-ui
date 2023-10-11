@@ -379,6 +379,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
         finalColumns.push({
           field: 'actions',
           width: 1,
+          headerName: '',
           renderCell: cellParams => /*#__PURE__*/_react.default.createElement(_react.default.Fragment, null, /*#__PURE__*/_react.default.createElement(_MoreVertTwoTone.default, {
             onClick: event => {
               setSelectedRecord(cellParams.row);

@@ -193,7 +193,7 @@ const GridBase = memo(({
     };
 
     const open = Boolean(anchorEl);
-    
+
     useEffect(() => {
         dataRef.current = data;
     }, [data]);
@@ -281,6 +281,7 @@ const GridBase = memo(({
                 finalColumns.push({
                     field: 'actions',
                     width: 1,
+                    headerName: '',
                     renderCell: (cellParams) => (
                         <>
                             <MoreVertTwoToneIcon onClick={(event) => {
