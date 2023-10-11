@@ -16,7 +16,8 @@ const Form = ({
     api,
     permissions = { edit: true, export: true, delete: true },
     Layout = FormLayout,
-    ids
+    ids,
+    closeDialog
 }) => {
     const { navigate, getParams } = useRouter()
     const defaultFieldConfigs = {} 
@@ -148,7 +149,7 @@ const Form = ({
                     {actionButtons.map((button, index) => {
                         return (
                             <Box key={index} ml={2} mt={4} >
-                                <model.CustomButton buttonFunction={button.text === 'Add' ? formik.handleSubmit : handleFormCancel} buttonText={button.text} variant={button.variant} color={button.color} />
+                                <model.CustomButton buttonFunction={button.text === 'Add' ?  () => {formik.handleSubmit(); closeDialog()} :() => { handleFormCancel(); closeDialog()}} buttonText={button.text} variant={button.variant} color={button.color} />
                             </Box>
                         )
                     })}

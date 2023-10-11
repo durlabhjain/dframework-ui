@@ -40,7 +40,8 @@ const Form = _ref => {
       delete: true
     },
     Layout = _fieldMapper.default,
-    ids
+    ids,
+    closeDialog
   } = _ref;
   const {
     navigate,
@@ -220,7 +221,13 @@ const Form = _ref => {
       ml: 2,
       mt: 4
     }, /*#__PURE__*/_react.default.createElement(model.CustomButton, {
-      buttonFunction: button.text === 'Add' ? formik.handleSubmit : handleFormCancel,
+      buttonFunction: button.text === 'Add' ? () => {
+        formik.handleSubmit();
+        closeDialog();
+      } : () => {
+        handleFormCancel();
+        closeDialog();
+      },
       buttonText: button.text,
       variant: button.variant,
       color: button.color

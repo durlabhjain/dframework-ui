@@ -199,7 +199,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     onCellClick,
     showRowsSelected,
     gridFooter = model.gridFooter || _footer.Footer,
-    advanceFilter
+    advanceFilter,
+    closeDialog
   } = _ref2;
   const [paginationModel, setPaginationModel] = (0, _react.useState)({
     pageSize: defaultPageSize,
@@ -613,6 +614,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   const getGridRowId = row => {
     return row[idProperty];
   };
+  const ClosingDialog = () => {
+    return setIsEdit(false);
+  };
   const handleExport = e => {
     const {
       orderedFields,
@@ -637,7 +641,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     });
     fetchData(undefined, undefined, e.target.dataset.contentType, columns);
   };
-  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, filterModel, advanceFilter]);
+  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, filterModel, advanceFilter, closeDialog, isEdit]);
 
   // useEffect(
   //     fetchData,
@@ -772,7 +776,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     title: "Edit Case",
     hideButtons: true
   }, /*#__PURE__*/_react.default.createElement(model.Form, {
-    ids: String(record.id)
+    ids: String(record.id),
+    closeDialog: ClosingDialog
   })), /*#__PURE__*/_react.default.createElement(_Menu.default, {
     anchorEl: anchorEl,
     id: "account-menu",

@@ -154,7 +154,8 @@ const GridBase = memo(({
     onCellClick,
     showRowsSelected,
     gridFooter = model.gridFooter || Footer,
-    advanceFilter
+    advanceFilter,
+    closeDialog
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState({ recordCount: 0, records: [], lookups: {} });
@@ -467,6 +468,11 @@ const GridBase = memo(({
         return row[idProperty];
     };
 
+    const ClosingDialog = () => {
+        return setIsEdit(false);
+      };
+  
+
     const handleExport = (e) => {
         const { orderedFields, columnVisibilityModel, lookup } = apiRef.current.state.columns;
         const columns = {};
@@ -484,7 +490,7 @@ const GridBase = memo(({
 
     useEffect(
         fetchData,
-        [paginationModel, sortModel,filterModel,advanceFilter]
+        [paginationModel, sortModel,filterModel,advanceFilter, closeDialog, isEdit,]
     );
 
     // useEffect(
@@ -606,7 +612,7 @@ const GridBase = memo(({
             {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
             }
             {isDeleting && !errorMessage && (<DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete"> {`${'Are you sure you want to delete'} ${record?.name}?`}</DialogComponent>)}
-            {isEdit && (<DialogComponent open={isEdit} onConfirm={handleDelete} onCancel={() => setIsEdit(false)} title="Edit Case" hideButtons={true}><model.Form ids={String(record.id)} /></DialogComponent>)}
+            {isEdit && (<DialogComponent open={isEdit} onConfirm={handleDelete} onCancel={() => setIsEdit(false)} title="Edit Case" hideButtons={true}><model.Form ids={String(record.id)} closeDialog={ClosingDialog}/></DialogComponent>)}
             <Menu
                 anchorEl={anchorEl}
                 id="account-menu"
