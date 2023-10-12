@@ -615,7 +615,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     return row[idProperty];
   };
   const ClosingDialog = () => {
-    return setIsEdit(false);
+    fetchData();
+    setIsEdit(false);
   };
   const handleExport = e => {
     const {
@@ -641,7 +642,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     });
     fetchData(undefined, undefined, e.target.dataset.contentType, columns);
   };
-  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, filterModel, advanceFilter, closeDialog, isEdit]);
+  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, isLoading, filterModel, advanceFilter, closeDialog]);
 
   // useEffect(
   //     fetchData,

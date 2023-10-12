@@ -469,7 +469,8 @@ const GridBase = memo(({
     };
 
     const ClosingDialog = () => {
-        return setIsEdit(false);
+        fetchData();
+        setIsEdit(false);
       };
   
 
@@ -490,7 +491,7 @@ const GridBase = memo(({
 
     useEffect(
         fetchData,
-        [paginationModel, sortModel,filterModel,advanceFilter, closeDialog, isEdit,]
+        [paginationModel, sortModel,isLoading,filterModel,advanceFilter, closeDialog,]
     );
 
     // useEffect(
