@@ -48,7 +48,8 @@ const Field = _ref => {
         sx: {
           color: 'primary.periwinkle'
         }
-      }, showPassword ? /*#__PURE__*/_react.default.createElement(_VisibilityOff.default, null) : /*#__PURE__*/_react.default.createElement(_Visibility.default, null)))
+      }, showPassword ? /*#__PURE__*/_react.default.createElement(_VisibilityOff.default, null) : /*#__PURE__*/_react.default.createElement(_Visibility.default, null))),
+      disableUnderline: true
     }
   }, otherProps);
   return /*#__PURE__*/_react.default.createElement(_string.default, _extends({

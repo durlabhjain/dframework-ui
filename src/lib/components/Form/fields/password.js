@@ -23,6 +23,7 @@ const Field = ({ otherProps, ...props }) => {
                     </IconButton>
                 </InputAdornment>
             ),
+            disableUnderline: true
         },
         ...otherProps
     }
