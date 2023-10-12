@@ -41,7 +41,7 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes, onChang
                 variant="standard"
                 fullWidth
                 InputProps={{
-                    readOnly: column?.readOnly === true,
+                    readOnly: column?.readOnly === true
                 }}
                 {...commonProps}
             />
