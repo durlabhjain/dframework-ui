@@ -13,7 +13,8 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes, onChang
         onBlur: formik.handleBlur,
         error: formik.touched[field] && Boolean(formik.errors[field]),
         helperText: formik.touched[field] && formik.errors[field],
-        ...otherProps
+        ...otherProps,
+        autoFocus: !!column.autoFocus
     };
 
     if (column.modifiedLabel) {

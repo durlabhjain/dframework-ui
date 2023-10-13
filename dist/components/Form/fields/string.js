@@ -28,7 +28,7 @@ const Field = _ref => {
     classes,
     onChange
   } = _ref;
-  const commonProps = _objectSpread({
+  const commonProps = _objectSpread(_objectSpread({
     type: "text",
     key: field,
     required: column === null || column === void 0 ? void 0 : column.required,
@@ -38,7 +38,9 @@ const Field = _ref => {
     onBlur: formik.handleBlur,
     error: formik.touched[field] && Boolean(formik.errors[field]),
     helperText: formik.touched[field] && formik.errors[field]
-  }, otherProps);
+  }, otherProps), {}, {
+    autoFocus: !!column.autoFocus
+  });
   if (column.modifiedLabel) {
     return /*#__PURE__*/_react.default.createElement(_TextField.default, _extends({
       id: "filled-basic",
