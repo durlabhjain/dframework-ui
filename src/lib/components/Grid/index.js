@@ -491,7 +491,7 @@ const GridBase = memo(({
 
     useEffect(
         fetchData,
-        [paginationModel, sortModel,isLoading,filterModel,advanceFilter, closeDialog]
+        [paginationModel, sortModel,filterModel,advanceFilter, closeDialog]
     );
 
     // useEffect(
