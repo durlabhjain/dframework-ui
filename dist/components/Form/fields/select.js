@@ -64,7 +64,7 @@ const Field = _ref => {
             return option ? option.label : 'Select';
           }).join(', ');
         } else {
-          const selectedOption = options.find(option => option.value === selected);
+          const selectedOption = options.find(option => option.value === Number(selected));
           return selectedOption ? selectedOption.label : 'Select';
         }
       },
