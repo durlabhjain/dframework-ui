@@ -56,7 +56,8 @@ const Field = _ref => {
         disableUnderline: true
       },
       sx: {
-        width: '337px'
+        width: '337px',
+        backgroundColor: 'transparent !important'
       }
     }, commonProps));
   } else {

@@ -76,7 +76,8 @@ const Field = _ref => {
       required: column === null || column === void 0 ? void 0 : column.required,
       fullWidth: true,
       sx: {
-        width: '300px'
+        width: '300px',
+        backgroundColor: 'transparent !important'
       },
       name: field,
       value: formik.values[field],

@@ -44,7 +44,7 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes }) => {
                     key={field}
                     required={column?.required}
                     fullWidth
-                    sx={{ width: '300px' }}
+                    sx={{ width: '300px',backgroundColor: 'transparent !important' }}
                     name={field}
                     value={formik.values[field]}
                     onChange={formik.handleChange}
