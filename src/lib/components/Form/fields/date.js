@@ -5,11 +5,13 @@ import { InputLabel } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import TextField from '@mui/material/TextField';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import dayjs from 'dayjs';
 
 const Field = ({ column, field, fieldLabel, formik, otherProps, classes, fieldConfigs }) => {
     const isDisabled = fieldConfigs?.disabled;
 
     if (column.modifiedLabel) {
+        const dateValue = formik.values[field] ? dayjs(formik.values[field]) : null;
         return (
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <InputLabel sx={{ margin: '0.9rem 2rem 2.5rem 0rem', position: 'absolute', zIndex: '1', transform: 'translate(14px, -9px) scale(0.75)' }}>{column.label}</InputLabel>
@@ -25,7 +27,7 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes, fieldCo
                         },
                     }}
                     name={field}
-                    value={formik.values[field]}
+                    value={dateValue}
                     components={{
                         OpenPickerIcon: CalendarMonthIcon
                     }}

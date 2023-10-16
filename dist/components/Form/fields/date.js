@@ -16,6 +16,7 @@ var _material = require("@mui/material");
 var _LocalizationProvider = require("@mui/x-date-pickers/LocalizationProvider");
 var _TextField = _interopRequireDefault(require("@mui/material/TextField"));
 var _CalendarMonth = _interopRequireDefault(require("@mui/icons-material/CalendarMonth"));
+var _dayjs = _interopRequireDefault(require("dayjs"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
@@ -35,6 +36,7 @@ const Field = _ref => {
   } = _ref;
   const isDisabled = fieldConfigs === null || fieldConfigs === void 0 ? void 0 : fieldConfigs.disabled;
   if (column.modifiedLabel) {
+    const dateValue = formik.values[field] ? (0, _dayjs.default)(formik.values[field]) : null;
     return /*#__PURE__*/_react.default.createElement(_LocalizationProvider.LocalizationProvider, {
       dateAdapter: _AdapterDayjs.AdapterDayjs
     }, /*#__PURE__*/_react.default.createElement(_material.InputLabel, {
@@ -57,7 +59,7 @@ const Field = _ref => {
         }
       },
       name: field,
-      value: formik.values[field],
+      value: dateValue,
       components: {
         OpenPickerIcon: _CalendarMonth.default
       },
