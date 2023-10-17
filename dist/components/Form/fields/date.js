@@ -53,9 +53,15 @@ const Field = _ref => {
       fullWidth: true,
       sx: {
         width: '337px',
-        backgroundColor: 'transparent !important',
+        backgroundColor: '#364072 !important',
         '& .MuiOutlinedInput-input': {
           padding: '1.65625rem 0.875rem 0.59375rem 0.875rem !important'
+        },
+        '& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input': {
+          backgroundColor: '#364072 !important'
+        },
+        '& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root': {
+          backgroundColor: '#364072 !important'
         }
       },
       name: field,
@@ -87,7 +93,7 @@ const Field = _ref => {
           fullWidth: true,
           sx: {
             width: '337px',
-            backgroundColor: 'transparent !important',
+            backgroundColor: '#364072',
             color: '#FFFFFF',
             padding: '1.65625rem 0.875rem 0.59375rem 0.875rem',
             '& .MuiInputLabel-root': {
