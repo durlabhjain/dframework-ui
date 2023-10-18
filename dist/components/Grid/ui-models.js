@@ -129,7 +129,9 @@ class UiModel {
         required = false,
         min = '',
         max = '',
-        validationLength = 0
+        validationLength = 0,
+        confirm = false,
+        emailValidation = false
       } = column;
       const formLabel = label || header;
       if (!formLabel) {
@@ -186,6 +188,12 @@ class UiModel {
       }
       if (requiredIfNew && (!id || id === '')) {
         config = config.trim().required("".concat(formLabel, " is required"));
+      }
+      if (confirm) {
+        config = yup.string().oneOf([yup.ref('password')], 'Passwords must match').required('Confirm Password is required');
+      }
+      if (emailValidation) {
+        config = yup.string().email('Invalid email format').required("".concat(formLabel, " is required"));
       }
       validationConfig[field] = config;
     }

@@ -24,7 +24,7 @@ const Field = _ref => {
     onChange,
     lookups
   } = _ref;
-  const options = lookups ? lookups[column === null || column === void 0 ? void 0 : column.lookup] : [];
+  let options = lookups ? lookups[column === null || column === void 0 ? void 0 : column.lookup] : [];
   let inputValue = String(formik.values[field]);
   if (column.multiSelect) {
     if (!inputValue || inputValue.length === 0) {
@@ -36,6 +36,10 @@ const Field = _ref => {
     }
   }
   if (column.modifiedLabel) {
+    if (field === 'ActualRoomId' && formik.values.HospitalId) {
+      const selectedHospitalId = formik.values.HospitalId;
+      options = options.filter(option => option.hospitalId === selectedHospitalId);
+    }
     return /*#__PURE__*/_react.default.createElement(_material.FormControl, {
       sx: {
         marginRight: '.9rem'

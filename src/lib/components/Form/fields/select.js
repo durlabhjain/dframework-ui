@@ -3,7 +3,7 @@ import { FormHelperText, FormControl, InputLabel, Select, MenuItem } from '@mui/
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 
 const Field = ({ column, field, fieldLabel, formik, activeRecord, otherProps, classes, onChange, lookups }) => {
-    const options = lookups ? lookups[column?.lookup] : [];
+    let options = lookups ? lookups[column?.lookup] : [];
     let inputValue = String(formik.values[field]);
 
     if (column.multiSelect) {
@@ -17,6 +17,11 @@ const Field = ({ column, field, fieldLabel, formik, activeRecord, otherProps, cl
     }
 
     if (column.modifiedLabel) {
+        if (field === 'ActualRoomId' && formik.values.HospitalId) {
+            const selectedHospitalId = formik.values.HospitalId;
+            options = options.filter(option => option.hospitalId === selectedHospitalId);
+        }
+
         return (
             <FormControl
                 sx={{ marginRight: '.9rem' }}

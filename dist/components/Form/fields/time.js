@@ -10,12 +10,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 require("core-js/modules/web.dom-collections.iterator.js");
+require("core-js/modules/es.regexp.to-string.js");
 var _react = _interopRequireWildcard(require("react"));
 var _TextField = _interopRequireDefault(require("@mui/material/TextField"));
 var _Radio = _interopRequireDefault(require("@mui/material/Radio"));
 var _RadioGroup = _interopRequireDefault(require("@mui/material/RadioGroup"));
 var _FormControlLabel = _interopRequireDefault(require("@mui/material/FormControlLabel"));
 var _FormControl = _interopRequireDefault(require("@mui/material/FormControl"));
+var _material = require("@mui/material");
+var _DesktopTimePicker = require("@mui/x-date-pickers/DesktopTimePicker");
 var _KeyboardArrowDown = _interopRequireDefault(require("@mui/icons-material/KeyboardArrowDown"));
 var _TimePicker = require("@mui/x-date-pickers/TimePicker");
 var _AdapterDayjs = require("@mui/x-date-pickers/AdapterDayjs");
@@ -39,78 +42,97 @@ const Field = _ref => {
     otherProps,
     classes
   } = _ref;
-  const [timePeriod, setTimePeriod] = (0, _react.useState)('AM');
+  const [timePeriod, setTimePeriod] = (0, _react.useState)("AM");
+  const [time, setTime] = (0, _react.useState)(null);
   const handleRadioChange = event => {
     setTimePeriod(event.target.value);
-    const combinedValue = "".concat(formik.values[field], " ").concat(event.target.value);
-    formik.setFieldValue(field, combinedValue);
+    updateFormikTime(time, event.target.value);
+  };
+  const handleTimeChange = newTime => {
+    setTime(newTime);
+    updateFormikTime(newTime, timePeriod);
+  };
+  const updateFormikTime = (timeValue, period) => {
+    if (timeValue) {
+      const hours = timeValue.hour();
+      const minutes = timeValue.minute();
+      formik.setFieldValue(field, "".concat(hours, ":").concat(minutes.toString().padStart(2, "0"), " ").concat(period));
+    }
   };
   if (column.modifiedLabel) {
     return /*#__PURE__*/_react.default.createElement("div", {
       style: {
-        display: 'flex',
-        alignItems: 'center'
+        display: "flex",
+        alignItems: "center"
       }
-    }, /*#__PURE__*/_react.default.createElement(_TextField.default, _extends({
-      type: "text",
-      variant: "filled",
-      placeholder: "Enter/Select",
-      label: column.label,
-      InputLabelProps: {
-        shrink: true
-      },
-      InputProps: {
-        readOnly: (column === null || column === void 0 ? void 0 : column.readOnly) === true,
-        disableUnderline: true,
-        endAdornment: /*#__PURE__*/_react.default.createElement(_KeyboardArrowDown.default, {
-          style: {
-            color: 'rgba(255, 255, 255, 0.7)'
-          }
-        }),
-        style: {
-          color: 'rgba(255, 255, 255, 0.7)',
-          marginLeft: '5px'
+    }, /*#__PURE__*/_react.default.createElement(_LocalizationProvider.LocalizationProvider, {
+      dateAdapter: _AdapterDayjs.AdapterDayjs
+    }, /*#__PURE__*/_react.default.createElement(_material.InputLabel, {
+      sx: {
+        margin: "1.8rem 2rem 2.5rem 0rem",
+        position: "absolute",
+        zIndex: "1",
+        transform: "translate(14px, -9px) scale(0.75)"
+      }
+    }, column.label), /*#__PURE__*/_react.default.createElement(_DesktopTimePicker.DesktopTimePicker, {
+      variant: "standard",
+      value: time,
+      onChange: handleTimeChange,
+      ampm: false,
+      sx: {
+        "& .MuiOutlinedInput-input": {
+          padding: "1.65625rem 0.875rem 0.59375rem 0.875rem !important"
+        },
+        "& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input": {
+          background: "#364072"
+        },
+        "& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root": {
+          background: "#364072"
+        },
+        "& .css-1k8vz0v-MuiList-root-MuiMultiSectionDigitalClockSection-root": {
+          background: "#364072"
         }
       },
-      key: field,
-      required: column === null || column === void 0 ? void 0 : column.required,
-      fullWidth: true,
-      sx: {
-        width: '300px',
-        backgroundColor: 'transparent !important'
+      components: {
+        OpenPickerIcon: _KeyboardArrowDown.default
       },
-      name: field,
-      value: formik.values[field],
-      onChange: formik.handleChange,
-      onBlur: formik.handleBlur,
-      error: formik.touched[field] && Boolean(formik.errors[field]),
-      helperText: formik.touched[field] && formik.errors[field]
-    }, otherProps)), /*#__PURE__*/_react.default.createElement(_FormControl.default, {
+      renderInput: params => /*#__PURE__*/_react.default.createElement(_TextField.default, _extends({}, params, {
+        placeholder: "select",
+        sx: {
+          width: "300px",
+          marginRight: "1rem",
+          backgroundColor: "#364072 !important",
+          "& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input": {
+            background: "#364072"
+          },
+          "& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root": {
+            background: "#364072"
+          }
+        }
+      }))
+    }), /*#__PURE__*/_react.default.createElement(_FormControl.default, {
       component: "fieldset"
     }, /*#__PURE__*/_react.default.createElement(_RadioGroup.default, {
-      style: {
-        flexDirection: 'row',
-        marginLeft: '2.9rem',
-        flexWrap: 'nowrap'
-      },
       value: timePeriod,
-      onChange: handleRadioChange
+      onChange: handleRadioChange,
+      style: {
+        flexDirection: "row",
+        marginLeft: "2.9rem",
+        flexWrap: "nowrap"
+      }
     }, /*#__PURE__*/_react.default.createElement(_FormControlLabel.default, {
       value: "AM",
       control: /*#__PURE__*/_react.default.createElement(_Radio.default, {
-        checked: timePeriod === 'AM'
+        checked: timePeriod === "AM"
       }),
       label: "AM"
     }), /*#__PURE__*/_react.default.createElement(_FormControlLabel.default, {
       value: "PM",
       control: /*#__PURE__*/_react.default.createElement(_Radio.default, {
-        checked: timePeriod === 'PM',
-        sx: {
-          color: timePeriod === 'PM' ? 'primary.silverBlue ' : ''
-        }
+        checked: timePeriod === "PM"
       }),
       label: "PM"
-    }))));
+    })))));
   } else {
     let inputValue = formik.values[field];
     if (column.isUtc) {
