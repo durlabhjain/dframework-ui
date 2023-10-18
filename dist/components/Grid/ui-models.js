@@ -176,6 +176,12 @@ class UiModel {
             return value;
           }).label(formLabel).required("".concat(formLabel, " is required"));
           break;
+        case 'select':
+          config = yup.string().trim().label(formLabel).required("".concat(formLabel, " is required"));
+          break;
+        case 'time':
+          config = yup.string().trim().label(formLabel).required("".concat(formLabel, " is required"));
+          break;
         case 'autocomplete':
           config = yup.string().trim().label(formLabel).required("Select at least one ".concat(formLabel));
           break;
@@ -184,7 +190,7 @@ class UiModel {
           break;
       }
       if (required) {
-        config = config.trim().required("".concat(formLabel, " is required"));
+        config = yup.mixed().required("".concat(formLabel, " is required"));
       }
       if (requiredIfNew && (!id || id === '')) {
         config = config.trim().required("".concat(formLabel, " is required"));

@@ -87,6 +87,12 @@ class UiModel {
                         return value;
                     }).label(formLabel).required(`${formLabel} is required`);
                     break;
+                case 'select':
+                    config = yup.string().trim().label(formLabel).required(`${formLabel} is required`);
+                    break;
+                case 'time':
+                    config = yup.string().trim().label(formLabel).required(`${formLabel} is required`);
+                    break;
                 case 'autocomplete':
                     config = yup.string().trim().label(formLabel).required(`Select at least one ${formLabel}`);
                     break;
@@ -95,18 +101,18 @@ class UiModel {
                     break;
             }
             if (required) {
-                config = config.trim().required(`${formLabel} is required`);
+                config = yup.mixed().required(`${formLabel} is required`);
             }
 
             if (requiredIfNew && (!id || id === '')) {
                 config = config.trim().required(`${formLabel} is required`);
             }
-            
-            if(confirm) {
+
+            if (confirm) {
                 config = yup.string().oneOf([yup.ref('password')], 'Passwords must match').required('Confirm Password is required');
             }
 
-            if(emailValidation) {
+            if (emailValidation) {
                 config = yup.string().email('Invalid email format').required(`${formLabel} is required`);
             }
             validationConfig[field] = config;
