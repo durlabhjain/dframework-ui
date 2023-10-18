@@ -190,17 +190,20 @@ class UiModel {
           break;
       }
       if (required) {
-        config = yup.mixed().required("".concat(formLabel, " is required"));
-      }
-      if (requiredIfNew && (!id || id === '')) {
         config = config.trim().required("".concat(formLabel, " is required"));
       }
-      if (confirm) {
-        config = yup.string().oneOf([yup.ref('password')], 'Passwords must match').required('Confirm Password is required');
-      }
-      if (emailValidation) {
-        config = yup.string().email('Invalid email format').required("".concat(formLabel, " is required"));
-      }
+
+      // if (requiredIfNew && (!id || id === '')) {
+      //     config = config.trim().required(`${formLabel} is required`);
+      // }
+
+      // if (confirm) {
+      //     config = yup.string().oneOf([yup.ref('password')], 'Passwords must match').required('Confirm Password is required');
+      // }
+
+      // if (emailValidation) {
+      //     config = yup.string().email('Invalid email format').required(`${formLabel} is required`);
+      // }
       validationConfig[field] = config;
     }
     let validationSchema = yup.object(_objectSpread(_objectSpread({}, validationConfig), this.validationSchema));
