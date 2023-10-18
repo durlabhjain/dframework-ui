@@ -38,7 +38,7 @@ const Field = _ref => {
   if (column.modifiedLabel) {
     if (field === 'ActualRoomId' && formik.values.HospitalId) {
       const selectedHospitalId = formik.values.HospitalId;
-      options = options.filter(option => option.hospitalId === selectedHospitalId);
+      options = options.filter(option => option.HospitalId === selectedHospitalId);
     }
     return /*#__PURE__*/_react.default.createElement(_material.FormControl, {
       sx: {

@@ -19,7 +19,7 @@ const Field = ({ column, field, fieldLabel, formik, activeRecord, otherProps, cl
     if (column.modifiedLabel) {
         if (field === 'ActualRoomId' && formik.values.HospitalId) {
             const selectedHospitalId = formik.values.HospitalId;
-            options = options.filter(option => option.hospitalId === selectedHospitalId);
+            options = options.filter(option => option.HospitalId === selectedHospitalId);
         }
 
         return (
