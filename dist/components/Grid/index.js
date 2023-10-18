@@ -791,7 +791,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
         overflow: 'visible',
         filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
         marginLeft: '-30px',
-        marginTop: '-40px',
+        marginTop: '-10px',
         backgroundColor: '#5460B4',
         color: '#FFFFFF',
         '& .MuiAvatar-root': {
