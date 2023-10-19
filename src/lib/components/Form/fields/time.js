@@ -55,7 +55,6 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes }) => {
                         variant="standard"
                         value={time}
                         onChange={handleTimeChange}
-                        ampm={false}
                         sx={{
                             "& .MuiOutlinedInput-input": {
                                 padding: "1.65625rem 0.875rem 0.59375rem 0.875rem !important",

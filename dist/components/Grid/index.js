@@ -253,6 +253,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   const isReadOnly = model.readOnly === true;
   const dataRef = (0, _react.useRef)(data);
   const [anchorEl, setAnchorEl] = _react.default.useState(null);
+  const prevIsLoading = (0, _react.useRef)(isLoading);
   const handleClick = event => {
     setAnchorEl(event.currentTarget);
   };
@@ -642,7 +643,13 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     });
     fetchData(undefined, undefined, e.target.dataset.contentType, columns);
   };
-  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, filterModel, advanceFilter, closeDialog]);
+  (0, _react.useEffect)(() => {
+    if (isLoading !== prevIsLoading.current) {
+      prevIsLoading.current = isLoading;
+      return;
+    }
+    fetchData();
+  }, [paginationModel, isLoading, sortModel, advanceFilter, closeDialog, fetchData]);
 
   // useEffect(
   //     fetchData,

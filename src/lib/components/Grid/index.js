@@ -188,6 +188,7 @@ const GridBase = memo(({
     const isReadOnly = model.readOnly === true;
     const dataRef = useRef(data);
     const [anchorEl, setAnchorEl] = React.useState(null);
+    const prevIsLoading = useRef(isLoading);
 
     const handleClick = (event) => {
         setAnchorEl(event.currentTarget);
@@ -489,10 +490,14 @@ const GridBase = memo(({
         fetchData(undefined, undefined, e.target.dataset.contentType, columns);
     };
 
-    useEffect(
-        fetchData,
-        [paginationModel, sortModel,filterModel,advanceFilter, closeDialog]
-    );
+    useEffect(() => {
+        if(isLoading !== prevIsLoading.current) {
+            prevIsLoading.current = isLoading;
+            return;
+        }
+    
+        fetchData();
+    }, [paginationModel, isLoading, sortModel, advanceFilter, closeDialog, fetchData]);
 
     // useEffect(
     //     fetchData,
