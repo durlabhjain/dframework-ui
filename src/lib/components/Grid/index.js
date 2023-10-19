@@ -280,6 +280,7 @@ const GridBase = memo(({
                 }
                 pinnedColumns.right.push('actions');
             } else {
+                if(!model.noOptionButton) {
                 finalColumns.push({
                     field: 'actions',
                     width: 1,
@@ -294,6 +295,7 @@ const GridBase = memo(({
                     ),
                 });
             }
+        }
         }
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment]);
