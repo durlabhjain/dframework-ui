@@ -616,7 +616,6 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     return row[idProperty];
   };
   const ClosingDialog = () => {
-    fetchData();
     setIsEdit(false);
   };
   const handleExport = e => {
@@ -649,7 +648,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       return;
     }
     fetchData();
-  }, [paginationModel, isLoading, sortModel, advanceFilter, closeDialog, fetchData]);
+  }, [paginationModel, isLoading, sortModel, advanceFilter, fetchData]);
 
   // useEffect(
   //     fetchData,
