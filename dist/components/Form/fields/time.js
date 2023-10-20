@@ -49,8 +49,10 @@ const Field = _ref => {
     updateFormikTime(time, event.target.value);
   };
   const handleTimeChange = newTime => {
-    setTime(newTime);
-    updateFormikTime(newTime, timePeriod);
+    if (newTime && newTime.isBefore) {
+      setTime(newTime);
+      updateFormikTime(newTime, timePeriod);
+    }
   };
   const updateFormikTime = (timeValue, period) => {
     if (timeValue) {

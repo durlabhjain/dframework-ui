@@ -22,9 +22,12 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes }) => {
     };
 
     const handleTimeChange = (newTime) => {
-        setTime(newTime);
-        updateFormikTime(newTime, timePeriod);
+        if (newTime && newTime.isBefore) { 
+            setTime(newTime);
+            updateFormikTime(newTime, timePeriod);
+        }
     };
+    
 
     const updateFormikTime = (timeValue, period) => {
         if (timeValue) {

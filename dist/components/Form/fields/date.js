@@ -36,7 +36,7 @@ const Field = _ref => {
   } = _ref;
   const isDisabled = fieldConfigs === null || fieldConfigs === void 0 ? void 0 : fieldConfigs.disabled;
   if (column.modifiedLabel) {
-    const dateValue = formik.values[field] ? (0, _dayjs.default)(formik.values[field]) : null;
+    // const dateValue = formik.values[field] ? dayjs(formik.values[field]) : null;
     return /*#__PURE__*/_react.default.createElement(_LocalizationProvider.LocalizationProvider, {
       dateAdapter: _AdapterDayjs.AdapterDayjs
     }, /*#__PURE__*/_react.default.createElement(_material.InputLabel, {
@@ -65,7 +65,7 @@ const Field = _ref => {
         }
       },
       name: field,
-      value: dateValue,
+      value: formik.values[field],
       components: {
         OpenPickerIcon: _CalendarMonth.default
       },
