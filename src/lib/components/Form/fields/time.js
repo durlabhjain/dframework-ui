@@ -64,18 +64,19 @@ const handleTimeChange = (newTime) => {
             value={time}
             onChange={handleTimeChange}
             sx={{
+              backgroundColor: "#4F5883 !important",
               "& .MuiOutlinedInput-input": {
                 padding: "1.65625rem 0.875rem 0.59375rem 0.875rem !important",
               },
               "& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input": {
-                background: "#4F5883",
+                backgroundColor: "#4F5883 !important",
               },
               "& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root": {
-                background: "#4F5883",
+                backgroundColor: "#4F5883 !important",
               },
               "& .css-1k8vz0v-MuiList-root-MuiMultiSectionDigitalClockSection-root":
                 {
-                  background: "#4F5883",
+                  backgroundColor: "#4F5883 !important",
                 },
             }}
             components={{
@@ -90,10 +91,10 @@ const handleTimeChange = (newTime) => {
                   marginRight: "1rem",
                   backgroundColor: "#4F5883 !important",
                   "& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input": {
-                    background: "#4F5883",
+                    backgroundColor: "#4F5883 !important",
                   },
                   "& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root": {
-                    background: "#4F5883",
+                    backgroundColor: "#4F5883 !important",
                   },
                 }}
               />

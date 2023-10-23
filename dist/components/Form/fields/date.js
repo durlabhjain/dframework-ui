@@ -53,7 +53,7 @@ const Field = _ref => {
       fullWidth: true,
       sx: {
         width: '337px',
-        backgroundColor: '#364072 !important',
+        backgroundColor: "#4F5883 !important",
         '& .MuiOutlinedInput-input': {
           padding: '1.65625rem 0.875rem 0.59375rem 0.875rem !important'
         }
@@ -87,7 +87,7 @@ const Field = _ref => {
           fullWidth: true,
           sx: {
             width: '337px',
-            backgroundColor: '#364072',
+            backgroundColor: "#4F5883 !important",
             color: '#FFFFFF',
             padding: '1.65625rem 0.875rem 0.59375rem 0.875rem',
             '& .MuiInputLabel-root': {
