@@ -10,7 +10,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 require("core-js/modules/web.dom-collections.iterator.js");
-require("core-js/modules/es.regexp.to-string.js");
 var _react = _interopRequireWildcard(require("react"));
 var _TextField = _interopRequireDefault(require("@mui/material/TextField"));
 var _Radio = _interopRequireDefault(require("@mui/material/Radio"));
@@ -44,6 +43,13 @@ const Field = _ref => {
   } = _ref;
   const [timePeriod, setTimePeriod] = (0, _react.useState)("AM");
   const [time, setTime] = (0, _react.useState)(null);
+  (0, _react.useEffect)(() => {
+    if (formik.values[field]) {
+      const dateTime = (0, _dayjs.default)(formik.values[field]);
+      setTime(dateTime);
+      setTimePeriod(dateTime.format('A'));
+    }
+  }, [formik.values]);
   const handleRadioChange = event => {
     setTimePeriod(event.target.value);
     updateFormikTime(time, event.target.value);
@@ -54,9 +60,12 @@ const Field = _ref => {
   };
   const updateFormikTime = (timeValue, period) => {
     if (timeValue) {
-      const hours = timeValue.hour();
+      let hours = timeValue.hour();
       const minutes = timeValue.minute();
-      formik.setFieldValue(field, "".concat(hours, ":").concat(minutes.toString().padStart(2, "0"), " ").concat(period));
+      if (period === "PM" && hours < 12) hours += 12;
+      if (period === "AM" && hours === 12) hours = 0;
+      const dateTime = (0, _dayjs.default)().hour(hours).minute(minutes);
+      formik.setFieldValue(field, dateTime.toISOString());
     }
   };
   if (column.modifiedLabel) {
@@ -148,7 +157,7 @@ const Field = _ref => {
       value: inputValue,
       onChange: value => {
         if (column.isUtc) {
-          value = value && value.isValid() ? value.format('YYYY-MM-DDTHH:mm:ss') + '.000Z' : null;
+          value = value && value.isValid() ? value.format("YYYY-MM-DDTHH:mm:ss") + ".000Z" : null;
         }
         return formik.setFieldValue(field, value);
       },
