@@ -57,7 +57,7 @@ const Field = _ref => {
       },
       sx: {
         width: '337px',
-        backgroundColor: 'transparent !important'
+        backgroundColor: ' #4F5883 !important'
       }
     }, commonProps));
   } else {

@@ -22,12 +22,9 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes }) => {
     };
 
     const handleTimeChange = (newTime) => {
-        if (newTime && newTime.isBefore) { 
-            setTime(newTime);
-            updateFormikTime(newTime, timePeriod);
-        }
+        setTime(newTime);
+        updateFormikTime(newTime, timePeriod);
     };
-    
 
     const updateFormikTime = (timeValue, period) => {
         if (timeValue) {
@@ -63,14 +60,14 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes }) => {
                                 padding: "1.65625rem 0.875rem 0.59375rem 0.875rem !important",
                             },
                             "& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input": {
-                                background: "#364072",
+                                background: "#4F5883",
                             },
                             "& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root": {
-                                background: "#364072",
+                                background: "#4F5883",
                             },
                             "& .css-1k8vz0v-MuiList-root-MuiMultiSectionDigitalClockSection-root":
                             {
-                                background: "#364072",
+                                background: "#4F5883",
                             },
                         }}
                         components={{
@@ -83,12 +80,12 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes }) => {
                                 sx={{
                                     width: "300px",
                                     marginRight: "1rem",
-                                    backgroundColor: "#364072 !important",
+                                    backgroundColor: "#4F5883 !important",
                                     "& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input": {
-                                        background: "#364072",
+                                        background: "#4F5883",
                                     },
                                     "& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root": {
-                                        background: "#364072",
+                                        background: "#4F5883",
                                     },
                                 }}
                             />

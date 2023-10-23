@@ -11,7 +11,7 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes, fieldCo
     const isDisabled = fieldConfigs?.disabled;
 
     if (column.modifiedLabel) {
-        // const dateValue = formik.values[field] ? dayjs(formik.values[field]) : null;
+        const dateValue = formik.values[field] ? dayjs(formik.values[field]) : null;
         return (
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <InputLabel sx={{ margin: '0.9rem 2rem 2.5rem 0rem', position: 'absolute', zIndex: '1', transform: 'translate(14px, -9px) scale(0.75)' }}>{column.label}</InputLabel>
@@ -24,16 +24,10 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes, fieldCo
                     sx={{
                         width: '337px', backgroundColor: '#364072 !important', '& .MuiOutlinedInput-input': {
                             padding: '1.65625rem 0.875rem 0.59375rem 0.875rem !important',
-                        },
-                        '& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input': {
-                            backgroundColor: '#364072 !important'
-                        },
-                        '& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root': {
-                            backgroundColor: '#364072 !important'
                         }
                     }}
                     name={field}
-                    value={formik.values[field]}
+                    value={dateValue}
                     components={{
                         OpenPickerIcon: CalendarMonthIcon
                     }}

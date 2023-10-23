@@ -47,7 +47,7 @@ const Field = ({ column, field, fieldLabel, formik, activeRecord, otherProps, cl
                             return selectedOption ? selectedOption.label : 'Select';
                         }
                     }}
-                    sx={{ width: '337px', backgroundColor: '#364072 !important', paddingTop: '.9rem', height: '3.313rem' }}
+                    sx={{ width: '337px', backgroundColor: ' #4F5883 !important', paddingTop: '.9rem', height: '3.313rem' }}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                 >
