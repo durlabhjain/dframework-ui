@@ -47,7 +47,7 @@ const Field = _ref => {
     if (formik.values[field]) {
       const dateTime = (0, _dayjs.default)(formik.values[field]);
       setTime(dateTime);
-      setTimePeriod(dateTime.format('A'));
+      setTimePeriod(dateTime.format("A"));
     }
   }, [formik.values]);
   const handleRadioChange = event => {
@@ -72,7 +72,9 @@ const Field = _ref => {
     return /*#__PURE__*/_react.default.createElement("div", {
       style: {
         display: "flex",
-        alignItems: "center"
+        alignItems: "center",
+        gap: '2.9rem',
+        width: '337px !important'
       }
     }, /*#__PURE__*/_react.default.createElement(_LocalizationProvider.LocalizationProvider, {
       dateAdapter: _AdapterDayjs.AdapterDayjs
@@ -92,32 +94,13 @@ const Field = _ref => {
         "& .MuiOutlinedInput-input": {
           padding: "1.65625rem 0.875rem 0.59375rem 0.875rem !important"
         },
-        "& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input": {
-          backgroundColor: "#4F5883 !important"
-        },
-        "& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root": {
-          backgroundColor: "#4F5883 !important"
-        },
-        "& .css-1k8vz0v-MuiList-root-MuiMultiSectionDigitalClockSection-root": {
-          backgroundColor: "#4F5883 !important"
-        }
+        width: "200px"
       },
       components: {
         OpenPickerIcon: _KeyboardArrowDown.default
       },
       renderInput: params => /*#__PURE__*/_react.default.createElement(_TextField.default, _extends({}, params, {
-        placeholder: "select",
-        sx: {
-          width: "300px",
-          marginRight: "1rem",
-          backgroundColor: "#4F5883 !important",
-          "& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input": {
-            backgroundColor: "#4F5883 !important"
-          },
-          "& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root": {
-            backgroundColor: "#4F5883 !important"
-          }
-        }
+        placeholder: "select"
       }))
     }), /*#__PURE__*/_react.default.createElement(_FormControl.default, {
       component: "fieldset"
@@ -126,7 +109,6 @@ const Field = _ref => {
       onChange: handleRadioChange,
       style: {
         flexDirection: "row",
-        marginLeft: "2.9rem",
         flexWrap: "nowrap"
       }
     }, /*#__PURE__*/_react.default.createElement(_FormControlLabel.default, {

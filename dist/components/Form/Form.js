@@ -6,7 +6,7 @@ require("core-js/modules/es.weak-map.js");
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = exports.ActiveStepContext = void 0;
 require("core-js/modules/web.dom-collections.iterator.js");
 require("core-js/modules/es.promise.js");
 require("core-js/modules/es.promise.finally.js");
@@ -17,6 +17,7 @@ var _crudHelper = require("../Grid/crud-helper");
 var _Button = _interopRequireDefault(require("@mui/material/Button"));
 var _Paper = _interopRequireDefault(require("@mui/material/Paper"));
 var _material = require("@mui/material");
+var _CircularProgress = _interopRequireDefault(require("@mui/material/CircularProgress"));
 var _Stack = _interopRequireDefault(require("@mui/material/Stack"));
 var _fieldMapper = _interopRequireDefault(require("./field-mapper"));
 var _SnackBar = require("../SnackBar");
@@ -30,6 +31,7 @@ function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t =
 function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return typeof key === "symbol" ? key : String(key); }
 function _toPrimitive(input, hint) { if (typeof input !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (typeof res !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
+const ActiveStepContext = exports.ActiveStepContext = /*#__PURE__*/(0, _react.createContext)(1);
 const Form = _ref => {
   let {
     model,
@@ -60,6 +62,10 @@ const Form = _ref => {
   const snackbar = (0, _SnackBar.useSnackbar)();
   const combos = {};
   const [validationSchema, setValidationSchema] = (0, _react.useState)(null);
+  const [activeStep, setActiveStep] = (0, _react.useState)(0);
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = (0, _react.useState)(false);
+  const [deleteError, setDeleteError] = (0, _react.useState)(null);
+  const [errorMessage, setErrorMessage] = (0, _react.useState)('');
   const fieldConfigs = model !== null && model !== void 0 && model.applyFieldConfig ? model === null || model === void 0 ? void 0 : model.applyFieldConfig({
     data,
     lookups
@@ -80,7 +86,7 @@ const Form = _ref => {
       });
     } catch (error) {
       snackbar === null || snackbar === void 0 || snackbar.showMessage('An error occured, please try after some time.');
-      // navigate('./');
+      navigate('./');
     }
   }, [id, idWithOptions, model]);
   const formik = (0, _formik.useFormik)({
@@ -102,16 +108,28 @@ const Form = _ref => {
       }).then(success => {
         if (success) {
           snackbar === null || snackbar === void 0 || snackbar.showMessage('Record Updated Successfully.');
-          // navigate('./');
+          navigate('./');
         }
       }).finally(() => setIsLoading(false));
     }
   });
   const errorOnLoad = function errorOnLoad(title, error) {
     snackbar === null || snackbar === void 0 || snackbar.showError(title, error);
-    // navigate('./');
+    navigate('./');
   };
-
+  const {
+    dirty
+  } = formik;
+  const handleDiscardChanges = () => {
+    formik.resetForm();
+    setIsDiscardDialogOpen(false);
+    navigate('.');
+  };
+  const warnUnsavedChanges = () => {
+    if (dirty) {
+      setIsDiscardDialogOpen(true);
+    }
+  };
   const setActiveRecord = function setActiveRecord(_ref3) {
     let {
       id,
@@ -159,6 +177,19 @@ const Form = _ref => {
       snackbar === null || snackbar === void 0 || snackbar.showError('An error occured, please try after some time.');
     }
   };
+  const clearError = () => {
+    setErrorMessage(null);
+    setIsDeleting(false);
+  };
+  if (isLoading) {
+    return /*#__PURE__*/_react.default.createElement(_material.Box, {
+      sx: {
+        display: 'flex',
+        pt: '20%',
+        justifyContent: 'center'
+      }
+    }, /*#__PURE__*/_react.default.createElement(_CircularProgress.default, null));
+  }
   const handleChange = function handleChange(e) {
     const {
       name,
@@ -205,16 +236,12 @@ const Form = _ref => {
     onChange: handleChange,
     lookups: lookups,
     id: id
-  }), /*#__PURE__*/_react.default.createElement(_material.Box, {
-    position: "absolute",
+  }), model.addHeaderFilters === false && /*#__PURE__*/_react.default.createElement(_material.Box, {
     bottom: 0,
     right: 0,
     display: "flex",
     justifyContent: "flex-end",
-    alignItems: "center",
-    marginBottom: '1.5rem',
-    marginTop: '10rem',
-    marginRight: '2.5rem'
+    alignItems: "center"
   }, actionButtons.map((button, index) => {
     return /*#__PURE__*/_react.default.createElement(_material.Box, {
       key: index,
@@ -232,16 +259,34 @@ const Form = _ref => {
       variant: button.variant,
       color: button.color
     }));
-  }))), /*#__PURE__*/_react.default.createElement(_Dialog.DialogComponent, {
+  }))), errorMessage && /*#__PURE__*/_react.default.createElement(_Dialog.DialogComponent, {
+    open: !!errorMessage,
+    onConfirm: clearError,
+    onCancel: clearError,
+    title: "Info",
+    hideCancelButton: true
+  }, " ", errorMessage), /*#__PURE__*/_react.default.createElement(_Dialog.DialogComponent, {
+    open: isDiscardDialogOpen,
+    onConfirm: handleDiscardChanges,
+    onCancel: () => setIsDiscardDialogOpen(false),
+    title: "Changes not saved",
+    okText: "Discard",
+    cancelText: "Continue"
+  }, "Would you like to continue to edit or discard changes?"), /*#__PURE__*/_react.default.createElement(_Dialog.DialogComponent, {
     open: isDeleting,
     onConfirm: handleDelete,
     onCancel: () => setIsDeleting(false),
     title: "Confirm Delete"
   }, "Are you sure you want to delete ".concat(data === null || data === void 0 ? void 0 : data.GroupName, "?")));
-  return model.addHeaderFilters !== false ? /*#__PURE__*/_react.default.createElement(_Paper.default, {
+  return !!model.addHeaderFilters ? /*#__PURE__*/_react.default.createElement(ActiveStepContext.Provider, {
+    value: {
+      activeStep,
+      setActiveStep
+    }
+  }, /*#__PURE__*/_react.default.createElement(_Paper.default, {
     sx: {
       padding: 2
     }
-  }, content) : content;
+  }, content)) : content;
 };
 var _default = exports.default = Form;

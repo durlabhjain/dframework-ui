@@ -617,7 +617,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   const getGridRowId = row => {
     return row[idProperty];
   };
-  const ClosingDialog = () => {
+  const closingDialog = () => {
     setIsEdit(false);
   };
   const handleExport = e => {
@@ -682,19 +682,31 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       overflow: 'hidden !important'
     }
   };
-  const handleDeletes = record => {
+  const handleMenuDelete = record => {
     setIsDeleting(true);
     setRecord({
       name: record[model === null || model === void 0 ? void 0 : model.linkColumn],
       id: record[idProperty]
     });
   };
-  const handleEdits = record => {
+  const handleMenuEdit = record => {
     setIsEdit(true);
     setRecord({
       name: record[model === null || model === void 0 ? void 0 : model.linkColumn],
       id: record[idProperty]
     });
+  };
+  const ActionMenuItem = _ref5 => {
+    let {
+      actionType,
+      handler,
+      children
+    } = _ref5;
+    return /*#__PURE__*/_react.default.createElement(_MenuItem.default, {
+      className: "actionMenuItem",
+      "data-action": actionType,
+      onClick: handler
+    }, children);
   };
   return /*#__PURE__*/_react.default.createElement("div", {
     style: customStyles
@@ -782,11 +794,11 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     open: isEdit,
     onConfirm: handleDelete,
     onCancel: () => setIsEdit(false),
-    title: "Edit Case",
+    title: "Edit Form",
     hideButtons: true
   }, /*#__PURE__*/_react.default.createElement(model.Form, {
     ids: String(record.id),
-    closeDialog: ClosingDialog
+    closeDialog: closingDialog
   })), /*#__PURE__*/_react.default.createElement(_Menu.default, {
     anchorEl: anchorEl,
     id: "account-menu",
@@ -830,14 +842,12 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       horizontal: 'right',
       vertical: 'center'
     }
-  }, /*#__PURE__*/_react.default.createElement(_MenuItem.default, {
-    className: "actionMenuItem",
-    "data-action": actionTypes.Edit,
-    onClick: () => handleEdits(selectedRecord)
-  }, "Edit"), /*#__PURE__*/_react.default.createElement(_MenuItem.default, {
-    className: "actionMenuItem",
-    "data-action": actionTypes.Delete,
-    onClick: () => handleDeletes(selectedRecord)
+  }, /*#__PURE__*/_react.default.createElement(ActionMenuItem, {
+    actionType: actionTypes.Edit,
+    handler: () => handleMenuEdit(selectedRecord)
+  }, "Edit"), /*#__PURE__*/_react.default.createElement(ActionMenuItem, {
+    actionType: actionTypes.Delete,
+    handler: () => handleMenuDelete(selectedRecord)
   }, "Delete")));
 }, areEqual);
 var _default = exports.default = GridBase;

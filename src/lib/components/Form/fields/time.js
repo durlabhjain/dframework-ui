@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import TextField from "@mui/material/TextField";
 import Radio from "@mui/material/Radio";
 import RadioGroup from "@mui/material/RadioGroup";
@@ -18,36 +18,37 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes }) => {
 
   useEffect(() => {
     if (formik.values[field]) {
-        const dateTime = dayjs(formik.values[field]);
-        setTime(dateTime);
-        setTimePeriod(dateTime.format('A'));
+      const dateTime = dayjs(formik.values[field]);
+      setTime(dateTime);
+      setTimePeriod(dateTime.format("A"));
     }
-}, [formik.values]);
+  }, [formik.values]);
 
-const handleRadioChange = (event) => {
+  const handleRadioChange = (event) => {
     setTimePeriod(event.target.value);
     updateFormikTime(time, event.target.value);
-};
+  };
 
-const handleTimeChange = (newTime) => {
+  const handleTimeChange = (newTime) => {
     setTime(newTime);
     updateFormikTime(newTime, timePeriod);
-};
+  };
   const updateFormikTime = (timeValue, period) => {
     if (timeValue) {
-        let hours = timeValue.hour();
-        const minutes = timeValue.minute();
-        if (period === "PM" && hours < 12) hours += 12;
-        if (period === "AM" && hours === 12) hours = 0;
+      let hours = timeValue.hour();
+      const minutes = timeValue.minute();
+      if (period === "PM" && hours < 12) hours += 12;
+      if (period === "AM" && hours === 12) hours = 0;
 
-        const dateTime = dayjs().hour(hours).minute(minutes);
-        formik.setFieldValue(field, dateTime.toISOString());
+      const dateTime = dayjs().hour(hours).minute(minutes);
+      formik.setFieldValue(field, dateTime.toISOString());
     }
-};
+  };
 
   if (column.modifiedLabel) {
     return (
-      <div style={{ display: "flex", alignItems: "center" }}>
+      <div
+        style={{ display: "flex", alignItems: "center", gap: '2.9rem', width: '337px !important' }}>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <InputLabel
             sx={{
@@ -68,36 +69,13 @@ const handleTimeChange = (newTime) => {
               "& .MuiOutlinedInput-input": {
                 padding: "1.65625rem 0.875rem 0.59375rem 0.875rem !important",
               },
-              "& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input": {
-                backgroundColor: "#4F5883 !important",
-              },
-              "& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root": {
-                backgroundColor: "#4F5883 !important",
-              },
-              "& .css-1k8vz0v-MuiList-root-MuiMultiSectionDigitalClockSection-root":
-                {
-                  backgroundColor: "#4F5883 !important",
-                },
+              width: "200px",
             }}
             components={{
               OpenPickerIcon: KeyboardArrowDownIcon,
             }}
             renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="select"
-                sx={{
-                  width: "300px",
-                  marginRight: "1rem",
-                  backgroundColor: "#4F5883 !important",
-                  "& .css-4i5lc0-MuiInputBase-input-MuiOutlinedInput-input": {
-                    backgroundColor: "#4F5883 !important",
-                  },
-                  "& .css-zh6go5-MuiInputBase-root-MuiOutlinedInput-root": {
-                    backgroundColor: "#4F5883 !important",
-                  },
-                }}
-              />
+              <TextField {...params} placeholder="select" />
             )}
           />
           <FormControl component="fieldset">
@@ -106,7 +84,6 @@ const handleTimeChange = (newTime) => {
               onChange={handleRadioChange}
               style={{
                 flexDirection: "row",
-                marginLeft: "2.9rem",
                 flexWrap: "nowrap",
               }}
             >

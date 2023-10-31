@@ -298,7 +298,7 @@ const saveRecord = exports.saveRecord = async function saveRecord(_ref5) {
     }
   } catch (error) {
     console.log(error);
-    setError('Save failed', error.response.data);
+    setError('Save failed', error);
   } finally {
     setIsLoading(false);
   }

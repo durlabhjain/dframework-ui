@@ -1,15 +1,17 @@
 import React from 'react';
 import { useFormik } from 'formik';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, createContext } from 'react';
 import { getRecord, saveRecord, deleteRecord } from '../Grid/crud-helper';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import { Box } from "@mui/material";
+import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import FormLayout from './field-mapper';
 import { useSnackbar } from '../SnackBar';
 import { DialogComponent } from '../Dialog';
 import { useRouter } from '../useRouter/useRouter';
+export const ActiveStepContext = createContext(1);
 
 const Form = ({
     model,
@@ -19,8 +21,8 @@ const Form = ({
     ids,
     closeDialog
 }) => {
-    const { navigate, getParams } = useRouter()
-    const defaultFieldConfigs = {} 
+    const { navigate, getParams } = useRouter();
+    const defaultFieldConfigs = {}
     const { id: idFromQuery } = getParams;
     const idWithOptions = idFromQuery || ids;
     const id = idWithOptions?.split('-')[0]
@@ -31,7 +33,10 @@ const Form = ({
     const snackbar = useSnackbar()
     const combos = {}
     const [validationSchema, setValidationSchema] = useState(null);
-
+    const [activeStep, setActiveStep] = useState(0);
+    const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
+    const [deleteError, setDeleteError] = useState(null);
+    const [errorMessage, setErrorMessage] = useState('');
     const fieldConfigs = model?.applyFieldConfig ? model?.applyFieldConfig({ data, lookups }) : defaultFieldConfigs;
 
     useEffect(() => {
@@ -47,7 +52,7 @@ const Form = ({
             })
         } catch (error) {
             snackbar?.showMessage('An error occured, please try after some time.');
-            // navigate('./');
+            navigate('./');
         }
     }, [id, idWithOptions, model]);
 
@@ -68,7 +73,7 @@ const Form = ({
                 .then(success => {
                     if (success) {
                         snackbar?.showMessage('Record Updated Successfully.');
-                        // navigate('./');
+                        navigate('./');
                     }
                 })
                 .finally(() => setIsLoading(false));
@@ -77,7 +82,21 @@ const Form = ({
 
     const errorOnLoad = function (title, error) {
         snackbar?.showError(title, error);
-        // navigate('./');
+        navigate('./');
+    }
+
+    const { dirty } = formik;
+
+    const handleDiscardChanges = () => {
+        formik.resetForm();
+        setIsDiscardDialogOpen(false);
+        navigate('.');
+    };
+
+    const warnUnsavedChanges = () => {
+        if (dirty) {
+            setIsDiscardDialogOpen(true);
+        }
     }
 
     const setActiveRecord = function ({ id, title, record, lookups }) {
@@ -117,6 +136,17 @@ const Form = ({
             snackbar?.showError('An error occured, please try after some time.');
         }
     }
+
+    const clearError = () => {
+        setErrorMessage(null);
+        setIsDeleting(false);
+    };
+    if (isLoading) {
+        return <Box sx={{ display: 'flex', pt: '20%', justifyContent: 'center' }}>
+            <CircularProgress />
+        </Box>
+    }
+
     const handleChange = function (e) {
         const { name, value } = e.target;
         const gridData = { ...data };
@@ -145,25 +175,31 @@ const Form = ({
                     )}
                 </Stack>
                 <Layout model={model} formik={formik} data={data} fieldConfigs={fieldConfigs} combos={combos} onChange={handleChange} lookups={lookups} id={id} />
-                <Box position='absolute' bottom={0} right={0} display='flex' justifyContent='flex-end' alignItems='center' marginBottom={'1.5rem'} marginTop={'10rem'} marginRight={'2.5rem'}>
+                {model.addHeaderFilters === false && (<Box bottom={0} right={0} display='flex' justifyContent='flex-end' alignItems='center'>
                     {actionButtons.map((button, index) => {
                         return (
                             <Box key={index} ml={2} mt={4} >
-                                <model.CustomButton buttonFunction={button.text === 'Add' ?  () => {formik.handleSubmit(); closeDialog()} :() => { handleFormCancel(); closeDialog()}} buttonText={button.text} variant={button.variant} color={button.color} />
+                                <model.CustomButton buttonFunction={button.text === 'Add' ? () => { formik.handleSubmit(); closeDialog() } : () => { handleFormCancel(); closeDialog() }} buttonText={button.text} variant={button.variant} color={button.color} />
                             </Box>
                         )
                     })}
-                </Box>
+                </Box>)}
             </form>
+            {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)}
+            <DialogComponent open={isDiscardDialogOpen} onConfirm={handleDiscardChanges} onCancel={() => setIsDiscardDialogOpen(false)} title="Changes not saved" okText="Discard" cancelText="Continue">
+                {"Would you like to continue to edit or discard changes?"}
+            </DialogComponent>
             <DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete">
                 {`Are you sure you want to delete ${data?.GroupName}?`}
             </DialogComponent>
         </>
     );
-    return model.addHeaderFilters !== false ? (
-        <Paper sx={{ padding: 2 }}>
-            {content}
-        </Paper>
+    return !!model.addHeaderFilters ? (
+        <ActiveStepContext.Provider value={{ activeStep, setActiveStep }}>
+            <Paper sx={{ padding: 2 }}>
+                {content}
+            </Paper>
+        </ActiveStepContext.Provider >
     ) : content;
 
 

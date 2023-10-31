@@ -471,7 +471,7 @@ const GridBase = memo(({
         return row[idProperty];
     };
 
-    const ClosingDialog = () => {
+    const closingDialog = () => {
         setIsEdit(false);
       };
   
@@ -530,15 +530,21 @@ const GridBase = memo(({
           }
     };
 
-    const handleDeletes = (record) => {
+    const handleMenuDelete = (record) => {
         setIsDeleting(true);
         setRecord({ name: record[model?.linkColumn], id: record[idProperty] });
     };
 
-    const handleEdits = (record) => {
+    const handleMenuEdit = (record) => {
         setIsEdit(true);
         setRecord({ name: record[model?.linkColumn], id: record[idProperty] });
     };
+
+    const ActionMenuItem = ({ actionType, handler, children }) => (
+        <MenuItem className="actionMenuItem" data-action={actionType} onClick={handler}>
+            {children}
+        </MenuItem>
+    );
 
     return (
         <div style={customStyles}>
@@ -618,7 +624,7 @@ const GridBase = memo(({
             {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
             }
             {isDeleting && !errorMessage && (<DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete"> {`${'Are you sure you want to delete'} ${record?.name}?`}</DialogComponent>)}
-            {isEdit && (<DialogComponent open={isEdit} onConfirm={handleDelete} onCancel={() => setIsEdit(false)} title="Edit Case" hideButtons={true}><model.Form ids={String(record.id)} closeDialog={ClosingDialog}/></DialogComponent>)}
+            {isEdit && (<DialogComponent open={isEdit} onConfirm={handleDelete} onCancel={() => setIsEdit(false)} title="Edit Form" hideButtons={true}><model.Form ids={String(record.id)} closeDialog={closingDialog}/></DialogComponent>)}
             <Menu
                 anchorEl={anchorEl}
                 id="account-menu"
@@ -657,15 +663,9 @@ const GridBase = memo(({
                 transformOrigin={{ horizontal: 'right', vertical: 'center' }}
                 anchorOrigin={{ horizontal: 'right', vertical: 'center' }}
             >
-                <MenuItem className="actionMenuItem" data-action={actionTypes.Edit} onClick={() => handleEdits(selectedRecord)}>
-                    Edit
-                </MenuItem>
-                <MenuItem className="actionMenuItem" data-action={actionTypes.Delete} onClick={() => handleDeletes(selectedRecord)}>
-                    Delete
-                </MenuItem>
+                <ActionMenuItem actionType={actionTypes.Edit} handler={() => handleMenuEdit(selectedRecord)}>Edit</ActionMenuItem>
+                <ActionMenuItem actionType={actionTypes.Delete} handler={() => handleMenuDelete(selectedRecord)}>Delete</ActionMenuItem>
             </Menu>
-
-
         </div >
     );
 }, areEqual);

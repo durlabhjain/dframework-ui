@@ -209,104 +209,75 @@ const RenderColumns = _ref3 => {
     onChange,
     combos,
     lookups,
-    fieldConfigs
+    fieldConfigs,
+    mode
   } = _ref3;
   const classes = useStyles();
   if (!(formElements !== null && formElements !== void 0 && formElements.length)) {
     return null;
   }
-  if (!model.addHeaderFilters) {
+  const renderFormElement = (element, key) => {
+    const {
+      Component,
+      column,
+      field,
+      fieldLabel,
+      otherProps
+    } = element;
+    let isGridComponent = typeof column.relation === 'function';
     return /*#__PURE__*/React.createElement(_Grid.default, {
       container: true,
+      spacing: 2,
+      key: key,
+      className: classes.root,
+      alignItems: isGridComponent ? "flex-start" : "center"
+    }, (column === null || column === void 0 ? void 0 : column.showLabel) !== false ? /*#__PURE__*/React.createElement(_Grid.default, {
+      item: true,
+      xs: 1.5,
+      className: classes.childStyles
+    }, /*#__PURE__*/React.createElement(_material.Typography, {
       sx: {
-        width: '52rem',
-        height: '37.125rem',
-        display: 'flex',
-        justifyContent: 'space-between'
-      },
-      spacing: 1
-    }, formElements.map((_ref4, key) => {
-      let {
-        Component,
-        column,
-        field,
-        fieldLabel,
-        otherProps
-      } = _ref4;
-      let isGridComponent = typeof column.relation === 'function';
-      return /*#__PURE__*/React.createElement(_Grid.default, {
-        item: true,
-        xs: 5,
-        key: key
-      }, /*#__PURE__*/React.createElement(_Grid.default, {
-        container: true,
-        alignItems: isGridComponent ? "flex-start" : "center"
-      }, /*#__PURE__*/React.createElement(_Grid.default, {
-        item: true,
-        xs: 9,
-        className: classes.childStyles
-      }, /*#__PURE__*/React.createElement(Component, _extends({
-        model: model,
-        fieldConfigs: fieldConfigs[field],
-        column: column,
-        field: field,
-        fieldLabel: fieldLabel,
-        formik: formik,
-        data: data,
-        onChange: onChange,
-        combos: combos,
-        lookups: lookups
-      }, otherProps)))));
-    }));
-  } else {
-    return /*#__PURE__*/React.createElement(React.Fragment, null, formElements.map((_ref5, key) => {
-      let {
-        Component,
-        column,
-        field,
-        fieldLabel,
-        otherProps
-      } = _ref5;
-      let isGridComponent = typeof column.relation === 'function';
-      return /*#__PURE__*/React.createElement(_Grid.default, {
-        container: true,
-        spacing: 2,
-        key: key,
-        className: classes.root,
-        alignItems: isGridComponent ? "flex-start" : "center"
-      }, /*#__PURE__*/React.createElement(_Grid.default, {
-        item: true,
-        xs: 1,
-        className: classes.childStyles
-      }, /*#__PURE__*/React.createElement(_material.Typography, {
-        sx: {
-          fontSize: '16px',
-          fontWeight: isGridComponent ? 'bold' : 'normal'
-        }
-      }, " ", column.label, ": ")), /*#__PURE__*/React.createElement(_Grid.default, {
-        item: true,
-        xs: isGridComponent ? 12 : 11,
-        className: classes.childStyles
-      }, /*#__PURE__*/React.createElement(Component, _extends({
-        model: model,
-        fieldConfigs: fieldConfigs[field],
-        column: column,
-        field: field,
-        fieldLabel: fieldLabel,
-        formik: formik,
-        data: data,
-        onChange: onChange,
-        combos: combos,
-        lookups: lookups
-      }, otherProps))));
-    }));
+        fontSize: '16px',
+        fontWeight: isGridComponent ? 'bold' : 'normal'
+      }
+    }, " ", column.label, ": ")) : null, /*#__PURE__*/React.createElement(_Grid.default, {
+      item: true,
+      xs: isGridComponent ? 12 : 10.5,
+      className: classes.childStyles
+    }, /*#__PURE__*/React.createElement(Component, _extends({
+      model: model,
+      fieldConfigs: fieldConfigs[field],
+      column: column,
+      mode: mode,
+      field: field,
+      fieldLabel: fieldLabel,
+      formik: formik,
+      data: data,
+      onChange: onChange,
+      combos: combos,
+      lookups: lookups
+    }, otherProps))));
+  };
+  if (!model.addHeaderFilters) {
+    const splitPoint = Math.ceil(formElements.length / 2);
+    return /*#__PURE__*/React.createElement(_Grid.default, {
+      container: true,
+      spacing: 2
+    }, /*#__PURE__*/React.createElement(_Grid.default, {
+      item: true,
+      xs: 6
+    }, formElements.slice(0, splitPoint).map((element, key) => renderFormElement(element, key))), /*#__PURE__*/React.createElement(_Grid.default, {
+      item: true,
+      xs: 6
+    }, formElements.slice(splitPoint).map((element, key) => renderFormElement(element, key))));
   }
+  return /*#__PURE__*/React.createElement(React.Fragment, null, formElements.map((element, key) => renderFormElement(element, key)));
 };
-const getFormConfig = function getFormConfig(_ref6) {
+const getFormConfig = function getFormConfig(_ref4) {
   let {
     columns,
     tabs = {}
-  } = _ref6;
+  } = _ref4;
   const formElements = [],
     tabColumns = {};
   for (const tab in tabs) {
@@ -353,7 +324,7 @@ const getFormConfig = function getFormConfig(_ref6) {
     tabColumns: tabsData
   };
 };
-const FormLayout = _ref7 => {
+const FormLayout = _ref5 => {
   let {
     model,
     formik,
@@ -362,8 +333,10 @@ const FormLayout = _ref7 => {
     onChange,
     lookups,
     id: displayId,
-    fieldConfigs
-  } = _ref7;
+    fieldConfigs,
+    mode,
+    handleSubmit
+  } = _ref5;
   const {
     formElements,
     tabColumns,
@@ -384,12 +357,7 @@ const FormLayout = _ref7 => {
       showTabs: showTabs && tabColumns.length > 0
     };
   }, [model]);
-  const wrapperStyle = model.addheaderFilters === false ? {
-    width: "52.313rem"
-  } : {};
-  return /*#__PURE__*/React.createElement("div", {
-    style: wrapperStyle
-  }, /*#__PURE__*/React.createElement(RenderColumns, {
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(RenderColumns, {
     formElements: formElements,
     model: model,
     formik: formik,
@@ -397,7 +365,8 @@ const FormLayout = _ref7 => {
     onChange: onChange,
     combos: combos,
     lookups: lookups,
-    fieldConfigs: fieldConfigs
+    fieldConfigs: fieldConfigs,
+    mode: mode
   }), /*#__PURE__*/React.createElement(RenderSteps, {
     tabColumns: tabColumns,
     model: model,
@@ -406,7 +375,9 @@ const FormLayout = _ref7 => {
     onChange: onChange,
     combos: combos,
     lookups: lookups,
-    fieldConfigs: fieldConfigs
+    fieldConfigs: fieldConfigs,
+    mode: mode,
+    handleSubmit: handleSubmit
   }));
 };
 var _default = exports.default = FormLayout;
