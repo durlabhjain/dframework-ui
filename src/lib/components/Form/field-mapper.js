@@ -39,12 +39,17 @@ const fieldMappers = {
 const useStyles = makeStyles({
     root: {
         marginTop: "1rem",
-        marginBottom: "1rem",
-        width: "58.59rem"
+        marginBottom: "1rem"
     },
     childStyles: {
         paddingTop: "2.5px",
         paddingBottom: "2.5px"
+    },
+    stepLabel: {
+        fontSize: "20px !important"
+    },
+    stepperMain: {
+        marginBottom: "20px"
     }
 })
 
