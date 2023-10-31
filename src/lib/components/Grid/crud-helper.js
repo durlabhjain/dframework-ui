@@ -221,7 +221,7 @@ const saveRecord = async function ({ id, api, values, setIsLoading, setError }) 
         }
     } catch (error) {
         console.log(error);
-        setError('Save failed', error);
+        setError('Save failed', error.response.data.error);
     } finally {
         setIsLoading(false);
     }
