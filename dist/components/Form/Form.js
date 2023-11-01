@@ -86,7 +86,7 @@ const Form = _ref => {
       });
     } catch (error) {
       snackbar === null || snackbar === void 0 || snackbar.showMessage('An error occured, please try after some time.');
-      navigate('./');
+      // navigate('./');
     }
   }, [id, idWithOptions, model]);
   const formik = (0, _formik.useFormik)({
@@ -108,15 +108,16 @@ const Form = _ref => {
       }).then(success => {
         if (success) {
           snackbar === null || snackbar === void 0 || snackbar.showMessage('Record Updated Successfully.');
-          navigate('./');
+          // navigate('./');
         }
       }).finally(() => setIsLoading(false));
     }
   });
   const errorOnLoad = function errorOnLoad(title, error) {
     snackbar === null || snackbar === void 0 || snackbar.showError(title, error);
-    navigate('./');
+    // navigate('./');
   };
+
   const {
     dirty
   } = formik;
@@ -171,7 +172,7 @@ const Form = _ref => {
       });
       if (response) {
         snackbar === null || snackbar === void 0 || snackbar.showMessage('Record Deleted Successfully.');
-        navigate('./');
+        // navigate('./');
       }
     } catch (error) {
       snackbar === null || snackbar === void 0 || snackbar.showError('An error occured, please try after some time.');
