@@ -15,11 +15,11 @@ const useStyles = makeStyles({
 const TransferField = ({
     component,
     name,
+    column,
     field,
     formik,
     type,
     model,
-    modifiedLabel, // Added this prop
     ...props
 }) => {
     const { value } = formik.getFieldProps(name || field);
@@ -33,7 +33,7 @@ const TransferField = ({
 
     return (
         <div>
-            {modifiedLabel ? (
+            {column.modifiedLabel ? (
                 <Component
                     selected={value}
                     onAssignChange={onAssignChange}
