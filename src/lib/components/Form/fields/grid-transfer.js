@@ -11,22 +11,44 @@ const useStyles = makeStyles({
         fontWeight: 'bold'
     }
 });
-const TransferField = ({ component, name, field, formik, type, model, ...props }) => {
+
+const TransferField = ({
+    component,
+    name,
+    field,
+    formik,
+    type,
+    model,
+    modifiedLabel, // Added this prop
+    ...props
+}) => {
     const { value } = formik.getFieldProps(name || field);
     const { setFieldValue } = formik;
     const Component = component || props.column.relation;
     const classes = useStyles();
-    const onAssignChange = useCallback((value) => {
-        setFieldValue(name || field, value);
+
+    const onAssignChange = useCallback((newValue) => {
+        setFieldValue(name || field, newValue);
     }, [setFieldValue, name, field]);
+
     return (
         <div>
-            <div className={`${classes.divSpacing} ${classes.boldText}`}>Available</div>
-            <Component selected={value} available={true} onAssignChange={onAssignChange} />
-            <div className={`${classes.divSpacing} ${classes.boldText}`}>Assigned</div>
-            <Component selected={value} assigned={true} onAssignChange={onAssignChange} />
+            {modifiedLabel ? (
+                <Component
+                    selected={value}
+                    onAssignChange={onAssignChange}
+                    {...props} 
+                />
+            ) : (
+                <>
+                    <div className={`${classes.divSpacing} ${classes.boldText}`}>Available</div>
+                    <Component selected={value} available={true} onAssignChange={onAssignChange} />
+                    <div className={`${classes.divSpacing} ${classes.boldText}`}>Assigned</div>
+                    <Component selected={value} assigned={true} onAssignChange={onAssignChange} />
+                </>
+            )}
         </div>
-    )
+    );
 }
 
 export default TransferField;
