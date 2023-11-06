@@ -15,7 +15,6 @@ const useStyles = makeStyles({
 const TransferField = ({
     component,
     name,
-    column,
     field,
     formik,
     type,
@@ -33,7 +32,7 @@ const TransferField = ({
 
     return (
         <div>
-            {column.modifiedLabel ? (
+            {props.column.modifiedLabel ? (
                 <Component
                     selected={value}
                     onAssignChange={onAssignChange}
