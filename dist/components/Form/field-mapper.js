@@ -236,7 +236,7 @@ const RenderColumns = _ref3 => {
       key: key,
       className: classes.root,
       alignItems: isGridComponent ? "flex-start" : "center"
-    }, (column === null || column === void 0 ? void 0 : column.showLabel) !== false ? /*#__PURE__*/React.createElement(_Grid.default, {
+    }, model.addHeaderFilters !== false ? /*#__PURE__*/React.createElement(_Grid.default, {
       item: true,
       xs: 1.5,
       className: classes.childStyles

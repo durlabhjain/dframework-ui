@@ -135,7 +135,7 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
         let isGridComponent = typeof column.relation === 'function';
         return (
             <Grid container spacing={2} key={key} className={classes.root} alignItems={isGridComponent ? "flex-start" : "center"}>
-                {column?.showLabel !== false ?
+                {model.addHeaderFilters !== false ?
                     <Grid item xs={1.5} className={classes.childStyles}>
                         <Typography sx={{ fontSize: '16px', fontWeight: isGridComponent ? 'bold' : 'normal' }}> {column.label}: </Typography>
                     </Grid>
