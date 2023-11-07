@@ -410,13 +410,16 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     if (assigned || available) {
       extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
     }
-    advanceFilter = [{
-      field: "RoleId",
-      operator: "equals",
-      type: "number",
-      value: Number(selectedId)
-    }];
-    if (advanceFilter || model.fetchId) {
+    if (advanceFilter) {
+      extraParams["advanceFilter"] = advanceFilter;
+    }
+    if (advanceFilter = [] && model.fetchId) {
+      advanceFilter = [{
+        field: "RoleId",
+        operator: "equals",
+        type: "number",
+        value: Number(selectedId)
+      }];
       extraParams["advanceFilter"] = advanceFilter;
     }
     (0, _crudHelper.getList)({

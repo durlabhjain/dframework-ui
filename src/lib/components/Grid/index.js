@@ -305,14 +305,18 @@ const GridBase = memo(({
         if (assigned || available) {
             extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
         }
-        advanceFilter = [{
-            field: "RoleId",
-            operator: "equals",
-            type: "number",
-            value: Number(selectedId)
-        }]
 
-        if (advanceFilter || model.fetchId) {
+        if (advanceFilter) {
+            extraParams["advanceFilter"] = advanceFilter;
+        }
+
+        if (advanceFilter = [] && model.fetchId) {
+            advanceFilter = [{
+                field: "RoleId",
+                operator: "equals",
+                type: "number",
+                value: Number(selectedId)
+            }]
             extraParams["advanceFilter"] = advanceFilter;
         }
         getList({
