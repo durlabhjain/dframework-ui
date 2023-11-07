@@ -21,7 +21,7 @@ const TransferField = ({ component, name, field, formik, type, model, ...props }
     }, [setFieldValue, name, field]);
     return (
         <div>
-            <Component selected={value} assigned={true} onAssignChange={onAssignChange} />
+            <Component selected={value} assigned={true} />
         </div>
     )
 }

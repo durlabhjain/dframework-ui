@@ -342,55 +342,53 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
         width: 200
       });
     }
-    if (!forAssignment && !isReadOnly) {
-      const showActions = (model === null || model === void 0 ? void 0 : model.addHeaderFilters) !== false;
-      if (showActions) {
-        const actions = [];
-        if (model.addEdit && permissions.edit) {
-          actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
-            icon: /*#__PURE__*/_react.default.createElement(_Edit.default, null),
-            "data-action": actionTypes.Edit,
-            label: "Edit"
-          }));
-        }
-        if (model.addCopy && permissions.add) {
-          actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
-            icon: /*#__PURE__*/_react.default.createElement(_FileCopy.default, null),
-            "data-action": actionTypes.Copy,
-            label: "Copy"
-          }));
-        }
-        if (model.delete && permissions.delete) {
-          actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
-            icon: /*#__PURE__*/_react.default.createElement(_Delete.default, null),
-            "data-action": actionTypes.Delete,
-            label: "Delete"
-          }));
-        }
-        if (actions.length > 0) {
-          finalColumns.push({
-            field: 'actions',
-            type: 'actions',
-            label: '',
-            width: actions.length * 50,
-            getActions: () => actions
-          });
-        }
-        pinnedColumns.right.push('actions');
-      } else {
-        if (!model.noOptionButton) {
-          finalColumns.push({
-            field: 'actions',
-            width: 1,
-            headerName: '',
-            renderCell: cellParams => /*#__PURE__*/_react.default.createElement(_react.default.Fragment, null, /*#__PURE__*/_react.default.createElement(_MoreVertTwoTone.default, {
-              onClick: event => {
-                setSelectedRecord(cellParams.row);
-                handleClick(event);
-              }
-            }))
-          });
-        }
+    const showActions = (model === null || model === void 0 ? void 0 : model.addHeaderFilters) !== false;
+    if (showActions && !forAssignment && !isReadOnly) {
+      const actions = [];
+      if (model.addEdit && permissions.edit) {
+        actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
+          icon: /*#__PURE__*/_react.default.createElement(_Edit.default, null),
+          "data-action": actionTypes.Edit,
+          label: "Edit"
+        }));
+      }
+      if (model.addCopy && permissions.add) {
+        actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
+          icon: /*#__PURE__*/_react.default.createElement(_FileCopy.default, null),
+          "data-action": actionTypes.Copy,
+          label: "Copy"
+        }));
+      }
+      if (model.delete && permissions.delete) {
+        actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
+          icon: /*#__PURE__*/_react.default.createElement(_Delete.default, null),
+          "data-action": actionTypes.Delete,
+          label: "Delete"
+        }));
+      }
+      if (actions.length > 0) {
+        finalColumns.push({
+          field: 'actions',
+          type: 'actions',
+          label: '',
+          width: actions.length * 50,
+          getActions: () => actions
+        });
+      }
+      pinnedColumns.right.push('actions');
+    } else {
+      if (!model.noOptionButton) {
+        finalColumns.push({
+          field: 'actions',
+          width: 1,
+          headerName: '',
+          renderCell: cellParams => /*#__PURE__*/_react.default.createElement(_react.default.Fragment, null, /*#__PURE__*/_react.default.createElement(_MoreVertTwoTone.default, {
+            onClick: event => {
+              setSelectedRecord(cellParams.row);
+              handleClick(event);
+            }
+          }))
+        });
       }
     }
     return {

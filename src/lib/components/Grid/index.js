@@ -256,9 +256,9 @@ const GridBase = memo(({
             );
         }
 
-        if (!forAssignment && !isReadOnly) {
+    
             const showActions = model?.addHeaderFilters !== false;
-            if (showActions) {
+            if (showActions && !forAssignment && !isReadOnly) {
                 const actions = [];
                 if (model.addEdit && permissions.edit) {
                     actions.push(<GridActionsCellItem icon={<EditIcon />} data-action={actionTypes.Edit} label="Edit" />);
@@ -295,7 +295,7 @@ const GridBase = memo(({
                     ),
                 });
             }
-        }
+        
         }
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment]);

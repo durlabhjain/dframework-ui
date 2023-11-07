@@ -45,8 +45,7 @@ const TransferField = _ref => {
   }, [setFieldValue, name, field]);
   return /*#__PURE__*/_react.default.createElement("div", null, /*#__PURE__*/_react.default.createElement(Component, {
     selected: value,
-    assigned: true,
-    onAssignChange: onAssignChange
+    assigned: true
   }));
 };
 var _default = exports.default = TransferField;
