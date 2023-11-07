@@ -410,8 +410,10 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
     }
     if (advanceFilter && model.fetchId) {
+      console.log(selectedRecord);
+      console.log("record", record);
       const updatedAdvanceFilter = advanceFilter.map(filter => _objectSpread(_objectSpread({}, filter), {}, {
-        value: selectedRecord.RoleId
+        value: record === null || record === void 0 ? void 0 : record.id
       }));
       extraParams["advanceFilter"] = updatedAdvanceFilter;
     }

@@ -305,9 +305,11 @@ const GridBase = memo(({
             extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
         }
         if (advanceFilter && model.fetchId) {
+            console.log(selectedRecord);
+            console.log("record",record);
             const updatedAdvanceFilter = advanceFilter.map(filter => ({
                 ...filter,
-                value: selectedRecord.RoleId
+                value: record?.id
             }));
             extraParams["advanceFilter"] = updatedAdvanceFilter;
         }
