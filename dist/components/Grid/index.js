@@ -417,9 +417,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       }));
       extraParams["advanceFilter"] = updatedAdvanceFilter;
     }
-    if (advanceFilter) {
-      extraParams["advanceFilter"] = advanceFilter;
-    }
+    // if (advanceFilter) {
+    //     extraParams["advanceFilter"] = advanceFilter;
+    // }
     (0, _crudHelper.getList)({
       action,
       page: !contentType ? page : 0,
@@ -515,6 +515,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       }
     }
   };
+  console.log("checking", selectedRecord);
   const handleClose = () => {
     setAnchorEl(null);
   };

@@ -313,9 +313,9 @@ const GridBase = memo(({
             }));
             extraParams["advanceFilter"] = updatedAdvanceFilter;
         }
-        if (advanceFilter) {
-            extraParams["advanceFilter"] = advanceFilter;
-        }
+        // if (advanceFilter) {
+        //     extraParams["advanceFilter"] = advanceFilter;
+        // }
         getList({
             action,
             page: !contentType ? page : 0,
@@ -389,7 +389,7 @@ const GridBase = memo(({
             }
         }
     };
-
+console.log("checking",selectedRecord);
     const handleClose = () => {
         setAnchorEl(null);
     };
@@ -545,7 +545,6 @@ const GridBase = memo(({
     };
 
     const handleMenuEdit = (record) => {
-
         setIsEdit(true);
         setRecord({ name: record[model?.linkColumn], id: record[idProperty] });
     };
