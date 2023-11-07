@@ -256,31 +256,31 @@ const GridBase = memo(({
             );
         }
 
-    
-            const showActions = model?.addHeaderFilters !== false;
-            if (showActions && !forAssignment && !isReadOnly) {
-                const actions = [];
-                if (model.addEdit && permissions.edit) {
-                    actions.push(<GridActionsCellItem icon={<EditIcon />} data-action={actionTypes.Edit} label="Edit" />);
-                }
-                if (model.addCopy && permissions.add) {
-                    actions.push(<GridActionsCellItem icon={<CopyIcon />} data-action={actionTypes.Copy} label="Copy" />);
-                }
-                if (model.delete && permissions.delete) {
-                    actions.push(<GridActionsCellItem icon={<DeleteIcon />} data-action={actionTypes.Delete} label="Delete" />);
-                }
-                if (actions.length > 0) {
-                    finalColumns.push({
-                        field: 'actions',
-                        type: 'actions',
-                        label: '',
-                        width: actions.length * 50,
-                        getActions: () => actions,
-                    });
-                }
-                pinnedColumns.right.push('actions');
-            } else {
-                if(!model.noOptionButton) {
+
+        const showActions = model?.addHeaderFilters !== false;
+        if (showActions && !forAssignment && !isReadOnly) {
+            const actions = [];
+            if (model.addEdit && permissions.edit) {
+                actions.push(<GridActionsCellItem icon={<EditIcon />} data-action={actionTypes.Edit} label="Edit" />);
+            }
+            if (model.addCopy && permissions.add) {
+                actions.push(<GridActionsCellItem icon={<CopyIcon />} data-action={actionTypes.Copy} label="Copy" />);
+            }
+            if (model.delete && permissions.delete) {
+                actions.push(<GridActionsCellItem icon={<DeleteIcon />} data-action={actionTypes.Delete} label="Delete" />);
+            }
+            if (actions.length > 0) {
+                finalColumns.push({
+                    field: 'actions',
+                    type: 'actions',
+                    label: '',
+                    width: actions.length * 50,
+                    getActions: () => actions,
+                });
+            }
+            pinnedColumns.right.push('actions');
+        } else {
+            if (!model.noOptionButton) {
                 finalColumns.push({
                     field: 'actions',
                     width: 1,
@@ -295,7 +295,7 @@ const GridBase = memo(({
                     ),
                 });
             }
-        
+
         }
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment]);
@@ -304,7 +304,14 @@ const GridBase = memo(({
         if (assigned || available) {
             extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
         }
-        if(advanceFilter) {
+        if (advanceFilter && model.fetchId) {
+            const updatedAdvanceFilter = advanceFilter.map(filter => ({
+                ...filter,
+                value: selectedRecord.RoleId
+            }));
+            extraParams["advanceFilter"] = updatedAdvanceFilter;
+        }
+        if (advanceFilter) {
             extraParams["advanceFilter"] = advanceFilter;
         }
         getList({
@@ -473,8 +480,8 @@ const GridBase = memo(({
 
     const closingDialog = () => {
         setIsEdit(false);
-      };
-  
+    };
+
 
     const handleExport = (e) => {
         const { orderedFields, columnVisibilityModel, lookup } = apiRef.current.state.columns;
@@ -492,7 +499,7 @@ const GridBase = memo(({
     };
 
     useEffect(() => {
-        if(isLoading !== prevIsLoading.current) {
+        if (isLoading !== prevIsLoading.current) {
             prevIsLoading.current = isLoading;
             return;
         }
@@ -527,7 +534,7 @@ const GridBase = memo(({
         },
         '.custom-data-grid .MuiDataGrid-mainGrid': {
             overflow: 'hidden !important'
-          }
+        }
     };
 
     const handleMenuDelete = (record) => {
@@ -536,6 +543,7 @@ const GridBase = memo(({
     };
 
     const handleMenuEdit = (record) => {
+
         setIsEdit(true);
         setRecord({ name: record[model?.linkColumn], id: record[idProperty] });
     };
@@ -624,7 +632,7 @@ const GridBase = memo(({
             {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
             }
             {isDeleting && !errorMessage && (<DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete"> {`${'Are you sure you want to delete'} ${record?.name}?`}</DialogComponent>)}
-            {isEdit && (<DialogComponent open={isEdit} onConfirm={handleDelete} onCancel={() => setIsEdit(false)} title="Edit Form" hideButtons={true}><model.Form ids={String(record.id)} closeDialog={closingDialog}/></DialogComponent>)}
+            {isEdit && (<DialogComponent open={isEdit} onConfirm={handleDelete} onCancel={() => setIsEdit(false)} title="Edit Form" hideButtons={true}><model.Form ids={String(record.id)} closeDialog={closingDialog} /></DialogComponent>)}
             <Menu
                 anchorEl={anchorEl}
                 id="account-menu"
