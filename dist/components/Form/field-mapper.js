@@ -70,6 +70,7 @@ var _gridTransfer = _interopRequireDefault(require("./fields/grid-transfer"));
 var _Grid = _interopRequireDefault(require("@mui/material/Grid"));
 var _radio = _interopRequireDefault(require("./fields/radio"));
 var _autocomplete = _interopRequireDefault(require("./fields/autocomplete"));
+var _formGrid = _interopRequireDefault(require("./fields/form-grid"));
 var _Stepper = _interopRequireDefault(require("@mui/material/Stepper"));
 var _Step = _interopRequireDefault(require("@mui/material/Step"));
 var _StepLabel = _interopRequireDefault(require("@mui/material/StepLabel"));
@@ -94,7 +95,8 @@ const fieldMappers = exports.fieldMappers = {
   "oneToMany": _gridTransfer.default,
   "radio": _radio.default,
   "autocomplete": _autocomplete.default,
-  "dayRadio": _dayRadio.default
+  "dayRadio": _dayRadio.default,
+  "gridInForm": _formGrid.default
 };
 const useStyles = (0, _core.makeStyles)({
   root: {
@@ -230,6 +232,7 @@ const RenderColumns = _ref3 => {
       otherProps
     } = element;
     let isGridComponent = typeof column.relation === 'function';
+    const gridStyle = !model.addHeaderFilters ? 12 : 10.5;
     return /*#__PURE__*/React.createElement(_Grid.default, {
       container: true,
       spacing: 2,
@@ -247,7 +250,7 @@ const RenderColumns = _ref3 => {
       }
     }, " ", column.label, ": ")) : null, /*#__PURE__*/React.createElement(_Grid.default, {
       item: true,
-      xs: isGridComponent ? 12 : 10.5,
+      xs: isGridComponent ? 12 : gridStyle,
       className: classes.childStyles
     }, /*#__PURE__*/React.createElement(Component, _extends({
       model: model,
@@ -263,20 +266,22 @@ const RenderColumns = _ref3 => {
       lookups: lookups
     }, otherProps))));
   };
-  if (!model.addHeaderFilters) {
-    const splitPoint = Math.ceil(formElements.length / 2);
-    return /*#__PURE__*/React.createElement(_Grid.default, {
-      container: true,
-      spacing: 2
-    }, /*#__PURE__*/React.createElement(_Grid.default, {
-      item: true,
-      xs: 6
-    }, formElements.slice(0, splitPoint).map((element, key) => renderFormElement(element, key))), /*#__PURE__*/React.createElement(_Grid.default, {
-      item: true,
-      xs: 6
-    }, formElements.slice(splitPoint).map((element, key) => renderFormElement(element, key))));
-  }
-  return /*#__PURE__*/React.createElement(React.Fragment, null, formElements.map((element, key) => renderFormElement(element, key)));
+  const gridComponents = formElements.filter(element => typeof element.column.grid === 'function');
+  const nonGridComponents = formElements.filter(element => typeof element.column.grid !== 'function');
+  const splitPoint = model.addHeaderFilters !== false ? nonGridComponents.length : Math.ceil(nonGridComponents.length / 2);
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(_Grid.default, {
+    container: true,
+    spacing: 2
+  }, /*#__PURE__*/React.createElement(_Grid.default, {
+    item: true,
+    xs: 6
+  }, nonGridComponents.slice(0, splitPoint).map(renderFormElement)), !model.addHeaderFilters && /*#__PURE__*/React.createElement(_Grid.default, {
+    item: true,
+    xs: 6
+  }, nonGridComponents.slice(splitPoint).map(renderFormElement))), gridComponents.length > 0 && /*#__PURE__*/React.createElement(_Grid.default, {
+    container: true,
+    direction: "column"
+  }, gridComponents.map(renderFormElement)));
 };
 const getFormConfig = function getFormConfig(_ref4) {
   let {

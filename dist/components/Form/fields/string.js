@@ -56,7 +56,6 @@ const Field = _ref => {
         disableUnderline: true
       },
       sx: {
-        width: '337px',
         backgroundColor: ' #4F5883 !important'
       }
     }, commonProps));

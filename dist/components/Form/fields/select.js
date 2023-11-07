@@ -31,27 +31,27 @@ const Field = _ref => {
       inputValue = [];
     } else {
       if (!Array.isArray(inputValue)) {
-        inputValue = inputValue.split(',').map(e => parseInt(e));
+        inputValue = inputValue.split(",").map(e => parseInt(e));
       }
     }
   }
   if (column.modifiedLabel) {
-    if (field === 'ActualRoomId' && formik.values.HospitalId) {
+    if (field === "ActualRoomId" && formik.values.HospitalId) {
       const selectedHospitalId = formik.values.HospitalId;
       options = options.filter(option => option.HospitalId === selectedHospitalId);
     }
     return /*#__PURE__*/_react.default.createElement(_material.FormControl, {
       sx: {
-        marginRight: '.9rem'
+        marginRight: ".9rem"
       },
       fullWidth: true,
       key: field
     }, /*#__PURE__*/_react.default.createElement(_material.InputLabel, {
       sx: {
-        margin: '0.9rem 2rem 1.5rem 0rem',
-        position: 'absolute',
-        zIndex: '1',
-        transform: 'translate(14px, -9px) scale(0.75)'
+        margin: "0.9rem 2rem 1.5rem 0rem",
+        position: "absolute",
+        zIndex: "1",
+        transform: "translate(14px, -9px) scale(0.75)"
       }
     }, column.label), /*#__PURE__*/_react.default.createElement(_material.Select, _extends({
       IconComponent: _KeyboardArrowDown.default
@@ -65,18 +65,18 @@ const Field = _ref => {
         if (Array.isArray(selected)) {
           return selected.map(value => {
             const option = options.find(option => option.value === value);
-            return option ? option.label : 'Select';
-          }).join(', ');
+            return option ? option.label : "Select";
+          }).join(", ");
         } else {
           const selectedOption = options.find(option => option.value === Number(selected));
-          return selectedOption ? selectedOption.label : 'Select';
+          return selectedOption ? selectedOption.label : "Select";
         }
       },
       sx: {
-        width: '337px',
-        backgroundColor: ' #4F5883 !important',
-        paddingTop: '.9rem',
-        height: '3.313rem'
+        // width: "337px",
+        backgroundColor: " #4F5883 !important",
+        paddingTop: ".9rem",
+        height: "3.313rem"
       },
       onChange: formik.handleChange,
       onBlur: formik.handleBlur

@@ -32,7 +32,7 @@ const Field = ({ column, field, fieldLabel, formik, otherProps, classes, onChang
                     readOnly: column?.readOnly === true,
                     disableUnderline: true
                 }}
-                sx={{ width: '337px', backgroundColor: ' #4F5883 !important' }}
+                sx={{ backgroundColor: ' #4F5883 !important' }}
                 {...commonProps}
             />
         );

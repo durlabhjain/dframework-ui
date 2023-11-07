@@ -52,7 +52,7 @@ const Field = _ref => {
       key: field,
       fullWidth: true,
       sx: {
-        width: '337px',
+        width: '380px',
         backgroundColor: "#4F5883 !important",
         '& .MuiOutlinedInput-input': {
           padding: '1.65625rem 0.875rem 0.59375rem 0.875rem !important'

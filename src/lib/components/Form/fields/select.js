@@ -1,8 +1,24 @@
-import React from 'react';
-import { FormHelperText, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import React from "react";
+import {
+    FormHelperText,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+} from "@mui/material";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
-const Field = ({ column, field, fieldLabel, formik, activeRecord, otherProps, classes, onChange, lookups }) => {
+const Field = ({
+    column,
+    field,
+    fieldLabel,
+    formik,
+    activeRecord,
+    otherProps,
+    classes,
+    onChange,
+    lookups,
+}) => {
     let options = lookups ? lookups[column?.lookup] : [];
     let inputValue = String(formik.values[field]);
 
@@ -11,57 +27,80 @@ const Field = ({ column, field, fieldLabel, formik, activeRecord, otherProps, cl
             inputValue = [];
         } else {
             if (!Array.isArray(inputValue)) {
-                inputValue = inputValue.split(',').map((e) => parseInt(e));
+                inputValue = inputValue.split(",").map((e) => parseInt(e));
             }
         }
     }
 
     if (column.modifiedLabel) {
-        if (field === 'ActualRoomId' && formik.values.HospitalId) {
+        if (field === "ActualRoomId" && formik.values.HospitalId) {
             const selectedHospitalId = formik.values.HospitalId;
-            options = options.filter(option => option.HospitalId === selectedHospitalId);
+            options = options.filter(
+                (option) => option.HospitalId === selectedHospitalId
+            );
         }
 
         return (
-            <FormControl
-                sx={{ marginRight: '.9rem' }}
-                fullWidth
-                key={field}>
-                <InputLabel sx={{ margin: '0.9rem 2rem 1.5rem 0rem', position: 'absolute', zIndex: '1', transform: 'translate(14px, -9px) scale(0.75)' }}>{column.label}</InputLabel>
+            <FormControl sx={{ marginRight: ".9rem" }} fullWidth key={field}>
+                <InputLabel
+                    sx={{
+                        margin: "0.9rem 2rem 1.5rem 0rem",
+                        position: "absolute",
+                        zIndex: "1",
+                        transform: "translate(14px, -9px) scale(0.75)",
+                    }}
+                >
+                    {column.label}
+                </InputLabel>
                 <Select
                     IconComponent={KeyboardArrowDownIcon}
                     {...otherProps}
                     name={field}
-                    placeholder='Select'
+                    placeholder="Select"
                     multiple={column.multiSelect === true}
                     readOnly={column.readOnly === true}
                     value={inputValue}
-                    renderValue={selected => {
+                    renderValue={(selected) => {
                         if (Array.isArray(selected)) {
-                            return selected.map(value => {
-                                const option = options.find(option => option.value === value);
-                                return option ? option.label : 'Select';
-                            }).join(', ');
+                            return selected
+                                .map((value) => {
+                                    const option = options.find(
+                                        (option) => option.value === value
+                                    );
+                                    return option ? option.label : "Select";
+                                })
+                                .join(", ");
                         } else {
-                            const selectedOption = options.find(option => option.value === Number(selected));
-                            return selectedOption ? selectedOption.label : 'Select';
+                            const selectedOption = options.find(
+                                (option) => option.value === Number(selected)
+                            );
+                            return selectedOption ? selectedOption.label : "Select";
                         }
                     }}
-                    sx={{ width: '337px', backgroundColor: ' #4F5883 !important', paddingTop: '.9rem', height: '3.313rem' }}
+                    sx={{
+                        // width: "337px",
+                        backgroundColor: " #4F5883 !important",
+                        paddingTop: ".9rem",
+                        height: "3.313rem",
+                    }}
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                 >
-                    {Array.isArray(options) && options.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+                    {Array.isArray(options) &&
+                        options.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                            </MenuItem>
+                        ))}
                 </Select>
-                <FormHelperText>{formik.touched[field] && formik.errors[field]}</FormHelperText>
+                <FormHelperText>
+                    {formik.touched[field] && formik.errors[field]}
+                </FormHelperText>
             </FormControl>
         );
     } else {
         return (
-            <FormControl
-                fullWidth
-                key={field}
-                variant="standard">
+            <FormControl fullWidth key={field} variant="standard">
                 <InputLabel>{fieldLabel}</InputLabel>
                 <Select
                     IconComponent={KeyboardArrowDownIcon}
@@ -73,9 +112,16 @@ const Field = ({ column, field, fieldLabel, formik, activeRecord, otherProps, cl
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                 >
-                    {Array.isArray(options) && options.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+                    {Array.isArray(options) &&
+                        options.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                            </MenuItem>
+                        ))}
                 </Select>
-                <FormHelperText>{formik.touched[field] && formik.errors[field]}</FormHelperText>
+                <FormHelperText>
+                    {formik.touched[field] && formik.errors[field]}
+                </FormHelperText>
             </FormControl>
         );
     }
