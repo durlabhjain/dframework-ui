@@ -200,7 +200,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     showRowsSelected,
     gridFooter = model.gridFooter || _footer.Footer,
     advanceFilter,
-    closeDialog
+    closeDialog,
+    selectedId
   } = _ref2;
   const [paginationModel, setPaginationModel] = (0, _react.useState)({
     pageSize: defaultPageSize,
@@ -409,15 +410,13 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     if (assigned || available) {
       extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
     }
-    if (advanceFilter && model.fetchId) {
-      console.log(selectedRecord);
-      console.log("record", record);
-      const updatedAdvanceFilter = advanceFilter.map(filter => _objectSpread(_objectSpread({}, filter), {}, {
-        value: record === null || record === void 0 ? void 0 : record.id
-      }));
-      extraParams["advanceFilter"] = updatedAdvanceFilter;
-    }
-    if (advanceFilter) {
+    advanceFilter = [{
+      field: "RoleId",
+      operator: "equals",
+      type: "number",
+      value: Number(selectedId)
+    }];
+    if (advanceFilter || model.fetchId) {
       extraParams["advanceFilter"] = advanceFilter;
     }
     (0, _crudHelper.getList)({
@@ -515,7 +514,6 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       }
     }
   };
-  console.log("checking", selectedRecord);
   const handleClose = () => {
     setAnchorEl(null);
   };
@@ -657,7 +655,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       return;
     }
     fetchData();
-  }, [paginationModel, isLoading, sortModel, advanceFilter]);
+  }, [paginationModel, isLoading, sortModel, advanceFilter, fetchData]);
 
   // useEffect(
   //     fetchData,

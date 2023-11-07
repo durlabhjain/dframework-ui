@@ -127,7 +127,7 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
     )
 }
 
-const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lookups, fieldConfigs, mode }) => {
+const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, id }) => {
     const classes = useStyles();
     if (!formElements?.length) {
         return null;
@@ -146,7 +146,7 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
                     : null
                 }
                 <Grid item xs={isGridComponent ? 12 : gridStyle} className={classes.childStyles}>
-                    <Component model={model} fieldConfigs={fieldConfigs[field]} column={column} mode={mode} field={field} fieldLabel={fieldLabel} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} {...otherProps} />
+                    <Component model={model} fieldConfigs={fieldConfigs[field]} column={column} mode={mode} field={field} fieldLabel={fieldLabel} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} id={id} {...otherProps} />
                 </Grid>
             </Grid >
         );
@@ -215,7 +215,7 @@ const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displa
     }, [model]);
     return (
         <div>
-            <RenderColumns formElements={formElements} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
+            <RenderColumns formElements={formElements} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} id={displayId}/>
             <RenderSteps tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} handleSubmit={handleSubmit} />
         </div>
     )

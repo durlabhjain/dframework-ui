@@ -155,7 +155,8 @@ const GridBase = memo(({
     showRowsSelected,
     gridFooter = model.gridFooter || Footer,
     advanceFilter,
-    closeDialog
+    closeDialog,
+    selectedId
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState({ recordCount: 0, records: [], lookups: {} });
@@ -304,16 +305,14 @@ const GridBase = memo(({
         if (assigned || available) {
             extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
         }
-        if (advanceFilter && model.fetchId) {
-            console.log(selectedRecord);
-            console.log("record",record);
-            const updatedAdvanceFilter = advanceFilter.map(filter => ({
-                ...filter,
-                value: record?.id
-            }));
-            extraParams["advanceFilter"] = updatedAdvanceFilter;
-        }
-        if (advanceFilter) {
+        advanceFilter = [{
+            field: "RoleId",
+            operator: "equals",
+            type: "number",
+            value: Number(selectedId)
+        }]
+
+        if (advanceFilter || model.fetchId) {
             extraParams["advanceFilter"] = advanceFilter;
         }
         getList({
@@ -389,7 +388,7 @@ const GridBase = memo(({
             }
         }
     };
-console.log("checking",selectedRecord);
+
     const handleClose = () => {
         setAnchorEl(null);
     };
@@ -506,7 +505,7 @@ console.log("checking",selectedRecord);
             return;
         }
         fetchData();
-    }, [paginationModel, isLoading, sortModel, advanceFilter]);
+    }, [paginationModel, isLoading, sortModel, advanceFilter, fetchData]);
 
     // useEffect(
     //     fetchData,
