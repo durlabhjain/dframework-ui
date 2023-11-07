@@ -313,9 +313,9 @@ const GridBase = memo(({
             }));
             extraParams["advanceFilter"] = updatedAdvanceFilter;
         }
-        // if (advanceFilter) {
-        //     extraParams["advanceFilter"] = advanceFilter;
-        // }
+        if (advanceFilter) {
+            extraParams["advanceFilter"] = advanceFilter;
+        }
         getList({
             action,
             page: !contentType ? page : 0,
@@ -506,7 +506,7 @@ console.log("checking",selectedRecord);
             return;
         }
         fetchData();
-    }, [paginationModel, isLoading, sortModel, advanceFilter, fetchData]);
+    }, [paginationModel, isLoading, sortModel, advanceFilter]);
 
     // useEffect(
     //     fetchData,

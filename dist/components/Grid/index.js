@@ -417,9 +417,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       }));
       extraParams["advanceFilter"] = updatedAdvanceFilter;
     }
-    // if (advanceFilter) {
-    //     extraParams["advanceFilter"] = advanceFilter;
-    // }
+    if (advanceFilter) {
+      extraParams["advanceFilter"] = advanceFilter;
+    }
     (0, _crudHelper.getList)({
       action,
       page: !contentType ? page : 0,
@@ -657,7 +657,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       return;
     }
     fetchData();
-  }, [paginationModel, isLoading, sortModel, advanceFilter, fetchData]);
+  }, [paginationModel, isLoading, sortModel, advanceFilter]);
 
   // useEffect(
   //     fetchData,
