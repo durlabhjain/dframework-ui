@@ -18,6 +18,7 @@ require("core-js/modules/es.promise.js");
 require("core-js/modules/es.array.includes.js");
 require("core-js/modules/es.string.includes.js");
 require("core-js/modules/es.parse-int.js");
+require("core-js/modules/es.promise.finally.js");
 var _Button = _interopRequireDefault(require("@mui/material/Button"));
 var _react = _interopRequireWildcard(require("react"));
 var _xDataGridPremium = require("@mui/x-data-grid-premium");
@@ -716,9 +717,24 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       onClick: handler
     }, children);
   };
+  const processRowUpdate = (updatedRow, originalRow) => {
+    setIsLoading(true);
+    (0, _crudHelper.saveRecord)({
+      id: updatedRow[idProperty],
+      api: api || (model === null || model === void 0 ? void 0 : model.api),
+      values: updatedRow,
+      setIsLoading,
+      setError: snackbar === null || snackbar === void 0 ? void 0 : snackbar.showError
+    }).then(success => {
+      if (success) {
+        snackbar === null || snackbar === void 0 || snackbar.showMessage('Record Updated Successfully.');
+      }
+    }).finally(() => setIsLoading(false));
+  };
   return /*#__PURE__*/_react.default.createElement("div", {
     style: customStyles
   }, /*#__PURE__*/_react.default.createElement(_xDataGridPremium.DataGridPremium, {
+    editMode: "row",
     disableColumnMenu: !model.addHeaderFilters,
     unstable_headerFilters: model.addHeaderFilters !== false,
     checkboxSelection: forAssignment,
@@ -741,6 +757,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     onSortModelChange: setSortModel,
     onFilterModelChange: setFilterModel,
     rowSelection: selection,
+    processRowUpdate: processRowUpdate,
     onRowSelectionModelChange: setSelection,
     filterModel: filterModel,
     getRowId: getGridRowId,

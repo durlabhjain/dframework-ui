@@ -23,7 +23,7 @@ import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
 import { useSnackbar, DialogComponent } from '@durlabh/dfamework-ui';
 import Menu from '@mui/material/Menu';
-import { getList, getRecord, deleteRecord } from './crud-helper';
+import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
 import PropTypes from 'prop-types';
 import { Footer } from './footer';
 import { useRouter } from '../useRouter/useRouter'
@@ -558,9 +558,27 @@ const GridBase = memo(({
         </MenuItem>
     );
 
+    const processRowUpdate = (updatedRow, originalRow) =>{
+        setIsLoading(true);
+        saveRecord({
+            id:updatedRow[idProperty],
+            api: api || model?.api,
+            values:updatedRow,
+            setIsLoading,
+            setError: snackbar?.showError
+        })
+            .then(success => {
+                if (success) {
+                    snackbar?.showMessage('Record Updated Successfully.');
+                }
+            })
+            .finally(() => setIsLoading(false));
+    }
+
     return (
         <div style={customStyles}>
             <DataGridPremium
+                editMode='row'
                 disableColumnMenu={!model.addHeaderFilters}
                 unstable_headerFilters={model.addHeaderFilters !== false}
                 checkboxSelection={forAssignment}
@@ -583,6 +601,7 @@ const GridBase = memo(({
                 onSortModelChange={setSortModel}
                 onFilterModelChange={setFilterModel}
                 rowSelection={selection}
+                processRowUpdate={processRowUpdate}
                 onRowSelectionModelChange={setSelection}
                 filterModel={filterModel}
                 getRowId={getGridRowId}
