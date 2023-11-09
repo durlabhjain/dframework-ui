@@ -734,7 +734,6 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   return /*#__PURE__*/_react.default.createElement("div", {
     style: customStyles
   }, /*#__PURE__*/_react.default.createElement(_xDataGridPremium.DataGridPremium, {
-    editMode: "row",
     disableColumnMenu: !model.addHeaderFilters,
     unstable_headerFilters: model.addHeaderFilters !== false,
     checkboxSelection: forAssignment,

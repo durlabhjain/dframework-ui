@@ -578,7 +578,6 @@ const GridBase = memo(({
     return (
         <div style={customStyles}>
             <DataGridPremium
-                editMode='row'
                 disableColumnMenu={!model.addHeaderFilters}
                 unstable_headerFilters={model.addHeaderFilters !== false}
                 checkboxSelection={forAssignment}
