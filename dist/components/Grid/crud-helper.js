@@ -285,7 +285,6 @@ const saveRecord = exports.saveRecord = async function saveRecord(_ref5) {
         return data;
       }
       setError('Save failed', data.err || data.message);
-      console.log(data.err);
       return;
     }
     if (response.status === _httpRequest.HTTP_STATUS_CODES.UNAUTHORIZED) {
@@ -297,7 +296,6 @@ const saveRecord = exports.saveRecord = async function saveRecord(_ref5) {
       setError('Save failed', response.body);
     }
   } catch (error) {
-    console.log(error);
     setError('Save failed', error.response.data.error);
   } finally {
     setIsLoading(false);

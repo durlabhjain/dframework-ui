@@ -558,12 +558,12 @@ const GridBase = memo(({
         </MenuItem>
     );
 
-    const processRowUpdate = (updatedRow, originalRow) =>{
+    const processRowUpdate = (updatedRow) => {
         setIsLoading(true);
         saveRecord({
-            id:updatedRow[idProperty],
+            id: updatedRow[idProperty],
             api: api || model?.api,
-            values:updatedRow,
+            values: updatedRow,
             setIsLoading,
             setError: snackbar?.showError
         })
@@ -573,6 +573,7 @@ const GridBase = memo(({
                 }
             })
             .finally(() => setIsLoading(false));
+        return updatedRow
     }
 
     return (

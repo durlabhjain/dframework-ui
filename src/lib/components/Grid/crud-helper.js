@@ -208,7 +208,6 @@ const saveRecord = async function ({ id, api, values, setIsLoading, setError }) 
                 return data;
             }
             setError('Save failed', data.err || data.message);
-            console.log(data.err);
             return;
         }
         if (response.status === HTTP_STATUS_CODES.UNAUTHORIZED) {
@@ -220,7 +219,6 @@ const saveRecord = async function ({ id, api, values, setIsLoading, setError }) 
             setError('Save failed', response.body);
         }
     } catch (error) {
-        console.log(error);
         setError('Save failed', error.response.data.error);
     } finally {
         setIsLoading(false);

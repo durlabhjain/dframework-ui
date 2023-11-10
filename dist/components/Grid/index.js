@@ -717,7 +717,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       onClick: handler
     }, children);
   };
-  const processRowUpdate = (updatedRow, originalRow) => {
+  const processRowUpdate = updatedRow => {
     setIsLoading(true);
     (0, _crudHelper.saveRecord)({
       id: updatedRow[idProperty],
@@ -730,6 +730,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
         snackbar === null || snackbar === void 0 || snackbar.showMessage('Record Updated Successfully.');
       }
     }).finally(() => setIsLoading(false));
+    return updatedRow;
   };
   return /*#__PURE__*/_react.default.createElement("div", {
     style: customStyles
