@@ -8,6 +8,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = exports.ActiveStepContext = void 0;
 require("core-js/modules/web.dom-collections.iterator.js");
+require("core-js/modules/es.object.from-entries.js");
+require("core-js/modules/es.array.includes.js");
+require("core-js/modules/es.string.includes.js");
 require("core-js/modules/es.promise.js");
 require("core-js/modules/es.promise.finally.js");
 require("core-js/modules/es.array.push.js");
@@ -99,6 +102,11 @@ const Form = _ref => {
         resetForm
       } = _ref2;
       setIsLoading(true);
+      const columns = model.columns.filter(item => item.isNotPayload).map(item => item.field);
+      values = Object.fromEntries(Object.entries(values).filter(_ref3 => {
+        let [key] = _ref3;
+        return !columns.includes(key);
+      }));
       (0, _crudHelper.saveRecord)({
         id,
         api: api || (model === null || model === void 0 ? void 0 : model.api),
@@ -131,13 +139,13 @@ const Form = _ref => {
       setIsDiscardDialogOpen(true);
     }
   };
-  const setActiveRecord = function setActiveRecord(_ref3) {
+  const setActiveRecord = function setActiveRecord(_ref4) {
     let {
       id,
       title,
       record,
       lookups
-    } = _ref3;
+    } = _ref4;
     const isCopy = idWithOptions.indexOf("-") > -1;
     const isNew = !id || id === "0";
     const localTitle = isNew ? "Create" : isCopy ? "Copy" : "Edit";

@@ -63,6 +63,10 @@ const Form = ({
         validateOnBlur: false,
         onSubmit: (values, { resetForm }) => {
             setIsLoading(true);
+            const columns = model.columns.filter(item => item.isNotPayload).map(item => item.field);
+            values = Object.fromEntries(
+                Object.entries(values).filter(([key]) => !columns.includes(key))
+            );
             saveRecord({
                 id,
                 api: api || model?.api,

@@ -504,12 +504,8 @@ const GridBase = memo(({
     };
 
     useEffect(() => {
-        if (isLoading !== prevIsLoading.current) {
-            prevIsLoading.current = isLoading;
-            return;
-        }
-        fetchData();
-    }, [paginationModel, isLoading, sortModel, advanceFilter, fetchData]);
+        fetchData()
+    }, [paginationModel, sortModel, filterModel, api, gridColumns, model, parentFilters, assigned, selected, available, advanceFilter]);
 
     // useEffect(
     //     fetchData,
