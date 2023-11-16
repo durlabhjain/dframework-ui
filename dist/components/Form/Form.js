@@ -167,7 +167,11 @@ const Form = _ref => {
     }
   };
   const handleFormCancel = function handleFormCancel() {
-    navigate('./');
+    if (model.path) {
+      navigate("./".concat(model.path));
+    } else {
+      navigate('./');
+    }
   };
   const handleDelete = async function handleDelete() {
     setIsDeleting(true);

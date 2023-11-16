@@ -121,7 +121,12 @@ const Form = ({
         }
     }
     const handleFormCancel = function () {
-        navigate('./');
+        if(model.path) {
+            navigate(`./${model.path}`);
+        } else {
+            navigate('./');
+        }
+        
     }
     const handleDelete = async function () {
         setIsDeleting(true);
