@@ -23,8 +23,8 @@ var _material = require("@mui/material");
 var _Form = _interopRequireDefault(require("../Form/Form"));
 const _excluded = ["match"],
   _excluded2 = ["match"];
-function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
-function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && Object.prototype.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
@@ -129,7 +129,9 @@ class UiModel {
         required = false,
         min = '',
         max = '',
-        validationLength = 0
+        validationLength = 0,
+        confirm = false,
+        emailValidation = false
       } = column;
       const formLabel = label || header;
       if (!formLabel) {
@@ -174,6 +176,12 @@ class UiModel {
             return value;
           }).label(formLabel).required("".concat(formLabel, " is required"));
           break;
+        case 'select':
+          config = yup.string().trim().label(formLabel).required("".concat(formLabel, " is required"));
+          break;
+        case 'time':
+          config = yup.string().trim().label(formLabel).required("".concat(formLabel, " is required"));
+          break;
         case 'autocomplete':
           config = yup.string().trim().label(formLabel).required("Select at least one ".concat(formLabel));
           break;
@@ -184,9 +192,18 @@ class UiModel {
       if (required) {
         config = config.trim().required("".concat(formLabel, " is required"));
       }
-      if (requiredIfNew && (!id || id === '')) {
-        config = config.trim().required("".concat(formLabel, " is required"));
-      }
+
+      // if (requiredIfNew && (!id || id === '')) {
+      //     config = config.trim().required(`${formLabel} is required`);
+      // }
+
+      // if (confirm) {
+      //     config = yup.string().oneOf([yup.ref('password')], 'Passwords must match').required('Confirm Password is required');
+      // }
+
+      // if (emailValidation) {
+      //     config = yup.string().email('Invalid email format').required(`${formLabel} is required`);
+      // }
       validationConfig[field] = config;
     }
     let validationSchema = yup.object(_objectSpread(_objectSpread({}, validationConfig), this.validationSchema));

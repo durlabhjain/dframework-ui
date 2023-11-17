@@ -224,7 +224,7 @@ const getRecord = async _ref3 => {
   }
 };
 exports.getRecord = getRecord;
-const deleteRecord = async function deleteRecord(_ref4) {
+const deleteRecord = exports.deleteRecord = async function deleteRecord(_ref4) {
   let {
     id,
     api,
@@ -250,8 +250,7 @@ const deleteRecord = async function deleteRecord(_ref4) {
     setIsLoading(false);
   }
 };
-exports.deleteRecord = deleteRecord;
-const saveRecord = async function saveRecord(_ref5) {
+const saveRecord = exports.saveRecord = async function saveRecord(_ref5) {
   let {
     id,
     api,
@@ -286,7 +285,6 @@ const saveRecord = async function saveRecord(_ref5) {
         return data;
       }
       setError('Save failed', data.err || data.message);
-      console.log(data.err);
       return;
     }
     if (response.status === _httpRequest.HTTP_STATUS_CODES.UNAUTHORIZED) {
@@ -298,11 +296,9 @@ const saveRecord = async function saveRecord(_ref5) {
       setError('Save failed', response.body);
     }
   } catch (error) {
-    console.log(error);
-    setError('Save failed', error.response.data);
+    setError('Save failed', error.response.data.error);
   } finally {
     setIsLoading(false);
   }
   return false;
 };
-exports.saveRecord = saveRecord;

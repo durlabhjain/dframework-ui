@@ -10,13 +10,9 @@ require("core-js/modules/es.parse-int.js");
 var _react = _interopRequireDefault(require("react"));
 var _material = require("@mui/material");
 var _KeyboardArrowDown = _interopRequireDefault(require("@mui/icons-material/KeyboardArrowDown"));
-var _FormControl = _interopRequireDefault(require("@mui/material/FormControl"));
-var _InputLabel = _interopRequireDefault(require("@mui/material/InputLabel"));
-var _Select = _interopRequireDefault(require("@mui/material/Select"));
-var _MenuItem = _interopRequireDefault(require("@mui/material/MenuItem"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
-const field = _ref => {
+const Field = _ref => {
   let {
     column,
     field,
@@ -28,37 +24,84 @@ const field = _ref => {
     onChange,
     lookups
   } = _ref;
-  const options = lookups ? lookups[column === null || column === void 0 ? void 0 : column.lookup] : [];
-  let inputValue = Number(formik.values[field]);
+  let options = lookups ? lookups[column === null || column === void 0 ? void 0 : column.lookup] : [];
+  let inputValue = String(formik.values[field]);
   if (column.multiSelect) {
     if (!inputValue || inputValue.length === 0) {
       inputValue = [];
     } else {
       if (!Array.isArray(inputValue)) {
-        inputValue = inputValue.split(',').map(e => parseInt(e));
+        inputValue = inputValue.split(",").map(e => parseInt(e));
       }
     }
   }
-  return /*#__PURE__*/_react.default.createElement(_FormControl.default, {
-    fullWidth: true,
-    key: field,
-    variant: "standard"
-  }, /*#__PURE__*/_react.default.createElement(_InputLabel.default, null, fieldLabel), /*#__PURE__*/_react.default.createElement(_Select.default, _extends({
-    IconComponent: _KeyboardArrowDown.default
-  }, otherProps, {
-    name: field,
-    multiple: column.multiSelect === true,
-    readOnly: column.readOnly === true,
-    value: inputValue,
-    onChange: formik.handleChange,
-    onBlur: formik.handleBlur,
-    MenuProps: {
-      classes: {}
+  if (column.modifiedLabel) {
+    if (field === "ActualRoomId" && formik.values.HospitalId) {
+      const selectedHospitalId = formik.values.HospitalId;
+      options = options.filter(option => option.HospitalId === selectedHospitalId);
     }
-  }), Array.isArray(options) && options.map(option => /*#__PURE__*/_react.default.createElement(_MenuItem.default, {
-    key: option.value,
-    value: option.value
-  }, option.label))), /*#__PURE__*/_react.default.createElement(_material.FormHelperText, null, formik.touched[field] && formik.errors[field]));
+    return /*#__PURE__*/_react.default.createElement(_material.FormControl, {
+      sx: {
+        marginRight: ".9rem"
+      },
+      fullWidth: true,
+      key: field
+    }, /*#__PURE__*/_react.default.createElement(_material.InputLabel, {
+      sx: {
+        margin: "0.9rem 2rem 1.5rem 0rem",
+        position: "absolute",
+        zIndex: "1",
+        transform: "translate(14px, -9px) scale(0.75)"
+      }
+    }, column.label), /*#__PURE__*/_react.default.createElement(_material.Select, _extends({
+      IconComponent: _KeyboardArrowDown.default
+    }, otherProps, {
+      name: field,
+      placeholder: "Select",
+      multiple: column.multiSelect === true,
+      readOnly: column.readOnly === true,
+      value: inputValue,
+      renderValue: selected => {
+        if (Array.isArray(selected)) {
+          return selected.map(value => {
+            const option = options.find(option => option.value === value);
+            return option ? option.label : "Select";
+          }).join(", ");
+        } else {
+          const selectedOption = options.find(option => option.value === Number(selected));
+          return selectedOption ? selectedOption.label : "Select";
+        }
+      },
+      sx: {
+        // width: "337px",
+        backgroundColor: " #4F5883 !important",
+        paddingTop: ".9rem",
+        height: "3.313rem"
+      },
+      onChange: formik.handleChange,
+      onBlur: formik.handleBlur
+    }), Array.isArray(options) && options.map(option => /*#__PURE__*/_react.default.createElement(_material.MenuItem, {
+      key: option.value,
+      value: option.value
+    }, option.label))), /*#__PURE__*/_react.default.createElement(_material.FormHelperText, null, formik.touched[field] && formik.errors[field]));
+  } else {
+    return /*#__PURE__*/_react.default.createElement(_material.FormControl, {
+      fullWidth: true,
+      key: field,
+      variant: "standard"
+    }, /*#__PURE__*/_react.default.createElement(_material.InputLabel, null, fieldLabel), /*#__PURE__*/_react.default.createElement(_material.Select, _extends({
+      IconComponent: _KeyboardArrowDown.default
+    }, otherProps, {
+      name: field,
+      multiple: column.multiSelect === true,
+      readOnly: column.readOnly === true,
+      value: inputValue,
+      onChange: formik.handleChange,
+      onBlur: formik.handleBlur
+    }), Array.isArray(options) && options.map(option => /*#__PURE__*/_react.default.createElement(_material.MenuItem, {
+      key: option.value,
+      value: option.value
+    }, option.label))), /*#__PURE__*/_react.default.createElement(_material.FormHelperText, null, formik.touched[field] && formik.errors[field]));
+  }
 };
-var _default = field;
-exports.default = _default;
+var _default = exports.default = Field;

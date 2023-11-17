@@ -12,13 +12,14 @@ import GridTransfer from './fields/grid-transfer';
 import Grid from '@mui/material/Grid';
 import RadioField from './fields/radio';
 import AutocompleteField from './fields/autocomplete';
+import GridForm from './fields/form-grid'
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
 import Button from '@mui/material/Button';
 import DaySelection from './fields/dayRadio';
 import { makeStyles } from '@material-ui/core';
-import { Typography } from '@mui/material';
+import { Typography, Container } from '@mui/material';
 
 const fieldMappers = {
     "boolean": BooleanField,
@@ -33,7 +34,8 @@ const fieldMappers = {
     "oneToMany": GridTransfer,
     "radio": RadioField,
     "autocomplete": AutocompleteField,
-    "dayRadio": DaySelection
+    "dayRadio": DaySelection,
+    "gridInForm": GridForm
 };
 
 const useStyles = makeStyles({
@@ -44,6 +46,12 @@ const useStyles = makeStyles({
     childStyles: {
         paddingTop: "2.5px",
         paddingBottom: "2.5px"
+    },
+    stepLabel: {
+        fontSize: "20px !important"
+    },
+    stepperMain: {
+        marginBottom: "20px"
     }
 })
 
@@ -119,31 +127,56 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
     )
 }
 
-const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lookups, fieldConfigs }) => {
+const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, id }) => {
     const classes = useStyles();
     if (!formElements?.length) {
         return null;
     }
+    const renderFormElement = (element, key) => {
+        const { Component, column, field, fieldLabel, otherProps } = element;
+        let isGridComponent = typeof column.relation === 'function';
+        const gridStyle = !model.addHeaderFilters ? 12 : 10.5;
+
+        return (
+            <Grid container spacing={2} key={key} className={classes.root} alignItems={isGridComponent ? "flex-start" : "center"}>
+                {column?.showLabel !== false ?
+                    <Grid item xs={1.5} className={classes.childStyles}>
+                        <Typography sx={{ fontSize: '16px', fontWeight: isGridComponent ? 'bold' : 'normal' }}> {column.label}: </Typography>
+                    </Grid>
+                    : null
+                }
+                <Grid item xs={isGridComponent ? 12 : gridStyle} className={classes.childStyles}>
+                    <Component model={model} fieldConfigs={fieldConfigs[field]} column={column} mode={mode} field={field} fieldLabel={fieldLabel} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} id={id} {...otherProps} />
+                </Grid>
+            </Grid >
+        );
+    }
+
+    const gridComponents = formElements.filter(element => typeof element.column.grid === 'function');
+    const nonGridComponents = formElements.filter(element => typeof element.column.grid !== 'function');
+
+    const splitPoint = model.addHeaderFilters !== false ? nonGridComponents.length : Math.ceil(nonGridComponents.length / 2);
     return (
         <>
-            {
-                formElements.map(({ Component, column, field, fieldLabel, otherProps }, key) => {
-                    let isGridComponent = typeof column.relation === 'function';
-                    return (
-                        <Grid container spacing={2} key={key} className={classes.root} alignItems={isGridComponent ? "flex-start" : "center"}>
-                            <Grid item xs={1} className={classes.childStyles}>
-                                <Typography sx={{ fontSize: '16px', fontWeight: isGridComponent ? 'bold' : 'normal' }}> {column.label}: </Typography>
-                            </Grid>
-                            <Grid item xs={isGridComponent ? 12 : 11} className={classes.childStyles}>
-                                <Component model={model} fieldConfigs={fieldConfigs[field]} column={column} field={field} fieldLabel={fieldLabel} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} {...otherProps} />
-                            </Grid>
-                        </Grid >
-                    )
-                })
-            }
+            <Grid container spacing={2}>
+                <Grid item xs={6}>
+                    {nonGridComponents.slice(0, splitPoint).map(renderFormElement)}
+                </Grid>
+                {!model.addHeaderFilters && (
+                    <Grid item xs={6}>
+                        {nonGridComponents.slice(splitPoint).map(renderFormElement)}
+                    </Grid>
+                )}
+            </Grid>
+            {gridComponents.length > 0 && (
+                <Grid container direction="column">
+                    {gridComponents.map(renderFormElement)}
+                </Grid>
+            )}
         </>
     )
 }
+
 
 const getFormConfig = function ({ columns, tabs = {} }) {
     const formElements = [], tabColumns = {};
@@ -174,7 +207,7 @@ const getFormConfig = function ({ columns, tabs = {} }) {
     return { formElements, tabColumns: tabsData };
 }
 
-const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayId, fieldConfigs }) => {
+const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayId, fieldConfigs, mode, handleSubmit }) => {
     const { formElements, tabColumns, showTabs } = React.useMemo(() => {
         let showTabs = model?.formConfig?.showTabbed;
         const { formElements, tabColumns } = getFormConfig({ columns: model.columns, tabs: showTabs ? model.tabs : {} });
@@ -182,8 +215,8 @@ const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displa
     }, [model]);
     return (
         <div>
-            <RenderColumns formElements={formElements} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} />
-            <RenderSteps tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} />
+            <RenderColumns formElements={formElements} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} id={displayId}/>
+            <RenderSteps tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} handleSubmit={handleSubmit} />
         </div>
     )
 };

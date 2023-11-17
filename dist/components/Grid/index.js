@@ -18,26 +18,30 @@ require("core-js/modules/es.promise.js");
 require("core-js/modules/es.array.includes.js");
 require("core-js/modules/es.string.includes.js");
 require("core-js/modules/es.parse-int.js");
+require("core-js/modules/es.promise.finally.js");
 var _Button = _interopRequireDefault(require("@mui/material/Button"));
 var _react = _interopRequireWildcard(require("react"));
 var _xDataGridPremium = require("@mui/x-data-grid-premium");
 var _Delete = _interopRequireDefault(require("@mui/icons-material/Delete"));
+var _UnfoldMoreTwoTone = _interopRequireDefault(require("@mui/icons-material/UnfoldMoreTwoTone"));
 var _FileCopy = _interopRequireDefault(require("@mui/icons-material/FileCopy"));
 var _Edit = _interopRequireDefault(require("@mui/icons-material/Edit"));
 var _FilterListOff = _interopRequireDefault(require("@mui/icons-material/FilterListOff"));
+var _MoreVertTwoTone = _interopRequireDefault(require("@mui/icons-material/MoreVertTwoTone"));
 var _Add = _interopRequireDefault(require("@mui/icons-material/Add"));
 var _Remove = _interopRequireDefault(require("@mui/icons-material/Remove"));
 var _Typography = _interopRequireDefault(require("@mui/material/Typography"));
 var _MenuItem = _interopRequireDefault(require("@mui/material/MenuItem"));
 var _dfameworkUi = require("@durlabh/dfamework-ui");
+var _Menu = _interopRequireDefault(require("@mui/material/Menu"));
 var _crudHelper = require("./crud-helper");
 var _propTypes = _interopRequireDefault(require("prop-types"));
 var _footer = require("./footer");
 var _useRouter = require("../useRouter/useRouter");
 var _template = _interopRequireDefault(require("./template"));
 const _excluded = ["row", "field", "id"];
-function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
-function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && Object.prototype.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
 function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
@@ -194,7 +198,11 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     onAssignChange,
     customStyle,
     onCellClick,
-    showRowsSelected
+    showRowsSelected,
+    gridFooter = model.gridFooter || _footer.Footer,
+    advanceFilter,
+    closeDialog,
+    selectedId
   } = _ref2;
   const [paginationModel, setPaginationModel] = (0, _react.useState)({
     pageSize: defaultPageSize,
@@ -216,7 +224,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     CreatedByUser: false
   }, model === null || model === void 0 ? void 0 : model.columnVisibilityModel));
   const [isDeleting, setIsDeleting] = (0, _react.useState)(false);
+  const [isEdit, setIsEdit] = (0, _react.useState)(false);
   const [record, setRecord] = (0, _react.useState)(null);
+  const [selectedRecord, setSelectedRecord] = (0, _react.useState)(null);
   const snackbar = (0, _dfameworkUi.useSnackbar)();
   const isClient = model.isClient === true ? 'client' : 'server';
   const [errorMessage, setErrorMessage] = (0, _react.useState)('');
@@ -244,6 +254,12 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   } = model;
   const isReadOnly = model.readOnly === true;
   const dataRef = (0, _react.useRef)(data);
+  const [anchorEl, setAnchorEl] = _react.default.useState(null);
+  const prevIsLoading = (0, _react.useRef)(isLoading);
+  const handleClick = event => {
+    setAnchorEl(event.currentTarget);
+  };
+  const open = Boolean(anchorEl);
   (0, _react.useEffect)(() => {
     dataRef.current = data;
   }, [data]);
@@ -303,7 +319,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       column.label = column === null || column === void 0 ? void 0 : column.label;
     }
     const auditColumns = model.standard === true;
-    if (auditColumns && (model === null || model === void 0 ? void 0 : model.addCreatedModifiedColumns) !== false) {
+    if (auditColumns && (model === null || model === void 0 ? void 0 : model.addCreatedModifiedColumns) !== false && (model === null || model === void 0 ? void 0 : model.addHeaderFilters) !== false) {
       finalColumns.push({
         field: "CreatedOn",
         type: "dateTime",
@@ -328,7 +344,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
         width: 200
       });
     }
-    if (!forAssignment && !isReadOnly) {
+    const showActions = (model === null || model === void 0 ? void 0 : model.addHeaderFilters) !== false;
+    if (showActions && !forAssignment && !isReadOnly) {
       const actions = [];
       if (model.addEdit && permissions.edit) {
         actions.push( /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
@@ -361,6 +378,20 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
         });
       }
       pinnedColumns.right.push('actions');
+    } else {
+      if (!model.noOptionButton) {
+        finalColumns.push({
+          field: 'actions',
+          width: 1,
+          headerName: '',
+          renderCell: cellParams => /*#__PURE__*/_react.default.createElement(_react.default.Fragment, null, /*#__PURE__*/_react.default.createElement(_MoreVertTwoTone.default, {
+            onClick: event => {
+              setSelectedRecord(cellParams.row);
+              handleClick(event);
+            }
+          }))
+        });
+      }
     }
     return {
       gridColumns: finalColumns,
@@ -379,6 +410,18 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     } = paginationModel;
     if (assigned || available) {
       extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
+    }
+    if (advanceFilter) {
+      extraParams["advanceFilter"] = advanceFilter;
+    }
+    if (advanceFilter = [] && model.fetchId) {
+      advanceFilter = [{
+        field: "RoleId",
+        operator: "equals",
+        type: "number",
+        value: Number(selectedId)
+      }];
+      extraParams["advanceFilter"] = advanceFilter;
     }
     (0, _crudHelper.getList)({
       action,
@@ -475,6 +518,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       }
     }
   };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
   const handleDelete = async function handleDelete() {
     const result = await (0, _crudHelper.deleteRecord)({
       id: record === null || record === void 0 ? void 0 : record.id,
@@ -510,7 +556,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       } = event;
       setSelectedOrder(row);
     } else {
-      if (!isReadOnly) {
+      if (!isReadOnly && model.addHeaderFilters !== false) {
         const {
           row: record
         } = event;
@@ -580,6 +626,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   const getGridRowId = row => {
     return row[idProperty];
   };
+  const closingDialog = () => {
+    setIsEdit(false);
+  };
   const handleExport = e => {
     const {
       orderedFields,
@@ -604,7 +653,9 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     });
     fetchData(undefined, undefined, e.target.dataset.contentType, columns);
   };
-  (0, _react.useEffect)(fetchData, [paginationModel, sortModel, filterModel, isLoading]);
+  (0, _react.useEffect)(() => {
+    fetchData();
+  }, [paginationModel, sortModel, filterModel, api, gridColumns, model, parentFilters, assigned, selected, available, advanceFilter]);
 
   // useEffect(
   //     fetchData,
@@ -628,11 +679,60 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   //         pageBackButton: { status: true, backRoute: backRoute },
   //     });
   // }, []);
-
+  const customStyles = {
+    '.MuiDataGrid-root.no-hover .MuiDataGrid-row:hover': {
+      backgroundColor: 'transparent !important'
+    },
+    '.custom-data-grid .MuiDataGrid-mainGrid': {
+      overflow: 'hidden !important'
+    }
+  };
+  const handleMenuDelete = record => {
+    setIsDeleting(true);
+    setRecord({
+      name: record[model === null || model === void 0 ? void 0 : model.linkColumn],
+      id: record[idProperty]
+    });
+  };
+  const handleMenuEdit = record => {
+    setIsEdit(true);
+    setRecord({
+      name: record[model === null || model === void 0 ? void 0 : model.linkColumn],
+      id: record[idProperty]
+    });
+  };
+  const ActionMenuItem = _ref5 => {
+    let {
+      actionType,
+      handler,
+      children
+    } = _ref5;
+    return /*#__PURE__*/_react.default.createElement(_MenuItem.default, {
+      className: "actionMenuItem",
+      "data-action": actionType,
+      onClick: handler
+    }, children);
+  };
+  const processRowUpdate = updatedRow => {
+    setIsLoading(true);
+    (0, _crudHelper.saveRecord)({
+      id: updatedRow[idProperty],
+      api: api || (model === null || model === void 0 ? void 0 : model.api),
+      values: updatedRow,
+      setIsLoading,
+      setError: snackbar === null || snackbar === void 0 ? void 0 : snackbar.showError
+    }).then(success => {
+      if (success) {
+        snackbar === null || snackbar === void 0 || snackbar.showMessage('Record Updated Successfully.');
+      }
+    }).finally(() => setIsLoading(false));
+    return updatedRow;
+  };
   return /*#__PURE__*/_react.default.createElement("div", {
-    style: customStyle
+    style: customStyles
   }, /*#__PURE__*/_react.default.createElement(_xDataGridPremium.DataGridPremium, {
-    unstable_headerFilters: true,
+    disableColumnMenu: !model.addHeaderFilters,
+    unstable_headerFilters: model.addHeaderFilters !== false,
     checkboxSelection: forAssignment,
     loading: isLoading,
     className: "pagination-fix",
@@ -653,25 +753,32 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     onSortModelChange: setSortModel,
     onFilterModelChange: setFilterModel,
     rowSelection: selection,
+    processRowUpdate: processRowUpdate,
     onRowSelectionModelChange: setSelection,
     filterModel: filterModel,
     getRowId: getGridRowId,
-    slots: {
-      headerFilterMenu: false,
-      toolbar: CustomToolbar,
-      footer: _footer.Footer
-    },
+    slots: _objectSpread({
+      headerFilterMenu: model.addHeaderFilters !== false ? false : null,
+      columnMenu: model.addHeaderFilters ? undefined : () => null,
+      columnSortedDescendingIcon: model.addHeaderFilters ? _UnfoldMoreTwoTone.default : () => null,
+      columnSortedAscendingIcon: model.addHeaderFilters ? _UnfoldMoreTwoTone.default : () => null,
+      columnUnsortedIcon: model.addHeaderFilters ? _UnfoldMoreTwoTone.default : () => null,
+      footer: gridFooter
+    }, model.addHeaderFilters ? {
+      toolbar: CustomToolbar
+    } : {}),
     slotProps: {
       footer: {
         pagination: true,
-        apiRef
+        apiRef,
+        rowCount: data.recordCount
       },
       panel: {
         placement: "bottom-end"
       }
     },
     hideFooterSelectedRowCount: rowsSelected,
-    density: "compact",
+    density: model.addHeaderFilters ? "compact" : "standard",
     disableDensitySelector: true,
     apiRef: apiRef,
     disableAggregation: true,
@@ -704,7 +811,64 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     onConfirm: handleDelete,
     onCancel: () => setIsDeleting(false),
     title: "Confirm Delete"
-  }, " ", 'Are you sure you want to delete'.concat(" ", record === null || record === void 0 ? void 0 : record.name, "?")));
+  }, " ", 'Are you sure you want to delete'.concat(" ", record === null || record === void 0 ? void 0 : record.name, "?")), isEdit && /*#__PURE__*/_react.default.createElement(_dfameworkUi.DialogComponent, {
+    open: isEdit,
+    onConfirm: handleDelete,
+    onCancel: () => setIsEdit(false),
+    title: "Edit Form",
+    hideButtons: true
+  }, /*#__PURE__*/_react.default.createElement(model.Form, {
+    ids: String(record.id),
+    closeDialog: closingDialog
+  })), /*#__PURE__*/_react.default.createElement(_Menu.default, {
+    anchorEl: anchorEl,
+    id: "account-menu",
+    open: open,
+    onClose: handleClose,
+    onClick: handleClose,
+    PaperProps: {
+      elevation: 0,
+      sx: {
+        overflow: 'visible',
+        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+        marginLeft: '-30px',
+        marginTop: '-10px',
+        backgroundColor: '#5460B4',
+        color: '#FFFFFF',
+        '& .MuiAvatar-root': {
+          width: 35,
+          height: 35,
+          ml: -0.5,
+          mr: 1
+        },
+        '&:before': {
+          content: '""',
+          display: 'block',
+          position: 'absolute',
+          right: 0,
+          top: 35,
+          width: 12,
+          height: 12,
+          bgcolor: '#5460B4',
+          transform: 'translateX(50%) rotate(45deg)',
+          zIndex: 0
+        }
+      }
+    },
+    transformOrigin: {
+      horizontal: 'right',
+      vertical: 'center'
+    },
+    anchorOrigin: {
+      horizontal: 'right',
+      vertical: 'center'
+    }
+  }, /*#__PURE__*/_react.default.createElement(ActionMenuItem, {
+    actionType: actionTypes.Edit,
+    handler: () => handleMenuEdit(selectedRecord)
+  }, "Edit"), /*#__PURE__*/_react.default.createElement(ActionMenuItem, {
+    actionType: actionTypes.Delete,
+    handler: () => handleMenuDelete(selectedRecord)
+  }, "Delete")));
 }, areEqual);
-var _default = GridBase;
-exports.default = _default;
+var _default = exports.default = GridBase;

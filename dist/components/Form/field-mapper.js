@@ -70,6 +70,7 @@ var _gridTransfer = _interopRequireDefault(require("./fields/grid-transfer"));
 var _Grid = _interopRequireDefault(require("@mui/material/Grid"));
 var _radio = _interopRequireDefault(require("./fields/radio"));
 var _autocomplete = _interopRequireDefault(require("./fields/autocomplete"));
+var _formGrid = _interopRequireDefault(require("./fields/form-grid"));
 var _Stepper = _interopRequireDefault(require("@mui/material/Stepper"));
 var _Step = _interopRequireDefault(require("@mui/material/Step"));
 var _StepLabel = _interopRequireDefault(require("@mui/material/StepLabel"));
@@ -78,10 +79,10 @@ var _dayRadio = _interopRequireDefault(require("./fields/dayRadio"));
 var _core = require("@material-ui/core");
 var _material = require("@mui/material");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
-function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(e) { return e ? t : r; })(e); }
+function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && Object.prototype.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
 function _extends() { _extends = Object.assign ? Object.assign.bind() : function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; return _extends.apply(this, arguments); }
-const fieldMappers = {
+const fieldMappers = exports.fieldMappers = {
   "boolean": _boolean.default,
   "select": _select.default,
   "string": _string.default,
@@ -94,9 +95,9 @@ const fieldMappers = {
   "oneToMany": _gridTransfer.default,
   "radio": _radio.default,
   "autocomplete": _autocomplete.default,
-  "dayRadio": _dayRadio.default
+  "dayRadio": _dayRadio.default,
+  "gridInForm": _formGrid.default
 };
-exports.fieldMappers = fieldMappers;
 const useStyles = (0, _core.makeStyles)({
   root: {
     marginTop: "1rem",
@@ -105,6 +106,12 @@ const useStyles = (0, _core.makeStyles)({
   childStyles: {
     paddingTop: "2.5px",
     paddingBottom: "2.5px"
+  },
+  stepLabel: {
+    fontSize: "20px !important"
+  },
+  stepperMain: {
+    marginBottom: "20px"
   }
 });
 const RenderSteps = _ref => {
@@ -209,59 +216,80 @@ const RenderColumns = _ref3 => {
     onChange,
     combos,
     lookups,
-    fieldConfigs
+    fieldConfigs,
+    mode,
+    id
   } = _ref3;
   const classes = useStyles();
   if (!(formElements !== null && formElements !== void 0 && formElements.length)) {
     return null;
   }
-  return /*#__PURE__*/React.createElement(React.Fragment, null, formElements.map((_ref4, key) => {
-    let {
+  const renderFormElement = (element, key) => {
+    const {
       Component,
       column,
       field,
       fieldLabel,
       otherProps
-    } = _ref4;
+    } = element;
     let isGridComponent = typeof column.relation === 'function';
+    const gridStyle = !model.addHeaderFilters ? 12 : 10.5;
     return /*#__PURE__*/React.createElement(_Grid.default, {
       container: true,
       spacing: 2,
       key: key,
       className: classes.root,
       alignItems: isGridComponent ? "flex-start" : "center"
-    }, /*#__PURE__*/React.createElement(_Grid.default, {
+    }, (column === null || column === void 0 ? void 0 : column.showLabel) !== false ? /*#__PURE__*/React.createElement(_Grid.default, {
       item: true,
-      xs: 1,
+      xs: 1.5,
       className: classes.childStyles
     }, /*#__PURE__*/React.createElement(_material.Typography, {
       sx: {
         fontSize: '16px',
         fontWeight: isGridComponent ? 'bold' : 'normal'
       }
-    }, " ", column.label, ": ")), /*#__PURE__*/React.createElement(_Grid.default, {
+    }, " ", column.label, ": ")) : null, /*#__PURE__*/React.createElement(_Grid.default, {
       item: true,
-      xs: isGridComponent ? 12 : 11,
+      xs: isGridComponent ? 12 : gridStyle,
       className: classes.childStyles
     }, /*#__PURE__*/React.createElement(Component, _extends({
       model: model,
       fieldConfigs: fieldConfigs[field],
       column: column,
+      mode: mode,
       field: field,
       fieldLabel: fieldLabel,
       formik: formik,
       data: data,
       onChange: onChange,
       combos: combos,
-      lookups: lookups
+      lookups: lookups,
+      id: id
     }, otherProps))));
-  }));
+  };
+  const gridComponents = formElements.filter(element => typeof element.column.grid === 'function');
+  const nonGridComponents = formElements.filter(element => typeof element.column.grid !== 'function');
+  const splitPoint = model.addHeaderFilters !== false ? nonGridComponents.length : Math.ceil(nonGridComponents.length / 2);
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(_Grid.default, {
+    container: true,
+    spacing: 2
+  }, /*#__PURE__*/React.createElement(_Grid.default, {
+    item: true,
+    xs: 6
+  }, nonGridComponents.slice(0, splitPoint).map(renderFormElement)), !model.addHeaderFilters && /*#__PURE__*/React.createElement(_Grid.default, {
+    item: true,
+    xs: 6
+  }, nonGridComponents.slice(splitPoint).map(renderFormElement))), gridComponents.length > 0 && /*#__PURE__*/React.createElement(_Grid.default, {
+    container: true,
+    direction: "column"
+  }, gridComponents.map(renderFormElement)));
 };
-const getFormConfig = function getFormConfig(_ref5) {
+const getFormConfig = function getFormConfig(_ref4) {
   let {
     columns,
     tabs = {}
-  } = _ref5;
+  } = _ref4;
   const formElements = [],
     tabColumns = {};
   for (const tab in tabs) {
@@ -308,7 +336,7 @@ const getFormConfig = function getFormConfig(_ref5) {
     tabColumns: tabsData
   };
 };
-const FormLayout = _ref6 => {
+const FormLayout = _ref5 => {
   let {
     model,
     formik,
@@ -317,8 +345,10 @@ const FormLayout = _ref6 => {
     onChange,
     lookups,
     id: displayId,
-    fieldConfigs
-  } = _ref6;
+    fieldConfigs,
+    mode,
+    handleSubmit
+  } = _ref5;
   const {
     formElements,
     tabColumns,
@@ -347,7 +377,9 @@ const FormLayout = _ref6 => {
     onChange: onChange,
     combos: combos,
     lookups: lookups,
-    fieldConfigs: fieldConfigs
+    fieldConfigs: fieldConfigs,
+    mode: mode,
+    id: displayId
   }), /*#__PURE__*/React.createElement(RenderSteps, {
     tabColumns: tabColumns,
     model: model,
@@ -356,8 +388,9 @@ const FormLayout = _ref6 => {
     onChange: onChange,
     combos: combos,
     lookups: lookups,
-    fieldConfigs: fieldConfigs
+    fieldConfigs: fieldConfigs,
+    mode: mode,
+    handleSubmit: handleSubmit
   }));
 };
-var _default = FormLayout;
-exports.default = _default;
+var _default = exports.default = FormLayout;

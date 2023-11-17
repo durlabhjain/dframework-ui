@@ -57,5 +57,4 @@ const Field = _ref => {
     }
   }, formik.errors[field]));
 };
-var _default = Field;
-exports.default = _default;
+var _default = exports.default = Field;

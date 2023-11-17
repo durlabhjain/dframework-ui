@@ -20,7 +20,7 @@ const field = ({ column, field, fieldLabel, formik, otherProps, classes, onChang
                     onBlur={formik.handleBlur}
                 />
             }
-            label={fieldLabel}
+            label={fieldLabel || column.label}
         />
         <FormHelperText>{formik.touched[field] && formik.errors[field]}</FormHelperText>
     </div>

@@ -1,5 +1,5 @@
 import Button from '@mui/material/Button';
-import React from 'react';
+import React, { useMemo, useEffect, memo, useRef, useState } from 'react';
 import {
     DataGridPremium,
     GridToolbarContainer,
@@ -8,24 +8,22 @@ import {
     GridToolbarExportContainer,
     getGridDateOperators,
     GRID_CHECKBOX_SELECTION_COL_DEF,
-} from '@mui/x-data-grid-premium';
-import DeleteIcon from '@mui/icons-material/Delete';
-import CopyIcon from '@mui/icons-material/FileCopy';
-import EditIcon from '@mui/icons-material/Edit';
-import FilterListOffIcon from '@mui/icons-material/FilterListOff';
-import {
     GridActionsCellItem,
     useGridApiRef
 } from '@mui/x-data-grid-premium';
-
-import { useMemo, useEffect, memo, useRef, useState } from 'react';
+import DeleteIcon from '@mui/icons-material/Delete';
+import UnfoldMoreTwoToneIcon from '@mui/icons-material/UnfoldMoreTwoTone';
+import CopyIcon from '@mui/icons-material/FileCopy';
+import EditIcon from '@mui/icons-material/Edit';
+import FilterListOffIcon from '@mui/icons-material/FilterListOff';
+import MoreVertTwoToneIcon from '@mui/icons-material/MoreVertTwoTone';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
-import { useSnackbar } from '@durlabh/dfamework-ui';
-import { DialogComponent } from '@durlabh/dfamework-ui';
-import { getList, getRecord, deleteRecord } from './crud-helper';
+import { useSnackbar, DialogComponent } from '@durlabh/dfamework-ui';
+import Menu from '@mui/material/Menu';
+import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
 import PropTypes from 'prop-types';
 import { Footer } from './footer';
 import { useRouter } from '../useRouter/useRouter'
@@ -154,7 +152,11 @@ const GridBase = memo(({
     onAssignChange,
     customStyle,
     onCellClick,
-    showRowsSelected
+    showRowsSelected,
+    gridFooter = model.gridFooter || Footer,
+    advanceFilter,
+    closeDialog,
+    selectedId
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState({ recordCount: 0, records: [], lookups: {} });
@@ -166,7 +168,9 @@ const GridBase = memo(({
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [visibilityModel, setVisibilityModel] = useState({ CreatedOn: false, CreatedByUser: false, ...model?.columnVisibilityModel });
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isEdit, setIsEdit] = useState(false);
     const [record, setRecord] = useState(null);
+    const [selectedRecord, setSelectedRecord] = useState(null);
     const snackbar = useSnackbar()
     const isClient = model.isClient === true ? 'client' : 'server';
     const [errorMessage, setErrorMessage] = useState('');
@@ -184,6 +188,15 @@ const GridBase = memo(({
     const { idProperty = "id" } = model;
     const isReadOnly = model.readOnly === true;
     const dataRef = useRef(data);
+    const [anchorEl, setAnchorEl] = React.useState(null);
+    const prevIsLoading = useRef(isLoading);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const open = Boolean(anchorEl);
+
     useEffect(() => {
         dataRef.current = data;
     }, [data]);
@@ -231,7 +244,7 @@ const GridBase = memo(({
 
         const auditColumns = model.standard === true;
 
-        if (auditColumns && model?.addCreatedModifiedColumns !== false) {
+        if (auditColumns && model?.addCreatedModifiedColumns !== false && model?.addHeaderFilters !== false) {
             finalColumns.push(
                 {
                     field: "CreatedOn", type: "dateTime", headerName: "Created On", width: 200, filterOperators: getGridDateOperators()
@@ -244,7 +257,9 @@ const GridBase = memo(({
             );
         }
 
-        if (!forAssignment && !isReadOnly) {
+
+        const showActions = model?.addHeaderFilters !== false;
+        if (showActions && !forAssignment && !isReadOnly) {
             const actions = [];
             if (model.addEdit && permissions.edit) {
                 actions.push(<GridActionsCellItem icon={<EditIcon />} data-action={actionTypes.Edit} label="Edit" />);
@@ -265,6 +280,23 @@ const GridBase = memo(({
                 });
             }
             pinnedColumns.right.push('actions');
+        } else {
+            if (!model.noOptionButton) {
+                finalColumns.push({
+                    field: 'actions',
+                    width: 1,
+                    headerName: '',
+                    renderCell: (cellParams) => (
+                        <>
+                            <MoreVertTwoToneIcon onClick={(event) => {
+                                setSelectedRecord(cellParams.row);
+                                handleClick(event);
+                            }} />
+                        </>
+                    ),
+                });
+            }
+
         }
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment]);
@@ -272,6 +304,20 @@ const GridBase = memo(({
         const { pageSize, page } = paginationModel;
         if (assigned || available) {
             extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(',') : selected;
+        }
+
+        if (advanceFilter) {
+            extraParams["advanceFilter"] = advanceFilter;
+        }
+
+        if (advanceFilter = [] && model.fetchId) {
+            advanceFilter = [{
+                field: "RoleId",
+                operator: "equals",
+                type: "number",
+                value: Number(selectedId)
+            }]
+            extraParams["advanceFilter"] = advanceFilter;
         }
         getList({
             action,
@@ -346,6 +392,11 @@ const GridBase = memo(({
             }
         }
     };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
     const handleDelete = async function () {
         const result = await deleteRecord({ id: record?.id, api: api || model?.api, setIsLoading, setError: snackbar.showError, setErrorMessage });
         if (result === true) {
@@ -373,7 +424,7 @@ const GridBase = memo(({
             const { row } = event;
             setSelectedOrder(row);
         } else {
-            if (!isReadOnly) {
+            if (!isReadOnly && model.addHeaderFilters !== false) {
                 const { row: record } = event;
                 openForm(record[idProperty]);
             }
@@ -432,6 +483,11 @@ const GridBase = memo(({
         return row[idProperty];
     };
 
+    const closingDialog = () => {
+        setIsEdit(false);
+    };
+
+
     const handleExport = (e) => {
         const { orderedFields, columnVisibilityModel, lookup } = apiRef.current.state.columns;
         const columns = {};
@@ -447,10 +503,9 @@ const GridBase = memo(({
         fetchData(undefined, undefined, e.target.dataset.contentType, columns);
     };
 
-    useEffect(
-        fetchData,
-        [paginationModel, sortModel, filterModel, isLoading]
-    );
+    useEffect(() => {
+        fetchData()
+    }, [paginationModel, sortModel, filterModel, api, gridColumns, model, parentFilters, assigned, selected, available, advanceFilter]);
 
     // useEffect(
     //     fetchData,
@@ -474,11 +529,54 @@ const GridBase = memo(({
     //         pageBackButton: { status: true, backRoute: backRoute },
     //     });
     // }, []);
+    const customStyles = {
+        '.MuiDataGrid-root.no-hover .MuiDataGrid-row:hover': {
+            backgroundColor: 'transparent !important',
+        },
+        '.custom-data-grid .MuiDataGrid-mainGrid': {
+            overflow: 'hidden !important'
+        }
+    };
+
+    const handleMenuDelete = (record) => {
+        setIsDeleting(true);
+        setRecord({ name: record[model?.linkColumn], id: record[idProperty] });
+    };
+
+    const handleMenuEdit = (record) => {
+        setIsEdit(true);
+        setRecord({ name: record[model?.linkColumn], id: record[idProperty] });
+    };
+
+    const ActionMenuItem = ({ actionType, handler, children }) => (
+        <MenuItem className="actionMenuItem" data-action={actionType} onClick={handler}>
+            {children}
+        </MenuItem>
+    );
+
+    const processRowUpdate = (updatedRow) => {
+        setIsLoading(true);
+        saveRecord({
+            id: updatedRow[idProperty],
+            api: api || model?.api,
+            values: updatedRow,
+            setIsLoading,
+            setError: snackbar?.showError
+        })
+            .then(success => {
+                if (success) {
+                    snackbar?.showMessage('Record Updated Successfully.');
+                }
+            })
+            .finally(() => setIsLoading(false));
+        return updatedRow
+    }
 
     return (
-        <div style={customStyle}>
+        <div style={customStyles}>
             <DataGridPremium
-                unstable_headerFilters
+                disableColumnMenu={!model.addHeaderFilters}
+                unstable_headerFilters={model.addHeaderFilters !== false}
                 checkboxSelection={forAssignment}
                 loading={isLoading}
                 className="pagination-fix"
@@ -499,25 +597,32 @@ const GridBase = memo(({
                 onSortModelChange={setSortModel}
                 onFilterModelChange={setFilterModel}
                 rowSelection={selection}
+                processRowUpdate={processRowUpdate}
                 onRowSelectionModelChange={setSelection}
                 filterModel={filterModel}
                 getRowId={getGridRowId}
                 slots={{
-                    headerFilterMenu: false,
-                    toolbar: CustomToolbar,
-                    footer: Footer
+                    headerFilterMenu: model.addHeaderFilters !== false ? false : null,
+                    columnMenu: model.addHeaderFilters ? undefined : () => null,
+                    columnSortedDescendingIcon: model.addHeaderFilters ? UnfoldMoreTwoToneIcon : () => null,
+                    columnSortedAscendingIcon: model.addHeaderFilters ? UnfoldMoreTwoToneIcon : () => null,
+                    columnUnsortedIcon: model.addHeaderFilters ? UnfoldMoreTwoToneIcon : () => null,
+                    footer: gridFooter,
+                    ...(model.addHeaderFilters ? { toolbar: CustomToolbar } : {})
                 }}
                 slotProps={{
                     footer: {
                         pagination: true,
-                        apiRef
+                        apiRef,
+                        rowCount: data.recordCount
+
                     },
                     panel: {
                         placement: "bottom-end"
                     },
                 }}
                 hideFooterSelectedRowCount={rowsSelected}
-                density="compact"
+                density={model.addHeaderFilters ? "compact" : "standard"}
                 disableDensitySelector={true}
                 apiRef={apiRef}
                 disableAggregation={true}
@@ -546,6 +651,48 @@ const GridBase = memo(({
             {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
             }
             {isDeleting && !errorMessage && (<DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete"> {`${'Are you sure you want to delete'} ${record?.name}?`}</DialogComponent>)}
+            {isEdit && (<DialogComponent open={isEdit} onConfirm={handleDelete} onCancel={() => setIsEdit(false)} title="Edit Form" hideButtons={true}><model.Form ids={String(record.id)} closeDialog={closingDialog} /></DialogComponent>)}
+            <Menu
+                anchorEl={anchorEl}
+                id="account-menu"
+                open={open}
+                onClose={handleClose}
+                onClick={handleClose}
+                PaperProps={{
+                    elevation: 0,
+                    sx: {
+                        overflow: 'visible',
+                        filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+                        marginLeft: '-30px',
+                        marginTop: '-10px',
+                        backgroundColor: '#5460B4',
+                        color: '#FFFFFF',
+                        '& .MuiAvatar-root': {
+                            width: 35,
+                            height: 35,
+                            ml: -0.5,
+                            mr: 1,
+                        },
+                        '&:before': {
+                            content: '""',
+                            display: 'block',
+                            position: 'absolute',
+                            right: 0,
+                            top: 35,
+                            width: 12,
+                            height: 12,
+                            bgcolor: '#5460B4',
+                            transform: 'translateX(50%) rotate(45deg)',
+                            zIndex: 0,
+                        },
+                    },
+                }}
+                transformOrigin={{ horizontal: 'right', vertical: 'center' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'center' }}
+            >
+                <ActionMenuItem actionType={actionTypes.Edit} handler={() => handleMenuEdit(selectedRecord)}>Edit</ActionMenuItem>
+                <ActionMenuItem actionType={actionTypes.Delete} handler={() => handleMenuDelete(selectedRecord)}>Delete</ActionMenuItem>
+            </Menu>
         </div >
     );
 }, areEqual);

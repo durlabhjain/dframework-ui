@@ -42,7 +42,7 @@ class UiModel {
         const { columns } = this;
         let validationConfig = {};
         for (const column of columns) {
-            const { field, label, header, type = 'string', requiredIfNew = false, required = false, min = '', max = '', validationLength = 0 } = column;
+            const { field, label, header, type = 'string', requiredIfNew = false, required = false, min = '', max = '', validationLength = 0, confirm = false, emailValidation = false } = column;
             const formLabel = label || header;
             if (!formLabel) {
                 continue;
@@ -87,6 +87,12 @@ class UiModel {
                         return value;
                     }).label(formLabel).required(`${formLabel} is required`);
                     break;
+                case 'select':
+                    config = yup.string().trim().label(formLabel).required(`${formLabel} is required`);
+                    break;
+                case 'time':
+                    config = yup.string().trim().label(formLabel).required(`${formLabel} is required`);
+                    break;
                 case 'autocomplete':
                     config = yup.string().trim().label(formLabel).required(`Select at least one ${formLabel}`);
                     break;
@@ -97,9 +103,18 @@ class UiModel {
             if (required) {
                 config = config.trim().required(`${formLabel} is required`);
             }
-            if (requiredIfNew && (!id || id === '')) {
-                config = config.trim().required(`${formLabel} is required`);
-            }
+
+            // if (requiredIfNew && (!id || id === '')) {
+            //     config = config.trim().required(`${formLabel} is required`);
+            // }
+
+            // if (confirm) {
+            //     config = yup.string().oneOf([yup.ref('password')], 'Passwords must match').required('Confirm Password is required');
+            // }
+
+            // if (emailValidation) {
+            //     config = yup.string().email('Invalid email format').required(`${formLabel} is required`);
+            // }
             validationConfig[field] = config;
         }
 
