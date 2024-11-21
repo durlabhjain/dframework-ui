@@ -160,6 +160,11 @@ const getList = async ({ gridColumns, setIsLoading, setData, page, pageSize, sor
                 });
             }
             setData(response.data);
+        } else if (response.status === HTTP_STATUS_CODES.UNAUTHORIZED) {
+            setError('Session Expired!');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
         } else {
             setError(response.statusText);
         }
