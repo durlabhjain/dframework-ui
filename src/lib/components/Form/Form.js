@@ -11,6 +11,7 @@ import FormLayout from './field-mapper';
 import { useSnackbar } from '../SnackBar';
 import { DialogComponent } from '../Dialog';
 import PageTitle from '../PageTitle';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import actionsStateProvider from '../useRouter/actions';
 export const ActiveStepContext = createContext(1);
@@ -22,6 +23,9 @@ const Form = ({
     permissions = { edit: true, export: true, delete: true },
     Layout = FormLayout,
 }) => {
+    const location = useLocation();
+    const currentPath = location.pathname; // e.g., /api/contact/0
+    const navigateBack = currentPath.substring(0, currentPath.lastIndexOf('/')); // removes the last segment
     const { dispatchData, stateData } = useStateContext();
     const { navigate, getParams, useParams } = useRouter()
     const { id: idWithOptions } = useParams() || getParams;
@@ -41,6 +45,7 @@ const Form = ({
     const fieldConfigs = model?.applyFieldConfig ? model?.applyFieldConfig({ data, lookups }) : defaultFieldConfigs;
     let gridApi = `${url}${model.api || api}`
     const { mode } = stateData.dataForm;
+
     useEffect(() => {
         setValidationSchema(model.getValidationSchema({ id, snackbar }));
         const options = idWithOptions?.split('-');
@@ -55,9 +60,10 @@ const Form = ({
             })
         } catch (error) {
             snackbar.showError('An error occured, please try after some time.', error);
-            navigate('./');
+            navigate(navigateBack);
         }
     }, [id, idWithOptions, model]);
+
     const formik = useFormik({
         enableReinitialize: true,
         initialValues: { ...model.initialValues, ...data },
@@ -75,7 +81,7 @@ const Form = ({
                 .then(success => {
                     if (success) {
                         snackbar.showMessage('Record Updated Successfully.');
-                        navigate('./');
+                        navigate(navigateBack);
                     }
                 })
                 .catch((err) => {
@@ -90,7 +96,7 @@ const Form = ({
     const handleDiscardChanges = () => {
         formik.resetForm();
         setIsDiscardDialogOpen(false);
-        navigate('.');
+        navigate(navigateBack);
     };
 
     const warnUnsavedChanges = () => {
@@ -101,7 +107,7 @@ const Form = ({
 
     const errorOnLoad = function (title, error) {
         snackbar.showError(title, error);
-        navigate('./');
+        navigate(navigateBack);
     }
 
     const setActiveRecord = function ({ id, title, record, lookups }) {
@@ -132,7 +138,7 @@ const Form = ({
             warnUnsavedChanges();
             event.preventDefault();
         } else {
-            navigate('.');
+            navigate(navigateBack);
         }
     }
     const handleDelete = async function () {
@@ -147,7 +153,7 @@ const Form = ({
             })
             if (response === true) {
                 snackbar.showMessage('Record Deleted Successfully.');
-                navigate('./');
+                navigate(navigateBack);
             }
         } catch (error) {
             snackbar?.showError('An error occured, please try after some time.');
