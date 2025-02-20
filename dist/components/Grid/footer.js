@@ -24,7 +24,7 @@ const Footer = _ref => {
   let {
     pagination,
     apiRef,
-    tTranslate
+    tTranslate = key => key
   } = _ref;
   const page = apiRef.current.state.pagination.paginationModel.page;
   const rowsPerPage = apiRef.current.state.pagination.paginationModel.pageSize;

@@ -191,7 +191,7 @@ const areEqual = function areEqual() {
   return equal;
 };
 const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
-  var _stateData$gridSettin, _stateData$gridSettin2, _stateData$gridSettin3, _stateData$gridSettin4, _stateData$gridSettin5;
+  var _stateData$gridSettin, _stateData$gridSettin2, _stateData$gridSettin3, _stateData$gridSettin4, _model$tTranslate, _stateData$gridSettin5;
   let {
     useLinkColumn = true,
     model,
@@ -321,6 +321,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     String: 'string',
     Boolean: 'boolean'
   };
+  const tTranslate = (_model$tTranslate = model.tTranslate) !== null && _model$tTranslate !== void 0 ? _model$tTranslate : key => key;
   const OrderSuggestionHistoryFields = {
     OrderStatus: 'OrderStatusId'
   };
@@ -486,7 +487,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
         overrides.cellClassName = "mui-grid-linkColumn";
       }
       finalColumns.push(_objectSpread(_objectSpread({
-        headerName: model === null || model === void 0 ? void 0 : model.tTranslate(column.headerName || column.label, tOpts)
+        headerName: tTranslate(column.headerName || column.label, tOpts)
       }, column), overrides));
       if (column.pinned) {
         pinnedColumns[column.pinned === 'right' ? 'right' : 'left'].push(column.field);
@@ -875,7 +876,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       sx: {
         ml: 1
       }
-    }, " ", model === null || model === void 0 ? void 0 : model.tTranslate(model.gridSubTitle, tOpts)), currentPreference && /*#__PURE__*/_react.default.createElement(_Typography.default, {
+    }, " ", tTranslate(model.gridSubTitle, tOpts)), currentPreference && /*#__PURE__*/_react.default.createElement(_Typography.default, {
       className: "preference-name-text",
       variant: "h6",
       component: "h6",
@@ -883,7 +884,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       sx: {
         ml: 1
       }
-    }, model === null || model === void 0 ? void 0 : model.tTranslate('Applied Preference', tOpts), " - ", currentPreference), (isReadOnly || !effectivePermissions.add && !forAssignment) && /*#__PURE__*/_react.default.createElement(_Typography.default, {
+    }, tTranslate('Applied Preference', tOpts), " - ", currentPreference), (isReadOnly || !effectivePermissions.add && !forAssignment) && /*#__PURE__*/_react.default.createElement(_Typography.default, {
       variant: "h6",
       component: "h3",
       textAlign: "center",
@@ -912,12 +913,14 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       startIcon: /*#__PURE__*/_react.default.createElement(_FilterListOff.default, null),
       onClick: clearFilters,
       size: "small"
-    }, model === null || model === void 0 ? void 0 : model.tTranslate("CLEAR FILTER", tOpts)), effectivePermissions.export && /*#__PURE__*/_react.default.createElement(CustomExportButton, {
+    }, tTranslate("CLEAR FILTER", tOpts)), effectivePermissions.export && /*#__PURE__*/_react.default.createElement(CustomExportButton, {
+      tTranslate: tTranslate,
+      tOpts: tOpts,
       handleExport: handleExport,
       showPivotExportBtn: model === null || model === void 0 ? void 0 : model.showPivotExportBtn,
       showOnlyExcelExport: model.showOnlyExcelExport
     }), model.preferenceId && /*#__PURE__*/_react.default.createElement(_GridPreference.default, {
-      tTranslate: model === null || model === void 0 ? void 0 : model.tTranslate,
+      tTranslate: tTranslate,
       preferenceName: model.preferenceId,
       gridRef: apiRef,
       columns: gridColumns,
@@ -1126,7 +1129,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       footer: {
         pagination: true,
         apiRef,
-        tTranslate: model === null || model === void 0 ? void 0 : model.tTranslate
+        tTranslate: tTranslate
       },
       panel: {
         placement: "bottom-end"

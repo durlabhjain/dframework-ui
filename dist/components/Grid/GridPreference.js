@@ -110,7 +110,7 @@ const defaultCoolRPrefName = "coolr default";
 const GridPreferences = _ref => {
   var _stateData$gridSettin, _stateData$gridSettin2;
   let {
-    tTranslate,
+    tTranslate = key => key,
     preferenceName,
     gridRef,
     columns = [],
