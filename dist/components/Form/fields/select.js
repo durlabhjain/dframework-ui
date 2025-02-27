@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 require("core-js/modules/es.parse-int.js");
-require("core-js/modules/esnext.iterator.constructor.js");
 require("core-js/modules/esnext.iterator.map.js");
 require("core-js/modules/web.dom-collections.iterator.js");
 var _react = _interopRequireDefault(require("react"));
@@ -25,11 +24,12 @@ const field = _ref => {
     fieldLabel,
     formik,
     activeRecord,
+    lookups,
     otherProps,
     classes,
     onChange
   } = _ref;
-  const options = typeof column.lookup === 'string' ? activeRecord === null || activeRecord === void 0 ? void 0 : activeRecord.lookups[column.lookup] : column.lookup;
+  const options = typeof column.lookup === 'string' ? lookups[column.lookup] : column.lookup;
   let inputValue = formik.values[field];
   if (column.multiSelect) {
     if (!inputValue || inputValue.length === 0) {
@@ -50,7 +50,7 @@ const field = _ref => {
     name: field,
     multiple: column.multiSelect === true,
     readOnly: column.readOnly === true,
-    value: inputValue
+    value: "".concat(inputValue)
     // label={fieldLabel}
     ,
     onChange: formik.handleChange

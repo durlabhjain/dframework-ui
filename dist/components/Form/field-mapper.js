@@ -55,7 +55,6 @@ Object.defineProperty(exports, "TimeField", {
 });
 exports.fieldMappers = exports.default = void 0;
 require("core-js/modules/es.array.push.js");
-require("core-js/modules/esnext.iterator.constructor.js");
 require("core-js/modules/esnext.iterator.map.js");
 require("core-js/modules/esnext.set.difference.v2.js");
 require("core-js/modules/esnext.set.intersection.v2.js");
@@ -272,7 +271,7 @@ const RenderColumns = _ref3 => {
         fontSize: '16px',
         fontWeight: isGridComponent ? 'bold' : 'normal'
       }
-    }, column.label, ":")) : null, /*#__PURE__*/React.createElement(_Grid.default, {
+    }, column.label || field, ":")) : null, /*#__PURE__*/React.createElement(_Grid.default, {
       item: true,
       xs: isGridComponent ? 12 : 10.5,
       className: classes.childStyles

@@ -233,6 +233,11 @@ const getList = async _ref => {
         });
       }
       setData(response.data);
+    } else if (response.status === _httpRequest.HTTP_STATUS_CODES.UNAUTHORIZED) {
+      setError('Session Expired!');
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
     } else {
       setError(response.statusText);
     }
