@@ -229,19 +229,19 @@ const GridBase = memo(({
             "valueFormatter": ({ value }) => (
                 formatDate(value, true, false, stateData.dateTime)
             ),
-            "filterOperators": LocalizedDatePicker({ columnType: "date" }),
+            "filterOperators": LocalizedDatePicker({ columnType: "date", tTranslate: tTranslate }),
         },
         "dateTime": {
             "valueFormatter": ({ value }) => (
                 formatDate(value, false, false, stateData.dateTime)
             ),
-            "filterOperators": LocalizedDatePicker({ columnType: "datetime" }),
+            "filterOperators": LocalizedDatePicker({ columnType: "datetime", tTranslate: tTranslate }),
         },
         "dateTimeLocal": {
             "valueFormatter": ({ value }) => (
                 formatDate(value, false, false, stateData.dateTime)
             ),
-            "filterOperators": LocalizedDatePicker({ type: "dateTimeLocal", convert: true }),
+            "filterOperators": LocalizedDatePicker({ type: "dateTimeLocal", convert: true, tTranslate: tTranslate }),
         },
         "boolean": {
             renderCell: booleanIconRenderer
@@ -369,7 +369,7 @@ const GridBase = memo(({
             if (model?.addCreatedOnColumn !== false) {
                 finalColumns.push(
                     {
-                        field: "CreatedOn", type: "dateTime", headerName: "Created On", width: 200, filterOperators: LocalizedDatePicker({ columnType: "date" }), valueFormatter: gridColumnTypes.dateTime.valueFormatter, keepLocal: true
+                        field: "CreatedOn", type: "dateTime", headerName: "Created On", width: 200, filterOperators: LocalizedDatePicker({ columnType: "date", tTranslate: tTranslate }), valueFormatter: gridColumnTypes.dateTime.valueFormatter, keepLocal: true
                     }
                 );
             }
@@ -381,7 +381,7 @@ const GridBase = memo(({
             if (model?.addModifiedOnColumn !== false) {
                 finalColumns.push(
                     {
-                        field: "ModifiedOn", type: "dateTime", headerName: "Modified On", width: 200, filterOperators: LocalizedDatePicker({ columnType: "date" }), valueFormatter: gridColumnTypes.dateTime.valueFormatter, keepLocal: true
+                        field: "ModifiedOn", type: "dateTime", headerName: "Modified On", width: 200, filterOperators: LocalizedDatePicker({ columnType: "date", tTranslate: tTranslate }), valueFormatter: gridColumnTypes.dateTime.valueFormatter, keepLocal: true
 
                     }
                 );
@@ -635,7 +635,7 @@ const GridBase = memo(({
                 }}
             >
                 {model.gridSubTitle && <Typography variant="h6" component="h3" textAlign="center" sx={{ ml: 1 }}> {tTranslate(model.gridSubTitle, tOpts)}</Typography>}
-                {currentPreference && <Typography className="preference-name-text" variant="h6" component="h6" textAlign="center" sx={{ ml: 1 }} >{tTranslate('Applied Preference', tOpts)} - {currentPreference}</Typography>}
+                {currentPreference && <Typography className="preference-name-text" variant="h6" component="h6" textAlign="center" sx={{ ml: 1 }} >{tTranslate('Applied Preference', tOpts)} - {tTranslate(currentPreference, tOpts)}</Typography>}
                 {(isReadOnly || (!effectivePermissions.add && !forAssignment)) && <Typography variant="h6" component="h3" textAlign="center" sx={{ ml: 1 }} > {isReadOnly ? "" : model.title}</Typography>}
                 {!forAssignment && effectivePermissions.add && !isReadOnly && !showAddIcon && <Button startIcon={!showAddIcon ? null : <AddIcon />} onClick={onAdd} size="medium" variant="contained" className={classes.buttons} >{model?.customAddTextTitle ? model.customAddTextTitle : ` ${!showAddIcon ? "" : `${"Add"}`} ${model.title}`}</Button>}
                 {available && <Button startIcon={!showAddIcon ? null : <AddIcon />} onClick={onAssign} size="medium" variant="contained" className={classes.buttons}  >{"Assign"}</Button>}
@@ -840,6 +840,50 @@ const GridBase = memo(({
                         columnVisibilityModel: visibilityModel
                     },
                     pinnedColumns: pinnedColumns
+                }}
+                localeText={{
+                    footerRowSelected: (count) => count !== 1 ? `${count} ${tTranslate('rows selected', tOpts)}` : `${count} ${tTranslate('row selected', tOpts)}`,
+                    footerTotalRows: `${tTranslate('Total rows', tOpts)}:`,
+                    footerTotalVisibleRows: (visibleCount, totalCount) => `${visibleCount} ${tTranslate('of', tOpts)} ${totalCount}`,
+                    MuiTablePagination: {
+                        labelRowsPerPage: tTranslate('Rows per page', tOpts)
+                    },
+                    toolbarQuickFilterPlaceholder: tTranslate(model?.searchPlaceholder || 'Search...', tOpts),
+                    toolbarColumns: tTranslate('Columns', tOpts),
+                    toolbarFilters: tTranslate('Filters', tOpts),
+                    toolbarExport: tTranslate('Export', tOpts),
+                    filterPanelAddFilter: tTranslate('Add filter', tOpts),
+                    filterPanelRemoveAll: tTranslate('Remove all', tOpts),
+                    filterPanelDeleteIconLabel: tTranslate('Delete', tOpts),
+                    filterPanelOperators: {
+                        and: tTranslate('And', tOpts),
+                        or: tTranslate('Or', tOpts),
+                    },
+                    filterPanelOperatorAnd: tTranslate('And', tOpts),
+                    filterPanelOperatorOr: tTranslate('Or', tOpts),
+                    filterPanelColumns: tTranslate('Columns', tOpts),
+                    filterPanelOperator: tTranslate('Operator', tOpts),
+                    filterPanelValue: tTranslate('Value', tOpts),
+                    filterPanelInputLabel: tTranslate('Filter', tOpts),
+                    filterPanelInputPlaceholder: tTranslate('Filter', tOpts),
+                    columnMenuLabel: tTranslate('Menu', tOpts),
+                    columnMenuShowColumns: tTranslate('Show columns', tOpts),
+                    columnMenuManageColumns: tTranslate('Manage columns', tOpts),
+                    columnMenuFilter: tTranslate('Filter', tOpts),
+                    columnMenuHideColumn: tTranslate('Hide column', tOpts),
+                    columnMenuUnsort: tTranslate('Unsort', tOpts),
+                    columnMenuSortAsc: tTranslate('Sort by ascending', tOpts),
+                    columnMenuSortDesc: tTranslate('Sort by descending', tOpts),
+                    columnMenuPinToLeft: tTranslate('Pin to left', tOpts),
+                    columnMenuPinToRight: tTranslate('Pin to right', tOpts),
+                    columnMenuUnpin: tTranslate('Unpin', tOpts),
+                    columnsPanelTextFieldLabel: tTranslate('Find column', tOpts),
+                    columnsPanelTextFieldPlaceholder: tTranslate('Column title', tOpts),
+                    columnsPanelHideAllButton: tTranslate('Hide all', tOpts),
+                    columnsPanelShowAllButton: tTranslate('Show all', tOpts),
+                    pinToLeft: tTranslate('Pin to left', tOpts),
+                    pinToRight: tTranslate('Pin to right', tOpts),
+                    unpin: tTranslate('Unpin', tOpts)
                 }}
             />
             {isOrderDetailModalOpen && selectedOrder && model.OrderModal && (
