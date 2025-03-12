@@ -179,6 +179,7 @@ const GridBase = memo(({
     const tOpts = { t: translate, i18n };
     const isClient = model.isClient === true ? 'client' : 'server';
     const [errorMessage, setErrorMessage] = useState('');
+    const [locales, setLocales] = useState({});
     const [sortModel, setSortModel] = useState(convertDefaultSort(defaultSort || model?.defaultSort));
     const initialFilterModel = { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' }
     if (model.defaultFilters) {
@@ -229,19 +230,19 @@ const GridBase = memo(({
             "valueFormatter": ({ value }) => (
                 formatDate(value, true, false, stateData.dateTime)
             ),
-            "filterOperators": LocalizedDatePicker({ columnType: "date", tTranslate: tTranslate }),
+            "filterOperators": LocalizedDatePicker({ columnType: "date", tTranslate }),
         },
         "dateTime": {
             "valueFormatter": ({ value }) => (
                 formatDate(value, false, false, stateData.dateTime)
             ),
-            "filterOperators": LocalizedDatePicker({ columnType: "datetime", tTranslate: tTranslate }),
+            "filterOperators": LocalizedDatePicker({ columnType: "datetime", tTranslate }),
         },
         "dateTimeLocal": {
             "valueFormatter": ({ value }) => (
                 formatDate(value, false, false, stateData.dateTime)
             ),
-            "filterOperators": LocalizedDatePicker({ type: "dateTimeLocal", convert: true, tTranslate: tTranslate }),
+            "filterOperators": LocalizedDatePicker({ type: "dateTimeLocal", convert: true, tTranslate }),
         },
         "boolean": {
             renderCell: booleanIconRenderer
@@ -251,6 +252,53 @@ const GridBase = memo(({
     useEffect(() => {
         dataRef.current = data;
     }, [data]);
+
+    useEffect(() => {
+        setLocales({
+            footerRowSelected: (count) => count !== 1 ? `${count} ${tTranslate('rows selected', tOpts)}` : `${count} ${tTranslate('row selected', tOpts)}`,
+            footerTotalRows: `${tTranslate('Total rows', tOpts)}:`,
+            footerTotalVisibleRows: (visibleCount, totalCount) => `${visibleCount} ${tTranslate('of', tOpts)} ${totalCount}`,
+            MuiTablePagination: {
+                labelRowsPerPage: tTranslate('Rows per page', tOpts)
+            },
+            toolbarQuickFilterPlaceholder: tTranslate(model?.searchPlaceholder || 'Search...', tOpts),
+            toolbarColumns: tTranslate('Columns', tOpts),
+            toolbarFilters: tTranslate('Filters', tOpts),
+            toolbarExport: tTranslate('Export', tOpts),
+            filterPanelAddFilter: tTranslate('Add filter', tOpts),
+            filterPanelRemoveAll: tTranslate('Remove all', tOpts),
+            filterPanelDeleteIconLabel: tTranslate('Delete', tOpts),
+            filterPanelOperators: {
+                and: tTranslate('And', tOpts),
+                or: tTranslate('Or', tOpts),
+            },
+            filterPanelOperatorAnd: tTranslate('And', tOpts),
+            filterPanelOperatorOr: tTranslate('Or', tOpts),
+            filterPanelColumns: tTranslate('Columns', tOpts),
+            filterPanelOperator: tTranslate('Operator', tOpts),
+            filterPanelValue: tTranslate('Value', tOpts),
+            filterPanelInputLabel: tTranslate('Filter', tOpts),
+            filterPanelInputPlaceholder: tTranslate('Filter', tOpts),
+            columnMenuLabel: tTranslate('Menu', tOpts),
+            columnMenuShowColumns: tTranslate('Show columns', tOpts),
+            columnMenuManageColumns: tTranslate('Manage columns', tOpts),
+            columnMenuFilter: tTranslate('Filter', tOpts),
+            columnMenuHideColumn: tTranslate('Hide column', tOpts),
+            columnMenuUnsort: tTranslate('Unsort', tOpts),
+            columnMenuSortAsc: tTranslate('Sort by ascending', tOpts),
+            columnMenuSortDesc: tTranslate('Sort by descending', tOpts),
+            columnMenuPinToLeft: tTranslate('Pin to left', tOpts),
+            columnMenuPinToRight: tTranslate('Pin to right', tOpts),
+            columnMenuUnpin: tTranslate('Unpin', tOpts),
+            columnsPanelTextFieldLabel: tTranslate('Find column', tOpts),
+            columnsPanelTextFieldPlaceholder: tTranslate('Column title', tOpts),
+            columnsPanelHideAllButton: tTranslate('Hide all', tOpts),
+            columnsPanelShowAllButton: tTranslate('Show all', tOpts),
+            pinToLeft: tTranslate('Pin to left', tOpts),
+            pinToRight: tTranslate('Pin to right', tOpts),
+            unpin: tTranslate('Unpin', tOpts)
+        });
+    }, [tTranslate]);
 
     useEffect(() => {
 
@@ -369,7 +417,7 @@ const GridBase = memo(({
             if (model?.addCreatedOnColumn !== false) {
                 finalColumns.push(
                     {
-                        field: "CreatedOn", type: "dateTime", headerName: "Created On", width: 200, filterOperators: LocalizedDatePicker({ columnType: "date", tTranslate: tTranslate }), valueFormatter: gridColumnTypes.dateTime.valueFormatter, keepLocal: true
+                        field: "CreatedOn", type: "dateTime", headerName: "Created On", width: 200, filterOperators: LocalizedDatePicker({ columnType: "date", tTranslate }), valueFormatter: gridColumnTypes.dateTime.valueFormatter, keepLocal: true
                     }
                 );
             }
@@ -381,7 +429,7 @@ const GridBase = memo(({
             if (model?.addModifiedOnColumn !== false) {
                 finalColumns.push(
                     {
-                        field: "ModifiedOn", type: "dateTime", headerName: "Modified On", width: 200, filterOperators: LocalizedDatePicker({ columnType: "date", tTranslate: tTranslate }), valueFormatter: gridColumnTypes.dateTime.valueFormatter, keepLocal: true
+                        field: "ModifiedOn", type: "dateTime", headerName: "Modified On", width: 200, filterOperators: LocalizedDatePicker({ columnType: "date", tTranslate }), valueFormatter: gridColumnTypes.dateTime.valueFormatter, keepLocal: true
 
                     }
                 );
@@ -841,50 +889,7 @@ const GridBase = memo(({
                     },
                     pinnedColumns: pinnedColumns
                 }}
-                localeText={{
-                    footerRowSelected: (count) => count !== 1 ? `${count} ${tTranslate('rows selected', tOpts)}` : `${count} ${tTranslate('row selected', tOpts)}`,
-                    footerTotalRows: `${tTranslate('Total rows', tOpts)}:`,
-                    footerTotalVisibleRows: (visibleCount, totalCount) => `${visibleCount} ${tTranslate('of', tOpts)} ${totalCount}`,
-                    MuiTablePagination: {
-                        labelRowsPerPage: tTranslate('Rows per page', tOpts)
-                    },
-                    toolbarQuickFilterPlaceholder: tTranslate(model?.searchPlaceholder || 'Search...', tOpts),
-                    toolbarColumns: tTranslate('Columns', tOpts),
-                    toolbarFilters: tTranslate('Filters', tOpts),
-                    toolbarExport: tTranslate('Export', tOpts),
-                    filterPanelAddFilter: tTranslate('Add filter', tOpts),
-                    filterPanelRemoveAll: tTranslate('Remove all', tOpts),
-                    filterPanelDeleteIconLabel: tTranslate('Delete', tOpts),
-                    filterPanelOperators: {
-                        and: tTranslate('And', tOpts),
-                        or: tTranslate('Or', tOpts),
-                    },
-                    filterPanelOperatorAnd: tTranslate('And', tOpts),
-                    filterPanelOperatorOr: tTranslate('Or', tOpts),
-                    filterPanelColumns: tTranslate('Columns', tOpts),
-                    filterPanelOperator: tTranslate('Operator', tOpts),
-                    filterPanelValue: tTranslate('Value', tOpts),
-                    filterPanelInputLabel: tTranslate('Filter', tOpts),
-                    filterPanelInputPlaceholder: tTranslate('Filter', tOpts),
-                    columnMenuLabel: tTranslate('Menu', tOpts),
-                    columnMenuShowColumns: tTranslate('Show columns', tOpts),
-                    columnMenuManageColumns: tTranslate('Manage columns', tOpts),
-                    columnMenuFilter: tTranslate('Filter', tOpts),
-                    columnMenuHideColumn: tTranslate('Hide column', tOpts),
-                    columnMenuUnsort: tTranslate('Unsort', tOpts),
-                    columnMenuSortAsc: tTranslate('Sort by ascending', tOpts),
-                    columnMenuSortDesc: tTranslate('Sort by descending', tOpts),
-                    columnMenuPinToLeft: tTranslate('Pin to left', tOpts),
-                    columnMenuPinToRight: tTranslate('Pin to right', tOpts),
-                    columnMenuUnpin: tTranslate('Unpin', tOpts),
-                    columnsPanelTextFieldLabel: tTranslate('Find column', tOpts),
-                    columnsPanelTextFieldPlaceholder: tTranslate('Column title', tOpts),
-                    columnsPanelHideAllButton: tTranslate('Hide all', tOpts),
-                    columnsPanelShowAllButton: tTranslate('Show all', tOpts),
-                    pinToLeft: tTranslate('Pin to left', tOpts),
-                    pinToRight: tTranslate('Pin to right', tOpts),
-                    unpin: tTranslate('Unpin', tOpts)
-                }}
+                localeText={locales}
             />
             {isOrderDetailModalOpen && selectedOrder && model.OrderModal && (
                 <model.OrderModal
