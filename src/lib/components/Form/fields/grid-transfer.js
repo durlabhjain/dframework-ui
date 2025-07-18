@@ -6,7 +6,7 @@ const DivSpacing = styled('div')({
     marginBottom: '10px',
     fontSize: '20px'
 });
-const TransferField = ({ component, name, formik, field, column }) => {
+const TransferField = ({ component, name, formik, field, type, column, ...props }) => {
     const { value } = formik.getFieldProps(name || field);
     const { setFieldValue } = formik;
     const Component = component || column.relation;

@@ -51,17 +51,12 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
     otherProps = {
         InputProps: {
             inputProps: {
-                min: resolvedMin,
-                max: resolvedMax,
-                readOnly: column.readOnly === true,
-                onKeyDown: (event) => {
+                min: Math.max(0, min),
+                max,
+                readOnly: column?.readOnly === true,
+                onKeyPress: (event) => {
                     const keyCode = event.which ? event.which : event.keyCode;
-                    // Allow: backspace, delete, tab, escape, enter, arrows
-                    if (CONTROL_KEYS.includes(keyCode) || (keyCode >= ARROW_LEFT && keyCode <= ARROW_RIGHT)) {
-                        return;
-                    }
-                    // Allow number keys (0-9)
-                    if (!(keyCode > DIGIT_START && keyCode < DIGIT_END)) {
+                    if (!(keyCode > minKey && keyCode < maxKey)) {
                         event.preventDefault();
                     }
                 },
@@ -78,9 +73,8 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
                 onBlur(event);
             }
         },
-    };
-
+    }
     return <StringField column={column} otherProps={otherProps} formik={formik} field={field} {...props} />;
 };
 
-export default Field;
+export default field;   
