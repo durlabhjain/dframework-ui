@@ -309,6 +309,7 @@ const GridBase = memo(({
     const [filterModel, setFilterModel] = useState({ ...initialFilterModel });
     const { pathname, navigate } = useRouter()
     const apiRef = useGridApiRef();
+    const initialGridRef = useRef(null);
     const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, createdOnKeepLocal = true, hideBackButton = false, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false } = model;
     const isReadOnly = model.readOnly === true;
     const isDoubleClicked = model.doubleClicked === false;
@@ -423,6 +424,16 @@ const GridBase = memo(({
                     hidden: { search: true, operation: true, export: true, print: true, filter: true }
                 }
             });
+        }
+        if (apiRef.current) {
+            // Wait for the grid to be fully initialized
+            const timer = setTimeout(() => {
+                if (!initialGridRef.current) {
+                    initialGridRef.current = { ...apiRef.current };
+                }
+            }, 100);
+
+            return () => clearTimeout(timer);
         }
     }, []);
 
