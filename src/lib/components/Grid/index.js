@@ -164,7 +164,8 @@ const GridBase = memo(({
     onRowClick = () => { },
     gridStyle,
     reRenderKey,
-    additionalFilters
+    additionalFilters,
+    selectedClients = null,
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState({ recordCount: 0, records: [], lookups: {} });
@@ -458,6 +459,8 @@ const GridBase = memo(({
         if (additionalFilters) {
             finalFilters.items = [...finalFilters.items, ...additionalFilters];
         }
+        // Handle client selection
+        const clientsSelected = (selectedClients || []).filter(ele => ele !== 0);
         getList({
             action,
             page: !contentType ? page : 0,
@@ -481,7 +484,8 @@ const GridBase = memo(({
             showFullScreenLoader,
             history: navigate,
             baseFilters,
-            isElasticExport
+            isElasticExport,
+            selectedClients: clientsSelected,
         });
     };
     const openForm = (id, { mode } = {}) => {
