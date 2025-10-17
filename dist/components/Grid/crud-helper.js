@@ -59,7 +59,7 @@ const getList = async _ref => {
     modelConfig = null,
     baseFilters = null,
     isElasticExport,
-    t = null,
+    tTranslate = null,
     tOpts = null
   } = _ref;
   if (!contentType) {
@@ -140,7 +140,7 @@ const getList = async _ref => {
     where,
     oderStatusId: oderStatusId,
     isElasticExport,
-    fileName: t(modelConfig === null || modelConfig === void 0 ? void 0 : modelConfig.overrideFileName, tOpts)
+    fileName: tTranslate(modelConfig === null || modelConfig === void 0 ? void 0 : modelConfig.overrideFileName, tOpts)
   });
   if (lookups) {
     requestData.lookups = lookups.join(',');
