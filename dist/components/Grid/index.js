@@ -22,6 +22,7 @@ require("core-js/modules/esnext.iterator.filter.js");
 require("core-js/modules/esnext.iterator.find.js");
 require("core-js/modules/esnext.iterator.for-each.js");
 require("core-js/modules/esnext.iterator.map.js");
+require("core-js/modules/esnext.json.parse.js");
 require("core-js/modules/web.dom-collections.iterator.js");
 var _Button = _interopRequireDefault(require("@mui/material/Button"));
 var _react = _interopRequireWildcard(require("react"));
@@ -1184,6 +1185,23 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
         columnVisibilityModel: visibilityModel
       },
       pinnedColumns: pinnedColumns
+    },
+    localeText: {
+      filterValueTrue: 'Yes',
+      filterValueFalse: 'No',
+      filterOperatorDoesNotContain: t('does not contain', tOpts),
+      filterOperatorDoesNotEqual: t('does not equal', tOpts),
+      paginationRowsPerPage: t('Rows per page', tOpts),
+      paginationDisplayedRows: _ref8 => {
+        let {
+          from,
+          to,
+          count
+        } = _ref8;
+        return "".concat(from, "\u2013").concat(to, " ").concat(t('of', tOpts), " ").concat(count);
+      },
+      toolbarQuickFilterLabel: t('Search', tOpts),
+      columnsManagementSearchTitle: t('Search', tOpts)
     }
   }), isOrderDetailModalOpen && selectedOrder && model.OrderModal && /*#__PURE__*/_react.default.createElement(model.OrderModal, {
     orderId: selectedOrder.OrderId,
