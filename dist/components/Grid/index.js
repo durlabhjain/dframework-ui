@@ -1189,19 +1189,21 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     localeText: {
       filterValueTrue: 'Yes',
       filterValueFalse: 'No',
-      filterOperatorDoesNotContain: t('does not contain', tOpts),
-      filterOperatorDoesNotEqual: t('does not equal', tOpts),
-      paginationRowsPerPage: t('Rows per page', tOpts),
+      toolbarExport: tTranslate('Export', tOpts),
+      toolbarColumnsLabel: tTranslate('Select columns', tOpts),
+      filterOperatorDoesNotContain: tTranslate('does not contain', tOpts),
+      filterOperatorDoesNotEqual: tTranslate('does not equal', tOpts),
+      paginationRowsPerPage: tTranslate('Rows per page', tOpts),
       paginationDisplayedRows: _ref8 => {
         let {
           from,
           to,
           count
         } = _ref8;
-        return "".concat(from, "\u2013").concat(to, " ").concat(t('of', tOpts), " ").concat(count);
+        return "".concat(from, "\u2013").concat(to, " ").concat(tTranslate('of', tOpts), " ").concat(count);
       },
-      toolbarQuickFilterLabel: t('Search', tOpts),
-      columnsManagementSearchTitle: t('Search', tOpts)
+      toolbarQuickFilterLabel: tTranslate('Search', tOpts),
+      columnsManagementSearchTitle: tTranslate('Search', tOpts)
     }
   }), isOrderDetailModalOpen && selectedOrder && model.OrderModal && /*#__PURE__*/_react.default.createElement(model.OrderModal, {
     orderId: selectedOrder.OrderId,
