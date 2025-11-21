@@ -14,6 +14,7 @@ require("core-js/modules/esnext.iterator.filter.js");
 require("core-js/modules/esnext.iterator.find.js");
 require("core-js/modules/esnext.iterator.for-each.js");
 require("core-js/modules/esnext.iterator.map.js");
+require("core-js/modules/esnext.json.parse.js");
 require("core-js/modules/web.dom-collections.iterator.js");
 var _react = _interopRequireWildcard(require("react"));
 var _Close = _interopRequireDefault(require("@mui/icons-material/Close"));
@@ -601,7 +602,23 @@ const GridPreferences = _ref2 => {
     disableAggregation: true,
     disableRowGrouping: true,
     disableRowSelectionOnClick: true,
-    autoHeight: true
+    autoHeight: true,
+    localeText: {
+      toolbarColumnsLabel: tTranslate('Select columns', tOpts),
+      toolbarExportLabel: tTranslate('Export', tOpts),
+      booleanCellFalseLabel: tTranslate('No', tOpts),
+      paginationRowsPerPage: tTranslate('Rows per page', tOpts),
+      paginationDisplayedRows: _ref5 => {
+        let {
+          from,
+          to,
+          count
+        } = _ref5;
+        return "".concat(from, "\u2013").concat(to, " ").concat(tTranslate('of', tOpts), " ").concat(count);
+      },
+      toolbarQuickFilterLabel: tTranslate('Search', tOpts),
+      columnsManagementSearchTitle: tTranslate('Search', tOpts)
+    }
   })))), formType === formTypes.Manage && /*#__PURE__*/_react.default.createElement(_material.DialogActions, null, /*#__PURE__*/_react.default.createElement(_material.Button, {
     color: "error",
     variant: "contained",

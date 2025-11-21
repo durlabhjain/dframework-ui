@@ -856,6 +856,18 @@ const GridBase = memo(({
                     },
                     pinnedColumns: pinnedColumns
                 }}
+                localeText={{
+                    filterValueTrue: 'Yes',
+                    filterValueFalse: 'No',
+                    toolbarExport: tTranslate('Export', tOpts),
+                    toolbarColumnsLabel: tTranslate('Select columns', tOpts),
+                    filterOperatorDoesNotContain: tTranslate('does not contain', tOpts),
+                    filterOperatorDoesNotEqual: tTranslate('does not equal', tOpts),
+                    paginationRowsPerPage: tTranslate('Rows per page', tOpts),
+                    paginationDisplayedRows: ({ from, to, count }) => `${from}–${to} ${tTranslate('of', tOpts)} ${count}`,
+                    toolbarQuickFilterLabel: tTranslate('Search', tOpts),
+                    columnsManagementSearchTitle: tTranslate('Search', tOpts),
+                }}
             />
             {isOrderDetailModalOpen && selectedOrder && model.OrderModal && (
                 <model.OrderModal
