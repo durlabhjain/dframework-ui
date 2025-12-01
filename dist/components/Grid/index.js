@@ -54,6 +54,7 @@ var _CustomDropdownmenu = _interopRequireDefault(require("./CustomDropdownmenu")
 var _reactI18next = require("react-i18next");
 var _iconsMaterial = require("@mui/icons-material");
 var _Box = _interopRequireDefault(require("@mui/material/Box"));
+var _utils = _interopRequireDefault(require("../utils"));
 const _excluded = ["row", "field", "id"],
   _excluded2 = ["filterField"];
 function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function _interopRequireWildcard(e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
@@ -67,6 +68,7 @@ function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" 
 function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 const defaultPageSize = 10;
+const t = _utils.default.t;
 const sortRegex = /(\w+)( ASC| DESC)?/i;
 const recordCounts = 60000;
 const actionTypes = {
@@ -249,7 +251,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     onRowClick = () => {},
     gridStyle,
     reRenderKey,
-    additionalFilters
+    additionalFilters,
+    selectedClients = null
   } = _ref2;
   const [paginationModel, setPaginationModel] = (0, _react.useState)({
     pageSize: defaultPageSize,
@@ -357,35 +360,23 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       "type": "singleSelect",
       "valueOptions": "lookup"
     },
+    "string": {
+      "filterOperators": (0, _xDataGridPremium.getGridStringOperators)().filter(op => !['doesNotContain', 'doesNotEqual'].includes(op.value))
+    },
     "date": {
-      "valueFormatter": _ref3 => {
-        let {
-          value
-        } = _ref3;
-        return formatDate(value, true, false, stateData.dateTime);
-      },
+      "valueFormatter": value => formatDate(value, true, false, stateData.dateTime),
       "filterOperators": (0, _LocalizedDatePicker.default)({
         columnType: "date"
       })
     },
     "dateTime": {
-      "valueFormatter": _ref4 => {
-        let {
-          value
-        } = _ref4;
-        return formatDate(value, false, false, stateData.dateTime);
-      },
+      "valueFormatter": value => formatDate(value, false, false, stateData.dateTime),
       "filterOperators": (0, _LocalizedDatePicker.default)({
         columnType: "datetime"
       })
     },
     "dateTimeLocal": {
-      "valueFormatter": _ref5 => {
-        let {
-          value
-        } = _ref5;
-        return formatDate(value, false, false, stateData.dateTime);
-      },
+      "valueFormatter": value => formatDate(value, false, false, stateData.dateTime),
       "filterOperators": (0, _LocalizedDatePicker.default)({
         type: "dateTimeLocal",
         convert: true
@@ -436,13 +427,13 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       }
     }
   }, [customFilters]);
-  const lookupOptions = _ref6 => {
+  const lookupOptions = _ref3 => {
     let {
         row,
         field,
         id
-      } = _ref6,
-      others = _objectWithoutProperties(_ref6, _excluded);
+      } = _ref3,
+      others = _objectWithoutProperties(_ref3, _excluded);
     const lookupData = dataRef.current.lookups || {};
     return lookupData[lookupMap[field].lookup] || [];
   };
@@ -692,8 +683,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       history: navigate,
       baseFilters,
       isElasticExport,
-      tTranslate,
-      tOpts
+      tOpts,
+      tTranslate
     });
   };
   const openForm = function openForm(id) {
@@ -858,11 +849,11 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       }
     }
   };
-  const updateAssignment = _ref7 => {
+  const updateAssignment = _ref4 => {
     let {
       unassign,
       assign
-    } = _ref7;
+    } = _ref4;
     const assignedValues = Array.isArray(selected) ? selected : selected.length ? selected.split(',') : [];
     const finalValues = unassign ? assignedValues.filter(id => !unassign.includes(parseInt(id))) : [...assignedValues, ...assign];
     onAssignChange(typeof selected === 'string' ? finalValues.join(',') : finalValues);
@@ -944,10 +935,21 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       size: "medium",
       variant: "contained",
       className: classes.buttons
-    }, "Remove"), /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridToolbarContainer, props, /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridToolbarColumnsButton, null), /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridToolbarFilterButton, null), /*#__PURE__*/_react.default.createElement(_Button.default, {
+    }, "Remove"), /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridToolbarContainer, props, /*#__PURE__*/_react.default.createElement(_Box.default, {
+      sx: {
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 2,
+        alignItems: 'center',
+        width: '100%'
+      }
+    }, /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridToolbarColumnsButton, null), /*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridToolbarFilterButton, null), /*#__PURE__*/_react.default.createElement(_Button.default, {
       startIcon: /*#__PURE__*/_react.default.createElement(_FilterListOff.default, null),
       onClick: clearFilters,
-      size: "small"
+      size: "small",
+      sx: {
+        width: 'max-content'
+      }
     }, tTranslate("CLEAR FILTER", tOpts)), effectivePermissions.export && /*#__PURE__*/_react.default.createElement(CustomExportButton, {
       tTranslate: tTranslate,
       tOpts: tOpts,
@@ -962,7 +964,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       model: model,
       initialGridRef: initialGridRef,
       setIsLoading: setIsLoading
-    })));
+    }))));
   };
   const getGridRowId = row => {
     return row[idProperty];
@@ -1120,21 +1122,13 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   };
   return /*#__PURE__*/_react.default.createElement("div", {
     style: gridStyle || customStyle
+  }, /*#__PURE__*/_react.default.createElement(_Box.default, {
+    className: "grid-parent-container"
   }, /*#__PURE__*/_react.default.createElement(_xDataGridPremium.DataGridPremium, {
-    sx: {
-      "& .MuiTablePagination-selectLabel": {
-        marginTop: 2
-      },
-      "& .MuiTablePagination-displayedRows": {
-        marginTop: 2
-      },
-      "& .MuiDataGrid-columnHeader .MuiInputLabel-shrink": {
-        display: "none"
-      }
-    },
-    unstable_headerFilters: showHeaderFilters,
+    headerFilters: showHeaderFilters,
     checkboxSelection: forAssignment,
     loading: isLoading,
+    showToolbar: true,
     className: "pagination-fix",
     onCellClick: onCellClickHandler,
     onCellDoubleClick: onCellDoubleClick,
@@ -1167,9 +1161,6 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
         pagination: true,
         apiRef,
         tTranslate: tTranslate
-      },
-      panel: {
-        placement: "bottom-end"
       }
     },
     hideFooterSelectedRowCount: rowsSelected,
@@ -1179,7 +1170,6 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     disableAggregation: true,
     disableRowGrouping: true,
     disableRowSelectionOnClick: disableRowSelectionOnClick,
-    autoHeight: true,
     initialState: {
       columns: {
         columnVisibilityModel: visibilityModel
@@ -1187,25 +1177,136 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       pinnedColumns: pinnedColumns
     },
     localeText: {
-      filterValueTrue: 'Yes',
-      filterValueFalse: 'No',
-      toolbarExport: tTranslate('Export', tOpts),
-      toolbarColumnsLabel: tTranslate('Select columns', tOpts),
-      filterOperatorDoesNotContain: tTranslate('does not contain', tOpts),
-      filterOperatorDoesNotEqual: tTranslate('does not equal', tOpts),
-      paginationRowsPerPage: tTranslate('Rows per page', tOpts),
-      paginationDisplayedRows: _ref8 => {
+      noRowsLabel: t('No data', tOpts),
+      footerTotalRows: "".concat(t('Total rows', tOpts), ":"),
+      MuiTablePagination: {
+        labelRowsPerPage: t('Rows per page', tOpts),
+        labelDisplayedRows: _ref5 => {
+          let {
+            from,
+            to,
+            count
+          } = _ref5;
+          return "".concat(from, "\u2013").concat(to, " ").concat(t('of', tOpts), " ").concat(count);
+        }
+      },
+      toolbarQuickFilterPlaceholder: t((model === null || model === void 0 ? void 0 : model.searchPlaceholder) || 'Search...', tOpts),
+      toolbarColumns: t('Columns', tOpts),
+      toolbarFilters: t('Filters', tOpts),
+      toolbarExport: t('Export', tOpts),
+      filterPanelAddFilter: t('Add filter', tOpts),
+      filterPanelRemoveAll: t('Remove all', tOpts),
+      filterPanelDeleteIconLabel: t('Delete', tOpts),
+      filterPanelColumns: t('Columns', tOpts),
+      filterPanelOperator: t('Operator', tOpts),
+      filterPanelValue: t('Value', tOpts),
+      filterPanelInputLabel: t('Value', tOpts),
+      filterPanelInputPlaceholder: t('Filter value', tOpts),
+      columnMenuLabel: t('Menu', tOpts),
+      columnMenuShowColumns: t('Show columns', tOpts),
+      columnMenuManageColumns: t('Manage columns', tOpts),
+      columnMenuFilter: t('Filter', tOpts),
+      columnMenuHideColumn: t('Hide column', tOpts),
+      columnMenuManagePivot: t('Manage pivot', tOpts),
+      toolbarColumnsLabel: t('Select columns', tOpts),
+      toolbarExportLabel: t('Export', tOpts),
+      pivotDragToColumns: t('Drag here to pivot by', tOpts),
+      pivotDragToRows: t('Drag here to group by', tOpts),
+      pivotDragToValues: t('Drag here to create values', tOpts),
+      pivotColumns: t('Pivot columns', tOpts),
+      pivotRows: t('Row groups', tOpts),
+      pivotValues: t('Values', tOpts),
+      pivotMenuRows: t('Rows', tOpts),
+      pivotMenuColumns: t('Columns', tOpts),
+      pivotMenuValues: t('Values', tOpts),
+      pivotToggleLabel: t('Pivot', tOpts),
+      pivotSearchControlPlaceholder: t('Search pivot columns', tOpts),
+      columnMenuUnsort: t('Unsort', tOpts),
+      columnMenuSortAsc: t('Sort by ascending', tOpts),
+      columnMenuSortDesc: t('Sort by descending', tOpts),
+      columnMenuUnpin: t('Unpin', tOpts),
+      columnsPanelTextFieldLabel: t('Find column', tOpts),
+      columnsPanelTextFieldPlaceholder: t('Column title', tOpts),
+      columnsPanelHideAllButton: t('Hide all', tOpts),
+      columnsPanelShowAllButton: t('Show all', tOpts),
+      pinToLeft: t('Pin to left', tOpts),
+      pinToRight: t('Pin to right', tOpts),
+      unpin: t('Unpin', tOpts),
+      filterValueAny: t('any', tOpts),
+      filterValueTrue: t('true', tOpts),
+      filterValueFalse: t('false', tOpts),
+      filterOperatorIs: t('is', tOpts),
+      filterOperatorNot: t('is not', tOpts),
+      filterOperatorIsAnyOf: t('is any of', tOpts),
+      filterOperatorContains: t('contains', tOpts),
+      filterOperatorDoesNotContain: t('does not contain', tOpts),
+      filterOperatorEquals: t('equals', tOpts),
+      filterOperatorDoesNotEqual: t('does not equal', tOpts),
+      filterOperatorStartsWith: t('starts with', tOpts),
+      filterOperatorEndsWith: t('ends with', tOpts),
+      filterOperatorIsEmpty: t('is empty', tOpts),
+      filterOperatorIsNotEmpty: t('is not empty', tOpts),
+      filterOperatorAfter: t('is after', tOpts),
+      filterOperatorOnOrAfter: t('is on or after', tOpts),
+      filterOperatorBefore: t('is before', tOpts),
+      filterOperatorOnOrBefore: t('is on or before', tOpts),
+      toolbarFiltersTooltipHide: t('Hide filters', tOpts),
+      toolbarFiltersTooltipShow: t('Show filters', tOpts),
+      //filter textfield labels
+      headerFilterOperatorContains: t('contains', tOpts),
+      headerFilterOperatorEquals: t('equals', tOpts),
+      headerFilterOperatorStartsWith: t('starts with', tOpts),
+      headerFilterOperatorEndsWith: t('ends with', tOpts),
+      headerFilterOperatorIsEmpty: t('is empty', tOpts),
+      headerFilterOperatorIsNotEmpty: t('is not empty', tOpts),
+      headerFilterOperatorAfter: t('is after', tOpts),
+      headerFilterOperatorOnOrAfter: t('is on or after', tOpts),
+      headerFilterOperatorBefore: t('is before', tOpts),
+      headerFilterOperatorOnOrBefore: t('is on or before', tOpts),
+      headerFilterOperatorIs: t('is', tOpts),
+      'headerFilterOperator=': t('equals', tOpts),
+      'headerFilterOperator!=': t('does not equal', tOpts),
+      'headerFilterOperator>': t('greater than', tOpts),
+      'headerFilterOperator>=': t('greater than or equal to', tOpts),
+      'headerFilterOperator<': t('less than', tOpts),
+      'headerFilterOperator<=': t('less than or equal to', tOpts),
+      columnsManagementSearchTitle: t('Search', tOpts),
+      columnsManagementNoColumns: t('No columns', tOpts),
+      paginationRowsPerPage: t('Rows per page', tOpts),
+      paginationDisplayedRows: _ref6 => {
         let {
           from,
           to,
           count
-        } = _ref8;
-        return "".concat(from, "\u2013").concat(to, " ").concat(tTranslate('of', tOpts), " ").concat(count);
+        } = _ref6;
+        return "".concat(from, "\u2013").concat(to, " ").concat(t('of', tOpts), " ").concat(count);
       },
-      toolbarQuickFilterLabel: tTranslate('Search', tOpts),
-      columnsManagementSearchTitle: tTranslate('Search', tOpts)
+      toolbarQuickFilterLabel: t('Search', tOpts),
+      toolbarFiltersTooltipActive: count => "".concat(count, " ").concat(t("active filter".concat(count > 1 ? 's' : ''), tOpts)),
+      columnHeaderSortIconLabel: t('Sort', tOpts),
+      filterPanelOperatorAnd: t('And', tOpts),
+      filterPanelOperatorOr: t('Or', tOpts),
+      noResultsOverlayLabel: t('No results found', tOpts),
+      columnHeaderFiltersTooltipActive: count => "".concat(count, " ").concat(t(count === 1 ? 'active filter' : 'active filters', tOpts)),
+      detailPanelToggle: t("Detail panel toggle", tOpts),
+      checkboxSelectionHeaderName: t('Checkbox selection', tOpts),
+      columnsManagementShowHideAllText: t('Show/Hide all', tOpts),
+      noColumnsOverlayLabel: t('No columns', tOpts),
+      noColumnsOverlayManageColumns: t('Manage columns', tOpts),
+      columnsManagementReset: t('Reset', tOpts),
+      groupColumn: name => "".concat(t('Group by', tOpts), " ").concat(name),
+      unGroupColumn: name => "".concat(t('Ungroup', tOpts), " ").concat(name),
+      footerRowSelected: count => count !== 1 ? "".concat(count.toLocaleString(), " ").concat(t('items selected', tOpts)) : "1 ".concat(t('item selected', tOpts))
+    },
+    columnHeaderHeight: 70,
+    sx: {
+      "& .MuiDataGrid-toolbarContainer": {
+        flexShrink: 0,
+        marginTop: 1,
+        borderBottom: 'none !important'
+      }
     }
-  }), isOrderDetailModalOpen && selectedOrder && model.OrderModal && /*#__PURE__*/_react.default.createElement(model.OrderModal, {
+  })), isOrderDetailModalOpen && selectedOrder && model.OrderModal && /*#__PURE__*/_react.default.createElement(model.OrderModal, {
     orderId: selectedOrder.OrderId,
     isOpen: true,
     orderTotal: selectedOrder.OrderTotal,
