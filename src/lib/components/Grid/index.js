@@ -313,7 +313,7 @@ const GridBase = memo(({
     const { pathname, navigate } = useRouter()
     const apiRef = useGridApiRef();
     const initialGridRef = useRef(null);
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, createdOnKeepLocal = true, hideBackButton = false, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false } = model;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, createdOnKeepLocal = true, hideBackButton = false, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false } = model;
     const isReadOnly = model.readOnly === true;
     const isDoubleClicked = model.doubleClicked === false;
     const customExportRef = useRef();
@@ -330,6 +330,7 @@ const GridBase = memo(({
     const withControllersUrl = stateData?.gridSettings?.permissions?.withControllersUrl;
     const currentPreference = stateData?.currentPreference;
     const defaultPreferenceEnums = stateData?.gridSettings?.permissions?.tablePreferenceEnums;
+    const preferenceName = model.preferenceId || model.module?.preferenceId;
     const emptyIsAnyOfOperatorFilters = ["isEmpty", "isNotEmpty", "isAnyOf"];
     const filterFieldDataTypes = {
         Number: 'number',
@@ -808,7 +809,7 @@ const GridBase = memo(({
         if (!preferenceName || !preferenceApi) {
             return;
         }
-        setupGridPreference({ preferenceName: preferenceName || model.prefernceId, Username, preferenceApi, defaultPreferenceEnums });
+        setupGridPreference({ preferenceName, Username, preferenceApi, defaultPreferenceEnums });
     }, [preferenceApi]);
 
     const getGridRowId = (row) => {
@@ -945,6 +946,11 @@ const GridBase = memo(({
                                 },
                                 "& .MuiDataGrid-columnHeader .MuiInputLabel-shrink": {
                                     display: "none"
+                                },
+                                "& .MuiDataGrid-toolbarContainer": {
+                                    flexShrink: 0,
+                                    marginTop: 1,
+                                    borderBottom: 'none !important'
                                 }
                             }}
                             showToolbar={true}
@@ -1142,13 +1148,6 @@ const GridBase = memo(({
                                     count !== 1
                                         ? `${count.toLocaleString()} ${t('items selected', tOpts)}`
                                         : `1 ${t('item selected', tOpts)}`,
-                            }}
-                            sx={{
-                                "& .MuiDataGrid-toolbarContainer": {
-                                    flexShrink: 0,
-                                    marginTop: 1,
-                                    borderBottom: 'none !important'
-                                }
                             }}
                         />
                         {isOrderDetailModalOpen && selectedOrder && model.OrderModal && (
