@@ -487,7 +487,9 @@ const GridBase = memo(({
             showFullScreenLoader,
             history: navigate,
             baseFilters,
-            isElasticExport
+            isElasticExport,
+            tOpts,
+            tTranslate
         });
     };
     const openForm = (id, { mode } = {}) => {
