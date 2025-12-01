@@ -1136,9 +1136,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
   return /*#__PURE__*/_react.default.createElement("div", {
     style: gridStyle || customStyle
   }, /*#__PURE__*/_react.default.createElement(_Box.default, {
-    sx: {
-      maxHeight: '75vh'
-    }
+    className: "grid-parent-container"
   }, /*#__PURE__*/_react.default.createElement(_xDataGridPremium.DataGridPremium, {
     headerFilters: showHeaderFilters,
     checkboxSelection: forAssignment,

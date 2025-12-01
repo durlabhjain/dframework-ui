@@ -796,7 +796,7 @@ const GridBase = memo(({
 
     return (
         <div style={gridStyle || customStyle}>
-            <Box sx={{ maxHeight: '75vh' }}>
+            <Box className="grid-parent-container">
                 <DataGridPremium
                     headerFilters={showHeaderFilters}
                     checkboxSelection={forAssignment}
