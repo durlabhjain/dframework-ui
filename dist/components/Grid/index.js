@@ -698,6 +698,8 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       baseFilters,
       isElasticExport,
       selectedClients: clientsSelected
+      tTranslate,
+      tOpts
     });
   };
   const openForm = function openForm(id) {
