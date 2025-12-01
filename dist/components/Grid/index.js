@@ -1161,9 +1161,6 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
         pagination: true,
         apiRef,
         tTranslate: tTranslate
-      },
-      panel: {
-        placement: "bottom-end"
       }
     },
     hideFooterSelectedRowCount: rowsSelected,
