@@ -671,8 +671,6 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
     if (additionalFilters) {
       finalFilters.items = [...finalFilters.items, ...additionalFilters];
     }
-    // Handle client selection
-    const clientsSelected = (selectedClients || []).filter(ele => ele !== 0);
     (0, _crudHelper.getList)({
       action,
       page: !contentType ? page : 0,
@@ -696,8 +694,7 @@ const GridBase = /*#__PURE__*/(0, _react.memo)(_ref2 => {
       showFullScreenLoader,
       history: navigate,
       baseFilters,
-      isElasticExport,
-      selectedClients: clientsSelected
+      isElasticExport
     });
   };
   const openForm = function openForm(id) {
