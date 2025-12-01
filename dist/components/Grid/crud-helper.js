@@ -58,7 +58,8 @@ const getList = async _ref => {
     oderStatusId = 0,
     modelConfig = null,
     baseFilters = null,
-    isElasticExport
+    isElasticExport,
+    selectedClients = []
   } = _ref;
   if (!contentType) {
     setIsLoading(true);
@@ -138,7 +139,8 @@ const getList = async _ref => {
     where,
     oderStatusId: oderStatusId,
     isElasticExport,
-    fileName: modelConfig === null || modelConfig === void 0 ? void 0 : modelConfig.overrideFileName
+    fileName: modelConfig === null || modelConfig === void 0 ? void 0 : modelConfig.overrideFileName,
+    selectedClients
   });
   if (lookups) {
     requestData.lookups = lookups.join(',');

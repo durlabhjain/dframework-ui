@@ -9,6 +9,7 @@ require("core-js/modules/es.error.cause.js");
 require("core-js/modules/es.promise.js");
 require("core-js/modules/esnext.iterator.constructor.js");
 require("core-js/modules/esnext.iterator.for-each.js");
+require("core-js/modules/esnext.json.parse.js");
 require("core-js/modules/web.dom-collections.iterator.js");
 var _react = _interopRequireWildcard(require("react"));
 var _stateReducer = _interopRequireDefault(require("./stateReducer"));
