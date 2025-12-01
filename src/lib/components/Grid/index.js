@@ -44,8 +44,10 @@ import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import FilterListIcon from '@mui/icons-material/FilterList';
+import utils from '../utils';
 
 const defaultPageSize = 10;
+const t = utils.t;
 const sortRegex = /(\w+)( ASC| DESC)?/i;
 const recordCounts = 60000;
 const actionTypes = {
@@ -1141,6 +1143,13 @@ const GridBase = memo(({
                                         ? `${count.toLocaleString()} ${t('items selected', tOpts)}`
                                         : `1 ${t('item selected', tOpts)}`,
                             }}
+                            sx={{
+                                "& .MuiDataGrid-toolbarContainer": {
+                                    flexShrink: 0,
+                                    marginTop: 1,
+                                    borderBottom: 'none !important'
+                                }
+                            }}
                         />
                         {isOrderDetailModalOpen && selectedOrder && model.OrderModal && (
                             <model.OrderModal
@@ -1157,27 +1166,8 @@ const GridBase = memo(({
                         )}
                         {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
                         }
-                        {isDeleting && !errorMessage && (
-                            <DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete">
-                                <DeleteContentText>
-                                    Are you sure you want to delete {record.name && <Tooltip style={{ display: "inline" }} title={record.name} arrow>
-                                        {record.name.length > 30 ? `${record.name.slice(0, 30)}...` : record.name}
-                                    </Tooltip>} ?
-                                </DeleteContentText>
-                            </DialogComponent>)}
-                        {showAddConfirmation && (
-                            <DialogComponent
-                                open={showAddConfirmation}
-                                onConfirm={handleAddRecords}
-                                onCancel={() => setShowAddConfirmation(false)}
-                                title="Confirm Add"
-                            >
-                                <DeleteContentText>
-                                    Are you sure you want to add {selectedSet.current.size} records?
-                                </DeleteContentText>
-                            </DialogComponent>
-                        )}
-                    </div>
+                        {isDeleting && !errorMessage && (<DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete"> {`${'Are you sure you want to delete'} ${record?.name}?`}</DialogComponent>)}
+                    </div >
                 </CardContent>
             </Card >
         </>
