@@ -42,8 +42,10 @@ import CustomDropdownmenu from './CustomDropdownmenu';
 import { useTranslation } from 'react-i18next';
 import { GridOn, Code, Language, TableChart, DataObject as DataObjectIcon } from '@mui/icons-material';
 import Box from '@mui/material/Box';
+import utils from '../utils';
 
 const defaultPageSize = 10;
+const t = utils.t;
 const sortRegex = /(\w+)( ASC| DESC)?/i;
 const recordCounts = 60000;
 const actionTypes = {
@@ -659,6 +661,7 @@ const GridBase = memo(({
                 {assigned && <Button startIcon={!showAddIcon ? null : <RemoveIcon />} onClick={onUnassign} size="medium" variant="contained" className={classes.buttons}  >{"Remove"}</Button>}
 
                 <GridToolbarContainer {...props}>
+                    <Box sx={{ display: 'flex', flexDirection: 'row', gap: 2, alignItems: 'center', width: '100%' }}>
                     <GridToolbarColumnsButton />
                     <GridToolbarFilterButton />
                     <Button startIcon={<FilterListOffIcon />} onClick={clearFilters} size="small">{tTranslate("CLEAR FILTER", tOpts)}</Button>
@@ -668,6 +671,7 @@ const GridBase = memo(({
                     {model.preferenceId &&
                         <GridPreferences tTranslate={tTranslate} gridRef={apiRef} columns={gridColumns} setIsGridPreferenceFetched={setIsGridPreferenceFetched} model={model} initialGridRef={initialGridRef} setIsLoading={setIsLoading} />
                     }
+                    </Box>
                 </GridToolbarContainer>
             </div >
         );
@@ -791,7 +795,7 @@ const GridBase = memo(({
     }
 
     return (
-        <div style={gridStyle || customStyle}>
+        <Box style={gridStyle || customStyle} sx={{ maxHeight: '75vh' }}>
             <DataGridPremium
                 headerFilters={showHeaderFilters}
                 checkboxSelection={forAssignment}
@@ -984,7 +988,7 @@ const GridBase = memo(({
             {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
             }
             {isDeleting && !errorMessage && (<DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete"> {`${'Are you sure you want to delete'} ${record?.name}?`}</DialogComponent>)}
-        </div >
+        </Box >
     );
 }, areEqual);
 
