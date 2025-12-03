@@ -1,4 +1,4 @@
-import Button from '@mui/material/Button';
+
 import React from 'react';
 import {
     DataGridPremium,
@@ -36,7 +36,6 @@ import PageTitle from '../PageTitle';
 import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
 import actionsStateProvider from '../useRouter/actions';
-import GridPreferences from './GridPreference';
 import CustomDropdownmenu from './CustomDropdownmenu';
 import { useTranslation } from 'react-i18next';
 import { GridOn, Code, Language, TableChart, DataObject as DataObjectIcon } from '@mui/icons-material';
@@ -45,6 +44,7 @@ import { styled } from '@mui/material/styles';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import utils from '../utils';
+import CustomToolbar from './CustomToolbar';
 
 const defaultPageSize = 10;
 const t = utils.t;
@@ -261,6 +261,7 @@ const GridBase = memo(({
     parentFilters,
     parent,
     where,
+    customHeaderComponent,
     title,
     showModal,
     OrderModal,
@@ -313,7 +314,7 @@ const GridBase = memo(({
     const { pathname, navigate } = useRouter()
     const apiRef = useGridApiRef();
     const initialGridRef = useRef(null);
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, createdOnKeepLocal = true, hideBackButton = false, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false } = model;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, createdOnKeepLocal = true, hideBackButton = false, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, enablePivoting = false, showCreateButton, hideExcelExport = false, hideXmlExport = false, hideHtmlExport = false, hideJsonExport = false } = model;
     const isReadOnly = model.readOnly === true;
     const isDoubleClicked = model.doubleClicked === false;
     const customExportRef = useRef();
@@ -326,6 +327,7 @@ const GridBase = memo(({
     const { ClientId } = stateData?.getUserData ? stateData.getUserData : {};
     const { Username } = stateData?.getUserData ? stateData.getUserData : {};
     const routesWithNoChildRoute = stateData.gridSettings.permissions?.routesWithNoChildRoute || [];
+    const disablePivoting = !enablePivoting;
     const url = stateData?.gridSettings?.permissions?.Url;
     const withControllersUrl = stateData?.gridSettings?.permissions?.withControllersUrl;
     const currentPreference = stateData?.currentPreference;
@@ -976,6 +978,7 @@ const GridBase = memo(({
                             sortingMode={paginationMode}
                             filterMode={paginationMode}
                             processRowUpdate={processRowUpdate}
+                            disablePivoting={disablePivoting}
                             keepNonExistentRowsSelected
                             onSortModelChange={updateSort}
                             onFilterModelChange={updateFilters}
@@ -1016,6 +1019,36 @@ const GridBase = memo(({
                                     tTranslate,
                                     tOpts,
                                     idProperty
+                                },
+                                toolbar: {
+                                    model,
+                                    customHeaderComponent,
+                                    currentPreference,
+                                    isReadOnly,
+                                    forAssignment,
+                                    showAddIcon,
+                                    showCreateButton,
+                                    available,
+                                    assigned,
+                                    t,
+                                    tOpts,
+                                    classes,
+                                    onAdd,
+                                    onAssign,
+                                    onUnassign,
+                                    clearFilters,
+                                    handleExport,
+                                    onExportMenuClick,
+                                    hideExcelExport,
+                                    hideXmlExport,
+                                    hideHtmlExport,
+                                    hideJsonExport,
+                                    apiRef,
+                                    gridColumns,
+                                    setIsGridPreferenceFetched,
+                                    initialGridRef,
+                                    setIsLoading,
+                                    CustomExportButton
                                 },
                                 footer: {
                                     pagination: true,
