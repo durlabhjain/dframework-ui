@@ -48,7 +48,7 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
     const [openPreferenceExistsModal, setOpenPreferenceExistsModal] = useState(false);
     const [openConfirmDeleteDialog, setOpenConfirmDeleteDialog] = useState({});
     const { Username } = stateData?.getUserData ? stateData.getUserData : {};
-    const preferences = stateData?.preferences;
+    const preferences = stateData?.preferences.filter(pref => pref.prefName !== coolrDefaultPreference);
     const currentPreference = stateData?.currentPreference;
     const preferenceApi = stateData?.gridSettings?.permissions?.preferenceApi; // this is the api endpoint used to fetch, save, edit or delete the preferences, passed via redux form application.
     const defaultPreferenceEnums = stateData?.gridSettings?.permissions?.defaultPreferenceEnums;
