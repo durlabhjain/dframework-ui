@@ -62,7 +62,7 @@ const GridPreferences = ({ tTranslate = (key) => key, model, gridRef, columns = 
     const [menuAnchorEl, setMenuAnchorEl] = useState();
     const [openPreferenceExistsModal, setOpenPreferenceExistsModal] = useState(false);
     const { Username } = stateData?.getUserData ? stateData.getUserData : {};
-    const preferences = stateData?.preferences;
+    const preferences = stateData?.preferences.filter(pref => pref.prefName !== coolrDefaultPreference);
     const currentPreference = stateData?.currentPreference;
     const preferenceApi = stateData?.gridSettings?.permissions?.preferenceApi;
     const filterModel = useGridSelector(gridRef, gridFilterModelSelector);

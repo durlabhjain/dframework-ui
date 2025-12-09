@@ -121,7 +121,7 @@ const GridPreferences = _ref2 => {
   const {
     Username
   } = stateData !== null && stateData !== void 0 && stateData.getUserData ? stateData.getUserData : {};
-  const preferences = stateData === null || stateData === void 0 ? void 0 : stateData.preferences;
+  const preferences = stateData === null || stateData === void 0 ? void 0 : stateData.preferences.filter(pref => pref.prefName !== coolrDefaultPreference);
   const currentPreference = stateData === null || stateData === void 0 ? void 0 : stateData.currentPreference;
   const preferenceApi = stateData === null || stateData === void 0 || (_stateData$gridSettin = stateData.gridSettings) === null || _stateData$gridSettin === void 0 || (_stateData$gridSettin = _stateData$gridSettin.permissions) === null || _stateData$gridSettin === void 0 ? void 0 : _stateData$gridSettin.preferenceApi;
   const filterModel = (0, _xDataGridPremium.useGridSelector)(gridRef, _xDataGridPremium.gridFilterModelSelector);
