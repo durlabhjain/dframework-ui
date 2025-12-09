@@ -69,36 +69,6 @@ const gridColumns = [{
   headerName: "Default",
   sortable: false,
   filterable: false
-}, {
-  field: 'editAction',
-  type: 'actions',
-  headerName: '',
-  width: 20,
-  getActions: () => [/*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
-    key: 1,
-    icon: /*#__PURE__*/_react.default.createElement(_material.Tooltip, {
-      title: actionTypes.Edit
-    }, "   ", /*#__PURE__*/_react.default.createElement(_Edit.default, null)),
-    tabIndex: 1,
-    "data-action": actionTypes.Edit,
-    label: "Edit",
-    color: "primary"
-  })]
-}, {
-  field: 'deleteAction',
-  type: 'actions',
-  headerName: '',
-  width: 20,
-  getActions: () => [/*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
-    key: 2,
-    icon: /*#__PURE__*/_react.default.createElement(_material.Tooltip, {
-      title: actionTypes.Delete
-    }, /*#__PURE__*/_react.default.createElement(_Delete.default, null), " "),
-    tabIndex: 2,
-    "data-action": actionTypes.Delete,
-    label: "Delete",
-    color: "error"
-  })]
 }];
 const initialValues = {
   prefName: '',
@@ -419,6 +389,40 @@ const GridPreferences = _ref2 => {
     }
   };
   const prefName = formik.values.prefName.trim();
+  if (preferences && preferences.length > 0) {
+    gridColumns.push({
+      field: 'editAction',
+      type: 'actions',
+      headerName: '',
+      width: 20,
+      getActions: () => [/*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
+        key: 1,
+        icon: /*#__PURE__*/_react.default.createElement(_material.Tooltip, {
+          title: actionTypes.Edit
+        }, "   ", /*#__PURE__*/_react.default.createElement(_Edit.default, null)),
+        tabIndex: 1,
+        "data-action": actionTypes.Edit,
+        label: "Edit",
+        color: "primary"
+      })]
+    });
+    gridColumns.push({
+      field: 'deleteAction',
+      type: 'actions',
+      headerName: '',
+      width: 20,
+      getActions: () => [/*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
+        key: 2,
+        icon: /*#__PURE__*/_react.default.createElement(_material.Tooltip, {
+          title: actionTypes.Delete
+        }, /*#__PURE__*/_react.default.createElement(_Delete.default, null), " "),
+        tabIndex: 2,
+        "data-action": actionTypes.Delete,
+        label: "Delete",
+        color: "error"
+      })]
+    });
+  }
   return /*#__PURE__*/_react.default.createElement(_material.Box, null, /*#__PURE__*/_react.default.createElement(_material.Button, {
     id: "grid-preferences-btn",
     "aria-controls": menuAnchorEl ? 'basic-menu' : undefined,
