@@ -48,6 +48,58 @@ const formTypes = {
   Edit: "Edit",
   Manage: 'Manage'
 };
+const gridColumns = [{
+  field: "prefName",
+  type: 'string',
+  width: 300,
+  headerName: "Preference Name",
+  sortable: false,
+  filterable: false
+}, {
+  field: "prefDesc",
+  type: 'string',
+  width: 300,
+  headerName: "Preference Description",
+  sortable: false,
+  filterable: false
+}, {
+  field: "isDefault",
+  type: "boolean",
+  width: 100,
+  headerName: "Default",
+  sortable: false,
+  filterable: false
+}, {
+  field: 'editAction',
+  type: 'actions',
+  headerName: '',
+  width: 20,
+  getActions: () => [/*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
+    key: 1,
+    icon: /*#__PURE__*/_react.default.createElement(_material.Tooltip, {
+      title: actionTypes.Edit
+    }, "   ", /*#__PURE__*/_react.default.createElement(_Edit.default, null)),
+    tabIndex: 1,
+    "data-action": actionTypes.Edit,
+    label: "Edit",
+    color: "primary"
+  })]
+}, {
+  field: 'deleteAction',
+  type: 'actions',
+  headerName: '',
+  width: 20,
+  getActions: () => [/*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
+    key: 2,
+    icon: /*#__PURE__*/_react.default.createElement(_material.Tooltip, {
+      title: actionTypes.Delete
+    }, /*#__PURE__*/_react.default.createElement(_Delete.default, null), " "),
+    tabIndex: 2,
+    "data-action": actionTypes.Delete,
+    label: "Delete",
+    color: "error"
+  })]
+}];
 const initialValues = {
   prefName: '',
   prefDesc: '',
@@ -121,7 +173,7 @@ const GridPreferences = _ref2 => {
   const {
     Username
   } = stateData !== null && stateData !== void 0 && stateData.getUserData ? stateData.getUserData : {};
-  const preferences = stateData === null || stateData === void 0 ? void 0 : stateData.preferences.filter(pref => pref.prefName !== coolrDefaultPreference);
+  const preferences = stateData === null || stateData === void 0 ? void 0 : stateData.preferences;
   const currentPreference = stateData === null || stateData === void 0 ? void 0 : stateData.currentPreference;
   const preferenceApi = stateData === null || stateData === void 0 || (_stateData$gridSettin = stateData.gridSettings) === null || _stateData$gridSettin === void 0 || (_stateData$gridSettin = _stateData$gridSettin.permissions) === null || _stateData$gridSettin === void 0 ? void 0 : _stateData$gridSettin.preferenceApi;
   const filterModel = (0, _xDataGridPremium.useGridSelector)(gridRef, _xDataGridPremium.gridFilterModelSelector);
@@ -367,58 +419,6 @@ const GridPreferences = _ref2 => {
     }
   };
   const prefName = formik.values.prefName.trim();
-  const gridColumns = (0, _react.useMemo)(() => {
-    const baseColumns = [{
-      field: 'prefName',
-      headerName: tTranslate('Preference Name', tOpts),
-      flex: 1
-    }, {
-      field: 'prefDesc',
-      headerName: tTranslate('Preference Description', tOpts),
-      flex: 1
-    }, {
-      field: 'isDefault',
-      headerName: tTranslate('Default', tOpts),
-      width: 100,
-      type: 'boolean'
-    }];
-    // Only add action columns if there are valid preferences to manage
-    if (preferences && preferences.length > 0) {
-      baseColumns.push({
-        field: 'editAction',
-        type: 'actions',
-        headerName: '',
-        width: 20,
-        getActions: () => [/*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
-          key: 1,
-          icon: /*#__PURE__*/_react.default.createElement(_material.Tooltip, {
-            title: actionTypes.Edit
-          }, "   ", /*#__PURE__*/_react.default.createElement(_Edit.default, null)),
-          tabIndex: 1,
-          "data-action": actionTypes.Edit,
-          label: "Edit",
-          color: "primary"
-        })]
-      });
-      baseColumns.push({
-        field: 'deleteAction',
-        type: 'actions',
-        headerName: '',
-        width: 20,
-        getActions: () => [/*#__PURE__*/_react.default.createElement(_xDataGridPremium.GridActionsCellItem, {
-          key: 2,
-          icon: /*#__PURE__*/_react.default.createElement(_material.Tooltip, {
-            title: actionTypes.Delete
-          }, /*#__PURE__*/_react.default.createElement(_Delete.default, null), " "),
-          tabIndex: 2,
-          "data-action": actionTypes.Delete,
-          label: "Delete",
-          color: "error"
-        })]
-      });
-    }
-    return baseColumns;
-  }, [preferences, tTranslate, tOpts]);
   return /*#__PURE__*/_react.default.createElement(_material.Box, null, /*#__PURE__*/_react.default.createElement(_material.Button, {
     id: "grid-preferences-btn",
     "aria-controls": menuAnchorEl ? 'basic-menu' : undefined,
