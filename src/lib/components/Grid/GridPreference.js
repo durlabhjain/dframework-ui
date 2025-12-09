@@ -421,7 +421,7 @@ const GridPreferences = ({ tTranslate = (key) => key, model, gridRef, columns = 
                                     pageSizeOptions={[5, 10, 20, 50, 100]}
                                     initialState={{
                                         pagination: {
-                                            paginationModel: { pageSize: 10, page: 0 }
+                                            paginationModel: { pageSize: 10 }
                                         },
                                     }}
                                     pagination

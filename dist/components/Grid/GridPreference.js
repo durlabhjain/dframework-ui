@@ -589,6 +589,13 @@ const GridPreferences = _ref2 => {
     onCellClick: onCellClick,
     columns: gridColumns,
     pageSizeOptions: [5, 10, 20, 50, 100],
+    initialState: {
+      pagination: {
+        paginationModel: {
+          pageSize: 10
+        }
+      }
+    },
     pagination: true,
     rowCount: filteredPrefs.length,
     rows: filteredPrefs,
