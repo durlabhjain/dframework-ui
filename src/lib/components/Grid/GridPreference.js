@@ -419,6 +419,11 @@ const GridPreferences = ({ tTranslate = (key) => key, model, gridRef, columns = 
                                     onCellClick={onCellClick}
                                     columns={gridColumns}
                                     pageSizeOptions={[5, 10, 20, 50, 100]}
+                                    initialState={{
+                                        pagination: {
+                                            paginationModel: { pageSize: 10, page: 0 }
+                                        },
+                                    }}
                                     pagination
                                     rowCount={filteredPrefs.length}
                                     rows={filteredPrefs}
