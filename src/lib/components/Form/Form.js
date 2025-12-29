@@ -6,19 +6,44 @@ import {
   saveRecord,
   deleteRecord
 } from "../Grid/crud-helper";
+import Button from "@mui/material/Button";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
 import FormLayout from "./field-mapper";
 import { useSnackbar } from "../SnackBar";
+import { DialogComponent } from "../Dialog";
 import { useStateContext, useRouter } from "../useRouter/StateProvider";
 import actionsStateProvider from "../useRouter/actions";
+import PageTitle from "../PageTitle";
 import utils, { getPermissions } from "../utils";
+import Relations from "./relations";
 export const ActiveStepContext = createContext(1);
 const defaultFieldConfigs = {};
+const consts = {
+  object: "object",
+  function: "function",
+  baseData: "baseData",
+  string: "string",
+  create: "Create",
+  copy: "Copy",
+  edit: "Edit",
+  number: "number"
+};
 
 const Form = ({
-    model,
-    api,
-    permissions = { edit: true, export: true, delete: true },
-    Layout = FormLayout,
+  model,
+  api,
+  models,
+  relationFilters = {},
+  permissions = {},
+  Layout = FormLayout,
+  baseSaveData = {},
+  sx,
+  readOnly,
+  beforeSubmit,
+  deletePromptText
 }) => {
   const formTitle = model.formTitle || model.title;
   const { navigate, getParams, useParams, pathname } = useRouter();
@@ -153,55 +178,51 @@ const Form = ({
     }
   });
 
-    const { dirty } = formik;
+  const { dirty } = formik;
 
-    const handleDiscardChanges = () => {
-        formik.resetForm();
-        setIsDiscardDialogOpen(false);
-        navigate('.');
-    };
+  const handleDiscardChanges = () => {
+    formik.resetForm();
+    setIsDiscardDialogOpen(false);
+    handleNavigation();
+  };
 
-    const warnUnsavedChanges = () => {
-        if (dirty) {
-            setIsDiscardDialogOpen(true);
-        }
+  const errorOnLoad = function (title, error) {
+    snackbar.showError(title, error);
+    handleNavigation();
+  };
+
+  const setActiveRecord = function ({ id, title, record, lookups }) {
+    const isCopy = idWithOptions.indexOf("-") > -1;
+    const isNew = !id || id === "0";
+    const pageTitle = isNew ? consts.create : isCopy ? consts.copy : consts.edit;
+    const linkColumn = isNew ? "" : record[model.linkColumn];
+    const breadcrumbs = [{ text: model.breadCrumbs }, { text: pageTitle }];
+    if (isCopy) {
+      record[model.linkColumn] = "";
     }
-
-    const errorOnLoad = function (title, error) {
-        snackbar.showError(title, error);
-        navigate('./');
+    model.columns.forEach((item) => {
+      if (item.skipCopy && isCopy) {
+        record[item.field] = "";
+      }
+    });
+    setData(record);
+    setLookups(lookups);
+    if (linkColumn !== "") {
+      breadcrumbs.push({ text: linkColumn });
     }
-
-    const setActiveRecord = function ({ id, title, record, lookups }) {
-        const isCopy = idWithOptions.indexOf("-") > -1;
-        const isNew = !id || id === "0";
-        const localTitle = isNew ? "Create" : (isCopy ? "Copy" : "Edit");
-        const localValue = isNew ? "" : record[model.linkColumn];
-        const breadcrumbs = [{ text: model?.breadCrumbs }, { text: localTitle }];
-
-        if (isCopy) {
-            record[model.linkColumn] += " (Copy)";
-        }
-        setData(record);
-        setLookups(lookups);
-
-        if (localValue !== "") {
-            breadcrumbs.push({ text: localValue });
-        }
-        dispatchData({
-            type: actionsStateProvider.PAGE_TITLE_DETAILS,
-            payload: {
-                showBreadcrumbs: true, breadcrumbs: breadcrumbs
-            },
-        });
-    }
-    const handleFormCancel = function (event) {
-        if (dirty) {
-            warnUnsavedChanges();
-            event.preventDefault();
-        } else {
-            navigate('.');
-        }
+    dispatchData({
+      type: actionsStateProvider.PAGE_TITLE_DETAILS,
+      payload: {
+        showBreadcrumbs: true,
+        breadcrumbs: breadcrumbs
+      }
+    });
+  };
+  const handleFormCancel = function (event) {
+    if (dirty) {
+      setIsDiscardDialogOpen(true);
+    } else {
+      handleNavigation();
     }
     event.preventDefault();
   };

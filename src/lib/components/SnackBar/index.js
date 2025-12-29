@@ -1,6 +1,5 @@
 import React, { useState, useContext, createContext } from 'react'
-import Snackbar from '@mui/material/Snackbar'
-import MuiAlert from '@mui/material/Alert';
+import { Snackbar, Alert as MuiAlert } from '@mui/material'
 
 const SnackbarContext = createContext(null);
 const vertical = 'bottom';

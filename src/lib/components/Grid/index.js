@@ -14,6 +14,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIcon from '@mui/icons-material/FileCopy';
 import EditIcon from '@mui/icons-material/Edit';
 import FilterListOffIcon from '@mui/icons-material/FilterListOff';
+import { getPermissions } from '../utils';
 import {
     GridActionsCellItem,
     useGridApiRef
@@ -21,7 +22,7 @@ import {
 import { useMemo, useEffect, memo, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import Typography from '@mui/material/Typography';
+import { Typography, Button, Card, CardContent } from '@mui/material';
 import MenuItem from '@mui/material/MenuItem';
 import { useSnackbar } from '../SnackBar/index';
 import { DialogComponent } from '../Dialog/index';
@@ -36,6 +37,7 @@ import PageTitle from '../PageTitle';
 import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
 import actionsStateProvider from '../useRouter/actions';
+import GridPreferences from './GridPreference';
 import CustomDropdownmenu from './CustomDropdownmenu';
 import { useTranslation } from 'react-i18next';
 import { GridOn, Code, Language, TableChart, DataObject as DataObjectIcon } from '@mui/icons-material';
@@ -44,7 +46,7 @@ import { styled } from '@mui/material/styles';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import utils from '../utils';
-import CustomToolbar from './CustomToolbar';
+import constants from '../constants';
 
 const defaultPageSize = 10;
 const t = utils.t;
@@ -55,10 +57,6 @@ const actionTypes = {
     Edit: "Edit",
     Delete: "Delete"
 };
-const constants = {
-    gridFilterModel: { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' },
-    permissions: { edit: true, add: true, export: true, delete: true, clearFilterText: "CLEAR THIS FILTER" },
-}
 
 const booleanIconRenderer = (params) => {
     if (params.value) {
@@ -133,7 +131,7 @@ const CustomToolbar = function (props) {
                 {currentPreference && model.showPreferenceInHeader && <Typography className="preference-name-text" variant="h6" component="h6" textAlign="center" sx={{ ml: 1 }} >{tTranslate('Applied Preference', tOpts)} - {currentPreference}</Typography>}
                 {(isReadOnly || (!canAdd && !forAssignment)) && <Typography variant="h6" component="h3" textAlign="center" sx={{ ml: 1 }} > {!canAdd || isReadOnly ? "" : model.title}</Typography>}
                 {!forAssignment && canAdd && !isReadOnly && <ButtonWithMargin startIcon={!showAddIcon ? null : <AddIcon />} onClick={onAdd} size="medium" variant="contained" >{addText}</ButtonWithMargin>}
-                {(selectionApi.length && data.records.length) ? (
+                {(selectionApi?.length && data.records.length) ? (
                     <ButtonWithMargin
                         onClick={selectAll}
                         size="medium"
@@ -285,7 +283,8 @@ const GridBase = memo(({
     reRenderKey,
     additionalFilters,
     selectedClients = null,
-    onExportMenuClick
+    onExportMenuClick,
+    ...props
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState({ recordCount: 0, records: [], lookups: {} });
@@ -315,7 +314,8 @@ const GridBase = memo(({
     const { pathname, navigate } = useRouter()
     const apiRef = useGridApiRef();
     const initialGridRef = useRef(null);
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, createdOnKeepLocal = true, hideBackButton = false, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, enablePivoting = false, showCreateButton, hideExcelExport = false, hideXmlExport = false, hideHtmlExport = false, hideJsonExport = false } = model;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, createdOnKeepLocal = true, hideBackButton = false, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, enablePivoting = false, showCreateButton, hideExcelExport = false, hideXmlExport = false, hideHtmlExport = false, hideJsonExport = false, addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, selectionApi, showPageTitle = false } = model;
+    const paginationMode = model.paginationMode === constants.client ? constants.client : constants.server;
     const isReadOnly = model.readOnly === true;
     const isDoubleClicked = model.doubleClicked === false;
     const customExportRef = useRef();
@@ -325,15 +325,24 @@ const GridBase = memo(({
     const [isGridPreferenceFetched, setIsGridPreferenceFetched] = useState(false);
     const { systemDateTimeFormat, stateData, dispatchData, formatDate, removeCurrentPreferenceName, getAllSavedPreferences, applyDefaultPreferenceIfExists } = useStateContext();
     const effectivePermissions = { ...constants.permissions, ...stateData.gridSettings.permissions, ...model.permissions, ...permissions };
-    const { ClientId } = stateData?.getUserData ? stateData.getUserData : {};
     const { Username } = stateData?.getUserData ? stateData.getUserData : {};
-    const routesWithNoChildRoute = stateData.gridSettings.permissions?.routesWithNoChildRoute || [];
     const disablePivoting = !enablePivoting;
-    const url = stateData?.gridSettings?.permissions?.Url;
-    const withControllersUrl = stateData?.gridSettings?.permissions?.withControllersUrl;
-    const currentPreference = stateData?.currentPreference;
-    const defaultPreferenceEnums = stateData?.gridSettings?.permissions?.tablePreferenceEnums;
     const preferenceName = model.preferenceId || model.module?.preferenceId;
+    const {
+        gridSettings: {
+            permissions: {
+                routesWithNoChildRoute = [],
+                Url: url,
+                withControllersUrl,
+                defaultPreferenceEnums,
+                preferenceApi
+            } = {}
+        } = {},
+        currentPreference
+    } = stateData;
+    const documentField = model.columns.find(ele => ele.type === 'fileUpload')?.field || "";
+    const userDefinedPermissions = { add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete };
+    const { canAdd, canEdit, canDelete } = getPermissions({ userData, model, userDefinedPermissions });
     const emptyIsAnyOfOperatorFilters = ["isEmpty", "isNotEmpty", "isAnyOf"];
     const filterFieldDataTypes = {
         Number: 'number',
@@ -345,7 +354,7 @@ const GridBase = memo(({
     const OrderSuggestionHistoryFields = {
         OrderStatus: 'OrderStatusId'
     }
-    const preferenceApi = stateData?.gridSettings?.permissions?.preferenceApi;
+    const selectedSet = useRef(new Set());
     const gridColumnTypes = {
         "radio": {
             "type": "singleSelect",
@@ -710,6 +719,14 @@ const GridBase = memo(({
         setErrorMessage(null);
         setIsDeleting(false);
     };
+
+    const processRowUpdate = (updatedRow) => {
+        if (typeof props.processRowUpdate === "function") {
+            props.processRowUpdate(updatedRow, data);
+        }
+        return updatedRow;
+    };
+
     const onCellDoubleClick = (event) => {
         const { row: record } = event;
         if ((!isReadOnly && !isDoubleClicked) && !disableCellRedirect) {
@@ -806,10 +823,24 @@ const GridBase = memo(({
         updateAssignment({ unassign: selection });
     }
 
+    const selectAll = () => {
+        if (selectedSet.current.size === data.records.length) {
+            // If all records are selected, deselect all
+            selectedSet.current.clear();
+            setSelection([]);
+        } else {
+            // Select all records
+            data.records.forEach(record => {
+                selectedSet.current.add(record[idProperty]);
+            });
+            setSelection(data.records.map(record => record[idProperty]));
+        }
+    };
+
     const setupGridPreference = async ({ preferenceName, Username, preferenceApi, defaultPreferenceEnums }) => {
         removeCurrentPreferenceName({ dispatchData });
         const preferences = await getAllSavedPreferences({ preferenceName, history: navigate, dispatchData, Username, preferenceApi, defaultPreferenceEnums });
-        applyDefaultPreferenceIfExists({ preferenceName, dispatchData, gridRef: apiRef, setIsGridPreferenceFetched, defaultPreferenceEnums, preferences });
+        applyDefaultPreferenceIfExists({ preferenceName, dispatchData, gridRef: apiRef, setIsGridPreferenceFetched, defaultPreferenceEnums, preferences, preferenceApi, Username });
     }
 
     useEffect(() => {
@@ -936,10 +967,15 @@ const GridBase = memo(({
         setSortModel(sort);
     }
 
+    const pageTitle = title || model.gridTitle || model.title;
+    const breadCrumbs = searchParamKey
+        ? [{ text: searchParams.get(searchParamKey) || pageTitle }]
+        : [{ text: pageTitle }];
+
     return (
         <>
-            <PageTitle navigate={navigate} showBreadcrumbs={!hideBreadcrumb && !hideBreadcrumbInGrid}
-                breadcrumbs={breadCrumbs} enableBackButton={navigateBack} breadcrumbColor={breadcrumbColor} />
+            {showPageTitle && <PageTitle navigate={navigate} showBreadcrumbs={!hideBreadcrumb && !hideBreadcrumbInGrid}
+                breadcrumbs={breadCrumbs} enableBackButton={navigateBack} breadcrumbColor={breadcrumbColor} /> }
             <Card style={gridStyle || customStyle} elevation={0} sx={{ '& .MuiCardContent-root': { p: 0 } }}>
                 <CardContent>
                     <DataGridPremium
@@ -949,9 +985,6 @@ const GridBase = memo(({
                             },
                             "& .MuiTablePagination-displayedRows": {
                                 marginTop: 2
-                            },
-                            "& .MuiDataGrid-columnHeader .MuiInputLabel-shrink": {
-                                display: "none"
                             },
                             "& .MuiDataGrid-toolbarContainer": {
                                 flexShrink: 0,
@@ -993,6 +1026,7 @@ const GridBase = memo(({
                             footer: Footer
                         }}
                         slotProps={{
+                            headerFilterCell: { showClearIcon: true },
                             toolbar: {
                                 model,
                                 data,
@@ -1018,39 +1052,19 @@ const GridBase = memo(({
                                 setIsGridPreferenceFetched,
                                 tTranslate,
                                 tOpts,
-                                idProperty
-                            },
-                            toolbar: {
-                                model,
+                                idProperty,
                                 customHeaderComponent,
-                                currentPreference,
-                                isReadOnly,
-                                forAssignment,
-                                showAddIcon,
                                 showCreateButton,
-                                available,
-                                assigned,
                                 t,
                                 tOpts,
-                                classes,
-                                onAdd,
-                                onAssign,
-                                onUnassign,
-                                clearFilters,
-                                handleExport,
                                 onExportMenuClick,
                                 hideExcelExport,
                                 hideXmlExport,
                                 hideHtmlExport,
                                 hideJsonExport,
-                                apiRef,
-                                gridColumns,
-                                setIsGridPreferenceFetched,
                                 initialGridRef,
                                 setIsLoading,
-                                CustomExportButton,
-                                effectivePermissions,
-                                tTranslate
+                                CustomExportButton
                             },
                             footer: {
                                 pagination: true,
@@ -1072,7 +1086,13 @@ const GridBase = memo(({
                             columns: {
                                 columnVisibilityModel: visibilityModel
                             },
-                            pinnedColumns: pinnedColumns
+                            pinnedColumns: pinnedColumns,
+                            pagination: {
+                                paginationModel: paginationModel
+                            },
+                            filter: {
+                                filterModel: initialFilterModel
+                            }
                         }}
                         localeText={{
                             filterValueTrue: 'Yes',

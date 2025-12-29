@@ -37,6 +37,7 @@ const Field = React.memo(({ column, field, formik, lookups, dependsOn = [], fiel
                 {...otherProps}
                 multiple
                 id={field}
+                limitTags={column.limitTags || consts.limitTags}
                 options={options || []}
                 getOptionLabel={(option) => option.label || ''}
                 defaultValue={filteredCombos}
@@ -52,4 +53,3 @@ const Field = React.memo(({ column, field, formik, lookups, dependsOn = [], fiel
 });
 
 export default Field;
-

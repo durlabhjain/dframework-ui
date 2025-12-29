@@ -14,6 +14,7 @@ import request from './httpRequest';
 import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import actionsStateProvider from '../useRouter/actions';
 import { DialogComponent } from '../Dialog';
+import constants from '../constants';
 
 const actionTypes = {
     Copy: "Copy",
@@ -40,7 +41,6 @@ const initialValues = {
     prefDesc: '',
     isDefault: false
 };
-const pageSizeOptions = [5, 10, 20, 50, 100];
 const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, columns = [], setIsGridPreferenceFetched }) => {
     const { stateData, dispatchData, removeCurrentPreferenceName, getAllSavedPreferences } = useStateContext();
     const { navigate } = useRouter();
@@ -338,6 +338,7 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
                 }
                 maxWidth={isManageForm ? 'md' : 'sm'}
                 fullWidth
+                showDialogActions={false}
             >
                 {openForm && (
                     <Grid
@@ -354,7 +355,7 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
                             }
                         }}
                     >
-                        <Grid size={12}>
+                        <Grid size={{ xs: 12}}>
                             <TextField
                                 defaultValue={tTranslate(formik.values.prefName, tOpts)}
                                 variant="outlined"
@@ -447,7 +448,7 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
                                 className="pagination-fix"
                                 onCellClick={onCellClick}
                                 columns={gridColumns}
-                                pageSizeOptions={pageSizeOptions}
+                                pageSizeOptions={constants.pageSizeOptions}
                                 initialState={{
                                     pagination: {
                                         paginationModel: { pageSize: 10 }
