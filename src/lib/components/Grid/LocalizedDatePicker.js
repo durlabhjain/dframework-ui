@@ -6,6 +6,7 @@ import { getGridDateOperators } from '@mui/x-data-grid-premium';
 import utcPlugin from 'dayjs/plugin/utc.js';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { useTranslation } from "react-i18next";
 import { useStateContext } from '../useRouter/StateProvider';
 import utils from '../utils';
 
@@ -20,6 +21,9 @@ const LocalizedDatePicker = (props) => {
     const { item, applyValue, convert } = props;
     const { systemDateTimeFormat, stateData } = useStateContext();
     const columnType = props?.type || 'date';
+    const { t: translate, i18n } = useTranslation();
+    const tOpts = { t: translate, i18n };
+    const t = utils.t;
     const filterFormat = fixedFilterFormat[columnType];
     const isValidDate = (date) => {
         const parsedDate = dayjs(date);
@@ -66,7 +70,9 @@ const LocalizedDatePicker = (props) => {
                 onChange={handleFilterChange}
                 slotProps={{
                     textField: {
-                        variant: "standard", label: "Value", sx: {
+                        variant: "standard", 
+                        label: t("Value", tOpts),
+                        sx: {
                             minHeight: '45px',
                             marginBottom: '-16px',
                             marginTop: '0px',
