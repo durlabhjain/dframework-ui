@@ -320,7 +320,7 @@ const GridBase = memo(({
     const { pathname, navigate } = useRouter()
     const apiRef = useGridApiRef();
     const initialGridRef = useRef(null);
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, createdOnKeepLocal = true, hideBackButton = false, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, enablePivoting = false, showCreateButton, hideExcelExport = false, hideXmlExport = false, hideHtmlExport = false, hideJsonExport = false, addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, selectionApi, showPageTitle = false } = model;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, createdOnKeepLocal = true, hideBackButton = false, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, enablePivoting = false, showCreateButton, hideExcelExport = false, hideXmlExport = false, hideHtmlExport = false, hideJsonExport = false, addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, selectionApi, showPageTitle = true } = model;
     const paginationMode = model.paginationMode === constants.client ? constants.client : constants.server;
     const isReadOnly = model.readOnly === true;
     const isDoubleClicked = model.doubleClicked === false;
