@@ -100,7 +100,7 @@ const localizedDateFormat = (colProps) => getGridDateOperators().map((operator) 
     ...operator,
     InputComponent: operator.InputComponent
         ? (props) => <LocalizedDatePicker {...props} {...colProps} />
-        : undefined,
+        : undefined
 }));
 
 export default localizedDateFormat;

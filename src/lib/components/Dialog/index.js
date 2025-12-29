@@ -17,7 +17,9 @@ const DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText,
             aria-describedby="alert-dialog-description"
             maxWidth={maxWidth}
         >
-            <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
+            <DialogContent>
+                <DialogTitle id="alert-dialog-title">{title}</DialogTitle>
+            </DialogContent>
             <DialogContent>
                 <DialogContentText>{children}</DialogContentText>
             </DialogContent>

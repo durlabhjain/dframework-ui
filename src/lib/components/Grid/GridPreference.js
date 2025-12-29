@@ -14,7 +14,6 @@ import request from './httpRequest';
 import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import actionsStateProvider from '../useRouter/actions';
 import { DialogComponent } from '../Dialog';
-import constants from '../constants';
 
 const actionTypes = {
     Copy: "Copy",
@@ -41,6 +40,7 @@ const initialValues = {
     prefDesc: '',
     isDefault: false
 };
+const pageSizeOptions = [5, 10, 20, 50, 100];
 const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, columns = [], setIsGridPreferenceFetched }) => {
     const { stateData, dispatchData, removeCurrentPreferenceName, getAllSavedPreferences } = useStateContext();
     const { navigate } = useRouter();
@@ -246,24 +246,6 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
     const prefName = formik.values.prefName.trim();
     // represent manage preferences form type.
     const isManageForm = formType === formTypes.Manage;
-    const gridColumns = useMemo(() => {
-        const baseColumns = [
-            { field: "prefName", type: 'string', width: 300, headerName: "Preference Name", sortable: false, filterable: false },
-            { field: "prefDesc", type: 'string', width: 300, headerName: "Preference Description", sortable: false, filterable: false },
-            { field: "isDefault", type: "boolean", width: 100, headerName: "Default", sortable: false, filterable: false },
-        ];
-        // Only add action columns if there are valid preferences to manage
-        if (preferences && preferences.length > 0) {
-            baseColumns.push(
-                { field: 'editAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={1} icon={<Tooltip title={actionTypes.Edit}>   <EditIcon /></Tooltip>} tabIndex={1} data-action={actionTypes.Edit} label="Edit" color="primary" />] }
-            );
-            baseColumns.push(
-                { field: 'deleteAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={2} icon={<Tooltip title={actionTypes.Delete}><DeleteIcon /> </Tooltip>} tabIndex={2} data-action={actionTypes.Delete} label="Delete" color="error" />] }
-            );
-        }
-        return baseColumns;
-    }, [preferences, tTranslate, tOpts]);
-
     return (
         <Box>
             <Button
@@ -355,7 +337,7 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
                             }
                         }}
                     >
-                        <Grid size={{ xs: 12}}>
+                        <Grid size={12}>
                             <TextField
                                 defaultValue={tTranslate(formik.values.prefName, tOpts)}
                                 variant="outlined"
@@ -448,12 +430,7 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
                                 className="pagination-fix"
                                 onCellClick={onCellClick}
                                 columns={gridColumns}
-                                pageSizeOptions={constants.pageSizeOptions}
-                                initialState={{
-                                    pagination: {
-                                        paginationModel: { pageSize: 10 }
-                                    },
-                                }}
+                                pageSizeOptions={pageSizeOptions}
                                 pagination
                                 rowCount={filteredPrefs.length}
                                 rows={filteredPrefs}
@@ -468,15 +445,6 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
                                 disableRowGrouping={true}
                                 disableRowSelectionOnClick={true}
                                 autoHeight
-                                localeText={{
-                                    toolbarColumnsLabel: tTranslate('Select columns', tOpts),
-                                    toolbarExportLabel: tTranslate('Export', tOpts),
-                                    booleanCellFalseLabel: tTranslate('No', tOpts),
-                                    paginationRowsPerPage: tTranslate('Rows per page', tOpts),
-                                    paginationDisplayedRows: ({ from, to, count }) => `${from}–${to} ${tTranslate('of', tOpts)} ${count}`,
-                                    toolbarQuickFilterLabel: tTranslate('Search', tOpts),
-                                    columnsManagementSearchTitle: tTranslate('Search', tOpts)
-                                }}
                             />
                         </Grid>
                         <Grid size={12}>

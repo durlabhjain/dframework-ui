@@ -1,5 +1,6 @@
 
 import React from 'react';
+
 import {
     DataGridPremium,
     Toolbar,
@@ -22,7 +23,7 @@ import {
 import { useMemo, useEffect, memo, useRef, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import { Typography, Button, Card, CardContent } from '@mui/material';
+import { Typography, Button, Card, CardContent, Badge } from '@mui/material';
 import MenuItem from '@mui/material/MenuItem';
 import { useSnackbar } from '../SnackBar/index';
 import { DialogComponent } from '../Dialog/index';
@@ -65,7 +66,6 @@ const booleanIconRenderer = (params) => {
         return <CloseIcon style={{ color: 'gray' }} />;
     }
 }
-
 
 const DeleteContentText = styled('span')({
     width: '100%',
@@ -113,10 +113,12 @@ const CustomToolbar = function (props) {
         gridColumns,
         setIsGridPreferenceFetched,
         tTranslate,
-        tOpts
+        tOpts,
+        filterModel
     } = props;
 
     const addText = model.customAddText || (model.title ? `Add ${model.title}` : 'Add');
+    const activeFilterCount = filterModel?.items?.length || 0;
 
     return (
         <div
@@ -164,7 +166,11 @@ const CustomToolbar = function (props) {
                         render={(triggerProps) => (
                             <Button
                                 {...triggerProps}
-                                startIcon={<FilterListIcon />}
+                                startIcon={
+                                    <Badge badgeContent={activeFilterCount} color="primary">
+                                        <FilterListIcon />
+                                    </Badge>
+                                }
                                 size="small"
                                 variant="text"
                             >
@@ -325,9 +331,11 @@ const GridBase = memo(({
     const [isGridPreferenceFetched, setIsGridPreferenceFetched] = useState(false);
     const { systemDateTimeFormat, stateData, dispatchData, formatDate, removeCurrentPreferenceName, getAllSavedPreferences, applyDefaultPreferenceIfExists } = useStateContext();
     const effectivePermissions = { ...constants.permissions, ...stateData.gridSettings.permissions, ...model.permissions, ...permissions };
+    const { ClientId } = stateData?.getUserData ? stateData.getUserData : {};
     const { Username } = stateData?.getUserData ? stateData.getUserData : {};
     const disablePivoting = !enablePivoting;
     const preferenceName = model.preferenceId || model.module?.preferenceId;
+    const searchParams = new URLSearchParams(window.location.search);
     const {
         gridSettings: {
             permissions: {
@@ -391,7 +399,6 @@ const GridBase = memo(({
     }, [data]);
 
     useEffect(() => {
-
         if (customFilters && Object.keys(customFilters) != 0) {
             if (customFilters.clear) {
                 let filterObject = {
@@ -455,6 +462,7 @@ const GridBase = memo(({
             return () => clearTimeout(timer);
         }
     }, []);
+
 
     const { gridColumns, pinnedColumns, lookupMap } = useMemo(() => {
         const baseColumnList = columns || model?.gridColumns || model?.columns;
@@ -566,6 +574,7 @@ const GridBase = memo(({
 
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment]);
+
     const fetchData = (action = "list", extraParams = {}, contentType, columns, isPivotExport, isElasticExport) => {
         const { pageSize, page } = paginationModel;
         let gridApi = `${model.controllerType === 'cs' ? withControllersUrl : url}${model.api || api}`
@@ -627,6 +636,7 @@ const GridBase = memo(({
             tOpts
         });
     };
+
     const openForm = (id, { mode } = {}) => {
         if (setActiveRecord) {
             getRecord({ id, api: api || model?.api, setIsLoading, setActiveRecord, modelConfig: model, parentFilters, where });
@@ -639,13 +649,13 @@ const GridBase = memo(({
         if (mode === "copy") {
             path += "0-" + id;
             dispatchData({ type: 'UPDATE_FORM_MODE', payload: 'copy' })
-
         } else {
             path += id;
             dispatchData({ type: 'UPDATE_FORM_MODE', payload: '' })
         }
         navigate(path);
     };
+
     const onCellClickHandler = async (cellParams, event, details) => {
         if (!isReadOnly) {
             if (onCellClick) {
@@ -702,7 +712,6 @@ const GridBase = memo(({
     };
 
     const handleDelete = async function () {
-
         let gridApi = `${model.controllerType === 'cs' ? withControllersUrl : url}${model.api || api}`
         const result = await deleteRecord({ id: record?.id, api: gridApi, setIsLoading, setError: snackbar.showError, setErrorMessage });
         if (result === true) {
@@ -713,8 +722,12 @@ const GridBase = memo(({
             setTimeout(() => {
                 setIsDeleting(false);
             }, 200);
+            setTimeout(() => {
+                setIsDeleting(false);
+            }, 200);
         }
     }
+
     const clearError = () => {
         setErrorMessage(null);
         setIsDeleting(false);
@@ -731,23 +744,28 @@ const GridBase = memo(({
         const { row: record } = event;
         if ((!isReadOnly && !isDoubleClicked) && !disableCellRedirect) {
             openForm(record[idProperty]);
-        }
-
-        if (isReadOnly && model.rowRedirectLink) {
-            let historyObject = {
-                pathname: template.replaceTags(model.rowRedirectLink, record),
+            if ((!isReadOnly && !isDoubleClicked) && !disableCellRedirect) {
+                openForm(record[idProperty]);
             }
 
-            if (model.addRecordToState) {
-                historyObject.state = record
-            }
-            navigate(historyObject);
-        }
 
-        if (onRowDoubleClick) {
-            onRowDoubleClick(event);
-        }
-    };
+            if (isReadOnly && model.rowRedirectLink) {
+                let historyObject = {
+                    pathname: template.replaceTags(model.rowRedirectLink, record),
+                }
+
+                if (model.addRecordToState) {
+                    historyObject.state = record
+                    historyObject.state = record
+                }
+                navigate(historyObject);
+            }
+
+            if (onRowDoubleClick) {
+                onRowDoubleClick(event);
+            }
+        };
+    }
 
     const handleAddRecords = async () => {
         if (selectedSet.current.size < 1) {
@@ -797,7 +815,22 @@ const GridBase = memo(({
 
 
     const onAdd = () => {
-        openForm(0);
+        if (selectionApi.length > 0) {
+            if (selectedSet.current.size) {
+                setShowAddConfirmation(true);
+                return;
+            }
+            snackbar.showError(
+                "Please select at least one record to proceed"
+            );
+            setIsLoading(false);
+            return;
+        }
+        if (typeof onAddOverride === constants.function) {
+            onAddOverride();
+        } else {
+            openForm({ id: 0 });
+        }
     };
 
     const clearFilters = () => {
@@ -809,6 +842,7 @@ const GridBase = memo(({
             }
         }
     }
+    
     const updateAssignment = ({ unassign, assign }) => {
         const assignedValues = Array.isArray(selected) ? selected : (selected.length ? selected.split(',') : []);
         const finalValues = unassign ? assignedValues.filter(id => !unassign.includes(parseInt(id))) : [...assignedValues, ...assign];
@@ -821,7 +855,7 @@ const GridBase = memo(({
 
     const onUnassign = () => {
         updateAssignment({ unassign: selection });
-    }
+    };
 
     const selectAll = () => {
         if (selectedSet.current.size === data.records.length) {
@@ -886,7 +920,7 @@ const GridBase = memo(({
         if (forAssignment || !updatePageTitle) {
             return;
         }
-        dispatchData({ type: actionsStateProvider.PAGE_TITLE_DETAILS, payload: { icon: "", titleHeading: model?.pageTitle || model?.title, titleDescription: model?.titleDescription, title: model?.title } })
+        dispatchData({ type: actionsStateProvider.PAGE_TITLE_DETAILS, payload: { icon: "", titleHeading: model?.pageTitle || model?.title, titleDescription: model?.titleDescription, title: model?.title } });
         return () => {
             dispatchData({
                 type: actionsStateProvider.PAGE_TITLE_DETAILS, payload: null
@@ -975,9 +1009,9 @@ const GridBase = memo(({
     return (
         <>
             {showPageTitle && <PageTitle navigate={navigate} showBreadcrumbs={!hideBreadcrumb && !hideBreadcrumbInGrid}
-                breadcrumbs={breadCrumbs} enableBackButton={navigateBack} breadcrumbColor={breadcrumbColor} /> }
-            <Card style={gridStyle || customStyle} elevation={0} sx={{ '& .MuiCardContent-root': { p: 0 } }}>
-                <CardContent>
+                breadcrumbs={breadCrumbs} enableBackButton={navigateBack} breadcrumbColor={breadcrumbColor} />}
+            <div style={gridStyle || customStyle}>
+                <Box sx={{ display: 'flex', width: '100%', flexDirection: 'column', position: 'relative', maxHeight: '75vh' }}>
                     <DataGridPremium
                         sx={{
                             "& .MuiTablePagination-selectLabel": {
@@ -1064,7 +1098,8 @@ const GridBase = memo(({
                                 hideJsonExport,
                                 initialGridRef,
                                 setIsLoading,
-                                CustomExportButton
+                                CustomExportButton,
+                                filterModel
                             },
                             footer: {
                                 pagination: true,
@@ -1081,7 +1116,6 @@ const GridBase = memo(({
                         disableAggregation={true}
                         disableRowGrouping={true}
                         disableRowSelectionOnClick={disableRowSelectionOnClick}
-                        autoHeight
                         initialState={{
                             columns: {
                                 columnVisibilityModel: visibilityModel
@@ -1089,9 +1123,6 @@ const GridBase = memo(({
                             pinnedColumns: pinnedColumns,
                             pagination: {
                                 paginationModel: paginationModel
-                            },
-                            filter: {
-                                filterModel: initialFilterModel
                             }
                         }}
                         localeText={{
@@ -1209,25 +1240,26 @@ const GridBase = memo(({
                                     : `1 ${t('item selected', tOpts)}`,
                         }}
                     />
-                    {isOrderDetailModalOpen && selectedOrder && model.OrderModal && (
-                        <model.OrderModal
-                            orderId={selectedOrder.OrderId}
-                            isOpen={true}
-                            orderTotal={selectedOrder.OrderTotal}
-                            orderDate={selectedOrder.OrderDateTime}
-                            orderStatus={selectedOrder.OrderStatus}
-                            customerNumber={selectedOrder.CustomerPhoneNumber}
-                            customerName={selectedOrder.CustomerName}
-                            customerEmail={selectedOrder.CustomerEmailAddress}
-                            onClose={handleCloseOrderDetailModal}
-                        />
-                    )}
-                    {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
-                    }
-                    {isDeleting && !errorMessage && (<DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete"> {`${'Are you sure you want to delete'} ${record?.name}?`}</DialogComponent>)}
-                </CardContent>
-            </Card >
+                </Box>
+                {isOrderDetailModalOpen && selectedOrder && model.OrderModal && (
+                    <model.OrderModal
+                        orderId={selectedOrder.OrderId}
+                        isOpen={true}
+                        orderTotal={selectedOrder.OrderTotal}
+                        orderDate={selectedOrder.OrderDateTime}
+                        orderStatus={selectedOrder.OrderStatus}
+                        customerNumber={selectedOrder.CustomerPhoneNumber}
+                        customerName={selectedOrder.CustomerName}
+                        customerEmail={selectedOrder.CustomerEmailAddress}
+                        onClose={handleCloseOrderDetailModal}
+                    />
+                )}
+                {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
+                }
+                {isDeleting && !errorMessage && (<DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete"> {`${'Are you sure you want to delete'} ${record?.name}?`}</DialogComponent>)}
+            </div>
         </>
+
     );
 }, areEqual);
 
