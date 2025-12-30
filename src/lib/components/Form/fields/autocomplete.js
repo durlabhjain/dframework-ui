@@ -3,18 +3,28 @@ import { FormHelperText } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
+import useCascadingLookup from '../../../hooks/useCascadingLookup';
 
-const Field = ({ column, field, fieldLabel, formik, lookups, data, otherProps, model, fieldConfigs, mode }) => {
-    let inputValue = formik.values[field]?.split(", ")?.map(Number) || [];
-    const options = lookups ? lookups[column?.lookup] : [];
-    let filteredCombos = options?.filter(option => inputValue.includes(option.value)) || [];
-    let isDisabled;
-    if (mode !== 'copy') {
-        isDisabled = fieldConfigs?.disabled;
+const consts = {
+    limitTags: 5
+}
+
+const Field = React.memo(({ column, field, formik, lookups, dependsOn = [], fieldConfigs = {}, mode, model, ...otherProps }) => {
+    const options = useCascadingLookup({ column, formik, lookups, dependsOn, model, isAutoComplete: true });
+    let inputValue = formik.values[field] || [];
+    if (!Array.isArray(inputValue)) {
+        inputValue = inputValue.split(", ").map(Number);
     }
-    const handleAutoCompleteChange = (event, newValue) => {
-        formik?.setFieldValue(field, newValue ? newValue.map(val => val.value).join(', ') : '');
-    }
+    const filteredCombos = options.filter(option => inputValue.includes(option.value)) || [];
+    const isDisabled = mode !== 'copy' && fieldConfigs.disabled;
+    const handleAutoCompleteChange = (_, newValue) => {
+        let toSave = newValue?.map(val => val.value) || [];
+        // multi-select values are stored as array or as comma-separated-string based on dataFormat
+        if (column.dataFormat !== 'array') {
+            toSave = toSave.length ? toSave.join(', ') : '';
+        }
+        formik.setFieldValue(field, toSave);
+    };
 
     return (
         <FormControl
@@ -27,6 +37,7 @@ const Field = ({ column, field, fieldLabel, formik, lookups, data, otherProps, m
                 {...otherProps}
                 multiple
                 id={field}
+                limitTags={column.limitTags || consts.limitTags}
                 options={options || []}
                 getOptionLabel={(option) => option.label || ''}
                 defaultValue={filteredCombos}
@@ -39,7 +50,6 @@ const Field = ({ column, field, fieldLabel, formik, lookups, data, otherProps, m
             {formik.touched[field] && formik.errors[field] && <FormHelperText>{formik.errors[field]}</FormHelperText>}
         </FormControl>
     )
-}
+});
 
 export default Field;
-

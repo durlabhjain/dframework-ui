@@ -1,5 +1,6 @@
 import actionsStateProvider from "../useRouter/actions";
 import { transport, HTTP_STATUS_CODES } from "./httpRequest";
+import utils from '../utils';
 import request from "./httpRequest";
 
 const dateDataTypes = ['date', 'dateTime'];
@@ -15,8 +16,9 @@ const getList = async ({ gridColumns, setIsLoading, setData, page, pageSize, sor
     }
 
     const lookups = [];
+    const lookupWithDeps = []; // for backward compatibility having two lookups arrays
     const dateColumns = [];
-    gridColumns.forEach(({ lookup, type, field, keepLocal = false, keepLocalDate }) => {
+    gridColumns.forEach(({ lookup, type, field, keepLocal = false, keepLocalDate, filterable = true, dependsOn }) => {
         if (dateDataTypes.includes(type)) {
             dateColumns.push({ field, keepLocal, keepLocalDate });
         }
@@ -25,6 +27,7 @@ const getList = async ({ gridColumns, setIsLoading, setData, page, pageSize, sor
         }
         if (!lookups.includes(lookup)) {
             lookups.push(lookup);
+            lookupWithDeps.push({ lookup, dependsOn });
         }
     });
 
@@ -70,8 +73,12 @@ const getList = async ({ gridColumns, setIsLoading, setData, page, pageSize, sor
         fileName: tTranslate(modelConfig?.overrideFileName, tOpts)
     };
 
-    if (lookups) {
+    if (lookups.length) {
         requestData.lookups = lookups.join(',');
+    }
+
+    if (lookupWithDeps.length) {
+        requestData.lookupWithDeps = JSON.stringify(lookupWithDeps);
     }
 
     if (modelConfig?.limitToSurveyed) {
@@ -91,6 +98,7 @@ const getList = async ({ gridColumns, setIsLoading, setData, page, pageSize, sor
         const form = document.createElement("form");
         requestData.responseType = contentType;
         requestData.columns = columns;
+        requestData.userTimezoneOffset = -new Date().getTimezoneOffset(); // Negate to get the correct offset for conversion
         form.setAttribute("method", "POST");
         form.setAttribute("id", "exportForm");
         form.setAttribute("target", "_blank")
@@ -183,7 +191,7 @@ const getRecord = async ({ api, id, setIsLoading, setActiveRecord, modelConfig, 
     const lookupsToFetch = [];
     const fields = modelConfig.formDef || modelConfig.columns;
     fields?.forEach(field => {
-        if (field.lookup && !lookupsToFetch.includes(field.lookup)) {
+        if (field.lookup && !lookupsToFetch.includes(field.lookup) && !field.dependsOn) {
             lookupsToFetch.push(field.lookup);
         }
     });

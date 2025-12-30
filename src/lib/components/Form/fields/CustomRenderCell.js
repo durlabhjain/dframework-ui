@@ -1,20 +1,14 @@
-import { makeStyles } from "@material-ui/core";
 import { Avatar, useTheme } from "@mui/material";
 
-const useStyles = makeStyles({
-    root: {
-        display: 'flex'
-    }
-})
 export const brandBackgroundColor = '#182eb5';
 export const brandColor = '#ffffff';
 function RenderDayCell({ value }) {
     const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
     const dayValues = value.split('');
-    const classes = useStyles();
+
     const theme = useTheme();
     return (
-        <div className={classes.root}>
+        <div style={{ display: 'flex' }}>
             {dayValues.map((val, index) => (
                 <Avatar
                     key={index}

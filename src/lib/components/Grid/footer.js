@@ -9,6 +9,7 @@ import Button from '@mui/material/Button';
 import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 import { useStateContext } from '../useRouter/StateProvider';
+import utils from '../utils';
 const Footer = ({ pagination, apiRef, tTranslate = (key) => key }) => {
     const page = apiRef.current.state.pagination.paginationModel.page;
     const rowsPerPage = apiRef.current.state.pagination.paginationModel.pageSize;
@@ -16,6 +17,7 @@ const Footer = ({ pagination, apiRef, tTranslate = (key) => key }) => {
     const totalPages = Math.ceil(totalRows / rowsPerPage);
     const { t: translate, i18n } = useTranslation()
     const tOpts = { t: translate, i18n };
+    const t = utils.t;
     const [pageNumber, setPageNumber] = useState(page + 1);
     const { useLocalization } = useStateContext();
     const { getLocalizedString } = useLocalization();
@@ -57,7 +59,7 @@ const Footer = ({ pagination, apiRef, tTranslate = (key) => key }) => {
             <Box sx={{ pl: 5 }}>
                 {pagination &&
                     <>
-                        <Typography variant="p">{tTranslate('Jump to page', tOpts)}:</Typography>
+                        <Typography variant="p">{t('Jump to page', tOpts)}:</Typography>
                         <TextField
                             sx={{
                                 width: 70,
@@ -77,7 +79,7 @@ const Footer = ({ pagination, apiRef, tTranslate = (key) => key }) => {
                             onKeyPress={handleKeyPress}
                             disabled={!totalRows}
                         />
-                        <Button disabled={!totalRows} size='small' onClick={onPageChange}>{tTranslate('Go', tOpts)}</Button>
+                        <Button disabled={!totalRows} size='small' onClick={onPageChange}>{t('Go', tOpts)}</Button>
                     </>
                 }
             </Box>
