@@ -652,7 +652,6 @@ const GridBase = memo(({
             baseFilters,
             isElasticExport,
             isDetailsExport,
-            selectedClients: props.selectedClients || undefined,
             fromSelfServe
         });
     };
