@@ -1,6 +1,7 @@
 import React from 'react';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import Typography from '@mui/material/Typography';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
@@ -13,6 +14,7 @@ import DialogTitle from '@mui/material/DialogTitle';
  * @param {boolean} props.open - Controls whether the dialog is open.
  * @param {function} props.onConfirm - Callback fired when the confirm/ok button is clicked.
  * @param {string} [props.title="Confirm"] - The title of the dialog.
+ * @param {string} [props.description] - The description text displayed below the title.
  * @param {function} props.onCancel - Callback fired when the cancel button or dialog close is triggered.
  * @param {string} [props.okText] - Custom text for the confirm/ok button.
  * @param {string} [props.cancelText] - Custom text for the cancel button.
@@ -24,7 +26,7 @@ import DialogTitle from '@mui/material/DialogTitle';
  * @returns {JSX.Element} The rendered Dialog component.
  */
 
-const DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText, cancelText, yesNo = false, children, maxWidth = 'sm', fullWidth = true, ...props }) => {
+const DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText, cancelText, yesNo = false, children, maxWidth = 'sm', fullWidth = true, description, ...props }) => {
     okText = okText || (yesNo ? 'Yes' : 'Ok');
     cancelText = cancelText || (yesNo ? 'No' : 'Cancel');
     return (
@@ -39,6 +41,9 @@ const DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText,
         >
             <DialogTitle id="alert-dialog-title" sx={{ fontSize: children ? 'inherit' : '1.25rem' }} >
                 {title}
+                {description && (
+                    <Typography variant="subtitle2" style={{ marginTop: '4px' }}>{description}</Typography>
+                )}
             </DialogTitle>
             {children && (
                 <DialogContent dividers>

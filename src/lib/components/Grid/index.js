@@ -138,7 +138,9 @@ const CustomToolbar = function (props) {
         setIsGridPreferenceFetched,
         tTranslate,
         tOpts,
-        filterModel
+        filterModel,
+        customHeaderComponent,
+        initialGridRef
     } = props;
 
     const addText = model.customAddText || (model.title ? `Add ${model.title}` : 'Add');
@@ -153,6 +155,7 @@ const CustomToolbar = function (props) {
             }}
         >
             <div>
+                {(model.hasCustomHeaderComponent && customHeaderComponent) && customHeaderComponent }
                 {model.gridSubTitle && <Typography variant="h6" component="h3" textAlign="center" sx={{ ml: 1 }}> {tTranslate(model.gridSubTitle, tOpts)}</Typography>}
                 {currentPreference && model.showPreferenceInHeader && <Typography className="preference-name-text" variant="h6" component="h6" textAlign="center" sx={{ ml: 1 }} >{tTranslate('Applied Preference', tOpts)} - {currentPreference}</Typography>}
                 {(isReadOnly || (!canAdd && !forAssignment)) && <Typography variant="h6" component="h3" textAlign="center" sx={{ ml: 1 }} > {!canAdd || isReadOnly ? "" : model.title}</Typography>}
@@ -170,7 +173,7 @@ const CustomToolbar = function (props) {
                 {available && <ButtonWithMargin startIcon={!showAddIcon ? null : <AddIcon />} onClick={onAssign} size="medium" variant="contained"  >{tTranslate("Assign", tOpts)}</ButtonWithMargin>}
                 {assigned && <ButtonWithMargin startIcon={!showAddIcon ? null : <RemoveIcon />} onClick={onUnassign} size="medium" variant="contained"  >{tTranslate("Remove", tOpts)}</ButtonWithMargin>}
             </div>
-            <GridToolBar {...props}>
+            <GridToolBar {...props} sx={{ gap: '2px' }}>
                 {effectivePermissions.showColumnsOrder && (
                     <ColumnsPanelTrigger
                         render={(triggerProps) => (
@@ -209,7 +212,7 @@ const CustomToolbar = function (props) {
                     <CustomExportButton handleExport={handleExport} showPivotExportBtn={model.pivotApi} exportFormats={model.exportFormats || {}} tTranslate={tTranslate} tOpts={tOpts} />
                 )}
                 {preferenceName &&
-                    <GridPreferences preferenceName={preferenceName} gridRef={apiRef} columns={gridColumns} setIsGridPreferenceFetched={setIsGridPreferenceFetched} />
+                    <GridPreferences preferenceName={preferenceName} gridRef={apiRef} columns={gridColumns} setIsGridPreferenceFetched={setIsGridPreferenceFetched} initialGridRef={initialGridRef} />
                 }
             </GridToolBar>
         </div >
@@ -249,6 +252,10 @@ const GridBase = memo(({
     dynamicColumns,
     readOnly = false,
     baseFilters = [],
+    disableRowGrouping: disableRowGroupingProp = true,
+    customHeaderComponent,
+    manageDataComponent: ManageDataComponent,
+    manageDataComponentProps = {},
     ...props
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
@@ -279,7 +286,8 @@ const GridBase = memo(({
     const { id: idWithOptions } = useParams() || getParams;
     const id = idWithOptions?.split('-')[0];
     const apiRef = useGridApiRef();
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideBackButton = false, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {} } = model;
+    const initialGridRef = useRef(null);
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideBackButton = false, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, disableRowGrouping } = model;
     const isReadOnly = model.readOnly === true || readOnly;
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
@@ -434,6 +442,7 @@ const GridBase = memo(({
             }
         });
     }, []);
+
     const { customActions = [] } = model;
     const { gridColumns, pinnedColumns, lookupMap } = useMemo(() => {
         let baseColumnList = columns || model.gridColumns || model.columns;
@@ -582,7 +591,7 @@ const GridBase = memo(({
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment, dynamicColumns]);
 
-    const fetchData = (action = "list", extraParams = {}, contentType, columns, isPivotExport, isElasticExport) => {
+    const fetchData = (action = "list", extraParams = {}, contentType, columns, isPivotExport, isElasticExport, isDetailsExport, fromSelfServe = false) => {
         const { pageSize, page } = paginationModel;
 
         let controllerType = model.controllerType;
@@ -641,7 +650,10 @@ const GridBase = memo(({
             showFullScreenLoader,
             history: navigate,
             baseFilters,
-            isElasticExport
+            isElasticExport,
+            isDetailsExport,
+            selectedClients: props.selectedClients || undefined,
+            fromSelfServe
         });
     };
 
@@ -1070,6 +1082,12 @@ const GridBase = memo(({
                                 zIndex: 2,
                             }
                         }}
+                        onStateChange={() => {
+                            // Capture initial grid state before any preferences are applied
+                            if (apiRef.current && !initialGridRef.current && !isGridPreferenceFetched && preferenceName) {
+                                initialGridRef.current = apiRef.current.exportState();
+                            }
+                        }}
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
                         checkboxSelection={forAssignment}
@@ -1129,7 +1147,9 @@ const GridBase = memo(({
                                 tTranslate,
                                 tOpts,
                                 idProperty,
-                                filterModel
+                                filterModel,
+                                customHeaderComponent,
+                                initialGridRef
                             },
                             footer: {
                                 pagination: true,
@@ -1144,7 +1164,7 @@ const GridBase = memo(({
                         disableDensitySelector={true}
                         apiRef={apiRef}
                         disableAggregation={true}
-                        disableRowGrouping={true}
+                        disableRowGrouping={disableRowGrouping || disableRowGroupingProp}
                         disableRowSelectionOnClick={disableRowSelectionOnClick}
                         disablePivoting={disablePivoting}
                         initialState={{
@@ -1295,6 +1315,27 @@ const GridBase = memo(({
                         <DeleteContentText>
                             {tTranslate("Are you sure you want to add", tOpts)} {selectedSet.current.size} {tTranslate("records", { count: selectedSet.current.size, ...tOpts })}?
                         </DeleteContentText>
+                    </DialogComponent>
+                )}
+                {(manageDataComponentProps && manageDataComponentProps.openModal && ManageDataComponent) && (
+                    <DialogComponent
+                        open={manageDataComponentProps.openModal}
+                        onCancel={() => { manageDataComponentProps.setOpenModal(false) }}
+                        title={tTranslate(manageDataComponentProps.title, tOpts)}
+                        description={tTranslate("You can edit, add data to the file and import it back to see the updates", tOpts)}
+                        maxWidth='md'
+                        showCloseIcon={true}
+                    >  
+                        <ManageDataComponent
+                            importUrl={manageDataComponentProps.importUrl}
+                            exportUrl={manageDataComponentProps.exportUrl}
+                            action={manageDataComponentProps.action}
+                            exportNote={manageDataComponentProps.exportNote}
+                            disable={manageDataComponentProps.disable}
+                            fetchData={fetchData}
+                            data={data}
+                            apiRef={apiRef}
+                        />
                     </DialogComponent>
                 )}
             </Box >
