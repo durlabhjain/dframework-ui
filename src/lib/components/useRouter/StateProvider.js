@@ -124,7 +124,23 @@ const StateProvider = ({ children }) => {
       userPreferenceCharts.gridColumn = filterNonExistingColumns({ gridRef, data: userPreferenceCharts.gridColumn });
       userPreferenceCharts.sortModel = filterNonExistingColumns({ gridRef, data: userPreferenceCharts.sortModel });
       userPreferenceCharts.filterModel.items = filterNonExistingColumns({ gridRef, data: userPreferenceCharts.filterModel.items });
+      
+      // Apply column visibility
       gridRef.current.setColumnVisibilityModel(userPreferenceCharts.columnVisibilityModel);
+      
+      // Apply column order
+      const orderedFields = userPreferenceCharts.gridColumn.map(({ field }) => field);
+      gridRef.current.state.columns.orderedFields = orderedFields;
+      
+      // Reorder columns using setColumnIndex for proper state management
+      orderedFields.forEach((field, targetIndex) => {
+        const currentIndex = gridRef.current.getColumnIndex(field);
+        if (currentIndex !== -1 && currentIndex !== targetIndex) {
+          gridRef.current.setColumnIndex(field, targetIndex);
+        }
+      });
+      
+      // Apply pinned columns, sort model, and filter model
       gridRef.current.setPinnedColumns(userPreferenceCharts.pinnedColumns);
       gridRef.current.setSortModel(userPreferenceCharts.sortModel || []);
       gridRef.current.setFilterModel(userPreferenceCharts?.filterModel);

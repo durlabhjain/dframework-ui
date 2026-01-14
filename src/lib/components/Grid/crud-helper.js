@@ -47,7 +47,7 @@ function shouldApplyFilter(filter) {
     return isUnaryOperator || hasValidValue;
 }
 
-const getList = async ({ gridColumns, setIsLoading, setData, page, pageSize, sortModel, filterModel, api, parentFilters, action = 'list', setError, extraParams, contentType, columns, controllerType = 'node', template = null, configFileName = null, dispatchData, showFullScreenLoader = false, model, baseFilters = null, isElasticExport }) => {
+const getList = async ({ gridColumns, setIsLoading, setData, page, pageSize, sortModel, filterModel, api, parentFilters, action = 'list', setError, extraParams, contentType, columns, controllerType = 'node', template = null, configFileName = null, dispatchData, showFullScreenLoader = false, model, baseFilters = null, isElasticExport, fromSelfServe=false }) => {
     if (!contentType) {
         if (showFullScreenLoader) {
             dispatchData({ type: actionsStateProvider.UPDATE_LOADER_STATE, payload: true });
@@ -111,6 +111,10 @@ const getList = async ({ gridColumns, setIsLoading, setData, page, pageSize, sor
         model: model.module,
         fileName: model.overrideFileName
     };
+    
+    if (fromSelfServe) {
+        requestData.fromSelfServe = true;
+    }
 
     if (lookups.length) {
         requestData.lookups = lookups.join(',');

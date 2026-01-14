@@ -41,8 +41,8 @@ const initialValues = {
     isDefault: false
 };
 const pageSizeOptions = [5, 10, 20, 50, 100];
-const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, columns = [], setIsGridPreferenceFetched }) => {
-    const { stateData, dispatchData, removeCurrentPreferenceName, getAllSavedPreferences } = useStateContext();
+const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, columns = [], setIsGridPreferenceFetched, initialGridRef }) => {
+    const { stateData, dispatchData, removeCurrentPreferenceName, getAllSavedPreferences, applyDefaultPreferenceIfExists } = useStateContext();
     const { navigate } = useRouter();
     const apiRef = useGridApiRef();
     const snackbar = useSnackbar();
@@ -101,7 +101,7 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
         setOpenDialog(false);
     };
 
-    const deletePreference = async (id, prefName) => {
+    const deletePreference = async ({ id, prefName, isDefault }) => {
         const params = {
             action: 'delete',
             id: preferenceName,
@@ -126,6 +126,9 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
                 removeCurrentPreferenceName({ dispatchData });
             }
             snackbar.showMessage('Preference Deleted Successfully.');
+            if (isDefault) {
+                await applyPreference(0);
+            }
         }
     };
 
@@ -137,9 +140,12 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
     };
     const savePreference = async (values) => {
         const presetName = values.prefName.trim();
-        const preferenceAlreadyExists = preferences.findIndex(ele => ele.prefName === presetName);
-        // if any default preferences maintain them inside the preferences array.
-        if (preferenceAlreadyExists > -1 && (formType === formTypes.Add || preferences[preferenceAlreadyExists].prefId !== values.prefId)) {
+        const preferenceAlreadyExists = preferences.findIndex(ele => {
+            // When editing, exclude the current preference from duplicate check
+            const isDifferentPreference = formType === formTypes.Edit ? ele.prefId !== values.prefId : true;
+            return isDifferentPreference && ele.prefName.toLocaleLowerCase() === presetName.toLocaleLowerCase();
+        });
+        if (preferenceAlreadyExists > -1) {
             setOpenPreferenceExistsModal(true);
             return;
         }
@@ -181,9 +187,18 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
     const applyPreference = async (prefId) => {
         let userPreferenceCharts;
         let defaultPreference = 'Default';
-        // Check if prefId is 0, if so, use defaultPreferenceEnums, otherwise fetch from API
+        // Check if prefId is 0, if so, reset to initial state or use defaultPreferenceEnums
         if (prefId === 0) {
-            userPreferenceCharts = defaultPreferenceEnums[preferenceName] || null;
+            // Try to use the captured initial grid state first
+            if (initialGridRef && initialGridRef.current) {
+                // Use MUI X restoreState to restore the complete initial grid state
+                gridRef.current.restoreState(initialGridRef.current);
+                setIsGridPreferenceFetched(true);
+                return;
+            } else {
+                // Fallback to defaultPreferenceEnums if initialGridRef is not available
+                userPreferenceCharts = defaultPreferenceEnums[preferenceName] || null;
+            }
         } else {
             const params = {
                 action: 'load',
@@ -219,13 +234,23 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
         // If userPreferenceCharts is available, apply preferences to the grid
         if (!userPreferenceCharts) return;
         const { gridColumn, columnVisibilityModel, pinnedColumns, sortModel, filterModel } = userPreferenceCharts;
-        gridColumn.forEach(({ field, width }) => {
-            if (gridRef.current.getColumnIndex(field) !== -1) {
-                gridRef.current.setColumnWidth(field, width);
+        
+        // Apply column visibility
+        gridRef.current.setColumnVisibilityModel(columnVisibilityModel);
+        
+        // Apply column order using the public API
+        const orderedFields = gridColumn.map(({ field }) => field);
+        gridRef.current.state.columns.orderedFields = orderedFields;
+        
+        // Reorder columns using setColumnIndex for proper state management
+        orderedFields.forEach((field, targetIndex) => {
+            const currentIndex = gridRef.current.getColumnIndex(field);
+            if (currentIndex !== -1 && currentIndex !== targetIndex) {
+                gridRef.current.setColumnIndex(field, targetIndex);
             }
         });
-        gridRef.current.setColumnVisibilityModel(columnVisibilityModel);
-        gridRef.current.state.columns.orderedFields = gridColumn.map(({ field }) => field);
+        
+        // Apply pinned columns, sort model, and filter model
         gridRef.current.setPinnedColumns(pinnedColumns);
         gridRef.current.setSortModel(sortModel || []);
         gridRef.current.setFilterModel(filterModel);
@@ -248,9 +273,22 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
         }
     };
 
+    const resetPreference = async () => {
+        // Clear current preference name
+        removeCurrentPreferenceName({ dispatchData });
+        
+        // Reset grid to initial state by applying preference ID 0
+        // This will use initialGridRef if available, or fallback to defaultPreferenceEnums
+        if (setIsGridPreferenceFetched) {
+            setIsGridPreferenceFetched(false);
+        }
+        await applyPreference(0);
+        setMenuAnchorEl(null);
+    }
+
     const confirmDeletePreference = async () => {
-        const { prefId, preferenceName: currentPrefname } = openConfirmDeleteDialog;
-        await deletePreference(prefId, currentPrefname);
+        const { prefId, preferenceName: currentPrefname, isDefault } = openConfirmDeleteDialog;
+        await deletePreference({ id: prefId, prefName: currentPrefname, isDefault });
         getAllSavedPreferences({ preferenceName, history: navigate, dispatchData, Username, preferenceApi, defaultPreferenceEnums });
         setOpenConfirmDeleteDialog({});
     };
@@ -269,7 +307,8 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
         if (action === actionTypes.Delete) {
             setOpenConfirmDeleteDialog({
                 prefId: cellParams.id,
-                preferenceName: cellParams.row.prefName
+                preferenceName: cellParams.row.prefName,
+                isDefault: cellParams.row.isDefault
             });
         }
     };
@@ -316,11 +355,14 @@ const GridPreferences = ({ tTranslate = (key) => key, preferenceName, gridRef, c
                 <MenuItem component={ListItemButton} dense onClick={() => openModal(formTypes.Add)}>
                     {tTranslate('Add Preference', tOpts)}
                 </MenuItem>
-                <MenuItem component={ListItemButton} dense divider={preferences?.length > 0} onClick={() => openModal(formTypes.Manage, false)}>
+                <MenuItem component={ListItemButton} dense onClick={() => openModal(formTypes.Manage, false)}>
                     <ListItemIcon>
                         <SettingsIcon />
                     </ListItemIcon>
                     {tTranslate('Manage Preferences', tOpts)}
+                </MenuItem>
+                <MenuItem component={ListItemButton} dense divider={preferences?.length > 0} onClick={resetPreference}>
+                    {tTranslate('Reset Preference', tOpts)}
                 </MenuItem>
 
                 {preferences?.length > 0 && preferences?.map((ele) => {
