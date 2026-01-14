@@ -254,8 +254,7 @@ const GridBase = memo(({
     baseFilters = [],
     disableRowGrouping: disableRowGroupingProp = true,
     customHeaderComponent,
-    manageDataComponent: ManageDataComponent,
-    manageDataComponentProps = {},
+    customParamsComponent: CustomParamsComponent,
     ...props
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
@@ -591,7 +590,7 @@ const GridBase = memo(({
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment, dynamicColumns]);
 
-    const fetchData = (action = "list", extraParams = {}, contentType, columns, isPivotExport, isElasticExport, isDetailsExport, fromSelfServe = false) => {
+    const fetchData = (action = "list", extraParams = {}, contentType, columns, isPivotExport, isElasticExport) => {
         const { pageSize, page } = paginationModel;
 
         let controllerType = model.controllerType;
@@ -650,9 +649,7 @@ const GridBase = memo(({
             showFullScreenLoader,
             history: navigate,
             baseFilters,
-            isElasticExport,
-            isDetailsExport,
-            fromSelfServe
+            isElasticExport
         });
     };
 
@@ -1316,27 +1313,13 @@ const GridBase = memo(({
                         </DeleteContentText>
                     </DialogComponent>
                 )}
-                {(manageDataComponentProps && manageDataComponentProps.openModal && ManageDataComponent) && (
-                    <DialogComponent
-                        open={manageDataComponentProps.openModal}
-                        onCancel={() => { manageDataComponentProps.setOpenModal(false) }}
-                        title={tTranslate(manageDataComponentProps.title, tOpts)}
-                        description={tTranslate("You can edit, add data to the file and import it back to see the updates", tOpts)}
-                        maxWidth='md'
-                        showCloseIcon={true}
-                    >  
-                        <ManageDataComponent
-                            importUrl={manageDataComponentProps.importUrl}
-                            exportUrl={manageDataComponentProps.exportUrl}
-                            action={manageDataComponentProps.action}
-                            exportNote={manageDataComponentProps.exportNote}
-                            disable={manageDataComponentProps.disable}
-                            fetchData={fetchData}
-                            data={data}
-                            apiRef={apiRef}
-                        />
-                    </DialogComponent>
-                )}
+                {CustomParamsComponent && <CustomParamsComponent
+                    fetchData={fetchData}
+                    data={data}
+                    apiRef={apiRef}
+                    extraParams={props.extraParams}
+                />
+                }
             </Box >
         </>
     );
