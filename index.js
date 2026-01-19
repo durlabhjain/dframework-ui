@@ -1,117 +1,117 @@
-import { jsx as n, jsxs as v, Fragment as me } from "react/jsx-runtime";
-import * as Ge from "react";
-import bt, { createContext as Gt, useContext as fr, useState as F, useEffect as ue, useReducer as ao, useMemo as be, useCallback as Ft, memo as Vr, useRef as Sr, createElement as mr } from "react";
-import io from "@mui/material/Snackbar";
-import so from "@mui/material/Alert";
-import Se from "@mui/material/Button";
-import lo from "@mui/material/Dialog";
-import co from "@mui/material/DialogActions";
-import uo from "@mui/material/DialogContent";
-import po from "@mui/material/DialogContentText";
-import fo from "@mui/material/DialogTitle";
-import * as nt from "@mui/x-data-grid-premium";
-import { GridFooterContainer as mo, GridFooter as ho, getGridDateOperators as Ur, useGridApiRef as zr, useGridSelector as cr, gridFilterModelSelector as Gr, gridSortModelSelector as go, DataGridPremium as jr, GridActionsCellItem as ze, GridToolbarExportContainer as yo, Toolbar as bo, GRID_CHECKBOX_SELECTION_COL_DEF as Co, getGridStringOperators as Eo, getGridBooleanOperators as vo, ColumnsPanelTrigger as xo, FilterPanelTrigger as Do } from "@mui/x-data-grid-premium";
-import Hr from "@mui/icons-material/Delete";
-import Or from "@mui/icons-material/FileCopy";
-import wo from "@mui/icons-material/Article";
-import dr from "@mui/icons-material/Edit";
-import To from "@mui/icons-material/FilterListOff";
-import Ar from "@mui/icons-material/Add";
-import So from "@mui/icons-material/Remove";
-import At from "@mui/material/Typography";
-import ut from "@mui/material/Box";
-import jt from "@mui/material/TextField";
-import { useTranslation as hr, withTranslation as Oo } from "react-i18next";
-import { Typography as Ne, Dialog as Ao, DialogTitle as Po, Grid as fe, DialogContent as Fo, Card as Io, CardContent as Mo, Breadcrumbs as Ro, Link as No, Button as lt, IconButton as Wr, Box as Re, Menu as Bo, List as Lo, MenuItem as $t, ListItemButton as Pr, ListItemIcon as ko, ListItem as _o, ListItemText as $o, TextField as Vt, FormControlLabel as ct, Checkbox as Vo, Stack as ir, Tooltip as Ie, FormControl as gr, Select as Uo, Badge as zo, FormHelperText as Ct, useTheme as Et, InputAdornment as Go, FormLabel as jo, RadioGroup as yr, Radio as yt, styled as Ho, Avatar as Wo, CircularProgress as qo, Divider as Ko } from "@mui/material";
-import Yo from "@mui/icons-material/Check";
-import ur from "@mui/icons-material/Close";
-import Jo from "@mui/icons-material/Help";
-import { Replay as Zo, Close as Qo } from "@mui/icons-material";
-import ie from "dayjs";
-import Xo from "dayjs/plugin/utc";
-import ea from "dayjs/plugin/timezone";
-import { DatePicker as qr } from "@mui/x-date-pickers/DatePicker";
-import { DateTimePicker as pr } from "@mui/x-date-pickers/DateTimePicker";
-import ta from "dayjs/plugin/utc.js";
-import { LocalizationProvider as ra } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs as na } from "@mui/x-date-pickers/AdapterDayjs";
-import oa from "@mui/icons-material/Save";
-import Fr from "@mui/icons-material/Settings";
-import { useFormik as Kr } from "formik";
-import * as ce from "yup";
-import aa from "@mui/icons-material/History";
-import ia from "@mui/icons-material/FileDownload";
-import Yr from "@mui/material/Checkbox";
-import Jr from "@mui/material/MenuItem";
-import { styled as Ht } from "@mui/material/styles";
-import sa from "@mui/icons-material/ViewColumn";
-import la from "@mui/icons-material/FilterList";
-import ca from "@mui/material/Paper";
-import da from "@mui/material/Stack";
-import ua from "@mui/material/CircularProgress";
-import pa from "@mui/material/FormControlLabel";
-import fa from "@mui/icons-material/VisibilityOff";
-import ma from "@mui/icons-material/Visibility";
-import { TimePicker as ha } from "@mui/x-date-pickers/TimePicker";
-import ga from "@mui/icons-material/KeyboardArrowDown";
-import Wt from "@mui/material/FormControl";
-import ya from "@mui/material/InputLabel";
-import ba from "@mui/material/Select";
-import sr from "@mui/material/Grid";
-import Zr from "@mui/material/Autocomplete";
-import Ca from "@mui/material/Stepper";
-import Ea from "@mui/material/Step";
-import va from "@mui/material/StepLabel";
-import { grey as xa } from "@mui/material/colors";
-import Da from "@emotion/styled";
-import wa from "@mui/material/Chip";
-import { SimpleTreeView as Ta } from "@mui/x-tree-view/SimpleTreeView";
-import { TreeItem as Ir } from "@mui/x-tree-view/TreeItem";
-import Sa from "@mui/material/Input";
-import Oa from "@mui/material/Tab";
-import Aa from "@mui/material/Tabs";
-const Qr = Gt(null), Pa = "bottom", Fa = "center", Ia = bt.forwardRef(function(t, r) {
-  return /* @__PURE__ */ n(so, { elevation: 6, ref: r, variant: "filled", ...t });
-}), Bl = ({ children: e }) => {
-  const [t, r] = F(null), [o, a] = F(!1), [s, i] = F(null), [d, h] = F(null), C = function(l, y, c = "info", f) {
-    typeof l != "string" && (l = l.toString()), y && typeof y != "string" && (y = y.toString()), r(y ? `${l}: ${y}` : l), i(c), a(!0), h(f);
-  }, u = function(l, y, c = "error", f) {
-    C(l, y, c, f);
-  }, p = function() {
-    a(!1), h(null), d && d();
+import { jsx as n, jsxs as D, Fragment as fe } from "react/jsx-runtime";
+import * as Le from "react";
+import ct, { createContext as jt, useContext as hr, useState as O, useEffect as ce, useReducer as Xn, useRef as Wr, useMemo as me, useCallback as se, memo as Kr, createElement as gr } from "react";
+import ea from "@mui/material/Snackbar";
+import ta from "@mui/material/Alert";
+import Ce from "@mui/material/Button";
+import ra from "@mui/material/Dialog";
+import na from "@mui/material/DialogActions";
+import aa from "@mui/material/DialogContent";
+import oa from "@mui/material/DialogContentText";
+import ia from "@mui/material/DialogTitle";
+import * as We from "@mui/x-data-grid-premium";
+import { GridFooterContainer as la, GridFooter as sa, getGridDateOperators as qr, useGridApiRef as Yr, DataGridPremium as Jr, GridActionsCellItem as Me, useGridSelector as ca, gridFilterModelSelector as ua, GridToolbarExportContainer as da, Toolbar as pa, GRID_CHECKBOX_SELECTION_COL_DEF as fa, getGridStringOperators as ma, getGridBooleanOperators as ha, ColumnsPanelTrigger as ga, FilterPanelTrigger as ya } from "@mui/x-data-grid-premium";
+import Zr from "@mui/icons-material/Delete";
+import Mr from "@mui/icons-material/FileCopy";
+import ba from "@mui/icons-material/Article";
+import pr from "@mui/icons-material/Edit";
+import Ca from "@mui/icons-material/FilterListOff";
+import Rr from "@mui/icons-material/Add";
+import Ea from "@mui/icons-material/Remove";
+import vt from "@mui/material/Typography";
+import He from "@mui/material/Box";
+import Ht from "@mui/material/TextField";
+import { useTranslation as Qr, withTranslation as Da } from "react-i18next";
+import { Typography as xe, Dialog as Ta, DialogTitle as xa, Grid as pe, DialogContent as va, Card as wa, CardContent as Sa, Breadcrumbs as Aa, Link as Oa, Button as Qe, IconButton as Xr, Box as Te, Menu as Pa, List as Fa, MenuItem as xt, ListItemButton as cr, ListItemIcon as Ia, ListItem as Ma, ListItemText as Ra, TextField as Vt, FormControlLabel as Xe, Checkbox as La, Stack as Lr, Tooltip as De, FormControl as yr, Select as Na, Badge as Ba, FormHelperText as ut, useTheme as dt, InputAdornment as ka, FormLabel as $a, RadioGroup as br, Radio as st, styled as _a, Avatar as Va, CircularProgress as za, Divider as Ga } from "@mui/material";
+import Ua from "@mui/icons-material/Check";
+import fr from "@mui/icons-material/Close";
+import ja from "@mui/icons-material/Help";
+import { Replay as Ha, Close as Wa, GridOn as Ka, TableChart as Nr, Code as qa, Language as Ya, DataObject as Ja } from "@mui/icons-material";
+import te from "dayjs";
+import Za from "dayjs/plugin/utc";
+import Qa from "dayjs/plugin/timezone";
+import { DatePicker as en } from "@mui/x-date-pickers/DatePicker";
+import { DateTimePicker as mr } from "@mui/x-date-pickers/DateTimePicker";
+import Xa from "dayjs/plugin/utc.js";
+import { LocalizationProvider as eo } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs as to } from "@mui/x-date-pickers/AdapterDayjs";
+import ro from "@mui/icons-material/Save";
+import Br from "@mui/icons-material/Settings";
+import { useFormik as tn } from "formik";
+import * as ne from "yup";
+import no from "@mui/icons-material/History";
+import ao from "@mui/icons-material/FileDownload";
+import rn from "@mui/material/Checkbox";
+import nn from "@mui/material/MenuItem";
+import { styled as Wt } from "@mui/material/styles";
+import oo from "@mui/icons-material/ViewColumn";
+import io from "@mui/icons-material/FilterList";
+import lo from "@mui/material/Paper";
+import so from "@mui/material/Stack";
+import co from "@mui/material/CircularProgress";
+import uo from "@mui/material/FormControlLabel";
+import po from "@mui/icons-material/VisibilityOff";
+import fo from "@mui/icons-material/Visibility";
+import { TimePicker as mo } from "@mui/x-date-pickers/TimePicker";
+import ho from "@mui/icons-material/KeyboardArrowDown";
+import Kt from "@mui/material/FormControl";
+import go from "@mui/material/InputLabel";
+import yo from "@mui/material/Select";
+import ur from "@mui/material/Grid";
+import an from "@mui/material/Autocomplete";
+import bo from "@mui/material/Stepper";
+import Co from "@mui/material/Step";
+import Eo from "@mui/material/StepLabel";
+import { grey as Do } from "@mui/material/colors";
+import To from "@emotion/styled";
+import xo from "@mui/material/Chip";
+import { SimpleTreeView as vo } from "@mui/x-tree-view/SimpleTreeView";
+import { TreeItem as kr } from "@mui/x-tree-view/TreeItem";
+import wo from "@mui/material/Input";
+import So from "@mui/material/Tab";
+import Ao from "@mui/material/Tabs";
+const on = jt(null), Oo = "bottom", Po = "center", Fo = ct.forwardRef(function(t, r) {
+  return /* @__PURE__ */ n(ta, { elevation: 6, ref: r, variant: "filled", ...t });
+}), Bs = ({ children: e }) => {
+  const [t, r] = O(null), [a, o] = O(!1), [s, i] = O(null), [c, p] = O(null), h = function(l, b, f = "info", d) {
+    typeof l != "string" && (l = l.toString()), b && typeof b != "string" && (b = b.toString()), r(b ? `${l}: ${b}` : l), i(f), o(!0), p(d);
+  }, y = function(l, b, f = "error", d) {
+    h(l, b, f, d);
+  }, u = function() {
+    o(!1), p(null), c && c();
   };
-  return /* @__PURE__ */ v(me, { children: [
+  return /* @__PURE__ */ D(fe, { children: [
     /* @__PURE__ */ n(
-      Qr.Provider,
+      on.Provider,
       {
-        value: { showMessage: C, showError: u },
+        value: { showMessage: h, showError: y },
         children: e
       }
     ),
-    /* @__PURE__ */ n(io, { open: o, autoHideDuration: 6e3, onClose: p, anchorOrigin: { vertical: Pa, horizontal: Fa }, children: /* @__PURE__ */ n(Ia, { severity: s, children: t }) })
+    /* @__PURE__ */ n(ea, { open: a, autoHideDuration: 6e3, onClose: u, anchorOrigin: { vertical: Oo, horizontal: Po }, children: /* @__PURE__ */ n(Fo, { severity: s, children: t }) })
   ] });
 }, qt = function() {
-  return fr(Qr);
-}, je = ({ open: e, onConfirm: t, title: r = "Confirm", onCancel: o, okText: a, cancelText: s, yesNo: i = !1, children: d, maxWidth: h = "sm", fullWidth: C = !0, ...u }) => (a = a || (i ? "Yes" : "Ok"), s = s || (i ? "No" : "Cancel"), /* @__PURE__ */ v(
-  lo,
+  return hr(on);
+}, Ne = ({ open: e, onConfirm: t, title: r = "Confirm", onCancel: a, okText: o, cancelText: s, yesNo: i = !1, children: c, maxWidth: p = "sm", fullWidth: h = !0, ...y }) => (o = o || (i ? "Yes" : "Ok"), s = s || (i ? "No" : "Cancel"), /* @__PURE__ */ D(
+  ra,
   {
-    ...u,
+    ...y,
     open: e,
-    onClose: o,
+    onClose: a,
     "aria-labelledby": "alert-dialog-title",
     "aria-describedby": "alert-dialog-description",
-    maxWidth: h,
-    fullWidth: C,
+    maxWidth: p,
+    fullWidth: h,
     children: [
-      /* @__PURE__ */ n(fo, { id: "alert-dialog-title", sx: { fontSize: d ? "inherit" : "1.25rem" }, children: r }),
-      d && /* @__PURE__ */ n(uo, { dividers: !0, children: /* @__PURE__ */ n(po, { children: d }) }),
-      (o || t) && /* @__PURE__ */ v(co, { children: [
-        o && /* @__PURE__ */ n(Se, { onClick: o, children: s }),
-        t && /* @__PURE__ */ n(Se, { onClick: t, autoFocus: !0, children: a })
+      /* @__PURE__ */ n(ia, { id: "alert-dialog-title", sx: { fontSize: c ? "inherit" : "1.25rem" }, children: r }),
+      c && /* @__PURE__ */ n(aa, { dividers: !0, children: /* @__PURE__ */ n(oa, { children: c }) }),
+      (a || t) && /* @__PURE__ */ D(na, { children: [
+        a && /* @__PURE__ */ n(Ce, { onClick: a, children: s }),
+        t && /* @__PURE__ */ n(Ce, { onClick: t, autoFocus: !0, children: o })
       ] })
     ]
   }
-)), z = {
+)), Z = {
   UPDATE_FORM_MODE: "UPDATE_FORM_MODE",
   UPDATE_DATE_TIME: "UPDATE_DATE_TIME",
   UPDATE_LOCALIZATION: "UPDATE_LOCALIZATION",
@@ -128,255 +128,267 @@ const Qr = Gt(null), Pa = "bottom", Fa = "center", Ia = bt.forwardRef(function(t
   PASS_FILTERS_TO_HEADER: "PASS_FILTERS_TO_HEADER",
   SET_TIMEZONE: "SET_TIMEZONE"
 };
-let Ot = 0;
-const He = {
+let Tt = 0;
+const Se = {
   OK: 200,
   SESSION_EXPIRED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   INTERNAL_SERVER_ERROR: 500
-}, Xr = (e) => {
+}, ln = (e) => {
   const t = new FormData();
   for (const r in e)
     typeof e[r] == "object" ? t.append(r, JSON.stringify(e[r])) : t.append(r, e[r]);
   return t;
-}, Ma = (e, t) => {
+}, Io = (e, t) => {
   const r = new URL(e);
-  for (const o in t) {
-    const a = typeof t[o] == "object" ? JSON.stringify(t[o]) : t[o];
-    r.searchParams.append(o, a);
+  for (const a in t) {
+    const o = typeof t[a] == "object" ? JSON.stringify(t[a]) : t[a];
+    r.searchParams.append(a, o);
   }
   window.open(r, "_blank").focus();
-}, vt = async (e) => {
+}, tt = async (e) => {
   const {
     method: t = "GET",
     url: r,
-    data: o,
-    headers: a = {},
+    data: a,
+    headers: o = {},
     credentials: s = "include",
     ...i
-  } = e, d = {
+  } = e, c = {
     method: t,
     credentials: s,
     headers: {
-      ...a
+      ...o
     },
     ...i
   };
-  o && (a["Content-Type"] === "multipart/form-data" ? (delete d.headers["Content-Type"], d.body = o instanceof FormData ? o : Xr(o)) : (d.headers["Content-Type"] = a["Content-Type"] || "application/json", d.body = typeof o == "string" ? o : JSON.stringify(o)));
-  const h = await fetch(r, d), C = h.headers.get("content-type") || {};
+  a && (o["Content-Type"] === "multipart/form-data" ? (delete c.headers["Content-Type"], c.body = a instanceof FormData ? a : ln(a)) : (c.headers["Content-Type"] = o["Content-Type"] || "application/json", c.body = typeof a == "string" ? a : JSON.stringify(a)));
+  const p = await fetch(r, c), h = p.headers.get("content-type") || {};
   return {
-    status: h.status,
-    data: C.includes("application/json") ? await h.json() : await h.text(),
-    headers: Object.fromEntries(h.headers.entries())
+    status: p.status,
+    data: h.includes("application/json") ? await p.json() : await p.text(),
+    headers: Object.fromEntries(p.headers.entries())
   };
-}, Pt = async ({ url: e, params: t = {}, history: r, jsonPayload: o = !1, additionalParams: a = {}, additionalHeaders: s = {}, disableLoader: i = !1, dispatchData: d }) => {
+}, $t = {
+  /**
+   * Parse JSON string or return object as-is
+   * Automatically handles string JSON responses
+   */
+  json: (e) => typeof e == "string" ? JSON.parse(e) : e,
+  /**
+   * Convert to string
+   */
+  text: (e) => String(e),
+  /**
+   * Return data as-is without parsing
+   */
+  raw: (e) => e
+}, _t = async ({
+  url: e,
+  params: t = {},
+  history: r,
+  jsonPayload: a = !1,
+  additionalParams: o = {},
+  additionalHeaders: s = {},
+  disableLoader: i = !1,
+  dispatchData: c,
+  dataParser: p = $t.raw,
+  onParseError: h
+}) => {
   if (t.exportData)
-    return Ma(e, t);
-  i || d({ type: z.UPDATE_LOADER_STATE, payload: !0 }), Ot++;
-  const h = {
+    return Io(e, t);
+  i = i || typeof c != "function", i || c({ type: Z.UPDATE_LOADER_STATE, payload: !0 }), Tt++;
+  const y = {
     method: "POST",
     credentials: "include",
     url: e,
-    headers: o ? { ...s } : { "Content-Type": "multipart/form-data", ...s },
-    ...a
+    headers: a ? { ...s } : { "Content-Type": "multipart/form-data", ...s },
+    ...o
   };
-  t && (h.data = o ? t : Xr(t));
+  t && (y.data = a ? t : ln(t));
   try {
-    const C = await vt(h);
-    Ot--;
-    const u = C.data;
-    if (Ot === 0 && !i && d({ type: "UPDATE_LOADER_STATE", loaderOpen: !1 }), C.status === He.SESSION_EXPIRED) {
+    const u = await tt(y);
+    Tt--;
+    let l = u.data;
+    if (Tt === 0 && !i && c({ type: "UPDATE_LOADER_STATE", payload: !1 }), u.status === Se.SESSION_EXPIRED && r) {
       r("/login");
       return;
     }
-    return C.status !== He.OK ? { data: { message: u.message || "An error occurred" } } : u;
-  } catch (C) {
-    return Ot--, Ot === 0 && d({ type: "UPDATE_LOADER_STATE", loaderOpen: !1 }), { data: { message: C.message || "Network error" } };
+    if (u.status !== Se.OK)
+      return { error: !0, message: l.message || "An error occurred" };
+    try {
+      l = p(l);
+    } catch (b) {
+      return h ? h(b, l) : {
+        error: !0,
+        message: "Failed to parse response data",
+        parseError: b.message,
+        rawData: l
+      };
+    }
+    return l;
+  } catch (u) {
+    return Tt--, Tt === 0 && !i && c({ type: "UPDATE_LOADER_STATE", payload: !1 }), { error: !0, message: u.message || "Network error" };
   }
-}, dt = {
-  fixedFilterFormat: {
-    date: "YYYY-MM-DD",
-    datetime: "YYYY-MM-DD hh:mm:ss a",
-    dateTimeLocal: "YYYY-MM-DD hh:mm:ss a",
-    OverrideDateFormat: "DD-MMM-YYYY"
-  },
-  errorMapping: {
-    413: "Upload failed: The file exceeds the 30 MB size limit. Please select a smaller file."
-  },
-  permissionsMapper: {
-    add: "Permission2",
-    edit: "Permission3",
-    delete: "Permission4"
-  },
-  emptyIdValues: [null, void 0, "", "0", 0]
-}, en = ({ userData: e = {}, model: t, userDefinedPermissions: r }) => {
-  const { permissions: o = [] } = e;
-  r = r || { add: !0, edit: !0, delete: !0 };
-  const a = o.find((s) => s.Module === t.module);
-  return a ? {
-    canAdd: r.add && !!a[dt.permissionsMapper.add],
-    canEdit: r.edit && !!a[dt.permissionsMapper.edit],
-    canDelete: r.delete && !!a[[dt.permissionsMapper.delete]]
-  } : { canAdd: r.add, canEdit: r.edit, canDelete: r.delete };
-}, Ra = ["date", "dateTime"], Na = ["singleSelect"], Mr = 200, Ba = (e) => (/* @__PURE__ */ new Date()).getTimezoneOffset() === new Date(e).getTimezoneOffset(), rt = (e, t) => e.status === He.SESSION_EXPIRED ? (t("Session Expired!"), setTimeout(() => {
+}, Mo = ["date", "dateTime"], Ro = ["singleSelect"], $r = 200, Lo = (e) => (/* @__PURE__ */ new Date()).getTimezoneOffset() === new Date(e).getTimezoneOffset(), Ae = (e, t) => e.status === Se.SESSION_EXPIRED ? (t("Session Expired!"), setTimeout(() => {
   window.location.href = "/";
-}, Mr), !0) : e.status === He.FORBIDDEN ? (t("Access Denied!"), setTimeout(() => {
+}, $r), !0) : e.status === Se.FORBIDDEN ? (t("Access Denied!"), setTimeout(() => {
   window.location.href = "/";
-}, Mr), !0) : (e.status === He.INTERNAL_SERVER_ERROR && t("Internal Server Error"), !1);
-function La(e) {
-  const { operator: t, value: r, type: o } = e, a = ["isEmpty", "isNotEmpty"].includes(t), s = r != null && (r !== "" || o === "number" && r === 0 || o === "boolean" && r === !1);
-  return a || s;
+}, $r), !0) : (e.status === Se.INTERNAL_SERVER_ERROR && t("Internal Server Error"), !1);
+function No(e) {
+  const { operator: t, value: r, type: a } = e, o = ["isEmpty", "isNotEmpty"].includes(t), s = r != null && (r !== "" || a === "number" && r === 0 || a === "boolean" && r === !1);
+  return o || s;
 }
-const ka = async ({ gridColumns: e, setIsLoading: t, setData: r, page: o, pageSize: a, sortModel: s, filterModel: i, api: d, parentFilters: h, action: C = "list", setError: u, extraParams: p, contentType: l, columns: y, controllerType: c = "node", template: f = null, configFileName: E = null, dispatchData: x, showFullScreenLoader: D = !1, model: w, baseFilters: P = null, isElasticExport: L }) => {
-  l || D && x({ type: z.UPDATE_LOADER_STATE, payload: !0 });
-  const J = [], j = [], ee = [];
-  e.forEach(({ lookup: R, type: Y, field: H, keepLocal: I = !1, keepLocalDate: K, filterable: Q = !0, dependsOn: X }) => {
-    Ra.includes(Y) && ee.push({ field: H, keepLocal: I, keepLocalDate: K }), R && !J.includes(R) && Na.includes(Y) && Q && (J.push(R), j.push({ lookup: R, dependsOn: X }));
+const sn = async ({ gridColumns: e, setIsLoading: t, setData: r, page: a, pageSize: o, sortModel: s, filterModel: i, api: c, parentFilters: p, action: h = "list", setError: y, extraParams: u, contentType: l, columns: b, controllerType: f = "node", template: d = null, configFileName: E = null, dispatchData: T, showFullScreenLoader: P = !1, model: S, baseFilters: x = null, isElasticExport: L }) => {
+  l || P && T({ type: Z.UPDATE_LOADER_STATE, payload: !0 });
+  const z = [], ie = [], le = [];
+  e.forEach(({ lookup: k, type: re, field: W, keepLocal: _ = !1, keepLocalDate: $, filterable: j = !0, dependsOn: ue }) => {
+    Mo.includes(re) && le.push({ field: W, keepLocal: _, keepLocalDate: $ }), k && !z.includes(k) && Ro.includes(re) && j && (z.push(k), ie.push({ lookup: k, dependsOn: ue }));
   });
-  const oe = [];
-  i?.items?.length && i.items.forEach((R) => {
-    if (La(R)) {
-      const { field: Y, operator: H, filterField: I } = R;
-      let { value: K } = R;
-      const X = e.filter((Ce) => Ce?.field === R.field)[0]?.type;
-      X === "boolean" ? K = K === "true" || K === !0 ? 1 : 0 : X === "number" && (K = Array.isArray(K) ? K.filter((Ce) => Ce) : K), K = R.filterValues || K, oe.push({
-        field: I || Y,
-        operator: H,
-        value: K,
-        type: X
+  const Y = [];
+  i?.items?.length && i.items.forEach((k) => {
+    if (No(k)) {
+      const { field: re, operator: W, filterField: _ } = k;
+      let { value: $ } = k;
+      const ue = e.filter((F) => F?.field === k.field)[0]?.type;
+      ue === "boolean" ? $ = $ === "true" || $ === !0 ? 1 : 0 : ue === "number" && ($ = Array.isArray($) ? $.filter((F) => F) : $), $ = k.filterValues || $, Y.push({
+        field: _ || re,
+        operator: W,
+        value: $,
+        type: ue
       });
     }
-  }), h && oe.push(...h), P && oe.push(...P);
-  const B = {
-    start: o * a,
-    limit: L ? w.exportSize : a,
-    ...p,
+  }), p && Y.push(...p), x && Y.push(...x);
+  const N = {
+    start: a * o,
+    limit: L ? S.exportSize : o,
+    ...u,
     logicalOperator: i.logicOperator,
-    sort: s.map((R) => (R.filterField || R.field) + " " + R.sort).join(","),
-    where: oe,
+    sort: s.map((k) => (k.filterField || k.field) + " " + k.sort).join(","),
+    where: Y,
     isElasticExport: L,
-    model: w.module,
-    fileName: w.overrideFileName
+    model: S.module,
+    fileName: S.overrideFileName
   };
-  J.length && (B.lookups = J.join(",")), j.length && (B.lookupWithDeps = JSON.stringify(j)), w?.limitToSurveyed && (B.limitToSurveyed = w?.limitToSurveyed);
-  const te = {};
-  let Z = c === "cs" ? `${d}?action=${C}&asArray=0` : `${d}/${C}`;
-  if (f !== null && (Z += `&template=${f}`), E !== null && (Z += `&configFileName=${E}`), l) {
-    const R = document.createElement("form");
-    if (B.responseType = l, B.columns = y, B.userTimezoneOffset = -(/* @__PURE__ */ new Date()).getTimezoneOffset(), R.setAttribute("method", "POST"), R.setAttribute("id", "exportForm"), R.setAttribute("target", "_blank"), f === null)
-      for (const Y in B) {
-        let H = B[Y];
-        if (H == null)
+  z.length && (N.lookups = z.join(",")), ie.length && (N.lookupWithDeps = JSON.stringify(ie)), S?.limitToSurveyed && (N.limitToSurveyed = S?.limitToSurveyed);
+  const J = {};
+  let K = f === "cs" ? `${c}?action=${h}&asArray=0` : `${c}/${h}`;
+  if (d !== null && (K += `&template=${d}`), E !== null && (K += `&configFileName=${E}`), l) {
+    const k = document.createElement("form");
+    if (N.responseType = l, N.columns = b, N.userTimezoneOffset = -(/* @__PURE__ */ new Date()).getTimezoneOffset(), k.setAttribute("method", "POST"), k.setAttribute("id", "exportForm"), k.setAttribute("target", "_blank"), d === null)
+      for (const re in N) {
+        let W = N[re];
+        if (W == null)
           continue;
-        typeof H != "string" && (H = JSON.stringify(H));
-        const I = document.createElement("input");
-        I.type = "hidden", I.name = Y, I.value = H, R.append(I);
+        typeof W != "string" && (W = JSON.stringify(W));
+        const _ = document.createElement("input");
+        _.type = "hidden", _.name = re, _.value = W, k.append(_);
       }
-    R.setAttribute("action", Z), document.body.appendChild(R), R.submit(), setTimeout(() => {
+    k.setAttribute("action", K), document.body.appendChild(k), k.submit(), setTimeout(() => {
       document.getElementById("exportForm").remove();
     }, 3e3);
     return;
   }
   try {
     t(!0);
-    const R = {
-      url: Z,
+    const k = {
+      url: K,
       method: "POST",
-      data: B,
+      data: N,
       headers: {
         "Content-Type": "application/json",
-        ...te
+        ...J
       },
       credentials: "include"
     };
-    r((H) => ({
-      ...H,
+    r((W) => ({
+      ...W,
       records: []
       // reset records to empty array before fetching new data
     }));
-    const Y = await vt(R);
-    if (Y.status === He.OK) {
-      const { records: H } = Y.data;
-      H && H.forEach((I) => {
-        ee.forEach((K) => {
-          const { field: Q, keepLocal: X, keepLocalDate: Ce } = K;
-          if (I[Q]) {
-            if (I[Q] = new Date(I[Q]), Ce) {
-              const re = I[Q].getTimezoneOffset() * 6e4;
-              I[Q] = new Date(I[Q].getTime() + re);
+    const re = await tt(k);
+    if (re.status === Se.OK) {
+      const { records: W } = re.data;
+      W && W.forEach((_) => {
+        le.forEach(($) => {
+          const { field: j, keepLocal: ue, keepLocalDate: F } = $;
+          if (_[j]) {
+            if (_[j] = new Date(_[j]), F) {
+              const I = _[j].getTimezoneOffset() * 6e4;
+              _[j] = new Date(_[j].getTime() + I);
             }
-            if (X && !Ba(I[Q])) {
-              const re = I[Q].getTimezoneOffset() * 6e4;
-              I[Q] = new Date(I[Q].getTime() + re);
+            if (ue && !Lo(_[j])) {
+              const I = _[j].getTimezoneOffset() * 6e4;
+              _[j] = new Date(_[j].getTime() + I);
             }
           }
-        }), w.columns.forEach(({ field: K, displayIndex: Q }) => {
-          Q && (I[K] = I[Q]);
+        }), S.columns.forEach(({ field: $, displayIndex: j }) => {
+          j && (_[$] = _[j]);
         });
-      }), r(Y.data);
-    } else rt(Y, u) || u(Y.statusText);
-  } catch (R) {
-    R.response && !rt(R.response, u) ? u("Could not list record", R.message || R.toString()) : u("Network failure or server unreachable. Please try again.");
+      }), r(re.data);
+    } else Ae(re, y) || y(re.statusText);
+  } catch (k) {
+    k.response && !Ae(k.response, y) ? y("Could not list record", k.message || k.toString()) : y("Network failure or server unreachable. Please try again.");
   } finally {
-    t(!1), !l && D && x({ type: z.UPDATE_LOADER_STATE, payload: !1 });
+    t(!1), !l && P && T({ type: Z.UPDATE_LOADER_STATE, payload: !1 });
   }
-}, tn = async ({ api: e, id: t, setIsLoading: r, setActiveRecord: o, model: a, parentFilters: s, where: i = {}, setError: d }) => {
-  e = e || a.api, r(!0);
-  const h = new URLSearchParams(), C = `${e}/${t ?? "-"}`, u = [];
-  (a.formDef || a.columns)?.forEach((l) => {
-    l.lookup && !u.includes(l.lookup) && !l.dependsOn && u.push(l.lookup);
-  }), h.set("lookups", u), i && Object.keys(i)?.length && h.set("where", JSON.stringify(i));
+}, zt = async ({ api: e, id: t, setIsLoading: r, setActiveRecord: a, model: o, parentFilters: s, where: i = {}, setError: c }) => {
+  e = e || o.api, r(!0);
+  const p = new URLSearchParams(), h = `${e}/${t ?? "-"}`, y = [];
+  (o.formDef || o.columns)?.forEach((l) => {
+    l.lookup && !y.includes(l.lookup) && !l.dependsOn && y.push(l.lookup);
+  }), p.set("lookups", y), i && Object.keys(i)?.length && p.set("where", JSON.stringify(i));
   try {
-    const l = await vt({
-      url: `${C}?${h.toString()}`,
+    const l = await tt({
+      url: `${h}?${p.toString()}`,
       method: "GET",
       credentials: "include"
     });
-    if (l.status === He.OK) {
-      const { data: y, lookups: c } = l.data;
-      let f = y[a.linkColumn];
-      const E = a.columns.find((D) => D.field === a.linkColumn);
-      if (E && E.lookup && c && c[E.lookup] && c[E.lookup]?.length) {
-        const D = c[E.lookup].find((w) => w.value === f);
-        D && (f = D.label);
+    if (l.status === Se.OK) {
+      const { data: b, lookups: f } = l.data;
+      let d = b[o.linkColumn];
+      const E = o.columns.find((P) => P.field === o.linkColumn);
+      if (E && E.lookup && f && f[E.lookup] && f[E.lookup]?.length) {
+        const P = f[E.lookup].find((S) => S.value === d);
+        P && (d = P.label);
       }
-      const x = { ...a.defaultValues };
-      o({ id: t, title: f, record: { ...x, ...y, ...s }, lookups: c });
-    } else rt(l, d) || d("Could not load record", l.body.toString());
+      const T = { ...o.defaultValues };
+      a({ id: t, title: d, record: { ...T, ...b, ...s }, lookups: f });
+    } else Ae(l, c) || c("Could not load record", l.body.toString());
   } catch (l) {
-    l.response && rt(l.response, d) && d("Could not load record", l.message || l.toString());
+    l.response && Ae(l.response, c) && c("Could not load record", l.message || l.toString());
   } finally {
     r(!1);
   }
-}, rn = async function({ id: e, api: t, setIsLoading: r, setError: o }) {
-  const a = { success: !1, error: "" };
+}, Cr = async function({ id: e, api: t, setIsLoading: r, setError: a }) {
+  const o = { success: !1, error: "" };
   if (!e) {
-    o("Deleted failed. No active record.");
+    a("Deleted failed. No active record.");
     return;
   }
   r(!0);
   try {
-    const s = await vt({
+    const s = await tt({
       url: `${t}/${e}`,
       method: "DELETE",
       credentials: "include"
     });
-    if (s.status === He.OK)
-      return s.data && !s.data.success ? (a.success = !1, o("Delete failed", s.data.message), !1) : (a.success = !0, !0);
-    rt(s, o) || o("Delete failed", s.body);
+    if (s.status === Se.OK)
+      return s.data && !s.data.success ? (o.success = !1, a("Delete failed", s.data.message), !1) : (o.success = !0, !0);
+    Ae(s, a) || a("Delete failed", s.body);
   } catch (s) {
-    s.response && !rt(s.response, o) && o("Could not delete record", s.message || s.toString());
+    s.response && !Ae(s.response, a) && a("Could not delete record", s.message || s.toString());
   } finally {
     r(!1);
   }
-  return a;
-}, nn = async function({ id: e, api: t, values: r, setIsLoading: o, setError: a }) {
+  return o;
+}, Er = async function({ id: e, api: t, values: r, setIsLoading: a, setError: o }) {
   let s, i;
   e !== 0 ? (s = `${t}/${e}`, i = "PUT") : (s = t, i = "POST");
   try {
-    o(!0);
-    const d = await vt({
+    a(!0);
+    const c = await tt({
       url: s,
       method: i,
       data: r,
@@ -385,41 +397,63 @@ const ka = async ({ gridColumns: e, setIsLoading: t, setData: r, page: o, pageSi
       },
       credentials: "include"
     });
-    if (d.status === He.OK) {
-      const h = d.data;
-      if (h.success)
-        return h;
-      a("Save failed", h.err || h.message);
-    } else rt(d, a) || a("Save failed", d.body);
-  } catch (d) {
-    d.response && !rt(d.response, a) && a("Could not save record", d.message || d.toString());
+    if (c.status === Se.OK) {
+      const p = c.data;
+      if (p.success)
+        return p;
+      o("Save failed", p.err || p.message);
+    } else Ae(c, o) || o("Save failed", c.body);
+  } catch (c) {
+    c.response && !Ae(c.response, o) && o("Could not save record", c.message || c.toString());
   } finally {
-    o(!1);
+    a(!1);
   }
   return !1;
-}, _a = ({ pagination: e, apiRef: t, tTranslate: r = (o) => o }) => {
-  const o = t.current.state.pagination.paginationModel.page, a = t.current.state.pagination.paginationModel.pageSize, s = t.current.state.rows.totalRowCount, i = Math.ceil(s / a), { t: d, i18n: h } = hr(), C = { t: d, i18n: h }, [u, p] = F(o + 1), l = function(f) {
-    let E = f.target?.value;
-    E === "" ? p("") : (E = parseInt(E), E = isNaN(E) || E < 1 ? 1 : E, p(E));
+}, Bo = async ({ api: e, setIsLoading: t, setActiveRecord: r, model: a, setError: o, lookups: s, scopeId: i }) => {
+  e = e || a.api, t(!0);
+  const c = new URLSearchParams(), p = `${e}/lookups`;
+  c.set("lookups", s), c.set("scopeId", i);
+  try {
+    const h = await tt({
+      url: `${p}?${c.toString()}`,
+      method: "GET",
+      credentials: "include"
+    });
+    h.status === Se.OK ? r(h.data) : Ae(h, o) || o("Could not load lookups", h.statusText);
+  } catch (h) {
+    h.response && !Ae(h.response, o) && o("Could not load lookups", h.message || h.toString());
+  } finally {
+    t(!1);
+  }
+}, ks = {
+  getList: sn,
+  getRecord: zt,
+  deleteRecord: Cr,
+  saveRecord: Er,
+  getLookups: Bo
+}, ko = ({ pagination: e, apiRef: t, tTranslate: r = (a) => a }) => {
+  const a = t.current.state.pagination.paginationModel.page, o = t.current.state.pagination.paginationModel.pageSize, s = t.current.state.rows.totalRowCount, i = Math.ceil(s / o), { t: c, i18n: p } = Qr(), h = { t: c, i18n: p }, [y, u] = O(a + 1), l = function(d) {
+    let E = d.target?.value;
+    E === "" ? u("") : (E = parseInt(E), E = isNaN(E) || E < 1 ? 1 : E, u(E));
   };
-  ue(() => {
-    p(o + 1);
-  }, [o, a]);
-  const y = function() {
-    let f = u === "" ? 1 : u;
-    f = Math.max(f, 1), f = Math.min(f, i), t.current.setPage(f - 1), p(f), u === "" && p(1);
-  }, c = (f) => {
-    const E = f.which || f.keyCode, x = String.fromCharCode(E);
-    /\d/.test(x) || f.preventDefault();
+  ce(() => {
+    u(a + 1);
+  }, [a, o]);
+  const b = function() {
+    let d = y === "" ? 1 : y;
+    d = Math.max(d, 1), d = Math.min(d, i), t.current.setPage(d - 1), u(d), y === "" && u(1);
+  }, f = (d) => {
+    const E = d.which || d.keyCode, T = String.fromCharCode(E);
+    /\d/.test(T) || d.preventDefault();
   };
-  return /* @__PURE__ */ v(mo, { children: [
-    /* @__PURE__ */ n(ut, { sx: { pl: 5 }, children: e && /* @__PURE__ */ v(me, { children: [
-      /* @__PURE__ */ v(At, { variant: "p", children: [
-        r("Jump to page", C),
+  return /* @__PURE__ */ D(la, { children: [
+    /* @__PURE__ */ n(He, { sx: { pl: 5 }, children: e && /* @__PURE__ */ D(fe, { children: [
+      /* @__PURE__ */ D(vt, { variant: "p", children: [
+        r("Jump to page", h),
         ":"
       ] }),
       /* @__PURE__ */ n(
-        jt,
+        Ht,
         {
           sx: {
             width: 70,
@@ -434,86 +468,86 @@ const ka = async ({ gridColumns: e, setIsLoading: t, setData: r, page: o, pageSi
           variant: "standard",
           type: "number",
           min: 1,
-          value: u,
+          value: y,
           onChange: l,
-          onKeyPress: c,
+          onKeyPress: f,
           disabled: !s
         }
       ),
-      /* @__PURE__ */ n(Se, { disabled: !s, size: "small", onClick: y, children: r("Go", C) })
+      /* @__PURE__ */ n(Ce, { disabled: !s, size: "small", onClick: b, children: r("Go", h) })
     ] }) }),
-    /* @__PURE__ */ n(ho, {})
+    /* @__PURE__ */ n(sa, {})
   ] });
-}, $a = /\${((\w+)\.)?(\w+)}/g, Va = function(e, t, { template: r = $a, keepMissingTags: o = !1 } = {}) {
-  return !e || !t ? e : e.replace(r, function(a, s, i, d) {
-    const h = i ? t[i] || {} : t;
-    return h[d] === void 0 ? o ? a : "" : h[d];
+}, $o = /\${((\w+)\.)?(\w+)}/g, _o = function(e, t, { template: r = $o, keepMissingTags: a = !1 } = {}) {
+  return !e || !t ? e : e.replace(r, function(o, s, i, c) {
+    const p = i ? t[i] || {} : t;
+    return p[c] === void 0 ? a ? o : "" : p[c];
   });
-}, lr = {
-  replaceTags: Va
+}, dr = {
+  replaceTags: _o
 };
-function Rr({ variant: e = "h2", component: t = "h2", text: r = "", name: o = null, ...a }) {
-  return /* @__PURE__ */ v(Ne, { variant: e, component: t, ...a, children: [
+function _r({ variant: e = "h2", component: t = "h2", text: r = "", name: a = null, ...o }) {
+  return /* @__PURE__ */ D(xe, { variant: e, component: t, ...o, children: [
     r,
-    o && ` ${o}`
+    a && ` ${a}`
   ] });
 }
-function Ua(e = !1) {
-  const t = s(), [r, o] = F(t);
-  function a() {
+function Vo(e = !1) {
+  const t = s(), [r, a] = O(t);
+  function o() {
     setTimeout(() => {
-      o(s());
+      a(s());
     }, 10);
   }
-  ue(() => (window.addEventListener("resize", a), () => {
-    window.removeEventListener("resize", a);
+  ce(() => (window.addEventListener("resize", o), () => {
+    window.removeEventListener("resize", o);
   }), []);
   function s() {
     let i = typeof window.navigator > "u" ? "" : navigator.userAgent;
-    const d = !!i.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i);
+    const c = !!i.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i);
     i = i.toLowerCase();
-    const h = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(i);
-    let C = null;
-    return window.innerWidth <= window.innerHeight ? C = "portrait" : C = "landscape", { mobile: d, tablet: h, portrait: C === "portrait", landscape: C === "landscape" };
+    const p = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(i);
+    let h = null;
+    return window.innerWidth <= window.innerHeight ? h = "portrait" : h = "landscape", { mobile: c, tablet: p, portrait: h === "portrait", landscape: h === "landscape" };
   }
   return e ? r.mobile : r;
 }
-const za = (e, t) => {
+const zo = (e, t) => {
   switch (t.type) {
-    case z.UPDATE_LOCALIZATION:
+    case Z.UPDATE_LOCALIZATION:
       return { ...e, dataLocalization: t.payload };
-    case z.UPDATE_DATE_TIME:
+    case Z.UPDATE_DATE_TIME:
       return { ...e, dateTime: t.payload };
-    case z.UPDATE_FORM_MODE:
+    case Z.UPDATE_FORM_MODE:
       return { ...e, dataForm: t.payload };
-    case z.PAGE_TITLE_DETAILS:
+    case Z.PAGE_TITLE_DETAILS:
       return { ...e, pageTitleDetails: t.payload };
-    case z.OPEN_MODAL:
+    case Z.OPEN_MODAL:
       return { ...e, modal: t.payload };
-    case z.SET_PAGE_BACK_BUTTON:
+    case Z.SET_PAGE_BACK_BUTTON:
       return { ...e, pageBackButton: t.payload };
-    case z.SET_GRID_SETTINGS:
+    case Z.SET_GRID_SETTINGS:
       return { ...e, gridSettings: t.payload };
-    case z.SET_LOCAL_LOCALIZATION:
+    case Z.SET_LOCAL_LOCALIZATION:
       return { ...e, getLocal: t.payload };
-    case z.USER_DATA:
+    case Z.USER_DATA:
       return { ...e, getUserData: t.payload };
-    case z.UDPATE_PREFERENCES:
+    case Z.UDPATE_PREFERENCES:
       return { ...e, preferences: t.payload };
-    case z.SET_CURRENT_PREFERENCE_NAME:
+    case Z.SET_CURRENT_PREFERENCE_NAME:
       return { ...e, currentPreference: t.payload };
-    case z.TOTAL_PREFERENCES:
+    case Z.TOTAL_PREFERENCES:
       return { ...e, totalPreferences: t.payload };
-    case z.UPDATE_LOADER_STATE:
+    case Z.UPDATE_LOADER_STATE:
       return { ...e, loaderOpen: t.payload };
-    case z.PASS_FILTERS_TO_HEADER:
+    case Z.PASS_FILTERS_TO_HEADER:
       return { ...e, filtersInHeader: t.payload };
-    case z.SET_TIMEZONE:
+    case Z.SET_TIMEZONE:
       return { ...e, timeZone: t.payload };
     default:
       return e;
   }
-}, Ga = {
+}, Go = {
   dataLocalization: "en",
   dateTime: "MM/DD/YYYY hh:mm:ss A",
   dataForm: "",
@@ -529,7 +563,7 @@ const za = (e, t) => {
   loaderOpen: !1,
   filtersInHeader: {},
   timeZone: ""
-}, ja = {
+}, Uo = {
   Jumptopage: "Gå til side",
   Go: "Gå",
   InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "I dette rum vil vi snart bringe dig et dashboard med hovedoversigt KPIer for nem adgang",
@@ -537,10 +571,10 @@ const za = (e, t) => {
   MuiTablePagination: {
     labelRowsPerPage: "Rækker pr. side"
   }
-}, Ha = {
-  ...nt.daDK,
-  ...ja
-}, Wa = {
+}, jo = {
+  ...We.daDK,
+  ...Uo
+}, Ho = {
   Jumptopage: "Zur Seite springen",
   Go: "Gehen",
   InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "In diesem Bereich werden wir Ihnen in Kürze ein Dashboard mit den wichtigsten Übersichts-KPIs für einen einfachen Zugriff bereitstellen",
@@ -548,10 +582,10 @@ const za = (e, t) => {
   MuiTablePagination: {
     labelRowsPerPage: "Zeilen pro Seite"
   }
-}, qa = {
-  ...nt.deDE,
-  ...Wa
-}, Ka = {
+}, Wo = {
+  ...We.deDE,
+  ...Ho
+}, Ko = {
   Jumptopage: "Μετάβαση στη σελίδα",
   Go: "Πηγαίνω",
   InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "Σε αυτόν τον χώρο θα σας φέρουμε σύντομα έναν πίνακα ελέγχου βασικών επισκόπησης KPI για εύκολη πρόσβαση",
@@ -559,10 +593,10 @@ const za = (e, t) => {
   MuiTablePagination: {
     labelRowsPerPage: "Σειρές ανά σελίδα"
   }
-}, Ya = {
-  ...nt.elGR,
-  ...Ka
-}, Ja = {
+}, qo = {
+  ...We.elGR,
+  ...Ko
+}, Yo = {
   Jumptopage: "Saltar a la página",
   Go: "Ir",
   InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "En este espacio pronto le ofreceremos un panel con los principales KPI generales para un fácil acceso.",
@@ -570,10 +604,10 @@ const za = (e, t) => {
   MuiTablePagination: {
     labelRowsPerPage: "Filas por página"
   }
-}, Za = {
-  ...nt.esES,
-  ...Ja
-}, Qa = {
+}, Jo = {
+  ...We.esES,
+  ...Yo
+}, Zo = {
   Jumptopage: "Aller à la page",
   Go: "Aller",
   InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "Dans cet espace, nous vous proposerons bientôt un tableau de bord des principaux KPI pour un accès facile.",
@@ -581,10 +615,10 @@ const za = (e, t) => {
   MuiTablePagination: {
     labelRowsPerPage: "Lignes par page"
   }
-}, Xa = {
-  ...nt.frFR,
-  ...Qa
-}, ei = {
+}, Qo = {
+  ...We.frFR,
+  ...Zo
+}, Xo = {
   Jumptopage: "Vai alla pagina",
   Go: "Andare",
   InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "In questo spazio presto ti forniremo una dashboard con i principali KPI generali per un facile accesso",
@@ -592,10 +626,10 @@ const za = (e, t) => {
   MuiTablePagination: {
     labelRowsPerPage: "Righe per pagina"
   }
+}, ei = {
+  ...We.itIT,
+  ...Xo
 }, ti = {
-  ...nt.itIT,
-  ...ei
-}, ri = {
   Jumptopage: "Sayfaya atla",
   Go: "Gitmek",
   InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "Bu alanda yakında size kolay erişim için ana genel bakış KPI larının bir kontrol panelini sunacağız",
@@ -603,10 +637,10 @@ const za = (e, t) => {
   MuiTablePagination: {
     labelRowsPerPage: "Sayfa başına satır"
   }
+}, ri = {
+  ...We.trTR,
+  ...ti
 }, ni = {
-  ...nt.trTR,
-  ...ri
-}, oi = {
   components: {
     MuiDataGrid: {
       defaultProps: {
@@ -777,120 +811,102 @@ const za = (e, t) => {
   MuiTablePagination: {
     labelRowsPerPage: "Rows per page"
   }
-}, ii = {
-  ...nt.enUS,
+}, oi = {
+  ...We.enUS,
   ...ai
-}, si = {
-  en: ii,
-  "tr-TR": ni,
-  "es-ES": Za,
-  "da-DK": Ha,
-  "de-DE": qa,
-  "el-GR": Ya,
-  "fr-FR": Xa,
-  "pt-PT": oi,
-  "it-IT": ti
+}, ii = {
+  en: oi,
+  "tr-TR": ri,
+  "es-ES": Jo,
+  "da-DK": jo,
+  "de-DE": Wo,
+  "el-GR": qo,
+  "fr-FR": Qo,
+  "pt-PT": ni,
+  "it-IT": ei
 };
-ie.extend(Xo);
-ie.extend(ea);
-const on = Gt(), an = Gt(null), Ll = ({ children: e }) => {
-  const [t, r] = ao(za, Ga);
-  function o(u, p, l) {
-    if (l != null) {
-      const y = l;
-      let c = u ? "DD-MM-YYYY" : "DD-MM-YYYY hh:mm:ss A";
-      return y && (c = y.split(" "), c[0] = c[0].toUpperCase(), u ? c = c[0] : p ? c = c[0].toUpperCase() : (c[1] += c[1].includes(":ss") ? "" : ":ss", c = c.join(" "))), c;
+te.extend(Za);
+te.extend(Qa);
+const cn = jt(), un = jt(null), $s = ({ children: e, apiEndpoints: t = {} }) => {
+  const [r, a] = Xn(zo, Go), o = Wr(t);
+  function s(u, l) {
+    o.current[u] = l;
+  }
+  function i(u) {
+    return o.current[u];
+  }
+  function c(u, l) {
+    return `${o.current[u || "default"] || ""}${l}`;
+  }
+  function p(u, l, b) {
+    if (b != null) {
+      const f = b;
+      let d = u ? "DD-MM-YYYY" : "DD-MM-YYYY hh:mm:ss A";
+      return f && (d = f.split(" "), d[0] = d[0].toUpperCase(), u ? d = d[0] : l ? d = d[0].toUpperCase() : (d[1] += d[1].includes(":ss") ? "" : ":ss", d = d.join(" "))), d;
     }
     return u ? "DD-MM-YYYY" : "DD-MM-YYYY hh:mm:ss A";
   }
-  async function a({ preferenceName: u, Username: p, history: l, dispatchData: y, preferenceApi: c, defaultPreferenceEnums: f = {}, addDefaultPreference: E = !1 }) {
-    const x = await Pt({ url: c, params: { action: "list", id: u, Username: p }, history: l, dispatchData: y }) || {};
-    let D = {};
-    if (typeof x == "string")
-      try {
-        D = JSON.parse(x);
-      } catch (P) {
-        console.error("Failed to parse preferences response as JSON:", P), D = {};
-      }
-    else x && typeof x == "object" && (D = x);
-    const w = D.preferences || [];
-    return E && w.unshift({
-      prefName: "Default",
-      prefId: 0,
-      GridId: u,
-      GridPreferenceId: 0,
-      prefValue: f[u]
-    }), y({ type: z.UDPATE_PREFERENCES, payload: w }), y({ type: z.TOTAL_PREFERENCES, payload: w.length }), w;
-  }
-  const s = ({ gridRef: u, data: p }) => p.filter((l) => u.current.getColumnIndex(l.field) !== -1);
-  async function i({ preferences: u = [], gridRef: p, dispatchData: l, preferenceName: y, setIsGridPreferenceFetched: c, defaultPreferenceEnums: f = {} }) {
-    const E = u.find((D) => D.isDefault && D.GridId === y), x = E ? JSON.parse(E.prefValue) : f[y];
-    x && Object.keys(x).length && (x.gridColumn = s({ gridRef: p, data: x.gridColumn }), x.sortModel = s({ gridRef: p, data: x.sortModel }), x.filterModel.items = s({ gridRef: p, data: x.filterModel.items }), p.current.setColumnVisibilityModel(x.columnVisibilityModel), p.current.setPinnedColumns(x.pinnedColumns), p.current.setSortModel(x.sortModel || []), p.current.setFilterModel(x?.filterModel), l({ type: z.SET_CURRENT_PREFERENCE_NAME, payload: E ? E.prefName : "Default" })), c && c(!0);
-  }
-  function d({ dispatchData: u }) {
-    u({ type: z.SET_CURRENT_PREFERENCE_NAME, payload: null });
-  }
-  function h({ value: u, useSystemFormat: p, showOnlyDate: l = !1, state: y, timeZone: c }) {
+  function h({ value: u, useSystemFormat: l, showOnlyDate: b = !1, state: f, timeZone: d }) {
     if (!u) return "-";
-    const f = o(p, l, y);
-    return c ? ie(u).tz(c).format(f) : ie(u).format(f);
+    const E = p(l, b, f);
+    return d ? te(u).tz(d).format(E) : te(u).format(E);
   }
-  function C() {
-    const u = t.dataLocalization, p = si[u];
-    function l(y) {
-      return u === "pt-PT" || u === "ptPT" ? p.components.MuiDataGrid.defaultProps.localeText[y] || y : p[y] || y;
+  function y() {
+    const u = r.dataLocalization, l = ii[u];
+    function b(f) {
+      return u === "pt-PT" || u === "ptPT" ? l.components.MuiDataGrid.defaultProps.localeText[f] || f : l[f] || f;
     }
-    return { getLocalizedString: l };
+    return { getLocalizedString: b };
   }
-  return /* @__PURE__ */ n(on.Provider, { value: { stateData: t, dispatchData: r, systemDateTimeFormat: o, formatDate: h, removeCurrentPreferenceName: d, getAllSavedPreferences: a, applyDefaultPreferenceIfExists: i, useLocalization: C }, children: e });
-}, kl = an.Provider, Kt = () => fr(an), We = () => {
-  const e = fr(on);
+  return /* @__PURE__ */ n(cn.Provider, { value: { stateData: r, dispatchData: a, systemDateTimeFormat: p, formatDate: h, useLocalization: y, getApiEndpoint: i, setApiEndpoint: s, buildUrl: c }, children: e });
+}, _s = un.Provider, Dr = () => hr(un), Be = () => {
+  const e = hr(cn);
   if (e === void 0)
     throw new Error("useStateContext must be used within a StateProvider");
   return e;
 }, li = () => {
-  const [e, t] = F(), [r, o] = F(!1), { stateData: a, dispatchData: s } = We(), i = a.modal, d = 16 / 9;
-  let h = (window.outerWidth - 10) / window.innerWidth * 100;
-  const C = () => {
-    let p = document.getElementById("tutorial-iframe");
-    p ? (p = p.offsetWidth, p = p / window.innerWidth) : p = 0.9;
-    const l = window.innerWidth * p * (1 / d), y = window.innerHeight - 180;
-    t(Math.min(l, y));
+  const [e, t] = O(), [r, a] = O(!1), { stateData: o, dispatchData: s } = Be(), i = o.modal, c = 16 / 9;
+  let p = (window.outerWidth - 10) / window.innerWidth * 100;
+  const h = () => {
+    let u = document.getElementById("tutorial-iframe");
+    u ? (u = u.offsetWidth, u = u / window.innerWidth) : u = 0.9;
+    const l = window.innerWidth * u * (1 / c), b = window.innerHeight - 180;
+    t(Math.min(l, b));
   };
-  ue(() => {
-    i?.status && (o(!0), C());
-  }, [i, h]), ue(() => (window.addEventListener("resize", C), () => {
-    window.removeEventListener("resize", C);
+  ce(() => {
+    i?.status && (a(!0), h());
+  }, [i, p]), ce(() => (window.addEventListener("resize", h), () => {
+    window.removeEventListener("resize", h);
   }), []);
-  function u() {
-    const p = document.getElementById("tutorial-iframe");
-    p.src = i?.data?.url;
+  function y() {
+    const u = document.getElementById("tutorial-iframe");
+    u.src = i?.data?.url;
   }
-  return /* @__PURE__ */ n("div", { children: i?.status && /* @__PURE__ */ v(Ao, { fullWidth: !0, maxWidth: "lg", open: i.status, onClose: () => {
+  return /* @__PURE__ */ n("div", { children: i?.status && /* @__PURE__ */ D(Ta, { fullWidth: !0, maxWidth: "lg", open: i.status, onClose: () => {
     s({
-      type: z.OPEN_MODAL,
+      type: Z.OPEN_MODAL,
       payload: { status: !1, data: {} }
     });
   }, children: [
-    /* @__PURE__ */ n(Po, { className: "pt-2 pb-0", children: /* @__PURE__ */ v(fe, { container: !0, spacing: 1, children: [
-      /* @__PURE__ */ v(fe, { size: 11, children: [
-        /* @__PURE__ */ v(Ne, { variant: "h7", component: "div", children: [
+    /* @__PURE__ */ n(xa, { className: "pt-2 pb-0", children: /* @__PURE__ */ D(pe, { container: !0, spacing: 1, children: [
+      /* @__PURE__ */ D(pe, { size: 11, children: [
+        /* @__PURE__ */ D(xe, { variant: "h7", component: "div", children: [
           " ",
           i?.data?.title || ""
         ] }),
-        /* @__PURE__ */ n(Ne, { variant: "caption", component: "div", children: i?.data?.subTitle || /* @__PURE__ */ n(me, { children: " " }) })
+        /* @__PURE__ */ n(xe, { variant: "caption", component: "div", children: i?.data?.subTitle || /* @__PURE__ */ n(fe, { children: " " }) })
       ] }),
-      /* @__PURE__ */ v(fe, { className: "text-right", size: 1, children: [
-        /* @__PURE__ */ n(Zo, { className: "cursor_pointer mt-2 mr-2", onClick: u }),
-        /* @__PURE__ */ n(Qo, { className: "cursor_pointer mt-2", onClick: () => {
+      /* @__PURE__ */ D(pe, { className: "text-right", size: 1, children: [
+        /* @__PURE__ */ n(Ha, { className: "cursor_pointer mt-2 mr-2", onClick: y }),
+        /* @__PURE__ */ n(Wa, { className: "cursor_pointer mt-2", onClick: () => {
           s({
-            type: z.OPEN_MODAL,
+            type: Z.OPEN_MODAL,
             payload: { status: !1, data: {} }
           });
         } })
       ] })
     ] }) }),
-    /* @__PURE__ */ v(Fo, { dividers: !0, children: [
+    /* @__PURE__ */ D(va, { dividers: !0, children: [
       r && /* @__PURE__ */ n("div", { children: "Loading..." }),
       i?.data?.url && /* @__PURE__ */ n(
         "iframe",
@@ -902,42 +918,42 @@ const on = Gt(), an = Gt(null), Ll = ({ children: e }) => {
           allowfullscreen: !0,
           frameborder: "0",
           loading: "lazy",
-          onLoad: () => o(!1)
+          onLoad: () => a(!1)
         }
       )
     ] })
   ] }) });
 };
-function ci({
+function si({
   titleHeading: e,
   navigate: t,
   name: r = null,
-  RightComponent: o = null,
-  mobileRightComponent: a,
+  RightComponent: a = null,
+  mobileRightComponent: o,
   title: s = "",
   titleClass: i = "text-theme-blue text-max-width",
-  showBreadcrumbs: d,
-  breadcrumbs: h = [],
-  enableBackButton: C = !1,
-  breadcrumbColor: u,
-  showHelpButton: p = !1
+  showBreadcrumbs: c,
+  breadcrumbs: p = [],
+  enableBackButton: h = !1,
+  breadcrumbColor: y,
+  showHelpButton: u = !1
 }) {
-  const l = Ua(!0), y = h.length - 1, c = d && h.length, f = () => {
+  const l = Vo(!0), b = p.length - 1, f = c && p.length, d = () => {
     t(-1);
   };
-  return ue(() => {
+  return ce(() => {
     s && (document.title = s);
-  }, [s]), /* @__PURE__ */ v(me, { children: [
-    /* @__PURE__ */ n(Rr, { className: "print-only", text: e }),
-    c && /* @__PURE__ */ v(me, { children: [
-      /* @__PURE__ */ n(Io, { sx: { mb: 3 }, children: /* @__PURE__ */ v(Mo, { sx: { backgroundColor: u || "#fff" }, children: [
-        /* @__PURE__ */ v(fe, { container: !0, children: [
-          /* @__PURE__ */ n(fe, { sx: { display: "flex", alignItems: "center", flex: 1 }, children: /* @__PURE__ */ n(Ro, { variant: "h5", "aria-label": "breadcrumb", separator: ">", className: `${i} breadcrumbs-text-title text-max-width`, children: h.map((E, x) => x < y ? /* @__PURE__ */ n(No, { onClick: f, className: `${i} breadcrumbs-text-title text-max-width`, variant: "inherit", sx: { textDecoration: "none", color: "#1976d2" }, children: E.text }, x) : /* @__PURE__ */ n(Ne, { className: `${i} breadcrumbs-text-title text-max-width`, variant: "inherit", children: E.text }, x)) }) }),
-          (h.length > 1 || C) && /* @__PURE__ */ n(fe, { sx: { display: "flex", alignItems: "center", justifyContent: "flex-end" }, children: /* @__PURE__ */ n(lt, { variant: "contained", onClick: f, children: "Back" }) }),
-          p && /* @__PURE__ */ n(fe, { sx: { display: "flex", alignItems: "center", justifyContent: "flex-end" }, children: /* @__PURE__ */ n(Wr, { color: "primary", title: "Help", size: "large", children: /* @__PURE__ */ n(Jo, { fontSize: "inherit" }) }) })
+  }, [s]), /* @__PURE__ */ D(fe, { children: [
+    /* @__PURE__ */ n(_r, { className: "print-only", text: e }),
+    f && /* @__PURE__ */ D(fe, { children: [
+      /* @__PURE__ */ n(wa, { sx: { mb: 3 }, children: /* @__PURE__ */ D(Sa, { sx: { backgroundColor: y || "#fff" }, children: [
+        /* @__PURE__ */ D(pe, { container: !0, children: [
+          /* @__PURE__ */ n(pe, { sx: { display: "flex", alignItems: "center", flex: 1 }, children: /* @__PURE__ */ n(Aa, { variant: "h5", "aria-label": "breadcrumb", separator: ">", className: `${i} breadcrumbs-text-title text-max-width`, children: p.map((E, T) => T < b ? /* @__PURE__ */ n(Oa, { onClick: d, className: `${i} breadcrumbs-text-title text-max-width`, variant: "inherit", sx: { textDecoration: "none", color: "#1976d2" }, children: E.text }, T) : /* @__PURE__ */ n(xe, { className: `${i} breadcrumbs-text-title text-max-width`, variant: "inherit", children: E.text }, T)) }) }),
+          (p.length > 1 || h) && /* @__PURE__ */ n(pe, { sx: { display: "flex", alignItems: "center", justifyContent: "flex-end" }, children: /* @__PURE__ */ n(Qe, { variant: "contained", onClick: d, children: "Back" }) }),
+          u && /* @__PURE__ */ n(pe, { sx: { display: "flex", alignItems: "center", justifyContent: "flex-end" }, children: /* @__PURE__ */ n(Xr, { color: "primary", title: "Help", size: "large", children: /* @__PURE__ */ n(ja, { fontSize: "inherit" }) }) })
         ] }),
-        /* @__PURE__ */ n(Re, { className: "app-page-title--first", children: /* @__PURE__ */ n("div", { children: /* @__PURE__ */ n("div", { style: { display: l ? "block" : "flex", alignItems: "center" }, children: /* @__PURE__ */ n("div", { style: { flex: "1 0 auto" }, children: /* @__PURE__ */ n(
-          Rr,
+        /* @__PURE__ */ n(Te, { className: "app-page-title--first", children: /* @__PURE__ */ n("div", { children: /* @__PURE__ */ n("div", { style: { display: l ? "block" : "flex", alignItems: "center" }, children: /* @__PURE__ */ n("div", { style: { flex: "1 0 auto" }, children: /* @__PURE__ */ n(
+          _r,
           {
             className: `${i} page-text-title`,
             variant: "p",
@@ -945,15 +961,15 @@ function ci({
             name: r
           }
         ) }) }) }) }),
-        !l && /* @__PURE__ */ v(me, { children: [
-          /* @__PURE__ */ v(Re, { children: [
+        !l && /* @__PURE__ */ D(fe, { children: [
+          /* @__PURE__ */ D(Te, { children: [
             " ",
-            o && /* @__PURE__ */ n(o, {}),
+            a && /* @__PURE__ */ n(a, {}),
             " "
           ] }),
-          /* @__PURE__ */ v(Re, { children: [
+          /* @__PURE__ */ D(Te, { children: [
             " ",
-            a,
+            o,
             " "
           ] })
         ] })
@@ -962,224 +978,239 @@ function ci({
     ] })
   ] });
 }
-const sn = Oo()(ci);
-ie.extend(ta);
-const di = {
-  date: qr,
-  datetime: pr,
-  dateTimeLocal: pr
-}, ui = "-10px", pi = "-16px", fi = (e) => {
-  const { fixedFilterFormat: t } = dt, { item: r, applyValue: o, convert: a } = e, { systemDateTimeFormat: s, stateData: i } = We(), d = e?.type || "date", h = t[d], C = (f) => {
-    const E = ie(f);
+const dn = Da()(si), et = {
+  fixedFilterFormat: {
+    date: "YYYY-MM-DD",
+    datetime: "YYYY-MM-DD hh:mm:ss a",
+    dateTimeLocal: "YYYY-MM-DD hh:mm:ss a",
+    OverrideDateFormat: "DD-MMM-YYYY"
+  },
+  errorMapping: {
+    413: "Upload failed: The file exceeds the 30 MB size limit. Please select a smaller file."
+  },
+  permissionsMapper: {
+    add: "Permission2",
+    edit: "Permission3",
+    delete: "Permission4"
+  },
+  emptyIdValues: [null, void 0, "", "0", 0]
+}, pn = ({ userData: e = {}, model: t, userDefinedPermissions: r }) => {
+  const { permissions: a = [] } = e;
+  r = r || { add: !0, edit: !0, delete: !0 };
+  const o = a.find((s) => s.Module === t.module);
+  return o ? {
+    canAdd: r.add && !!o[et.permissionsMapper.add],
+    canEdit: r.edit && !!o[et.permissionsMapper.edit],
+    canDelete: r.delete && !!o[[et.permissionsMapper.delete]]
+  } : { canAdd: r.add, canEdit: r.edit, canDelete: r.delete };
+};
+te.extend(Xa);
+const ci = {
+  date: en,
+  datetime: mr,
+  dateTimeLocal: mr
+}, ui = "-10px", di = "-16px", pi = (e) => {
+  const { fixedFilterFormat: t } = et, { item: r, applyValue: a, convert: o } = e, { systemDateTimeFormat: s, stateData: i } = Be(), c = e?.type || "date", p = t[c], h = (d) => {
+    const E = te(d);
     return E.isValid() && E.year() > 1900;
-  }, u = s(i.dateTime), p = (f) => {
-    if (!(d !== "date" && d !== "datetime" && d !== "dateTimeLocal" || ((x) => typeof x != "string" ? !1 : !ie(x, u, !0).isValid())(f))) {
-      if (a) {
-        f = ie(f).utc(), o({ ...r, value: f });
+  }, y = s(i.dateTime), u = (d) => {
+    if (!(c !== "date" && c !== "datetime" && c !== "dateTimeLocal" || ((T) => typeof T != "string" ? !1 : !te(T, y, !0).isValid())(d))) {
+      if (o) {
+        d = te(d).utc(), a({ ...r, value: d });
         return;
       }
-      if (!C(f)) {
-        o({ ...r, value: null });
+      if (!h(d)) {
+        a({ ...r, value: null });
         return;
       }
-      o({ ...r, value: f.format(h) });
+      a({ ...r, value: d.format(p) });
     }
-  }, l = (f) => {
-    if (f && f === t.OverrideDateFormat) {
-      const E = f.split("-");
+  }, l = (d) => {
+    if (d && d === t.OverrideDateFormat) {
+      const E = d.split("-");
       return E.length === 3 ? E[1] : null;
     }
-  }, y = di[d], c = d === "dateTimeLocal" ? r?.value ? ie(r?.value.$d) : null : r?.value ? ie(r.value) : null;
-  return /* @__PURE__ */ n(ra, { dateAdapter: na, children: /* @__PURE__ */ n(
-    y,
+  }, b = ci[c], f = c === "dateTimeLocal" ? r?.value ? te(r?.value.$d) : null : r?.value ? te(r.value) : null;
+  return /* @__PURE__ */ n(eo, { dateAdapter: to, children: /* @__PURE__ */ n(
+    b,
     {
       fullWidth: !0,
-      format: u,
-      value: c,
-      onChange: p,
+      format: y,
+      value: f,
+      onChange: u,
       slotProps: {
         textField: {
           variant: "standard",
           label: e.label,
           sx: {
             marginTop: ui,
-            marginBottom: pi
+            marginBottom: di
           }
         }
       },
       localeText: {
-        fieldMonthPlaceholder: () => l(u) === "MMM" ? "MMM" : "MM"
+        fieldMonthPlaceholder: () => l(y) === "MMM" ? "MMM" : "MM"
       }
     }
   ) });
-}, Lt = (e) => Ur().map((t) => ({
+}, Nt = (e) => qr().map((t) => ({
   ...t,
-  InputComponent: t.InputComponent ? (r) => /* @__PURE__ */ n(fi, { ...r, ...e }) : void 0
-})), Me = {
+  InputComponent: t.InputComponent ? (r) => /* @__PURE__ */ n(pi, { ...r, ...e }) : void 0
+})), Re = {
   Edit: "Edit",
   Delete: "Delete"
-}, st = {
-  Add: "Add",
-  Manage: "Manage"
-}, mi = [
+}, Ee = {
+  ADD: "Add",
+  EDIT: "Edit",
+  MANAGE: "Manage",
+  NONE: null
+}, fi = [
   { field: "prefName", type: "string", width: 300, headerName: "Preference Name", sortable: !1, filterable: !1 },
   { field: "prefDesc", type: "string", width: 300, headerName: "Preference Description", sortable: !1, filterable: !1 },
   { field: "isDefault", type: "boolean", width: 100, headerName: "Default", sortable: !1, filterable: !1 },
-  { field: "editAction", type: "actions", headerName: "", width: 20, getActions: () => [/* @__PURE__ */ n(ze, { icon: /* @__PURE__ */ v(Ie, { title: Me.Edit, children: [
-    "   ",
-    /* @__PURE__ */ n(dr, {})
-  ] }), tabIndex: 1, "data-action": Me.Edit, label: "Edit", color: "primary" }, 1)] },
-  { field: "deleteAction", type: "actions", headerName: "", width: 20, getActions: () => [/* @__PURE__ */ n(ze, { icon: /* @__PURE__ */ v(Ie, { title: Me.Delete, children: [
-    /* @__PURE__ */ n(Hr, {}),
-    " "
-  ] }), tabIndex: 2, "data-action": Me.Delete, label: "Delete", color: "error" }, 2)] }
-], hi = {
+  { field: "editAction", type: "actions", headerName: "", width: 20, getActions: () => [/* @__PURE__ */ n(Me, { icon: /* @__PURE__ */ n(De, { title: Re.Edit, children: /* @__PURE__ */ n(pr, {}) }), tabIndex: 1, "data-action": Re.Edit, label: "Edit", color: "primary" }, 1)] },
+  { field: "deleteAction", type: "actions", headerName: "", width: 20, getActions: () => [/* @__PURE__ */ n(Me, { icon: /* @__PURE__ */ n(De, { title: Re.Delete, children: /* @__PURE__ */ n(Zr, {}) }), tabIndex: 2, "data-action": Re.Delete, label: "Delete", color: "error" }, 2)] }
+], mi = {
   prefName: "",
   prefDesc: "",
   isDefault: !1
-}, gi = [5, 10, 20, 50, 100], yi = ({ tTranslate: e = (s) => s, preferenceName: t, gridRef: r, columns: o = [], setIsGridPreferenceFetched: a }) => {
-  const { stateData: s, dispatchData: i, removeCurrentPreferenceName: d, getAllSavedPreferences: h } = We(), { navigate: C } = Kt(), u = zr(), p = qt(), { t: l, i18n: y } = hr(), c = { t: l, i18n: y }, [f, E] = F(!1), [x, D] = F(!1), [w, P] = F([]), [L, J] = F(), [j, ee] = F(), [oe, B] = F(!1), [te, Z] = F({}), { Username: R } = s?.getUserData ? s.getUserData : {}, Y = s?.preferences, H = s?.currentPreference, I = s?.gridSettings?.permissions?.preferenceApi, K = s?.gridSettings?.permissions?.defaultPreferenceEnums, Q = cr(r, Gr), X = cr(r, go), Ce = be(() => ce.object({
-    prefName: ce.string().trim(!0).required("Preference Name is Required").max(20, "Maximum Length is 20"),
-    prefDesc: ce.string().max(100, "Description maximum length is 100")
-  }), []);
-  ue(() => {
-    P(Y?.filter((M) => M.prefId !== 0));
-  }, [Y]);
-  const re = Kr({
-    initialValues: hi,
-    validationSchema: Ce,
-    onSubmit: async (M) => {
-      await _e(M);
-    },
+}, hi = { pageSize: 50, page: 0 }, gi = [5, 10, 20, 50, 100], yi = ({ gridRef: e, onPreferenceChange: t, t: r, tOpts: a }) => {
+  const { getApiEndpoint: o } = Be(), s = o("GridPreferenceManager"), i = e.current?.prefKey, c = Yr(), p = qt(), [h, y] = O(Ee.NONE), [u, l] = O(null), [b, f] = O(!1), [d, E] = O({}), [T, P] = O(null), [S, x] = O(null), L = me(
+    () => T == null ? [] : T.filter((F) => F.prefId !== 0),
+    [T]
+  ), z = me(() => ne.object({
+    prefName: ne.string().trim(!0).required(r("Preference Name is Required")).max(20, r("Maximum Length is ", a) + "20"),
+    prefDesc: ne.string().max(100, r("Maximum Length is ", a) + "100")
+  }), [r, a]), ie = (F) => l(F?.currentTarget), le = () => l(null), Y = () => {
+    y(Ee.NONE), le();
+  }, N = () => {
+    e.current?.initialGridState && (e.current.restoreState(e.current.initialGridState), x(null), t && t(null), le());
+  }, J = se(async ({ applyDefault: F = !1 }) => {
+    const I = await _t({
+      url: s,
+      params: { action: "list", id: i },
+      dataParser: $t.json
+    });
+    if (!I?.preferences) {
+      p.showMessage(r("Failed to load preferences.", a)), t && t(null);
+      return;
+    }
+    const de = I.preferences.filter((ae) => ae.prefName.trim() !== "");
+    if (P(de), F) {
+      const ae = de.find((he) => he.isDefault);
+      if (ae)
+        return { defaultPrefId: ae.prefId };
+      t && t(null);
+    }
+  }, [s, i, p, r, a, t]), K = se(async (F) => {
+    if (!e.current?.initialGridState && e.current?.exportState && (e.current.initialGridState = e.current.exportState()), F === 0) {
+      N();
+      return;
+    }
+    const I = T.find((ae) => ae.prefId === F);
+    if (!I?.prefValue) {
+      p.showMessage(r("Failed to load preference.", a));
+      return;
+    }
+    let de;
+    try {
+      de = typeof I.prefValue == "string" ? JSON.parse(I.prefValue) : I.prefValue;
+    } catch {
+      p.showMessage(r("Failed to parse preference data.", a));
+      return;
+    }
+    e.current.restoreState(de), x(I.prefName), t && t(I.prefName), le();
+  }, [e, N, T, t, p, r, a]), k = async (F) => {
+    const I = F.prefName.trim(), de = I.toLocaleLowerCase();
+    if (T.find((he) => he.prefName.toLocaleLowerCase() === de && he.prefId !== F.prefId)) {
+      f(!0);
+      return;
+    }
+    const ae = await _t({
+      url: s,
+      params: {
+        action: "save",
+        id: i,
+        prefId: F.prefId,
+        prefName: I,
+        prefDesc: F.prefDesc,
+        prefValue: JSON.stringify(e.current.exportState()),
+        isDefault: F.isDefault
+      },
+      dataParser: $t.json
+    });
+    if (ae === !0 || ae?.success === !0) {
+      p.showMessage(r(`Preference ${h === Ee.ADD ? "added" : "saved"} successfully.`, a)), Y(), await J({ applyDefault: !1 });
+      return;
+    }
+    p.showMessage(r("Error saving preference: ", a) + (ae?.message || r("Unknown error", a)));
+  }, re = async () => {
+    const F = await _t({
+      url: s,
+      params: {
+        action: "delete",
+        id: i,
+        prefIdArray: d.prefId
+      },
+      dataParser: $t.json
+    });
+    if (F === !0 || F?.success === !0) {
+      p.showMessage(r("Preference deleted successfully.", a)), await J({ applyDefault: !1 }), E({});
+      return;
+    }
+    p.showMessage(r("Error deleting preference: ", a) + (F?.message || r("Unknown error", a)));
+  }, W = (F) => {
+    const I = F.field === "editAction" ? Re.Edit : F.field === "deleteAction" ? Re.Delete : null;
+    if (F.id === 0 && I) {
+      p.showMessage(r(`Default preference cannot be ${I === Re.Edit ? "edited" : "deleted"}`, a));
+      return;
+    }
+    I === Re.Edit && (y(Ee.EDIT), $.setValues(F?.row)), I === Re.Delete && E({
+      prefId: F.id,
+      preferenceName: F.row.prefName
+    });
+  }, _ = (F) => {
+    y(F), le(), F === Ee.ADD && $.resetForm();
+  }, $ = tn({
+    initialValues: mi,
+    validationSchema: z,
+    onSubmit: k,
     mode: "onBlur"
-  }), Ee = (M) => {
-    ee(M?.currentTarget);
-  }, Oe = () => {
-    ee(null);
-  }, ot = () => {
-    J(), Oe(), E(!1);
-  }, Le = async (M, $) => {
-    const m = await Pt({ url: I, params: {
-      action: "delete",
-      id: t,
-      Username: R,
-      prefIdArray: M
-    }, history: C, dispatchData: i });
-    let se = m;
-    if (typeof m == "string")
-      try {
-        se = JSON.parse(m);
-      } catch (Be) {
-        typeof console < "u" && typeof console.error == "function" && console.error("Failed to parse deletePreference response:", Be, m), p.showMessage("An error occurred while processing the server response.");
-        return;
-      }
-    (se === !0 || se?.success) && ($ === H && d({ dispatchData: i }), p.showMessage("Preference Deleted Successfully."));
-  }, ke = async (M) => {
-    a && a(!1), await $e(M);
-  }, _e = async (M) => {
-    const $ = M.prefName.trim(), ve = Y.findIndex((xe) => xe.prefName === $);
-    if (ve > -1 && (L === st.Add || Y[ve].prefId !== M.prefId)) {
-      B(!0);
-      return;
-    }
-    const { pinnedColumns: m } = r.current.state, { orderedFields: se, columnVisibilityModel: Be, lookup: Pe } = r.current.state.columns, qe = [];
-    se?.forEach((xe) => {
-      const { field: Ke } = Pe[xe], Ye = o.find((Je) => Je.field === Ke) || Pe[xe];
-      Ye.width = Pe[xe].width, qe.push(Ye);
-    });
-    const ye = Q?.items?.map((xe) => {
-      const { field: Ke, operator: Ye, value: Je } = xe;
-      return { field: Ke, operator: Ye, value: Je };
-    });
-    Q.items = ye;
-    const de = {
-      action: "save",
-      id: t,
-      prefName: $,
-      prefDesc: M.prefDesc,
-      prefValue: { sortModel: X, filterModel: Q, columnVisibilityModel: Be, gridColumn: qe, pinnedColumns: m },
-      isDefault: M.isDefault
-    };
-    M.prefId && (de.prefId = M.prefId);
-    const ae = await Pt({ url: I, params: de, history: C, dispatchData: i }), le = typeof ae == "string" ? JSON.parse(ae) : ae, Dt = L === st.Add ? "Added" : "Saved";
-    (le === !0 || le?.success === !0) && (p.showMessage(`Preference ${Dt} Successfully.`), ot()), h({ preferenceName: t, Username: R, history: C, dispatchData: i, preferenceApi: I, defaultPreferenceEnums: K });
-  }, $e = async (M) => {
-    let $, ve = "Default";
-    if (M === 0)
-      $ = K[t] || null;
-    else {
-      const de = await Pt({ url: I, params: {
-        action: "load",
-        id: t,
-        Username: R,
-        prefId: M
-      }, history: C, dispatchData: i }) || {};
-      let ae = de;
-      if (typeof de == "string")
-        try {
-          ae = JSON.parse(de);
-        } catch (le) {
-          console.error("Failed to parse preference response JSON", { error: le, rawResponse: de });
-          return;
-        }
-      if (ae && ae.prefValue)
-        try {
-          $ = JSON.parse(ae.prefValue);
-        } catch (le) {
-          console.error("Failed to parse preference value JSON", { error: le, prefValue: ae.prefValue });
-          return;
-        }
-      else
-        $ = null;
-      ae && ae.prefName && (ve = ae.prefName);
-    }
-    if (!$) return;
-    const { gridColumn: m, columnVisibilityModel: se, pinnedColumns: Be, sortModel: Pe, filterModel: qe } = $;
-    m.forEach(({ field: ye, width: de }) => {
-      r.current.getColumnIndex(ye) !== -1 && r.current.setColumnWidth(ye, de);
-    }), r.current.setColumnVisibilityModel(se), r.current.state.columns.orderedFields = m.map(({ field: ye }) => ye), r.current.setPinnedColumns(Be), r.current.setSortModel(Pe || []), r.current.setFilterModel(qe), i({ type: z.SET_CURRENT_PREFERENCE_NAME, payload: ve }), a(!0);
-  }, Ae = (M) => M.GridPreferenceId, pt = (M, $ = !0) => {
-    J(M), Oe(), E(!0), D($), $ && re.resetForm();
-  }, xt = async () => {
-    const { prefId: M, preferenceName: $ } = te;
-    await Le(M, $), h({ preferenceName: t, history: C, dispatchData: i, Username: R, preferenceApi: I, defaultPreferenceEnums: K }), Z({});
-  }, ft = async (M) => {
-    const $ = M.field === "editAction" ? Me.Edit : M.field === "deleteAction" ? Me.Delete : null;
-    if (M.id === 0 && ($ === Me.Edit || $ === Me.Delete)) {
-      p.showMessage(`Default Preference Can Not Be ${$ === Me.Edit ? "Edited" : "Deleted"}`);
-      return;
-    }
-    $ === Me.Edit && (J("Modify"), re.setValues(M?.row), D(!0)), $ === Me.Delete && Z({
-      prefId: M.id,
-      preferenceName: M.row.prefName
-    });
-  }, at = re.values.prefName.trim(), he = L === st.Manage;
-  return /* @__PURE__ */ v(Re, { children: [
-    /* @__PURE__ */ v(
-      lt,
+  });
+  ce(() => {
+    if (!i) return;
+    (async () => {
+      const I = await J({ applyDefault: !0 });
+      I?.defaultPrefId && await K(I.defaultPrefId);
+    })();
+  }, [i]);
+  const j = h === Ee.MANAGE, ue = h === Ee.ADD || h === Ee.EDIT;
+  return /* @__PURE__ */ D(Te, { children: [
+    /* @__PURE__ */ D(
+      Qe,
       {
         id: "grid-preferences-btn",
-        "aria-controls": j ? "basic-menu" : void 0,
+        "aria-controls": u ? "basic-menu" : void 0,
         "aria-haspopup": "true",
-        "aria-expanded": j ? "true" : void 0,
-        onClick: Ee,
-        title: e("Preference", c),
-        startIcon: /* @__PURE__ */ n(Fr, {}),
+        "aria-expanded": u ? "true" : void 0,
+        onClick: ie,
+        title: r("Preference", a),
+        startIcon: /* @__PURE__ */ n(Br, {}),
         children: [
-          e("Preferences", c),
+          r("Preferences", a),
           " ",
-          H && `(${H})`
+          S && `(${S})`
         ]
       }
     ),
-    /* @__PURE__ */ v(
-      Bo,
+    /* @__PURE__ */ D(
+      Pa,
       {
         id: "grid-preference-menu",
-        anchorEl: j,
-        open: !!j,
-        onClose: Oe,
-        component: Lo,
+        anchorEl: u,
+        open: !!u,
+        onClose: le,
+        component: Fa,
         dense: !0,
         MenuListProps: {
           "aria-labelledby": "grid-preferences-btn"
@@ -1197,47 +1228,48 @@ const di = {
           }
         },
         children: [
-          /* @__PURE__ */ n($t, { component: Pr, dense: !0, onClick: () => pt(st.Add), children: e("Add Preference", c) }),
-          /* @__PURE__ */ v($t, { component: Pr, dense: !0, divider: Y?.length > 0, onClick: () => pt(st.Manage, !1), children: [
-            /* @__PURE__ */ n(ko, { children: /* @__PURE__ */ n(Fr, {}) }),
-            e("Manage Preferences", c)
+          /* @__PURE__ */ n(xt, { component: cr, dense: !0, onClick: () => _(Ee.ADD), children: r("Add Preference", a) }),
+          /* @__PURE__ */ D(xt, { component: cr, dense: !0, onClick: () => _(Ee.MANAGE), children: [
+            /* @__PURE__ */ n(Ia, { children: /* @__PURE__ */ n(Br, {}) }),
+            r("Manage Preferences", a)
           ] }),
-          Y?.length > 0 && Y?.map((M) => {
-            const { prefName: $, prefDesc: ve, prefId: m } = M;
+          e.current?.initialGridState && /* @__PURE__ */ n(xt, { component: cr, dense: !0, divider: T?.length > 0, onClick: () => K(0), children: r("Reset to Default", a) }),
+          T?.length > 0 && T?.map((F) => {
+            const { prefName: I, prefDesc: de, prefId: ae } = F;
             return /* @__PURE__ */ n(
-              $t,
+              xt,
               {
-                onClick: () => ke(m),
-                component: _o,
-                selected: H === $,
-                title: e(ve, c),
+                onClick: () => K(ae),
+                component: Ma,
+                selected: S === I,
+                title: r(de, a),
                 dense: !0,
-                children: /* @__PURE__ */ n($o, { primary: e($, c) })
+                children: /* @__PURE__ */ n(Ra, { primary: I })
               },
-              `pref-item-${m}`
+              `pref-item-${ae}`
             );
           })
         ]
       }
     ),
-    /* @__PURE__ */ v(
-      je,
+    /* @__PURE__ */ D(
+      Ne,
       {
-        open: f,
+        open: h !== Ee.NONE,
         disableRestoreFocus: !0,
-        title: /* @__PURE__ */ n(ir, { direction: "row", columnGap: 2, children: /* @__PURE__ */ v(Ne, { variant: "h5", children: [
-          L,
+        title: /* @__PURE__ */ D(xe, { variant: "h5", children: [
+          h,
           " ",
-          e(`Preference${L === st.Manage ? "s" : ""}`, c)
-        ] }) }),
-        maxWidth: he ? "md" : "sm",
+          r(j ? "Preferences" : "Preference", a)
+        ] }),
+        maxWidth: j ? "md" : "sm",
         fullWidth: !0,
         children: [
-          x && /* @__PURE__ */ v(
-            fe,
+          ue && /* @__PURE__ */ D(
+            pe,
             {
               component: "form",
-              onSubmit: re.handleSubmit,
+              onSubmit: $.handleSubmit,
               rowGap: 2,
               container: !0,
               sx: {
@@ -1250,90 +1282,90 @@ const di = {
                 }
               },
               children: [
-                /* @__PURE__ */ n(fe, { size: 12, children: /* @__PURE__ */ n(
+                /* @__PURE__ */ n(pe, { size: 12, children: /* @__PURE__ */ n(
                   Vt,
                   {
-                    defaultValue: e(re.values.prefName, c),
+                    value: $.values.prefName,
                     variant: "outlined",
                     size: "small",
                     margin: "dense",
-                    label: /* @__PURE__ */ v("span", { children: [
-                      e("Preference Name", c),
+                    label: /* @__PURE__ */ D("span", { children: [
+                      r("Preference Name", a),
                       " ",
                       /* @__PURE__ */ n("span", { style: { color: "red" }, children: "*" })
                     ] }),
                     autoFocus: !0,
                     name: "prefName",
-                    onChange: re.handleChange,
-                    error: !!re.errors.prefName,
-                    helperText: re.errors.prefName,
+                    onChange: $.handleChange,
+                    error: !!$.errors.prefName,
+                    helperText: $.errors.prefName,
                     fullWidth: !0
                   }
                 ) }),
-                /* @__PURE__ */ n(fe, { size: 12, children: /* @__PURE__ */ n(
+                /* @__PURE__ */ n(pe, { size: 12, children: /* @__PURE__ */ n(
                   Vt,
                   {
-                    defaultValue: e(re.values.prefDesc, c),
+                    value: $.values.prefDesc,
                     variant: "outlined",
                     multiline: !0,
                     rows: 2,
                     size: "small",
                     margin: "dense",
-                    label: e("Preference Description", c),
+                    label: r("Preference Description", a),
                     name: "prefDesc",
-                    onChange: re.handleChange,
-                    error: !!re.errors.prefDesc,
-                    helperText: re.errors.prefDesc,
+                    onChange: $.handleChange,
+                    error: !!$.errors.prefDesc,
+                    helperText: $.errors.prefDesc,
                     fullWidth: !0
                   }
                 ) }),
-                /* @__PURE__ */ n(fe, { size: 12, children: /* @__PURE__ */ n(
-                  ct,
+                /* @__PURE__ */ n(pe, { size: 12, children: /* @__PURE__ */ n(
+                  Xe,
                   {
                     control: /* @__PURE__ */ n(
-                      Vo,
+                      La,
                       {
-                        checked: re.values.isDefault,
+                        checked: $.values.isDefault,
                         name: "isDefault",
-                        onChange: re.handleChange
+                        onChange: $.handleChange
                       }
                     ),
-                    label: e("Default", c)
+                    label: r("Default", a)
                   }
                 ) }),
-                /* @__PURE__ */ n(fe, { size: 12, children: /* @__PURE__ */ v(ir, { direction: "row", columnGap: 1, style: { justifyContent: "end" }, children: [
+                /* @__PURE__ */ n(pe, { size: 12, children: /* @__PURE__ */ D(Lr, { direction: "row", columnGap: 1, style: { justifyContent: "end" }, children: [
                   /* @__PURE__ */ n(
-                    lt,
+                    Qe,
                     {
                       type: "submit",
                       size: "small",
-                      startIcon: /* @__PURE__ */ n(oa, {}),
+                      startIcon: /* @__PURE__ */ n(ro, {}),
                       color: "primary",
                       variant: "contained",
                       disableElevation: !0,
-                      children: e("Save", c)
+                      children: r("Save", a)
                     }
                   ),
                   /* @__PURE__ */ n(
-                    lt,
+                    Qe,
                     {
                       type: "button",
-                      startIcon: /* @__PURE__ */ n(ur, {}),
+                      startIcon: /* @__PURE__ */ n(fr, {}),
                       color: "error",
                       variant: "contained",
                       size: "small",
-                      onClick: ot,
+                      onClick: Y,
                       disableElevation: !0,
-                      children: e("Close", c)
+                      children: r("Close", a)
                     }
                   )
                 ] }) })
               ]
             }
           ),
-          f && L === st.Manage && /* @__PURE__ */ v(fe, { container: !0, rowGap: 2, children: [
-            /* @__PURE__ */ n(fe, { size: 12, children: /* @__PURE__ */ n(
-              jr,
+          j && /* @__PURE__ */ D(pe, { container: !0, rowGap: 2, children: [
+            /* @__PURE__ */ n(pe, { size: 12, children: /* @__PURE__ */ n(
+              Jr,
               {
                 sx: {
                   "& .MuiTablePagination-selectLabel": {
@@ -1347,70 +1379,75 @@ const di = {
                   }
                 },
                 className: "pagination-fix",
-                onCellClick: ft,
-                columns: mi,
+                onCellClick: W,
+                columns: fi,
                 pageSizeOptions: gi,
                 pagination: !0,
-                rowCount: w.length,
-                rows: w,
-                getRowId: Ae,
+                rowCount: L.length,
+                rows: L,
+                getRowId: (F) => F.GridPreferenceId,
                 slots: {
                   headerFilterMenu: !1
                 },
                 density: "compact",
                 disableDensitySelector: !0,
-                apiRef: u,
+                apiRef: c,
                 disableAggregation: !0,
                 disableRowGrouping: !0,
                 disableRowSelectionOnClick: !0,
-                autoHeight: !0
+                initialState: {
+                  pagination: {
+                    paginationModel: hi
+                  }
+                }
               }
             ) }),
-            /* @__PURE__ */ n(fe, { size: 12, children: /* @__PURE__ */ n(ir, { direction: "row", columnGap: 1, style: { justifyContent: "end" }, children: /* @__PURE__ */ n(
-              lt,
+            /* @__PURE__ */ n(pe, { size: 12, children: /* @__PURE__ */ n(Lr, { direction: "row", columnGap: 1, style: { justifyContent: "end" }, children: /* @__PURE__ */ n(
+              Qe,
               {
                 type: "button",
-                startIcon: /* @__PURE__ */ n(ur, {}),
+                startIcon: /* @__PURE__ */ n(fr, {}),
                 color: "error",
                 variant: "contained",
                 size: "small",
-                onClick: ot,
+                onClick: Y,
                 disableElevation: !0,
-                children: e("Close", c)
+                children: r("Close", a)
               }
             ) }) })
           ] })
         ]
       }
     ),
-    /* @__PURE__ */ v(
-      je,
+    /* @__PURE__ */ D(
+      Ne,
       {
-        open: oe,
-        onConfirm: () => B(!1),
+        open: b,
+        onConfirm: () => f(!1),
         title: "",
-        okText: e("Ok", c),
+        okText: r("Ok", a),
         cancelText: "",
         children: [
           '"',
-          at,
-          '" ',
-          e("name already in use, please use another name.", c)
+          $.values.prefName.trim(),
+          '": ',
+          r("name already in use, please use another name.", a)
         ]
       }
     ),
-    /* @__PURE__ */ v(
-      je,
+    /* @__PURE__ */ D(
+      Ne,
       {
-        open: te.preferenceName,
-        onConfirm: xt,
-        onCancel: () => Z({}),
-        title: "Confirm delete",
+        open: !!d.preferenceName,
+        onConfirm: re,
+        onCancel: () => E({}),
+        title: r("Confirm delete", a),
         yesNo: !0,
         children: [
-          'Are you sure you wish to delete "',
-          te.preferenceName,
-          '"'
+          r("Are you sure you wish to delete", a),
+          ' "',
+          d.preferenceName,
+          '"?'
         ]
       }
     )
@@ -1418,40 +1455,40 @@ const di = {
 }, bi = {
   IsAnyOf: "isAnyOf"
 }, Ci = (e) => {
-  const { column: t, item: r, applyValue: o, apiRef: a } = e, s = t?.dataRef?.current?.lookups;
+  const { column: t, item: r, applyValue: a, apiRef: o } = e, s = t?.dataRef?.current?.lookups;
   let i = t.customLookup || s[t.lookup] || [];
-  typeof t.lookup == "string" && (i = i.map(({ label: p, value: l }) => ({
-    label: p,
+  typeof t.lookup == "string" && (i = i.map(({ label: u, value: l }) => ({
+    label: u,
     value: l
   })));
-  const d = cr(a, Gr), h = be(
-    () => d.items?.filter((p) => p.field === t.field),
-    [t.field, d.items]
-  ), C = Ft(
-    (p) => {
-      let l = p.target.value;
-      if (d.items.length >= 1) {
+  const c = ca(o, ua), p = me(
+    () => c.items?.filter((u) => u.field === t.field),
+    [t.field, c.items]
+  ), h = se(
+    (u) => {
+      let l = u.target.value;
+      if (c.items.length >= 1) {
         l = l.length === 1 ? l[0] : l;
-        for (const f of d.items)
-          f.field === r.field && (f.operator === bi.IsAnyOf ? l = Array.isArray(l) ? l : [l] : l = l === 0 ? "0" : l);
+        for (const d of c.items)
+          d.field === r.field && (d.operator === bi.IsAnyOf ? l = Array.isArray(l) ? l : [l] : l = l === 0 ? "0" : l);
       }
-      if (l.length === 0 && h[0]) {
-        a.current.deleteFilterItem(h[0]);
+      if (l.length === 0 && p[0]) {
+        o.current.deleteFilterItem(p[0]);
         return;
       }
-      const y = l, c = h[0] ? h[0] : r;
-      o({ ...c, value: y });
+      const b = l, f = p[0] ? p[0] : r;
+      a({ ...f, value: b });
     },
-    [a, t.applyZeroFilter, h, r, o]
-  ), u = h[0]?.value ?? "";
-  return /* @__PURE__ */ n(gr, { variant: "standard", className: "w-100", children: /* @__PURE__ */ n(
-    Uo,
+    [o, t.applyZeroFilter, p, r, a]
+  ), y = p[0]?.value ?? "";
+  return /* @__PURE__ */ n(yr, { variant: "standard", className: "w-100", children: /* @__PURE__ */ n(
+    Na,
     {
       label: t.field,
       variant: "standard",
-      value: u,
-      onChange: (p) => C(p),
-      multiple: Array.isArray(u),
+      value: y,
+      onChange: (u) => h(u),
+      multiple: Array.isArray(y),
       MenuProps: {
         PaperProps: {
           style: {
@@ -1460,53 +1497,52 @@ const di = {
           }
         }
       },
-      children: i?.map((p, l) => /* @__PURE__ */ n($t, { value: p.value, children: p.label }, l))
+      children: i?.map((u, l) => /* @__PURE__ */ n(xt, { value: u.value, children: u.label }, l))
     }
   ) });
-}, Ei = (e, t, r) => typeof e !== t.string ? [] : e.split(",").map((o) => {
+}, Ei = (e, t, r) => typeof e !== t.string ? [] : e.split(",").map((a) => {
   r.lastIndex = 0;
-  const a = r.exec(o);
-  if (!a) return null;
-  const [, s, i = "ASC"] = a;
+  const o = r.exec(a);
+  if (!o) return null;
+  const [, s, i = "ASC"] = o;
   return {
     field: s.trim(),
     sort: i.trim().toLowerCase()
   };
-}).filter(Boolean), gt = ({ tTranslate: e, tOpts: t, handleExport: r, contentType: o, type: a, isPivotExport: s = !1 }) => /* @__PURE__ */ v(
-  Jr,
+}).filter(Boolean), lt = ({ tTranslate: e, tOpts: t, handleExport: r, contentType: a, type: o, isPivotExport: s = !1, icon: i }) => /* @__PURE__ */ D(
+  nn,
   {
     onClick: r,
-    "data-type": a,
-    "data-content-type": o,
+    "data-type": o,
+    "data-content-type": a,
     "data-is-pivot-export": s,
     children: [
-      e("Export", t),
-      " ",
-      a.charAt(0).toUpperCase() + a.slice(1).toLowerCase()
+      /* @__PURE__ */ n(He, { className: "grid-icons", sx: { pointerEvents: "none", marginTop: 1 }, children: i }),
+      e(o, t)
     ]
   }
-), vi = ({ exportFormats: e, ...t }) => /* @__PURE__ */ v(yo, { ...t, children: [
-  e.csv !== !1 && /* @__PURE__ */ n(gt, { ...t, type: "csv", contentType: "text/csv" }),
-  e.excel !== !1 && /* @__PURE__ */ n(gt, { ...t, type: "excel", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
-  t.showPivotExportBtn && /* @__PURE__ */ n(gt, { ...t, type: "excel With Pivot", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", isPivotExport: !0 }),
-  e.xml !== !1 && /* @__PURE__ */ n(gt, { ...t, type: "xml", contentType: "text/xml" }),
-  e.html !== !1 && /* @__PURE__ */ n(gt, { ...t, type: "html", contentType: "text/html" }),
-  e.json !== !1 && /* @__PURE__ */ n(gt, { ...t, type: "json", contentType: "application/json" })
-] }), xi = (e = {}, t = {}) => {
+), Di = ({ exportFormats: e, ...t }) => /* @__PURE__ */ D(da, { ...t, children: [
+  e.csv !== !1 && /* @__PURE__ */ n(lt, { ...t, icon: /* @__PURE__ */ n(Ka, { fontSize: "small" }), type: "CSV", contentType: "text/csv" }),
+  e.excel !== !1 && /* @__PURE__ */ n(lt, { ...t, icon: /* @__PURE__ */ n(Nr, { fontSize: "small" }), type: "Excel", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+  t.showPivotExportBtn && /* @__PURE__ */ n(lt, { ...t, icon: /* @__PURE__ */ n(Nr, { fontSize: "small" }), type: "Excel With Pivot", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", isPivotExport: !0 }),
+  e.xml !== !1 && /* @__PURE__ */ n(lt, { ...t, icon: /* @__PURE__ */ n(qa, { fontSize: "small" }), type: "XML", contentType: "text/xml" }),
+  e.html !== !1 && /* @__PURE__ */ n(lt, { ...t, icon: /* @__PURE__ */ n(Ya, { fontSize: "small" }), type: "HTML", contentType: "text/html" }),
+  e.json !== !1 && /* @__PURE__ */ n(lt, { ...t, icon: /* @__PURE__ */ n(Ja, { fontSize: "small" }), type: "JSON", contentType: "application/json" })
+] }), Ti = (e = {}, t = {}) => {
   let r = !0;
-  for (const o in e)
-    e[o] !== t[o] && (r = !1);
-  for (const o in t)
-    o in e || (r = !1);
+  for (const a in e)
+    e[a] !== t[a] && (r = !1);
+  for (const a in t)
+    a in e || (r = !1);
   return r;
-}, Di = 10, wi = /(\w+)( ASC| DESC)?/i, Ti = 6e4, we = {
+}, xi = 50, vi = /(\w+)( ASC| DESC)?/i, wi = 6e4, ye = {
   Copy: "Copy",
   Edit: "Edit",
   Delete: "Delete",
   History: "History",
   Download: "Download"
 }, Si = {
-  article: /* @__PURE__ */ n(wo, {})
+  article: /* @__PURE__ */ n(ba, {})
 }, U = {
   gridFilterModel: { items: [], logicOperator: "and", quickFilterValues: Array(0), quickFilterLogicOperator: "and" },
   permissions: { edit: !0, add: !0, export: !0, delete: !0, showColumnsOrder: !0, filter: !0 },
@@ -1517,6 +1553,7 @@ const di = {
   endDate: "endDate",
   oneToMany: "oneToMany",
   lookup: "lookup",
+  Number: "number",
   string: "string",
   boolean: "boolean",
   right: "right",
@@ -1525,19 +1562,19 @@ const di = {
   actions: "actions",
   function: "function",
   pageSizeOptions: [5, 10, 20, 50, 100]
-}, Oi = [
+}, Ai = [
   { key: "addCreatedOnColumn", field: "CreatedOn", type: "dateTime", header: "Created On" },
   { key: "addCreatedByColumn", field: "CreatedByUser", type: "string", header: "Created By" },
   { key: "addModifiedOnColumn", field: "ModifiedOn", type: "dateTime", header: "Modified On" },
   { key: "addModifiedByColumn", field: "ModifiedByUser", type: "string", header: "Modified By" }
-], Ai = (e) => e.value ? /* @__PURE__ */ n(Yo, { style: { color: "green" } }) : /* @__PURE__ */ n(ur, { style: { color: "gray" } }), Nr = Ht("span")({
+], Oi = (e) => e.value ? /* @__PURE__ */ n(Ua, { style: { color: "green" } }) : /* @__PURE__ */ n(fr, { style: { color: "gray" } }), Vr = Wt("span")({
   width: "100%",
   whiteSpace: "nowrap",
   overflow: "hidden",
   textOverflow: "ellipsis"
-}), kt = Ht(Se)({
+}), Bt = Wt(Ce)({
   margin: "6px"
-}), Pi = Ht(bo)({
+}), Pi = Wt(pa)({
   display: "flex",
   alignItems: "center",
   gap: "1.5rem",
@@ -1545,35 +1582,48 @@ const di = {
   whiteSpace: "nowrap",
   minHeight: "auto",
   borderBottom: "none"
-}), Fi = function(e) {
+}), Fi = ({ params: e, selectedSet: t, handleSelectRow: r, idProperty: a }) => {
+  const o = e.row[a], s = t.has(o);
+  return /* @__PURE__ */ n(
+    rn,
+    {
+      onClick: (c) => {
+        c.stopPropagation(), r({ row: e.row });
+      },
+      checked: s,
+      color: "primary",
+      inputProps: { "aria-label": "checkbox" }
+    }
+  );
+}, Ii = function(e) {
   const {
     model: t,
     data: r,
-    currentPreference: o,
-    isReadOnly: a,
+    currentPreference: a,
+    isReadOnly: o,
     canAdd: s,
     forAssignment: i,
-    showAddIcon: d,
-    onAdd: h,
-    selectionApi: C,
-    selectedSet: u,
-    selectAll: p,
+    showAddIcon: c,
+    onAdd: p,
+    selectionApi: h,
+    selectedSet: y,
+    selectAll: u,
     available: l,
-    onAssign: y,
-    assigned: c,
-    onUnassign: f,
+    onAssign: b,
+    assigned: f,
+    onUnassign: d,
     effectivePermissions: E,
-    clearFilters: x,
-    handleExport: D,
-    preferenceName: w,
-    apiRef: P,
-    gridColumns: L,
-    setIsGridPreferenceFetched: J,
-    tTranslate: j,
-    tOpts: ee,
-    filterModel: oe
-  } = e, B = t.customAddText || (t.title ? `Add ${t.title}` : "Add"), te = oe?.items?.length || 0;
-  return /* @__PURE__ */ v(
+    clearFilters: T,
+    handleExport: P,
+    preferenceKey: S,
+    apiRef: x,
+    tTranslate: L,
+    tOpts: z,
+    filterModel: ie,
+    onPreferenceChange: le,
+    toolbarItems: Y
+  } = e, N = t.customAddText || (t.title ? `Add ${t.title}` : "Add"), J = ie?.items?.length || 0;
+  return /* @__PURE__ */ D(
     "div",
     {
       style: {
@@ -1582,546 +1632,509 @@ const di = {
         padding: "10px"
       },
       children: [
-        /* @__PURE__ */ v("div", { children: [
-          t.gridSubTitle && /* @__PURE__ */ v(At, { variant: "h6", component: "h3", textAlign: "center", sx: { ml: 1 }, children: [
+        /* @__PURE__ */ D("div", { children: [
+          t.gridSubTitle && /* @__PURE__ */ D(vt, { variant: "h6", component: "h3", textAlign: "center", sx: { ml: 1 }, children: [
             " ",
-            j(t.gridSubTitle, ee)
+            L(t.gridSubTitle, z)
           ] }),
-          o && t.showPreferenceInHeader && /* @__PURE__ */ v(At, { className: "preference-name-text", variant: "h6", component: "h6", textAlign: "center", sx: { ml: 1 }, children: [
-            j("Applied Preference", ee),
-            " - ",
-            o
+          a && t.showPreferenceInHeader && /* @__PURE__ */ D(vt, { className: "preference-name-text", variant: "h6", component: "h6", textAlign: "center", sx: { ml: 1 }, children: [
+            L("Applied Preference", z),
+            ": ",
+            a
           ] }),
-          (a || !s && !i) && /* @__PURE__ */ v(At, { variant: "h6", component: "h3", textAlign: "center", sx: { ml: 1 }, children: [
+          (o || !s && !i) && /* @__PURE__ */ D(vt, { variant: "h6", component: "h3", textAlign: "center", sx: { ml: 1 }, children: [
             " ",
-            !s || a ? "" : t.title
+            !s || o ? "" : t.title
           ] }),
-          !i && s && !a && /* @__PURE__ */ n(kt, { startIcon: d ? /* @__PURE__ */ n(Ar, {}) : null, onClick: h, size: "medium", variant: "contained", children: B }),
-          C.length && r.records.length ? /* @__PURE__ */ n(
-            kt,
+          !i && s && !o && /* @__PURE__ */ n(Bt, { startIcon: c ? /* @__PURE__ */ n(Rr, {}) : null, onClick: p, size: "medium", variant: "contained", children: L(N, z) }),
+          h.length && r.records.length ? /* @__PURE__ */ n(
+            Bt,
             {
-              onClick: p,
+              onClick: u,
               size: "medium",
               variant: "contained",
-              children: u.current.size === r.records.length ? j("Deselect All", ee) : j("Select All", ee)
+              children: y.size === r.records.length ? L("Deselect All", z) : L("Select All", z)
             }
-          ) : /* @__PURE__ */ n(me, {}),
-          l && /* @__PURE__ */ n(kt, { startIcon: d ? /* @__PURE__ */ n(Ar, {}) : null, onClick: y, size: "medium", variant: "contained", children: j("Assign", ee) }),
-          c && /* @__PURE__ */ n(kt, { startIcon: d ? /* @__PURE__ */ n(So, {}) : null, onClick: f, size: "medium", variant: "contained", children: j("Remove", ee) })
+          ) : /* @__PURE__ */ n(fe, {}),
+          l && /* @__PURE__ */ n(Bt, { startIcon: c ? /* @__PURE__ */ n(Rr, {}) : null, onClick: b, size: "medium", variant: "contained", children: L("Assign", z) }),
+          f && /* @__PURE__ */ n(Bt, { startIcon: c ? /* @__PURE__ */ n(Ea, {}) : null, onClick: d, size: "medium", variant: "contained", children: L("Remove", z) })
         ] }),
-        /* @__PURE__ */ v(Pi, { ...e, children: [
+        /* @__PURE__ */ D(Pi, { ...e, children: [
           E.showColumnsOrder && /* @__PURE__ */ n(
-            xo,
+            ga,
             {
-              render: (Z) => /* @__PURE__ */ n(
-                Se,
+              render: (K) => /* @__PURE__ */ n(
+                Ce,
                 {
-                  ...Z,
-                  startIcon: /* @__PURE__ */ n(sa, {}),
+                  ...K,
+                  startIcon: /* @__PURE__ */ n(oo, {}),
                   size: "small",
                   variant: "text",
-                  children: j("COLUMNS", ee)
+                  children: L("COLUMNS", z)
                 }
               )
             }
           ),
-          E.filter && /* @__PURE__ */ v(me, { children: [
+          E.filter && /* @__PURE__ */ D(fe, { children: [
             /* @__PURE__ */ n(
-              Do,
+              ya,
               {
-                render: (Z) => /* @__PURE__ */ n(
-                  Se,
+                render: (K) => /* @__PURE__ */ n(
+                  Ce,
                   {
-                    ...Z,
-                    startIcon: /* @__PURE__ */ n(zo, { badgeContent: te, color: "primary", children: /* @__PURE__ */ n(la, {}) }),
+                    ...K,
+                    startIcon: /* @__PURE__ */ n(Ba, { badgeContent: J, color: "primary", children: /* @__PURE__ */ n(io, {}) }),
                     size: "small",
                     variant: "text",
-                    children: j("FILTERS", ee)
+                    children: L("FILTERS", z)
                   }
                 )
               }
             ),
-            /* @__PURE__ */ n(Se, { startIcon: /* @__PURE__ */ n(To, {}), onClick: x, size: "small", children: j("CLEAR FILTER", ee) })
+            /* @__PURE__ */ n(Ce, { startIcon: /* @__PURE__ */ n(Ca, {}), onClick: T, size: "small", children: L("CLEAR FILTER", z) })
           ] }),
-          E.export && /* @__PURE__ */ n(vi, { handleExport: D, showPivotExportBtn: t.pivotApi, exportFormats: t.exportFormats || {}, tTranslate: j, tOpts: ee }),
-          w && /* @__PURE__ */ n(yi, { preferenceName: w, gridRef: P, columns: L, setIsGridPreferenceFetched: J })
+          E.export && /* @__PURE__ */ n(Di, { handleExport: P, showPivotExportBtn: t.pivotApi, exportFormats: t.exportFormats || {}, tTranslate: L, tOpts: z }),
+          Y,
+          S && /* @__PURE__ */ n(
+            yi,
+            {
+              gridRef: x,
+              onPreferenceChange: le,
+              t: L,
+              tOpts: z
+            }
+          )
         ] })
       ]
     }
   );
-}, Br = Vr(({
+}, zr = Kr(({
   model: e,
   columns: t,
   api: r,
-  defaultSort: o,
-  setActiveRecord: a,
+  defaultSort: a,
+  setActiveRecord: o,
   parentFilters: s,
   parent: i,
-  where: d,
-  title: h,
-  permissions: C,
+  where: c,
+  title: p,
+  showPageTitle: h,
+  permissions: y,
   selected: u,
-  assigned: p,
-  available: l,
-  disableCellRedirect: y = !1,
-  onAssignChange: c,
-  customStyle: f,
-  onCellClick: E,
-  showRowsSelected: x,
-  chartFilters: D,
-  clearChartFilter: w,
-  showFullScreenLoader: P,
-  customFilters: L,
-  onRowDoubleClick: J,
-  onRowClick: j = () => {
+  assigned: l,
+  available: b,
+  disableCellRedirect: f = !1,
+  onAssignChange: d,
+  customStyle: E,
+  onCellClick: T,
+  showRowsSelected: P,
+  showFullScreenLoader: S,
+  customFilters: x,
+  onRowDoubleClick: L,
+  onRowClick: z = () => {
   },
-  gridStyle: ee,
-  reRenderKey: oe,
-  additionalFilters: B,
-  onCellDoubleClickOverride: te,
-  onAddOverride: Z,
-  dynamicColumns: R,
-  readOnly: Y = !1,
-  baseFilters: H = [],
-  ...I
+  gridStyle: ie,
+  reRenderKey: le,
+  additionalFilters: Y,
+  onCellDoubleClickOverride: N,
+  onAddOverride: J,
+  dynamicColumns: K,
+  toolbarItems: k,
+  readOnly: re = !1,
+  onListParamsChange: W,
+  apiRef: _,
+  baseFilters: $,
+  ...j
 }) => {
-  const [K, Q] = F({ pageSize: Di, page: 0 }), [X, Ce] = F({ recordCount: 0, records: [], lookups: {} }), [re, Ee] = F(!0), Oe = !!c, ot = x, [Le, ke] = F([]), [_e, $e] = F(!1), [Ae, pt] = F(null), xt = { CreatedOn: !1, CreatedByUser: !1, ...e.columnVisibilityModel }, [ft, at] = F(!1), he = qt(), M = e.paginationMode === U.client ? U.client : U.server, { t: $, i18n: ve } = hr(), m = { t: $, i18n: ve }, [se, Be] = F(""), [Pe, qe] = F(Ei(o || e.defaultSort, U, wi)), ye = { items: [], logicOperator: "and", quickFilterValues: Array(0), quickFilterLogicOperator: "and" };
-  e.defaultFilters && (ye.items = [], e.defaultFilters.forEach((g) => {
-    ye.items.push(g);
+  const [ue, F] = O({ pageSize: xi, page: 0 }), [I, de] = O({ recordCount: 0, records: [], lookups: {} }), [ae, he] = O(!0), Oe = !!d, wt = P, [ke, $e] = O([]), [pt, Ke] = O(!1), [_e, Yt] = O(null), Jt = { CreatedOn: !1, CreatedByUser: !1, ...e.columnVisibilityModel }, [St, Ve] = O(!1), oe = qt(), ft = e.paginationMode === U.client ? U.client : U.server, { t: At, i18n: ze } = Qr(), m = { t: At, i18n: ze }, [rt, Ot] = O(""), [mt, Zt] = O(Ei(a || e.defaultSort, U, vi)), ht = { items: [], logicOperator: "and", quickFilterValues: Array(0), quickFilterLogicOperator: "and" };
+  e.defaultFilters && (ht.items = [], e.defaultFilters.forEach((C) => {
+    ht.items.push(C);
   }));
-  const [de, ae] = F({ ...ye }), { navigate: le, getParams: Dt, useParams: xe, pathname: Ke } = Kt(), { id: Ye } = xe() || Dt, Je = Ye?.split("-")[0], Ze = zr(), { idProperty: ge = "id", showHeaderFilters: k = !0, disableRowSelectionOnClick: De = !0, hideBackButton: ne = !1, hideTopFilters: Qe = !0, updatePageTitle: Xe = !0, isElasticScreen: et = !1, navigateBack: Yt = !1, selectionApi: mt = {} } = e, Ve = e.readOnly === !0 || Y, It = e.allowDoubleClick === !1, Jt = Sr(X), pn = e.showAddIcon === !0, fn = e.columns.filter(({ link: g }) => !!g).map((g) => g.link), [br, Cr] = F(!1), { stateData: Ue, dispatchData: Fe, formatDate: Zt, removeCurrentPreferenceName: mn, getAllSavedPreferences: hn, applyDefaultPreferenceIfExists: gn } = We(), { timeZone: Qt } = Ue, wt = { ...U.permissions, ...Ue.gridSettings.permissions, ...e.permissions, ...C }, { Username: yn } = Ue?.getUserData ? Ue.getUserData : {}, {
-    gridSettings: {
-      permissions: {
-        routesWithNoChildRoute: bn = [],
-        Url: Tt,
-        withControllersUrl: Xt,
-        defaultPreferenceEnums: Cn,
-        preferenceApi: er,
-        historyScreenName: En = "historyScreen",
-        showPageTitle: vn = !0
-      } = {}
-    } = {},
-    currentPreference: xn
-  } = Ue, Dn = ["isEmpty", "isNotEmpty", "isAnyOf"], wn = Ue.getUserData || {}, Er = e.columns.find((g) => g.type === "fileUpload")?.field || "", Tn = { add: wt.add, edit: wt.edit, delete: wt.delete }, { canAdd: Sn, canEdit: vr, canDelete: On } = en({ userData: wn, model: e, userDefinedPermissions: Tn }), b = e.tTranslate ?? ((g) => g), { addUrlParamKey: tr, searchParamKey: Mt, hideBreadcrumb: An = !1, tableName: Pn, showHistory: Fn = !0, hideBreadcrumbInGrid: In = !1, breadcrumbColor: Mn, disablePivoting: Rn = !1, columnHeaderHeight: Nn = 70 } = e, Bn = e.gridTitle || e.title, Rt = e.preferenceId || e.module?.preferenceId, ht = new URLSearchParams(window.location.search), xr = ht.has("baseData") && ht.get("baseData"), Ln = (() => {
-    if (xr) {
-      const g = JSON.parse(xr);
-      if (typeof g === U.object && g !== null)
-        return g;
-    }
-    return {};
-  })(), pe = Sr(/* @__PURE__ */ new Set()), kn = ({ row: g }) => {
-    const S = g[ge];
-    pe.current.has(S) ? pe.current.delete(S) : pe.current.add(S), ke(Array.from(pe.current));
-  }, _n = (g) => {
-    const S = g.row[ge], [O, T] = F(pe.current.has(S));
-    return ue(() => {
-      T(pe.current.has(S));
-    }, [g.row, pe.current.size]), /* @__PURE__ */ n(
-      Yr,
-      {
-        onClick: (V) => {
-          V.stopPropagation(), kn(g);
-        },
-        checked: O,
-        color: "primary",
-        inputProps: { "aria-label": "checkbox" }
+  const [Pe, nt] = O({ ...ht }), { navigate: ge, getParams: Qt, useParams: Xt, pathname: Pt } = Dr(), { id: Ft } = Xt() || Qt, gt = Ft?.split("-")[0], R = _ || Yr(), { idProperty: q = "id", showHeaderFilters: ee = !0, disableRowSelectionOnClick: Ge = !0, hideTopFilters: Ue = !0, updatePageTitle: at = !0, isElasticScreen: qe = !1, navigateBack: It = !1, selectionApi: Ye = {} } = e, ve = e.readOnly === !0 || re, yn = e.allowDoubleClick === !1, er = Wr(I), bn = e.showAddIcon === !0, Tr = e.columns.filter(({ link: C }) => !!C).map((C) => C.link), { stateData: yt, dispatchData: Je, formatDate: tr, getApiEndpoint: rr, buildUrl: nr } = Be(), { timeZone: ar } = yt, bt = { ...U.permissions, ...e.permissions, ...y }, Cn = ["isEmpty", "isNotEmpty", "isAnyOf"], En = yt.getUserData || {}, or = e.columns.find((C) => C.type === "fileUpload")?.field || "", Dn = { add: bt.add, edit: bt.edit, delete: bt.delete }, { canAdd: Tn, canEdit: xr, canDelete: xn } = pn({ userData: En, model: e, userDefinedPermissions: Dn }), g = e.tTranslate ?? ((C) => C), { addUrlParamKey: Mt, searchParamKey: Ct, hideBreadcrumb: vn = !1, tableName: vr, showHistory: wn = !0, hideBreadcrumbInGrid: Sn = !1, breadcrumbColor: An, disablePivoting: On = !1, columnHeaderHeight: Pn = 70 } = e, wr = e.gridTitle || e.title, Rt = rr("GridPreferenceManager") ? e.preferenceId || e.module?.preferenceId : null, je = new URLSearchParams(window.location.search), [Fn, In] = O(null), [Sr, Mn] = O(!Rt), Ze = r || e.api;
+  ce(() => {
+    R.current && (R.current.prefKey = Rt);
+  }, [R, Rt]);
+  const Rn = (C) => {
+    In(C), Mn(!0);
+  }, ir = je.has("baseData") && je.get("baseData"), Ln = me(() => {
+    if (ir)
+      try {
+        const C = JSON.parse(ir);
+        if (typeof C === U.object && C !== null)
+          return C;
+      } catch (C) {
+        console.error("Failed to parse baseData from URL:", C);
       }
-    );
-  }, rr = {
+    return {};
+  }, [ir]), [we, ot] = O(/* @__PURE__ */ new Set()), Nn = se(({ row: C }) => {
+    const v = C[q];
+    ot((A) => {
+      const w = new Set(A);
+      return w.has(v) ? w.delete(v) : w.add(v), $e(Array.from(w)), w;
+    });
+  }, [q, ot, $e]), lr = {
     radio: {
       type: "singleSelect",
       valueOptions: "lookup"
     },
     date: {
-      valueFormatter: (g) => Zt({ value: g, useSystemFormat: !0, showOnlyDate: !1, state: Ue.dateTime, timeZone: Qt }),
-      filterOperators: Lt({ columnType: "date", label: b("Value", m) })
+      valueFormatter: (C) => tr({ value: C, useSystemFormat: !0, showOnlyDate: !1, state: yt.dateTime, timeZone: ar }),
+      filterOperators: Nt({ columnType: "date", label: g("Value", m) })
     },
     dateTime: {
-      valueFormatter: (g) => Zt({ value: g, useSystemFormat: !1, showOnlyDate: !1, state: Ue.dateTime, timeZone: Qt }),
-      filterOperators: Lt({ columnType: "datetime", label: b("Value", m) })
+      valueFormatter: (C) => tr({ value: C, useSystemFormat: !1, showOnlyDate: !1, state: yt.dateTime, timeZone: ar }),
+      filterOperators: Nt({ columnType: "datetime", label: g("Value", m) })
     },
     dateTimeLocal: {
-      valueFormatter: (g) => Zt({ value: g, useSystemFormat: !1, showOnlyDate: !1, state: Ue.dateTime, timeZone: Qt }),
-      filterOperators: Lt({ type: "dateTimeLocal", convert: !0 })
+      valueFormatter: (C) => tr({ value: C, useSystemFormat: !1, showOnlyDate: !1, state: yt.dateTime, timeZone: ar }),
+      filterOperators: Nt({ type: "dateTimeLocal", convert: !0 })
     },
     boolean: {
-      renderCell: Ai
+      renderCell: Oi
     },
     select: {
       type: "singleSelect",
       valueOptions: "lookup"
     },
     selection: {
-      renderCell: (g) => /* @__PURE__ */ n(_n, { ...g })
+      renderCell: (C) => /* @__PURE__ */ n(Fi, { params: C, selectedSet: we, handleSelectRow: Nn, idProperty: q })
     }
   };
-  ue(() => {
-    Jt.current = X;
-  }, [X]), ue(() => {
-    if (!L || !Object.keys(L).length) return;
-    if (L.clear) {
-      ae({ items: [], logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
+  ce(() => {
+    er.current = I;
+  }, [I]), ce(() => {
+    if (!x || !Object.keys(x).length) return;
+    if (x.clear) {
+      nt({ items: [], logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
       return;
     }
-    const g = Object.entries(L).reduce((S, [O, T]) => (O === U.startDate || O === U.endDate ? S.push(T) : O in L && S.push({ field: O, value: T, operator: "equals", type: "string" }), S), []);
-    ae({ items: g, logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
-  }, [L]);
-  const $n = ({ field: g }) => (Jt.current.lookups || {})[or[g].lookup] || [];
-  ue(() => {
-    I.isChildGrid || !Qe || Fe({
-      type: z.PASS_FILTERS_TO_HEADER,
+    const C = Object.entries(x).reduce((v, [A, w]) => (A === U.startDate || A === U.endDate ? v.push(w) : A in x && v.push({ field: A, value: w, operator: "equals", type: "string" }), v), []);
+    nt({ items: C, logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
+  }, [x]);
+  const Bn = se(({ field: C, lookupMap: v }) => (er.current.lookups || {})[(v || {})[C]?.lookup] || [], []);
+  ce(() => {
+    j.isChildGrid || !Ue || Je({
+      type: Z.PASS_FILTERS_TO_HEADER,
       payload: {
         filterButton: null,
         hidden: { search: !0, operation: !0, export: !0, print: !0, filter: !0 }
       }
     });
   }, []);
-  const { customActions: nr = [] } = e, { gridColumns: tt, pinnedColumns: Vn, lookupMap: or } = be(() => {
-    let g = t || e.gridColumns || e.columns;
-    R && (g = [...R, ...g]);
-    const S = { left: [Co.field], right: [] }, O = [], T = {};
-    for (const N of g) {
-      if (N.gridLabel === null || i && N.lookup === i || N.type === U.oneToMany && N.countInList === !1) continue;
-      const W = {};
-      if (N.type === U.oneToMany && (W.type = "number", W.field = N.field.replace(/s$/, "Count")), rr[N.type] && Object.assign(W, rr[N.type]), W.valueOptions === U.lookup || N.type === U.boolean) {
-        let G = [];
-        W.valueOptions === U.lookup && (W.valueOptions = $n, G = [...Ur(), ...Eo()].filter((St) => ["is", "not", "isAnyOf"].includes(St.value))), N.type === U.boolean && (G = vo()), W.filterOperators = G.map((_) => ({
-          ..._,
-          InputComponent: _.InputComponent ? (St) => /* @__PURE__ */ n(
+  const { customActions: Lt = [] } = e, { gridColumns: Fe, pinnedColumns: kn, lookupMap: sr } = me(() => {
+    let C = t || e.gridColumns || e.columns;
+    K && (C = [...K, ...C]);
+    const v = { left: [fa.field], right: [] }, A = [], w = {};
+    for (const B of C) {
+      if (B.gridLabel === null || i && B.lookup === i || B.type === U.oneToMany && B.countInList === !1) continue;
+      const G = {};
+      if (B.type === U.oneToMany && (G.type = "number", G.field = B.field.replace(/s$/, "Count")), lr[B.type] && Object.assign(G, lr[B.type]), G.valueOptions === U.lookup || B.type === U.boolean) {
+        let V = [];
+        G.valueOptions === U.lookup && (G.valueOptions = (Ie) => Bn({ ...Ie, lookupMap: w }), V = [...qr(), ...ma()].filter((Ie) => ["is", "not", "isAnyOf"].includes(Ie.value))), B.type === U.boolean && (V = ha()), G.filterOperators = V.map((X) => ({
+          ...X,
+          InputComponent: X.InputComponent ? (Ie) => /* @__PURE__ */ n(
             Ci,
             {
               column: {
-                ...N,
-                ...N.type === U.boolean ? {
+                ...B,
+                ...B.type === U.boolean ? {
                   customLookup: [
                     { value: !0, label: "Yes" },
                     { value: !1, label: "No" }
                   ]
                 } : {},
-                dataRef: Jt
+                dataRef: er
               },
-              ...St,
+              ...Ie,
               autoHighlight: !0
             }
           ) : void 0
         }));
       }
-      (N.linkTo || N.link) && (W.cellClassName = "mui-grid-linkColumn");
-      const q = b(N.gridLabel || N.label, m);
-      O.push({ headerName: q, description: q, ...N, ...W }), N.pinned && S[N.pinned === U.right ? U.right : U.left].push(N.field), T[N.field] = N;
+      (B.linkTo || B.link) && (G.cellClassName = "mui-grid-linkColumn");
+      const Q = g(B.gridLabel || B.label, m);
+      A.push({ ...B, ...G, headerName: Q, description: Q }), B.pinned && v[B.pinned === U.right ? U.right : U.left].push(B.field), w[B.field] = B;
     }
-    let A = e.standard;
-    A === !0 && (A = { addCreatedOnColumn: !0, addCreatedByColumn: !0, addModifiedOnColumn: !0, addModifiedByColumn: !0 }), A && typeof A === U.object && Oi.forEach(({ key: N, field: W, type: q, header: G }) => {
-      if (A[N] === !0) {
-        const _ = { field: W, type: q, headerName: G, width: 200 };
-        q === U.dateTime && (_.filterOperators = Lt({ columnType: "date" }), _.valueFormatter = rr.dateTime.valueFormatter, _.keepLocal = !0), O.push(_);
+    let M = e.standard;
+    M === !0 && (M = { addCreatedOnColumn: !0, addCreatedByColumn: !0, addModifiedOnColumn: !0, addModifiedByColumn: !0 }), M && typeof M === U.object && Ai.forEach(({ key: B, field: G, type: Q, header: V }) => {
+      if (M[B] === !0) {
+        const X = { field: G, type: Q, headerName: g(V, m), width: 200 };
+        Q === U.dateTime && (X.filterOperators = Nt({ columnType: "date" }), X.valueFormatter = lr.dateTime.valueFormatter, X.keepLocal = !0), A.push(X);
       }
     });
-    const V = [];
-    return !Oe && !Ve && (vr && V.push(/* @__PURE__ */ n(ze, { icon: /* @__PURE__ */ n(Ie, { title: "Edit", children: /* @__PURE__ */ n(dr, {}) }), "data-action": we.Edit, label: "Edit", color: "primary" })), wt.copy && V.push(/* @__PURE__ */ n(ze, { icon: /* @__PURE__ */ v(Ie, { title: "Copy", children: [
-      /* @__PURE__ */ n(Or, {}),
+    const H = [];
+    return !Oe && !ve && (xr && H.push(/* @__PURE__ */ n(Me, { icon: /* @__PURE__ */ n(De, { title: "Edit", children: /* @__PURE__ */ n(pr, {}) }), "data-action": ye.Edit, label: "Edit", color: "primary" })), bt.copy && H.push(/* @__PURE__ */ n(Me, { icon: /* @__PURE__ */ D(De, { title: "Copy", children: [
+      /* @__PURE__ */ n(Mr, {}),
       " "
-    ] }), "data-action": we.Copy, label: "Copy", color: "primary" })), On && V.push(/* @__PURE__ */ n(ze, { icon: /* @__PURE__ */ v(Ie, { title: "Delete", children: [
-      /* @__PURE__ */ n(Hr, {}),
+    ] }), "data-action": ye.Copy, label: "Copy", color: "primary" })), xn && H.push(/* @__PURE__ */ n(Me, { icon: /* @__PURE__ */ D(De, { title: "Delete", children: [
+      /* @__PURE__ */ n(Zr, {}),
       " "
-    ] }), "data-action": we.Delete, label: "Delete", color: "error" })), Fn && V.push(/* @__PURE__ */ n(ze, { icon: /* @__PURE__ */ v(Ie, { title: "History", children: [
-      /* @__PURE__ */ n(aa, {}),
+    ] }), "data-action": ye.Delete, label: "Delete", color: "error" })), wn && H.push(/* @__PURE__ */ n(Me, { icon: /* @__PURE__ */ D(De, { title: "History", children: [
+      /* @__PURE__ */ n(no, {}),
       " "
-    ] }), "data-action": we.History, label: "History", color: "primary" })), nr.length && nr.forEach(({ icon: N, action: W, color: q }) => {
-      V.push(
+    ] }), "data-action": ye.History, label: "History", color: "primary" })), Lt.length && Lt.forEach(({ icon: B, action: G, color: Q }) => {
+      H.push(
         /* @__PURE__ */ n(
-          ze,
+          Me,
           {
-            icon: /* @__PURE__ */ n(Ie, { title: W, children: Si[N] || /* @__PURE__ */ n(Or, {}) }),
-            "data-action": W,
-            label: W,
-            color: q || "primary"
+            icon: /* @__PURE__ */ n(De, { title: G, children: Si[B] || /* @__PURE__ */ n(Mr, {}) }),
+            "data-action": G,
+            label: G,
+            color: Q || "primary"
           }
         )
       );
-    })), Er.length && V.push(/* @__PURE__ */ n(ze, { icon: /* @__PURE__ */ v(Ie, { title: "Download document", children: [
-      /* @__PURE__ */ n(ia, {}),
+    })), or.length && H.push(/* @__PURE__ */ n(Me, { icon: /* @__PURE__ */ D(De, { title: "Download document", children: [
+      /* @__PURE__ */ n(ao, {}),
       " "
-    ] }), "data-action": we.Download, label: "Download document", color: "primary" })), V.length && O.push({
+    ] }), "data-action": ye.Download, label: "Download document", color: "primary" })), H.length && A.push({
       field: "actions",
       type: "actions",
       label: "",
-      width: V.length * 50,
+      width: H.length * 50,
       hidable: !1,
-      getActions: (N) => {
-        const W = [...V];
-        if (vr && !Ve) {
-          const q = N.row.canEdit === !1;
-          W[0] = /* @__PURE__ */ n(
-            ze,
+      getActions: (B) => {
+        const G = [...H];
+        if (xr && !ve) {
+          const Q = B.row.canEdit === !1;
+          G[0] = /* @__PURE__ */ n(
+            Me,
             {
-              icon: /* @__PURE__ */ n(Ie, { title: "Edit", children: /* @__PURE__ */ n(dr, {}) }),
-              "data-action": we.Edit,
+              icon: /* @__PURE__ */ n(De, { title: "Edit", children: /* @__PURE__ */ n(pr, {}) }),
+              "data-action": ye.Edit,
               label: "Edit",
               color: "primary",
-              disabled: q
+              disabled: Q
             }
           );
         }
-        return W;
+        return G;
       }
-    }), S.right.push("actions"), { gridColumns: O, pinnedColumns: S, lookupMap: T };
-  }, [t, e, i, C, Oe, R]), Nt = (g = "list", S = {}, O, T, A, V) => {
-    const { pageSize: N, page: W } = K;
-    let q = e.controllerType, G = `${q === "cs" ? Xt : Tt || ""}${e.api || r}`;
-    A && (G = `${Xt}${e.pivotApi}`, q = "cs"), (p || l) && (S[p ? "include" : "exclude"] = Array.isArray(u) ? u.join(",") : u);
-    const _ = { ...de };
-    if (D?.items?.length > 0) {
-      const { columnField: it, operatorValue: ar } = D.items[0] || {}, oo = U.chartFilterFields[it];
-      _.items = [{ field: oo, operator: ar, isChartFilter: !1 }], JSON.stringify(de) !== JSON.stringify(_) && (ae({ ..._ }), D.items.length = 0);
-    }
-    e.joinColumn && Je && H.push({ field: e.joinColumn, operator: "is", type: "number", value: Number(Je) }), B && (_.items = [..._.items || [], ...B]), S = { ...S, ...I.extraParams }, (!_.items.length || _.items.every((it) => "value" in it && it.value !== void 0)) && ka({
-      action: g,
-      page: O ? 0 : W,
-      pageSize: O ? 1e6 : N,
-      sortModel: Pe,
-      filterModel: _,
-      controllerType: q,
-      api: G,
-      setIsLoading: Ee,
-      setData: Ce,
-      gridColumns: tt,
+    }), v.right.push("actions"), { gridColumns: A, pinnedColumns: v, lookupMap: w };
+  }, [t, e, i, y, Oe, K, At]), Et = (C = "list", v = {}, A, w, M, H) => {
+    const { pageSize: B, page: G } = ue, Q = nr(e.controllerType, M ? e.pivotApi : Ze);
+    (l || b) && (v[l ? "include" : "exclude"] = Array.isArray(u) ? u.join(",") : u);
+    const V = { ...Pe }, X = Array.isArray($) ? [...$] : [];
+    if (e.joinColumn && gt && X.push({ field: e.joinColumn, operator: "is", type: "number", value: Number(gt) }), Y && (V.items = [...V.items || [], ...Y]), v = { ...v, ...j.extraParams }, !(!V.items.length || V.items.every((Ir) => "value" in Ir && Ir.value !== void 0))) return;
+    const Dt = {
+      action: C,
+      page: A ? 0 : G,
+      pageSize: A ? 1e6 : B,
+      sortModel: mt,
+      filterModel: V,
+      controllerType: e.controllerType,
+      api: Q,
+      gridColumns: Fe,
       model: e,
       parentFilters: s,
-      extraParams: S,
-      setError: he.showError,
-      contentType: O,
-      columns: T,
-      template: A ? e.exportTemplate : null,
-      configFileName: A ? e.configFileName : null,
-      dispatchData: Fe,
-      showFullScreenLoader: P,
-      history: le,
-      baseFilters: H,
-      isElasticExport: V
+      extraParams: v,
+      contentType: A,
+      columns: w,
+      template: M ? e.exportTemplate : null,
+      configFileName: M ? e.configFileName : null,
+      baseFilters: X,
+      isElasticExport: H
+    };
+    return typeof W == "function" && W(Dt), R.current.listParams = Dt, sn({
+      ...Dt,
+      setError: oe.showError,
+      setIsLoading: he,
+      setData: de,
+      dispatchData: Je,
+      showFullScreenLoader: S,
+      history: ge
     });
-  }, Bt = ({ id: g, record: S = {}, mode: O }) => {
-    if (a) {
-      tn({ id: g, api: r || e.api, setIsLoading: Ee, setActiveRecord: a, model: e, parentFilters: s, where: d });
+  }, it = se(({ id: C, record: v = {}, mode: A }) => {
+    if (o) {
+      zt({ id: C, api: Ze, setIsLoading: he, setActiveRecord: o, model: e, parentFilters: s, where: c });
       return;
     }
-    let T = Ke;
-    T.endsWith("/") || (T += "/"), O === "copy" ? (T += "0-" + g, Fe({ type: "UPDATE_FORM_MODE", payload: "copy" })) : (T += g, Fe({ type: "UPDATE_FORM_MODE", payload: "" })), tr && (ht.set(tr, S[tr]), T += `?${ht.toString()}`), le(T);
-  }, Un = async ({ documentLink: g, fileName: S }) => {
-    if (g)
-      try {
-        const O = await fetch(g);
-        if (!O.ok)
-          throw new Error(`Failed to fetch the file: ${O.statusText}`);
-        const T = await O.blob(), A = window.URL.createObjectURL(T), V = document.createElement("a");
-        V.href = A;
-        const N = g.split("/").pop() || `downloaded-file.${T.type.split("/")[1] || "txt"}`;
-        V.download = S || N, document.body.appendChild(V), V.click(), document.body.removeChild(V), window.URL.revokeObjectURL(A);
-      } catch {
-        window.open(g);
-      }
-  }, zn = async (g, S, O) => {
-    let T = g.field === e.linkColumn ? we.Edit : null;
-    if (!T && g.field === U.actions && (T = O?.action, !T)) {
-      const q = S.target.closest("button");
-      q && (T = q.dataset.action);
+    let w = Pt;
+    w.endsWith("/") || (w += "/"), A === "copy" ? (w += "0-" + C, Je({ type: "UPDATE_FORM_MODE", payload: "copy" })) : (w += C, Je({ type: "UPDATE_FORM_MODE", payload: "" })), Mt && (je.set(Mt, v[Mt]), w += `?${je.toString()}`), ge(w);
+  }, [o, Ze, e, s, c, Pt, Mt, je, ge, Je, zt]), Ar = se(({ documentLink: C }) => {
+    C && window.open(C, "_blank");
+  }, []), $n = se(async (C, v, A) => {
+    let w = C.field === e.linkColumn ? ye.Edit : null;
+    if (!w && C.field === U.actions && (w = A?.action, !w)) {
+      const Q = v.target.closest("button");
+      Q && (w = Q.dataset.action);
     }
-    const { row: A } = g;
-    if (!Ve) {
-      if (E && typeof await E({ cellParams: g, event: S, details: O }) !== U.boolean)
+    const { row: M } = C;
+    if (!ve) {
+      if (T && typeof await T({ cellParams: C, event: v, details: A }) !== U.boolean)
         return;
-      const q = or[g.field] || {};
-      if (q.linkTo) {
-        le({
-          pathname: lr.replaceTags(q.linkTo, A)
+      const Q = sr[C.field] || {};
+      if (Q.linkTo) {
+        ge({
+          pathname: dr.replaceTags(Q.linkTo, M)
         });
         return;
       }
-      switch (T) {
-        case we.Edit:
-          return Bt({ id: A[ge], record: A });
-        case we.Copy:
-          return Bt({ id: A[ge], mode: "copy" });
-        case we.Delete:
-          $e(!0), pt({ name: A[e.linkColumn], id: A[ge] });
+      switch (w) {
+        case ye.Edit:
+          return it({ id: M[q], record: M });
+        case ye.Copy:
+          return it({ id: M[q], mode: "copy" });
+        case ye.Delete:
+          Ke(!0), Yt({ name: M[e.linkColumn], id: M[q] });
           break;
-        case we.History:
-          return le(`${En}?tableName=${Pn}&id=${A[ge]}&breadCrumb=${Mt ? ht.get(Mt) : Bn}`);
+        case ye.History:
+          return ge(`${rr("history")}?tableName=${vr}&id=${M[q]}&breadCrumb=${Ct ? je.get(Ct) : wr}`);
         default:
-          const G = nr.find((_) => _.action === T && typeof _.onClick === U.function);
-          if (G) {
-            G.onClick({ row: A, navigate: le });
+          const V = Lt.find((X) => X.action === w && typeof X.onClick === U.function);
+          if (V) {
+            V.onClick({ row: M, navigate: ge });
             return;
           }
           break;
       }
     }
-    if (T === we.Download && Un({ documentLink: A[Er], fileName: A.FileName }), !fn.length)
+    if (w === ye.Download && Ar({ documentLink: M[or] }), !Tr.length)
       return;
-    const { row: V } = g, N = or[g.field] || {}, W = {
-      pathname: lr.replaceTags(N.linkTo, V)
+    const { row: H } = C, B = sr[C.field] || {}, G = {
+      pathname: dr.replaceTags(B.linkTo, H)
     };
-    e.addRecordToState && (W.state = V), le(W);
-  }, Gn = async function() {
-    await rn({ id: Ae.id, api: `${e.controllerType === "cs" ? Xt : Tt}${e.api || r}`, setIsLoading: Ee, setError: he.showError, setErrorMessage: Be }) === !0 ? ($e(!1), he.showMessage("Record Deleted Successfully."), Nt()) : $e(!1);
-  }, Dr = () => {
-    Be(null), $e(!1);
-  }, jn = (g) => (typeof I.processRowUpdate == "function" && I.processRowUpdate(g, X), g), Hn = (g) => {
-    if (g.row.canEdit === !1)
+    e.addRecordToState && (G.state = H), ge(G);
+  }, [ve, T, sr, e, q, or, ge, Tr, Lt, vr, Ct, je, wr, rr, Ar, it]), _n = async function() {
+    const C = nr(e.controllerType, Ze);
+    await Cr({ id: _e.id, api: C, setIsLoading: he, setError: oe.showError, setErrorMessage: Ot }) === !0 ? (Ke(!1), oe.showMessage("Record Deleted Successfully."), Et()) : Ke(!1);
+  }, Or = () => {
+    Ot(null), Ke(!1);
+  }, Vn = (C) => (typeof j.processRowUpdate == "function" && j.processRowUpdate(C, I), C), zn = (C) => {
+    if (C.row.canEdit === !1)
       return;
-    const { row: S } = g;
-    if (typeof te === U.function) {
-      te(g);
+    const { row: v } = C;
+    if (typeof N === U.function) {
+      N(C);
       return;
     }
-    if (!Ve && !It && !y && Bt({ id: S[ge], record: S }), Ve && e.rowRedirectLink) {
-      const O = {
-        pathname: lr.replaceTags(e.rowRedirectLink, S)
+    if (!ve && !yn && !f && it({ id: v[q], record: v }), ve && e.rowRedirectLink) {
+      const A = {
+        pathname: dr.replaceTags(e.rowRedirectLink, v)
       };
-      e.addRecordToState && (O.state = S), le(O);
+      e.addRecordToState && (A.state = v), ge(A);
     }
-    typeof J === U.function && J(g);
-  }, Wn = async () => {
-    if (pe.current.size < 1) {
-      he.showError("Please select at least one record to proceed");
+    typeof L === U.function && L(C);
+  }, Gn = async () => {
+    if (we.size < 1) {
+      oe.showError("Please select at least one record to proceed");
       return;
     }
-    const g = Array.from(pe.current), S = new Map(X.records.map((T) => [T[ge], T]));
-    let O = g.map((T) => ({ ...Ln, ...S.get(T) }));
-    Array.isArray(e.selectionUpdateKeys) && e.selectionUpdateKeys.length && (O = O.map(
-      (T) => Object.fromEntries(e.selectionUpdateKeys.map((A) => [A, T[A]]))
+    const C = Array.from(we), v = new Map(I.records.map((M) => [M[q], M]));
+    let A = C.map((M) => ({ ...Ln, ...v.get(M) }));
+    Array.isArray(e.selectionUpdateKeys) && e.selectionUpdateKeys.length && (A = A.map(
+      (M) => Object.fromEntries(e.selectionUpdateKeys.map((H) => [H, M[H]]))
     ));
+    const w = nr(e.controllerType, Ze);
     try {
-      const T = await nn({
+      const M = await Er({
         id: 0,
-        api: `${Tt}${mt || r}/updateMany`,
-        values: { items: O },
-        setIsLoading: Ee,
-        setError: he.showError
+        api: `${w}${Ye || r}/updateMany`,
+        values: { items: A },
+        setIsLoading: he,
+        setError: oe.showError
       });
-      if (T) {
-        Nt();
-        const A = T.info ? T.info : "Record Added Successfully.";
-        he.showMessage(A);
+      if (M) {
+        Et();
+        const H = M.info ? M.info : "Record Added Successfully.";
+        oe.showMessage(H);
       }
-    } catch (T) {
-      he.showError(T.message || "An error occurred, please try again later.");
+    } catch (M) {
+      oe.showError(M.message || "An error occurred, please try again later.");
     } finally {
-      pe.current.clear(), Ee(!1), at(!1);
+      ot(/* @__PURE__ */ new Set()), he(!1), Ve(!1);
     }
-  }, qn = () => {
-    if (mt.length > 0) {
-      if (pe.current.size) {
-        at(!0);
+  }, Un = se(() => {
+    if (Ye.length > 0) {
+      if (we.size) {
+        Ve(!0);
         return;
       }
-      he.showError(
+      oe.showError(
         "Please select at least one record to proceed"
-      ), Ee(!1);
+      ), he(!1);
       return;
     }
-    typeof Z === U.function ? Z() : Bt({ id: 0 });
-  }, Kn = () => {
-    if (!de?.items?.length) return;
-    const g = JSON.parse(JSON.stringify(U.gridFilterModel));
-    ae(g), w && w();
-  }, wr = ({ unassign: g, assign: S }) => {
-    const O = Array.isArray(u) ? u : u.length ? u.split(",") : [], T = g ? O.filter((A) => !g.includes(parseInt(A))) : [...O, ...S];
-    c(typeof u === U.string ? T.join(",") : T);
-  }, Yn = () => {
-    wr({ assign: Le });
-  }, Jn = () => {
-    wr({ unassign: Le });
-  }, Zn = () => {
-    pe.current.size === X.records.length ? (pe.current.clear(), ke([])) : (X.records.forEach((g) => {
-      pe.current.add(g[ge]);
-    }), ke(X.records.map((g) => g[ge])));
-  }, Qn = async ({ preferenceName: g, Username: S, preferenceApi: O, defaultPreferenceEnums: T }) => {
-    mn({ dispatchData: Fe });
-    const A = await hn({ preferenceName: g, history: le, dispatchData: Fe, Username: S, preferenceApi: O, defaultPreferenceEnums: T });
-    gn({ preferenceName: g, dispatchData: Fe, gridRef: Ze, setIsGridPreferenceFetched: Cr, defaultPreferenceEnums: T, preferences: A });
-  };
-  ue(() => {
-    !Rt || !er || Qn({ preferenceName: Rt, Username: yn, preferenceApi: er, defaultPreferenceEnums: Cn });
-  }, [er]);
-  const Xn = (g) => g[ge], eo = (g) => {
-    if (X?.recordCount > Ti) {
-      he.showMessage("Cannot export more than 60k records, please apply filters or reduce your results using filters");
+    typeof J === U.function ? J() : it({ id: 0 });
+  }, [Ye, we.size, oe, J, it]), jn = se(() => {
+    Pe?.items?.length && nt({ ...U.gridFilterModel });
+  }, [Pe]), Pr = ({ unassign: C, assign: v }) => {
+    const A = Array.isArray(u) ? u : u.length ? u.split(",") : [], w = C ? A.filter((M) => !C.includes(parseInt(M))) : [...A, ...v];
+    d(typeof u === U.string ? w.join(",") : w);
+  }, Hn = () => {
+    Pr({ assign: ke });
+  }, Wn = () => {
+    Pr({ unassign: ke });
+  }, Kn = se(() => {
+    if (we.size === I.records.length)
+      ot(/* @__PURE__ */ new Set()), $e([]);
+    else {
+      const C = I.records.map((v) => v[q]);
+      ot(new Set(C)), $e(C);
+    }
+  }, [we.size, I.records, q, $e, ot]), qn = (C) => C[q], Yn = se((C) => {
+    if (I?.recordCount > wi) {
+      oe.showMessage("Cannot export more than 60k records, please apply filters or reduce your results using filters");
       return;
     }
-    const { orderedFields: S, columnVisibilityModel: O, lookup: T } = Ze.current.state.columns, A = g.target.dataset.isPivotExport === "true", V = Object.keys(O).filter((G) => O[G] === !1), N = new Set(tt.filter((G) => G.exportable === !1).map((G) => G.field)), W = S.filter(
-      (G) => !N.has(G) && !V.includes(G) && G !== "__check__" && G !== "actions"
+    const { orderedFields: v, columnVisibilityModel: A, lookup: w } = R.current.state.columns, M = C.target.dataset.isPivotExport === "true", H = Object.keys(A).filter((V) => A[V] === !1), B = new Set(Fe.filter((V) => V.exportable === !1).map((V) => V.field)), G = v.filter(
+      (V) => !B.has(V) && !H.includes(V) && V !== "__check__" && V !== "actions"
     );
-    if (W.length === 0) {
-      he.showMessage("You cannot export while all columns are hidden... please show at least 1 column before exporting");
+    if (G.length === 0) {
+      oe.showMessage("You cannot export while all columns are hidden... please show at least 1 column before exporting");
       return;
     }
-    const q = {};
-    W.forEach((G) => {
-      const _ = T[G];
-      q[G] = { field: G, width: _.width, headerName: _.headerName || _.field, type: _.type, keepLocal: _.keepLocal === !0, isParsable: _.isParsable, lookup: _.lookup };
-    }), Nt(
-      A ? "export" : void 0,
+    const Q = {};
+    G.forEach((V) => {
+      const X = w[V];
+      Q[V] = { field: V, width: X.width, headerName: X.headerName || X.field, type: X.type, keepLocal: X.keepLocal === !0, isParsable: X.isParsable, lookup: X.lookup };
+    }), Et(
+      M ? "export" : void 0,
       void 0,
-      g.target.dataset.contentType,
-      q,
-      A,
-      et
+      C.target.dataset.contentType,
+      Q,
+      M,
+      qe
     );
-  };
-  ue(() => {
-    !Tt || Rt && !br || Nt();
-  }, [K, Pe, de, r, tt, e, s, p, u, l, D, br, oe, Tt]), ue(() => {
-    if (!(I.isChildGrid || Oe || !Xe))
-      return Fe({ type: z.PAGE_TITLE_DETAILS, payload: { icon: "", titleHeading: e.pageTitle || e.title, title: e.title } }), () => {
-        Fe({
-          type: z.PAGE_TITLE_DETAILS,
+  }, [I?.recordCount, R, Fe, oe, Et, qe]);
+  ce(() => {
+    !Ze || !Sr || Et();
+  }, [ue, e, l, b, u, Pe, gt, Y, j.extraParams, mt, Ze, Fe, s, qe, Sr, $]), ce(() => {
+    if (!(j.isChildGrid || Oe || !at))
+      return Je({ type: Z.PAGE_TITLE_DETAILS, payload: { icon: "", titleHeading: e.pageTitle || e.title, title: e.title } }), () => {
+        Je({
+          type: Z.PAGE_TITLE_DETAILS,
           payload: null
         });
       };
-  }, []), ue(() => {
-    if (I.isChildGrid)
-      return;
-    let g = Ke;
-    if (ne || bn.includes(g)) {
-      Fe({
-        type: z.SET_PAGE_BACK_BUTTON,
-        payload: { status: !1, backRoute: "" }
-      });
-      return;
-    }
-    g = g.split("/"), g.pop(), g = g.join("/"), Fe({
-      type: z.SET_PAGE_BACK_BUTTON,
-      payload: { status: !0, backRoute: g }
+  }, []);
+  const Jn = (C) => {
+    const { items: v } = C, A = v.map((w) => {
+      const { field: M, operator: H, type: B, value: G } = w, Q = Fe.find((Ie) => Ie.field === M) || {}, V = Q.type === U.number;
+      return V && G < 0 ? { ...w, value: null } : Cn.includes(H) || V && !isNaN(G) || !V ? (qe && Fe.filter((Dt) => Dt.field === M)[0]?.isKeywordField && (w.filterField = `${w.field}.keyword`), w.value = ["isEmpty", "isNotEmpty"].includes(H) ? null : G, { ...w, type: Q.type }) : { field: M, operator: H, type: B, value: V ? null : G };
     });
-  }, [re]);
-  const to = (g) => {
-    const { items: S } = g, O = S.map((A) => {
-      const { field: V, operator: N, type: W, value: q } = A, G = tt.find((it) => it.field === V) || {}, _ = G.type === U.number;
-      return _ && q < 0 ? { ...A, value: null } : Dn.includes(N) || _ && !isNaN(q) || !_ ? (et && tt.filter((ar) => ar.field === V)[0]?.isKeywordField && (A.filterField = `${A.field}.keyword`), A.value = ["isEmpty", "isNotEmpty"].includes(N) ? null : q, { ...A, type: G.type }) : { field: V, operator: N, type: W, value: _ ? null : q };
+    C.items = A, nt(C);
+  }, Zn = (C) => {
+    const v = C.map((A) => {
+      const w = Fe.filter((B) => B.field === A.field)[0] || {}, M = qe && w.isKeywordField, H = { ...A, filterField: M ? `${A.field}.keyword` : A.field };
+      return w.dataIndex && (H.filterField = w.dataIndex), H;
     });
-    g.items = O, ae(g), (g.items.findIndex((A) => A.isChartFilter && !["isEmpty", "isNotEmpty"].includes(A.operator)) === -1 || D?.items?.length && (!g.items.length || D.items.findIndex((A) => A.columnField === g.items[0]?.field) > -1)) && w && w();
-  }, ro = (g) => {
-    const S = g.map((O) => {
-      const T = tt.filter((N) => N.field === O.field)[0] || {}, A = et && T.isKeywordField, V = { ...O, filterField: A ? `${O.field}.keyword` : O.field };
-      return T.dataIndex && (V.filterField = T.dataIndex), V;
-    });
-    qe(S);
-  }, Tr = h || e.gridTitle || e.title, no = Mt ? [{ text: ht.get(Mt) || Tr }] : [{ text: Tr }];
-  return /* @__PURE__ */ v(me, { children: [
-    vn && /* @__PURE__ */ n(
-      sn,
+    Zt(v);
+  }, Fr = p || e.gridTitle || e.title, Qn = Ct ? [{ text: je.get(Ct) || Fr }] : [{ text: Fr }];
+  return /* @__PURE__ */ D(fe, { children: [
+    h !== !1 && /* @__PURE__ */ n(
+      dn,
       {
-        navigate: le,
-        showBreadcrumbs: !An && !In,
-        breadcrumbs: no,
-        enableBackButton: Yt,
-        breadcrumbColor: Mn
+        navigate: ge,
+        showBreadcrumbs: !vn && !Sn,
+        breadcrumbs: Qn,
+        enableBackButton: It,
+        breadcrumbColor: An
       }
     ),
-    /* @__PURE__ */ v(Re, { style: ee || f, children: [
-      /* @__PURE__ */ n(Re, { sx: { display: "flex", maxHeight: "80vh", flexDirection: "column" }, children: /* @__PURE__ */ n(
-        jr,
+    /* @__PURE__ */ D(Te, { style: ie || E, children: [
+      /* @__PURE__ */ n(Te, { sx: { display: "flex", maxHeight: "80vh", flexDirection: "column" }, children: /* @__PURE__ */ n(
+        Jr,
         {
           sx: {
             "& .MuiTablePagination-selectLabel": {
@@ -2134,267 +2147,268 @@ const di = {
               zIndex: 2
             }
           },
-          headerFilters: k,
-          unstable_headerFilters: k,
+          headerFilters: ee,
+          unstable_headerFilters: ee,
           checkboxSelection: Oe,
-          loading: re,
+          loading: ae,
           className: "pagination-fix",
-          onCellClick: zn,
-          onCellDoubleClick: Hn,
-          columns: tt,
-          paginationModel: K,
+          onCellClick: $n,
+          onCellDoubleClick: zn,
+          columns: Fe,
+          paginationModel: ue,
           pageSizeOptions: U.pageSizeOptions,
-          onPaginationModelChange: Q,
+          onPaginationModelChange: F,
           pagination: !0,
-          rowCount: X.recordCount,
-          rows: X.records,
-          sortModel: Pe,
-          paginationMode: M,
-          sortingMode: M,
-          filterMode: M,
-          processRowUpdate: jn,
+          rowCount: I.recordCount,
+          rows: I.records,
+          sortModel: mt,
+          paginationMode: ft,
+          sortingMode: ft,
+          filterMode: ft,
+          processRowUpdate: Vn,
           keepNonExistentRowsSelected: !0,
-          onSortModelChange: ro,
-          onFilterModelChange: to,
-          rowSelection: Le,
-          onRowSelectionModelChange: ke,
-          filterModel: de,
-          getRowId: Xn,
-          onRowClick: j,
+          onSortModelChange: Zn,
+          onFilterModelChange: Jn,
+          rowSelection: ke,
+          onRowSelectionModelChange: $e,
+          filterModel: Pe,
+          getRowId: qn,
+          onRowClick: z,
           slots: {
             headerFilterMenu: !1,
-            toolbar: Fi,
-            footer: _a
+            toolbar: Ii,
+            footer: ko
           },
           slotProps: {
             toolbar: {
               model: e,
-              data: X,
-              currentPreference: xn,
-              isReadOnly: Ve,
-              canAdd: Sn,
+              data: I,
+              currentPreference: Fn,
+              isReadOnly: ve,
+              canAdd: Tn,
               forAssignment: Oe,
-              showAddIcon: pn,
-              onAdd: qn,
-              selectionApi: mt,
-              selectedSet: pe,
-              selectAll: Zn,
-              available: l,
-              onAssign: Yn,
-              assigned: p,
-              onUnassign: Jn,
-              effectivePermissions: wt,
-              clearFilters: Kn,
-              handleExport: eo,
-              preferenceName: Rt,
-              apiRef: Ze,
-              gridColumns: tt,
-              setIsGridPreferenceFetched: Cr,
-              tTranslate: b,
+              showAddIcon: bn,
+              onAdd: Un,
+              selectionApi: Ye,
+              selectedSet: we,
+              selectAll: Kn,
+              available: b,
+              onAssign: Hn,
+              assigned: l,
+              onUnassign: Wn,
+              effectivePermissions: bt,
+              clearFilters: jn,
+              handleExport: Yn,
+              preferenceKey: Rt,
+              apiRef: R,
+              gridColumns: Fe,
+              tTranslate: g,
               tOpts: m,
-              idProperty: ge,
-              filterModel: de
+              idProperty: q,
+              filterModel: Pe,
+              onPreferenceChange: Rn,
+              toolbarItems: k
             },
             footer: {
               pagination: !0,
-              apiRef: Ze
+              apiRef: R
             },
             panel: {
               placement: "bottom-end"
             }
           },
-          hideFooterSelectedRowCount: ot,
+          hideFooterSelectedRowCount: wt,
           density: "compact",
           disableDensitySelector: !0,
-          apiRef: Ze,
+          apiRef: R,
           disableAggregation: !0,
           disableRowGrouping: !0,
-          disableRowSelectionOnClick: De,
-          disablePivoting: Rn,
+          disableRowSelectionOnClick: Ge,
+          disablePivoting: On,
           initialState: {
             columns: {
-              columnVisibilityModel: xt
+              columnVisibilityModel: Jt
             },
-            pinnedColumns: Vn
+            pinnedColumns: kn
           },
           localeText: {
-            filterValueTrue: b("Yes", m),
-            filterValueFalse: b("No", m),
-            noRowsLabel: b("No data", m),
-            footerTotalRows: `${b("Total rows", m)}:`,
+            filterValueTrue: g("Yes", m),
+            filterValueFalse: g("No", m),
+            noRowsLabel: g("No data", m),
+            footerTotalRows: `${g("Total rows", m)}:`,
             MuiTablePagination: {
-              labelRowsPerPage: b("Rows per page", m),
-              labelDisplayedRows: ({ from: g, to: S, count: O }) => `${g}–${S} ${b("of", m)} ${O}`
+              labelRowsPerPage: g("Rows per page", m),
+              labelDisplayedRows: ({ from: C, to: v, count: A }) => `${C}–${v} ${g("of", m)} ${A}`
             },
-            toolbarQuickFilterPlaceholder: b(e?.searchPlaceholder || "Search...", m),
-            toolbarColumns: b("Columns", m),
-            toolbarFilters: b("Filters", m),
-            toolbarExport: b("Export", m),
-            filterPanelAddFilter: b("Add filter", m),
-            filterPanelRemoveAll: b("Remove all", m),
-            filterPanelDeleteIconLabel: b("Delete", m),
-            filterPanelColumns: b("Columns", m),
-            filterPanelOperator: b("Operator", m),
-            filterPanelValue: b("Value", m),
-            filterPanelInputLabel: b("Value", m),
-            filterPanelInputPlaceholder: b("Filter value", m),
-            columnMenuLabel: b("Menu", m),
-            columnMenuShowColumns: b("Show columns", m),
-            columnMenuManageColumns: b("Manage columns", m),
-            columnMenuFilter: b("Filter", m),
-            columnMenuHideColumn: b("Hide column", m),
-            columnMenuManagePivot: b("Manage pivot", m),
-            toolbarColumnsLabel: b("Select columns", m),
-            toolbarExportLabel: b("Export", m),
-            pivotDragToColumns: b("Drag here to pivot by", m),
-            pivotDragToRows: b("Drag here to group by", m),
-            pivotDragToValues: b("Drag here to create values", m),
-            pivotColumns: b("Pivot columns", m),
-            pivotRows: b("Row groups", m),
-            pivotValues: b("Values", m),
-            pivotMenuRows: b("Rows", m),
-            pivotMenuColumns: b("Columns", m),
-            pivotMenuValues: b("Values", m),
-            pivotToggleLabel: b("Pivot", m),
-            pivotSearchControlPlaceholder: b("Search pivot columns", m),
-            columnMenuUnsort: b("Unsort", m),
-            columnMenuSortAsc: b("Sort by ascending", m),
-            columnMenuSortDesc: b("Sort by descending", m),
-            columnMenuUnpin: b("Unpin", m),
-            columnsPanelTextFieldLabel: b("Find column", m),
-            columnsPanelTextFieldPlaceholder: b("Column title", m),
-            columnsPanelHideAllButton: b("Hide all", m),
-            columnsPanelShowAllButton: b("Show all", m),
-            pinToLeft: b("Pin to left", m),
-            pinToRight: b("Pin to right", m),
-            unpin: b("Unpin", m),
-            filterValueAny: b("any", m),
-            filterOperatorIs: b("is", m),
-            filterOperatorNot: b("is not", m),
-            filterOperatorIsAnyOf: b("is any of", m),
-            filterOperatorContains: b("contains", m),
-            filterOperatorDoesNotContain: b("does not contain", m),
-            filterOperatorEquals: b("equals", m),
-            filterOperatorDoesNotEqual: b("does not equal", m),
-            filterOperatorStartsWith: b("starts with", m),
-            filterOperatorEndsWith: b("ends with", m),
-            filterOperatorIsEmpty: b("is empty", m),
-            filterOperatorIsNotEmpty: b("is not empty", m),
-            filterOperatorAfter: b("is after", m),
-            filterOperatorOnOrAfter: b("is on or after", m),
-            filterOperatorBefore: b("is before", m),
-            filterOperatorOnOrBefore: b("is on or before", m),
-            toolbarFiltersTooltipHide: b("Hide filters", m),
-            toolbarFiltersTooltipShow: b("Show filters", m),
+            toolbarQuickFilterPlaceholder: g(e?.searchPlaceholder || "Search...", m),
+            toolbarColumns: g("Columns", m),
+            toolbarFilters: g("Filters", m),
+            toolbarExport: g("Export", m),
+            filterPanelAddFilter: g("Add filter", m),
+            filterPanelRemoveAll: g("Remove all", m),
+            filterPanelDeleteIconLabel: g("Delete", m),
+            filterPanelColumns: g("Columns", m),
+            filterPanelOperator: g("Operator", m),
+            filterPanelValue: g("Value", m),
+            filterPanelInputLabel: g("Value", m),
+            filterPanelInputPlaceholder: g("Filter value", m),
+            columnMenuLabel: g("Menu", m),
+            columnMenuShowColumns: g("Show columns", m),
+            columnMenuManageColumns: g("Manage columns", m),
+            columnMenuFilter: g("Filter", m),
+            columnMenuHideColumn: g("Hide column", m),
+            columnMenuManagePivot: g("Manage pivot", m),
+            toolbarColumnsLabel: g("Select columns", m),
+            toolbarExportLabel: g("Export", m),
+            pivotDragToColumns: g("Drag here to pivot by", m),
+            pivotDragToRows: g("Drag here to group by", m),
+            pivotDragToValues: g("Drag here to create values", m),
+            pivotColumns: g("Pivot columns", m),
+            pivotRows: g("Row groups", m),
+            pivotValues: g("Values", m),
+            pivotMenuRows: g("Rows", m),
+            pivotMenuColumns: g("Columns", m),
+            pivotMenuValues: g("Values", m),
+            pivotToggleLabel: g("Pivot", m),
+            pivotSearchControlPlaceholder: g("Search pivot columns", m),
+            columnMenuUnsort: g("Unsort", m),
+            columnMenuSortAsc: g("Sort by ascending", m),
+            columnMenuSortDesc: g("Sort by descending", m),
+            columnMenuUnpin: g("Unpin", m),
+            columnsPanelTextFieldLabel: g("Find column", m),
+            columnsPanelTextFieldPlaceholder: g("Column title", m),
+            columnsPanelHideAllButton: g("Hide all", m),
+            columnsPanelShowAllButton: g("Show all", m),
+            pinToLeft: g("Pin to left", m),
+            pinToRight: g("Pin to right", m),
+            unpin: g("Unpin", m),
+            filterValueAny: g("any", m),
+            filterOperatorIs: g("is", m),
+            filterOperatorNot: g("is not", m),
+            filterOperatorIsAnyOf: g("is any of", m),
+            filterOperatorContains: g("contains", m),
+            filterOperatorDoesNotContain: g("does not contain", m),
+            filterOperatorEquals: g("equals", m),
+            filterOperatorDoesNotEqual: g("does not equal", m),
+            filterOperatorStartsWith: g("starts with", m),
+            filterOperatorEndsWith: g("ends with", m),
+            filterOperatorIsEmpty: g("is empty", m),
+            filterOperatorIsNotEmpty: g("is not empty", m),
+            filterOperatorAfter: g("is after", m),
+            filterOperatorOnOrAfter: g("is on or after", m),
+            filterOperatorBefore: g("is before", m),
+            filterOperatorOnOrBefore: g("is on or before", m),
+            toolbarFiltersTooltipHide: g("Hide filters", m),
+            toolbarFiltersTooltipShow: g("Show filters", m),
             //filter textfield labels
-            headerFilterOperatorContains: b("contains", m),
-            headerFilterOperatorEquals: b("equals", m),
-            headerFilterOperatorStartsWith: b("starts with", m),
-            headerFilterOperatorEndsWith: b("ends with", m),
-            headerFilterOperatorIsEmpty: b("is empty", m),
-            headerFilterOperatorIsNotEmpty: b("is not empty", m),
-            headerFilterOperatorAfter: b("is after", m),
-            headerFilterOperatorOnOrAfter: b("is on or after", m),
-            headerFilterOperatorBefore: b("is before", m),
-            headerFilterOperatorOnOrBefore: b("is on or before", m),
-            headerFilterOperatorIs: b("is", m),
-            "headerFilterOperator=": b("equals", m),
-            "headerFilterOperator!=": b("does not equal", m),
-            "headerFilterOperator>": b("greater than", m),
-            "headerFilterOperator>=": b("greater than or equal to", m),
-            "headerFilterOperator<": b("less than", m),
-            "headerFilterOperator<=": b("less than or equal to", m),
-            columnsManagementSearchTitle: b("Search", m),
-            columnsManagementNoColumns: b("No columns", m),
-            paginationRowsPerPage: b("Rows per page", m),
-            paginationDisplayedRows: ({ from: g, to: S, count: O }) => `${g}–${S} ${b("of", m)} ${O}`,
-            toolbarQuickFilterLabel: b("Search", m),
-            toolbarFiltersTooltipActive: (g) => `${g} ${b(g === 1 ? "active filter" : "active filters", m)}`,
-            columnHeaderSortIconLabel: b("Sort", m),
-            filterPanelOperatorAnd: b("And", m),
-            filterPanelOperatorOr: b("Or", m),
-            noResultsOverlayLabel: b("No results found", m),
-            columnHeaderFiltersTooltipActive: (g) => `${g} ${b(g === 1 ? "active filter" : "active filters", m)}`,
-            detailPanelToggle: b("Detail panel toggle", m),
-            checkboxSelectionHeaderName: b("Checkbox selection", m),
-            columnsManagementShowHideAllText: b("Show/Hide all", m),
-            noColumnsOverlayLabel: b("No columns", m),
-            noColumnsOverlayManageColumns: b("Manage columns", m),
-            columnsManagementReset: b("Reset", m),
-            groupColumn: (g) => `${b("Group by", m)} ${g}`,
-            unGroupColumn: (g) => `${b("Ungroup", m)} ${g}`,
-            footerRowSelected: (g) => {
-              const S = g === 1 ? "item selected" : "items selected";
-              return `${g.toLocaleString()} ${b(S, m)}`;
+            headerFilterOperatorContains: g("contains", m),
+            headerFilterOperatorEquals: g("equals", m),
+            headerFilterOperatorStartsWith: g("starts with", m),
+            headerFilterOperatorEndsWith: g("ends with", m),
+            headerFilterOperatorIsEmpty: g("is empty", m),
+            headerFilterOperatorIsNotEmpty: g("is not empty", m),
+            headerFilterOperatorAfter: g("is after", m),
+            headerFilterOperatorOnOrAfter: g("is on or after", m),
+            headerFilterOperatorBefore: g("is before", m),
+            headerFilterOperatorOnOrBefore: g("is on or before", m),
+            headerFilterOperatorIs: g("is", m),
+            "headerFilterOperator=": g("equals", m),
+            "headerFilterOperator!=": g("does not equal", m),
+            "headerFilterOperator>": g("greater than", m),
+            "headerFilterOperator>=": g("greater than or equal to", m),
+            "headerFilterOperator<": g("less than", m),
+            "headerFilterOperator<=": g("less than or equal to", m),
+            columnsManagementSearchTitle: g("Search", m),
+            columnsManagementNoColumns: g("No columns", m),
+            paginationRowsPerPage: g("Rows per page", m),
+            paginationDisplayedRows: ({ from: C, to: v, count: A }) => `${C}–${v} ${g("of", m)} ${A}`,
+            toolbarQuickFilterLabel: g("Search", m),
+            toolbarFiltersTooltipActive: (C) => `${C} ${g(C === 1 ? "active filter" : "active filters", m)}`,
+            columnHeaderSortIconLabel: g("Sort", m),
+            filterPanelOperatorAnd: g("And", m),
+            filterPanelOperatorOr: g("Or", m),
+            noResultsOverlayLabel: g("No results found", m),
+            columnHeaderFiltersTooltipActive: (C) => `${C} ${g(C === 1 ? "active filter" : "active filters", m)}`,
+            detailPanelToggle: g("Detail panel toggle", m),
+            checkboxSelectionHeaderName: g("Checkbox selection", m),
+            columnsManagementShowHideAllText: g("Show/Hide all", m),
+            noColumnsOverlayLabel: g("No columns", m),
+            noColumnsOverlayManageColumns: g("Manage columns", m),
+            columnsManagementReset: g("Reset", m),
+            groupColumn: (C) => `${g("Group by", m)} ${C}`,
+            unGroupColumn: (C) => `${g("Ungroup", m)} ${C}`,
+            footerRowSelected: (C) => {
+              const v = C === 1 ? "item selected" : "items selected";
+              return `${C.toLocaleString()} ${g(v, m)}`;
             }
           },
           showToolbar: !0,
-          columnHeaderHeight: Nn
+          columnHeaderHeight: Pn
         }
       ) }),
-      se && /* @__PURE__ */ v(je, { open: !!se, onConfirm: Dr, onCancel: Dr, title: "Info", hideCancelButton: !0, children: [
+      rt && /* @__PURE__ */ D(Ne, { open: !!rt, onConfirm: Or, onCancel: Or, title: "Info", hideCancelButton: !0, children: [
         " ",
-        se
+        rt
       ] }),
-      _e && !se && /* @__PURE__ */ n(je, { open: _e, onConfirm: Gn, onCancel: () => $e(!1), title: "Confirm Delete", children: /* @__PURE__ */ v(Nr, { children: [
-        b("Are you sure you want to delete", m),
+      pt && !rt && /* @__PURE__ */ n(Ne, { open: pt, onConfirm: _n, onCancel: () => Ke(!1), title: "Confirm Delete", children: /* @__PURE__ */ D(Vr, { children: [
+        g("Are you sure you want to delete", m),
         " ",
-        Ae.name && /* @__PURE__ */ n(Ie, { style: { display: "inline" }, title: Ae.name, arrow: !0, children: Ae.name.length > 30 ? `${Ae.name.slice(0, 30)}...` : Ae.name }),
+        _e.name && /* @__PURE__ */ n(De, { style: { display: "inline" }, title: _e.name, arrow: !0, children: _e.name.length > 30 ? `${_e.name.slice(0, 30)}...` : _e.name }),
         " ?"
       ] }) }),
-      ft && /* @__PURE__ */ n(
-        je,
+      St && /* @__PURE__ */ n(
+        Ne,
         {
-          open: ft,
-          onConfirm: Wn,
-          onCancel: () => at(!1),
+          open: St,
+          onConfirm: Gn,
+          onCancel: () => Ve(!1),
           title: "Confirm Add",
-          children: /* @__PURE__ */ v(Nr, { children: [
-            b("Are you sure you want to add", m),
+          children: /* @__PURE__ */ D(Vr, { children: [
+            g("Are you sure you want to add", m),
             " ",
-            pe.current.size,
+            we.size,
             " ",
-            b("records", { count: pe.current.size, ...m }),
+            g("records", { count: we.size, ...m }),
             "?"
           ] })
         }
       )
     ] })
   ] });
-}, xi), Ii = ({ column: e, field: t, formik: r, otherProps: o }) => {
-  const a = (d) => {
-    r.setFieldValue(t, d.target.checked);
-  }, s = be(() => r.values[t] ?? !!e.defaultValue, [r, e]), i = typeof e.readOnly == "function" ? e.readOnly(r) : e.readOnly;
-  return /* @__PURE__ */ v("div", { children: [
+}, Ti), Mi = ({ column: e, field: t, formik: r, otherProps: a }) => {
+  const o = (c) => {
+    r.setFieldValue(t, c.target.checked);
+  }, s = me(() => r.values[t] ?? !!e.defaultValue, [r, e]), i = typeof e.readOnly == "function" ? e.readOnly(r) : e.readOnly;
+  return /* @__PURE__ */ D("div", { children: [
     /* @__PURE__ */ n(
-      pa,
+      uo,
       {
         control: /* @__PURE__ */ n(
-          Yr,
+          rn,
           {
-            ...o,
+            ...a,
             name: t,
             disabled: i || e.disabled === !0,
             checked: s,
-            onChange: a,
+            onChange: o,
             onBlur: r.handleBlur,
             defaultChecked: e.defaultValue
           }
         )
       }
     ),
-    /* @__PURE__ */ n(Ct, { error: r.touched[t] && !!r.errors[t], children: r.touched[t] && r.errors[t] })
+    /* @__PURE__ */ n(ut, { error: r.touched[t] && !!r.errors[t], children: r.touched[t] && r.errors[t] })
   ] }, t);
-}, Ut = ({ column: e, field: t, formik: r, otherProps: o }) => {
-  const a = Et(), s = e.rows || (e.multiline ? 5 : 1);
+}, Gt = ({ column: e, field: t, formik: r, otherProps: a }) => {
+  const o = dt(), s = e.rows || (e.multiline ? 5 : 1);
   return /* @__PURE__ */ n(
-    jt,
+    Ht,
     {
       type: "text",
       variant: e.variant || "standard",
       InputProps: {
         readOnly: e.readOnly === !0,
-        sx: e.readOnly ? { backgroundColor: a.palette?.action?.disabled } : void 0
+        sx: e.readOnly ? { backgroundColor: o.palette?.action?.disabled } : void 0
       },
       required: e.required,
       multiline: e.multiline,
@@ -2407,310 +2421,310 @@ const di = {
       error: r.touched[t] && !!r.errors[t],
       helperText: r.touched[t] && r.errors[t],
       autoComplete: e.autoComplete,
-      ...o,
+      ...a,
       defaultValue: e.defaultValue
     },
     t
   );
 };
-function ln(e, t) {
-  const [r, o] = F(e);
-  return ue(() => {
-    const a = setTimeout(() => {
-      o(e);
+function fn(e, t) {
+  const [r, a] = O(e);
+  return ce(() => {
+    const o = setTimeout(() => {
+      a(e);
     }, t);
     return () => {
-      clearTimeout(a);
+      clearTimeout(o);
     };
   }, [e, t]), r;
 }
-const Mi = 47, Ri = 58, Ni = 37, Bi = 40, Li = [8, 46, 9, 27, 13], Lr = ({ value: e, state: t }) => {
+const Ri = 47, Li = 58, Ni = 37, Bi = 40, ki = [8, 46, 9, 27, 13], Gr = ({ value: e, state: t }) => {
   if (typeof e == "string" && e.startsWith("{") && e.endsWith("}")) {
     const r = e.slice(1, -1);
     return t[r] !== void 0 ? t[r] : e;
   }
   return e;
-}, ki = ({ column: e, otherProps: t, formik: r, field: o, ...a }) => {
-  const { min: s, max: i } = e, d = Et(), [h, C] = F(r.values[o]), u = ln(h, 400), p = be(
-    () => Math.max(0, Lr({ value: s, state: r.values })),
+}, $i = ({ column: e, otherProps: t, formik: r, field: a, ...o }) => {
+  const { min: s, max: i } = e, c = dt(), [p, h] = O(r.values[a]), y = fn(p, 400), u = me(
+    () => Math.max(0, Gr({ value: s, state: r.values })),
     [s, r.values]
-  ), l = be(
-    () => Lr({ value: i, state: r.values }),
+  ), l = me(
+    () => Gr({ value: i, state: r.values }),
     [i, r.values]
   );
-  ue(() => {
-    if (u !== r.values[o]) {
-      const c = Number(u);
-      c < p ? r.setFieldValue(o, p) : l && c > l ? r.setFieldValue(o, l) : r.setFieldValue(o, c);
+  ce(() => {
+    if (y !== r.values[a]) {
+      const f = Number(y);
+      f < u ? r.setFieldValue(a, u) : l && f > l ? r.setFieldValue(a, l) : r.setFieldValue(a, f);
     }
-  }, [u, o, p, l]);
-  const { onBlur: y } = a;
+  }, [y, a, u, l]);
+  const { onBlur: b } = o;
   return t = {
     InputProps: {
       inputProps: {
-        min: p,
+        min: u,
         max: l,
         readOnly: e.readOnly === !0,
-        onKeyDown: (c) => {
-          const f = c.which ? c.which : c.keyCode;
-          Li.includes(f) || f >= Ni && f <= Bi || f > Mi && f < Ri || c.preventDefault();
+        onKeyDown: (f) => {
+          const d = f.which ? f.which : f.keyCode;
+          ki.includes(d) || d >= Ni && d <= Bi || d > Ri && d < Li || f.preventDefault();
         },
-        sx: e.readOnly ? { backgroundColor: d.palette?.action?.disabled } : void 0
+        sx: e.readOnly ? { backgroundColor: c.palette?.action?.disabled } : void 0
       }
     },
     type: "number",
     ...t,
-    onChange: (c) => {
-      C(c.target.value), typeof y == "function" && y(c);
+    onChange: (f) => {
+      h(f.target.value), typeof b == "function" && b(f);
     }
-  }, /* @__PURE__ */ n(Ut, { column: e, otherProps: t, formik: r, field: o, ...a });
+  }, /* @__PURE__ */ n(Gt, { column: e, otherProps: t, formik: r, field: a, ...o });
 }, _i = ({ otherProps: e, ...t }) => {
-  const [r, o] = bt.useState(!1), a = () => o((h) => !h), s = (h) => {
-    h.preventDefault();
-  }, { readOnly: i = !1, disabled: d = !1 } = t.column || {};
+  const [r, a] = ct.useState(!1), o = () => a((p) => !p), s = (p) => {
+    p.preventDefault();
+  }, { readOnly: i = !1, disabled: c = !1 } = t.column || {};
   return e = {
     type: r ? "text" : "password",
     InputProps: {
       readOnly: i,
-      disabled: d,
-      endAdornment: /* @__PURE__ */ n(Go, { position: "end", children: /* @__PURE__ */ n(
-        Wr,
+      disabled: c,
+      endAdornment: /* @__PURE__ */ n(ka, { position: "end", children: /* @__PURE__ */ n(
+        Xr,
         {
           "aria-label": "toggle password visibility",
-          onClick: a,
+          onClick: o,
           onMouseDown: s,
           edge: "end",
-          disabled: d,
+          disabled: c,
           readOnly: i,
           size: "large",
-          children: r ? /* @__PURE__ */ n(fa, {}) : /* @__PURE__ */ n(ma, {})
+          children: r ? /* @__PURE__ */ n(po, {}) : /* @__PURE__ */ n(fo, {})
         }
       ) })
     },
     ...e
-  }, /* @__PURE__ */ n(Ut, { otherProps: e, ...t });
-}, $i = ({ column: e, field: t, formik: r, otherProps: o, fieldConfigs: a = {}, mode: s }) => {
-  const i = s !== "copy" && a.disabled, { systemDateTimeFormat: d, stateData: h } = We();
-  return /* @__PURE__ */ mr(
-    qr,
+  }, /* @__PURE__ */ n(Gt, { otherProps: e, ...t });
+}, Vi = ({ column: e, field: t, formik: r, otherProps: a, fieldConfigs: o = {}, mode: s }) => {
+  const i = s !== "copy" && o.disabled, { systemDateTimeFormat: c, stateData: p } = Be();
+  return /* @__PURE__ */ gr(
+    en,
     {
-      ...o,
+      ...a,
       variant: "standard",
       readOnly: e?.readOnly === !0,
       key: t,
       fullWidth: !0,
-      format: d(!0, !1, h.dateTime),
+      format: c(!0, !1, p.dateTime),
       name: t,
-      value: ie(r.values[t]),
-      onChange: (C) => {
-        const p = ie(C).hour(12).toISOString();
-        r.setFieldValue(t, p);
+      value: te(r.values[t]),
+      onChange: (h) => {
+        const u = te(h).hour(12).toISOString();
+        r.setFieldValue(t, u);
       },
       onBlur: r.handleBlur,
       helperText: r.touched[t] && r.errors[t],
-      minDate: e.min ? ie(e.min) : null,
-      maxDate: e.max ? ie(e.max) : null,
+      minDate: e.min ? te(e.min) : null,
+      maxDate: e.max ? te(e.max) : null,
       disabled: i,
       slotProps: { textField: { fullWidth: !0, helperText: r.errors[t], variant: "standard" } }
     }
   );
-}, Vi = ({ column: e, field: t, formik: r, otherProps: o }) => {
-  const { systemDateTimeFormat: a, stateData: s } = We();
-  return /* @__PURE__ */ mr(
-    pr,
+}, zi = ({ column: e, field: t, formik: r, otherProps: a }) => {
+  const { systemDateTimeFormat: o, stateData: s } = Be();
+  return /* @__PURE__ */ gr(
+    mr,
     {
-      ...o,
+      ...a,
       variant: "standard",
       readOnly: e?.readOnly === !0,
       key: t,
       fullWidth: !0,
-      format: a(!1, !1, s.dateTime),
+      format: o(!1, !1, s.dateTime),
       name: t,
-      value: ie(r.values[t]),
+      value: te(r.values[t]),
       onChange: (i) => r.setFieldValue(t, i),
       onBlur: r.handleBlur,
       helperText: r.touched[t] && r.errors[t],
-      minDateTime: e.min ? ie(e.min) : null,
-      maxDateTime: e.max ? ie(e.max) : null,
+      minDateTime: e.min ? te(e.min) : null,
+      maxDateTime: e.max ? te(e.max) : null,
       slotProps: { textField: { fullWidth: !0, helperText: r.errors[t], variant: "standard" } }
     }
   );
-}, Ui = ({ column: e, field: t, formik: r, otherProps: o }) => {
-  let a = r.values[t];
-  return e.isUtc && (a = ie.utc(a).utcOffset(ie().utcOffset(), !0).format()), /* @__PURE__ */ mr(
-    ha,
+}, Gi = ({ column: e, field: t, formik: r, otherProps: a }) => {
+  let o = r.values[t];
+  return e.isUtc && (o = te.utc(o).utcOffset(te().utcOffset(), !0).format()), /* @__PURE__ */ gr(
+    mo,
     {
-      ...o,
+      ...a,
       variant: "standard",
       readOnly: e.readOnly === !0,
       key: t,
       fullWidth: !0,
       name: t,
-      value: ie(a),
+      value: te(o),
       onChange: (s) => (e.isUtc && (s = s && s.isValid() ? s.format("YYYY-MM-DDTHH:mm:ss") + ".000Z" : null), r.setFieldValue(t, s)),
       onBlur: r.handleBlur,
       helperText: r.touched[t] && r.errors[t],
       slotProps: { textField: { fullWidth: !0, helperText: r.errors[t], variant: "standard" } }
     }
   );
-}, zi = [null, void 0, ""];
-function cn({ column: e, formik: t, lookups: r, dependsOn: o = [], isAutoComplete: a = !1, userSelected: s, model: i }) {
-  const [d, h] = F([]), { stateData: C } = We(), u = C?.gridSettings?.permissions?.Url || "", p = be(() => `${u}${i?.api || ""}`, [u, i?.api]), l = be(() => {
-    const f = {};
-    if (!o.length) return f;
-    for (const E of o)
-      f[E] = t.values[E];
-    return f;
-  }, o.map((f) => t.values[f])), y = be(() => o.length ? [] : typeof e.lookup == "string" ? r[e.lookup] : e.lookup, [e.lookup, r, o]), c = async () => {
+}, Ui = [null, void 0, ""];
+function mn({ column: e, formik: t, lookups: r, dependsOn: a = [], isAutoComplete: o = !1, userSelected: s, model: i }) {
+  const [c, p] = O([]), { stateData: h } = Be(), y = h?.gridSettings?.permissions?.Url || "", u = me(() => `${y}${i?.api || ""}`, [y, i?.api]), l = me(() => {
+    const d = {};
+    if (!a.length) return d;
+    for (const E of a)
+      d[E] = t.values[E];
+    return d;
+  }, a.map((d) => t.values[d])), b = me(() => a.length ? [] : typeof e.lookup == "string" ? r[e.lookup] : e.lookup, [e.lookup, r, a]), f = async () => {
     if (!e.lookup) return;
     if (!Object.values(l).every(
-      (D) => !zi.includes(D)
+      (P) => !Ui.includes(P)
     )) {
-      h([]);
+      p([]);
       return;
     }
     let E = [];
-    const x = {
+    const T = {
       lookups: [{ lookup: e.lookup, where: l }]
     };
     try {
-      const D = await Pt({ url: `${p}/combo`, params: x, disableLoader: !0, jsonPayload: !0 });
-      D && D.success && D.lookups ? E = D.lookups[e.lookup] || [] : E = [];
+      const P = await _t({ url: `${u}/combo`, params: T, disableLoader: !0, jsonPayload: !0 });
+      P && P.success && P.lookups ? E = P.lookups[e.lookup] || [] : E = [];
     } catch {
       E = [];
     } finally {
-      h(E);
+      p(E);
     }
   };
-  return ue(() => {
-    o.length ? c() : (a || !s.current) && h(y);
-  }, [l, y, p, e.lookup]), d;
+  return ce(() => {
+    a.length ? f() : (o || !s.current) && p(b);
+  }, [l, b, u, e.lookup]), c;
 }
-const Gi = bt.memo(({ column: e, field: t, formik: r, lookups: o, dependsOn: a = [], model: s, ...i }) => {
-  const d = bt.useRef(!1), { placeHolder: h } = e, C = cn({ column: e, formik: r, lookups: o, dependsOn: a, userSelected: d, model: s }), u = Et(), p = be(() => {
-    let y = r.values[t];
-    if (C?.length && !y && !e.multiSelect && "IsDefault" in C[0]) {
-      const c = C.find((f) => f.IsDefault);
-      c && (y = c.value, r.setFieldValue(t, c.value));
+const ji = ct.memo(({ column: e, field: t, formik: r, lookups: a, dependsOn: o = [], model: s, ...i }) => {
+  const c = ct.useRef(!1), { placeHolder: p } = e, h = mn({ column: e, formik: r, lookups: a, dependsOn: o, userSelected: c, model: s }), y = dt(), u = me(() => {
+    let b = r.values[t];
+    if (h?.length && !b && !e.multiSelect && "IsDefault" in h[0]) {
+      const f = h.find((d) => d.IsDefault);
+      f && (b = f.value, r.setFieldValue(t, f.value));
     }
-    return e.multiSelect && (!y || y.length === 0 ? y = [] : Array.isArray(y) || (y = y.split(",").map((c) => parseInt(c)))), y;
-  }, [r.values[t], C, e.multiSelect, t]), l = Ft((y) => {
-    r.handleChange(y), d.current = !0;
+    return e.multiSelect && (!b || b.length === 0 ? b = [] : Array.isArray(b) || (b = b.split(",").map((f) => parseInt(f)))), b;
+  }, [r.values[t], h, e.multiSelect, t]), l = se((b) => {
+    r.handleChange(b), c.current = !0;
   }, [r]);
-  return /* @__PURE__ */ v(
-    Wt,
+  return /* @__PURE__ */ D(
+    Kt,
     {
       fullWidth: !0,
       error: r.touched[t] && r.errors[t],
       variant: "standard",
       children: [
-        /* @__PURE__ */ n(ya, { children: h || "" }),
+        /* @__PURE__ */ n(go, { children: p || "" }),
         /* @__PURE__ */ n(
-          ba,
+          yo,
           {
-            IconComponent: ga,
+            IconComponent: ho,
             ...i,
             name: t,
             multiple: e.multiSelect === !0,
             readOnly: e.readOnly === !0,
-            value: `${p}`,
+            value: `${u}`,
             onChange: l,
             onBlur: r.handleBlur,
             sx: {
-              backgroundColor: e.readOnly ? u.palette?.action?.disabled : ""
+              backgroundColor: e.readOnly ? y.palette?.action?.disabled : ""
             },
-            children: Array.isArray(C) && C.map((y) => /* @__PURE__ */ n(Jr, { value: y.value, disabled: y.isDisabled, children: y.label }, y.value))
+            children: Array.isArray(h) && h.map((b) => /* @__PURE__ */ n(nn, { value: b.value, disabled: b.isDisabled, children: b.label }, b.value))
           }
         ),
-        /* @__PURE__ */ n(Ct, { children: r.touched[t] && r.errors[t] })
+        /* @__PURE__ */ n(ut, { children: r.touched[t] && r.errors[t] })
       ]
     },
     t
   );
-}), kr = Ht("div")({
+}), Ur = Wt("div")({
   marginTop: "10px",
   marginBottom: "10px",
   fontSize: "20px"
-}), ji = ({ component: e, name: t, formik: r, field: o, column: a }) => {
-  const { value: s } = r.getFieldProps(t || o), { setFieldValue: i } = r, d = e || a.relation, h = Ft((C) => {
-    i(t || o, C);
-  }, [i, t, o]);
-  return /* @__PURE__ */ v("div", { children: [
-    /* @__PURE__ */ n(kr, { children: `Available ${a.label}` }),
-    /* @__PURE__ */ n(d, { selected: s, available: !0, onAssignChange: h, disableCellRedirect: a.disableCellRedirect, readOnly: a.readOnly }),
-    /* @__PURE__ */ n(kr, { children: `Assigned ${a.label}` }),
-    /* @__PURE__ */ n(d, { selected: s, assigned: !0, onAssignChange: h, disableCellRedirect: a.disableCellRedirect, readOnly: a.readOnly })
+}), Hi = ({ component: e, name: t, formik: r, field: a, column: o }) => {
+  const { value: s } = r.getFieldProps(t || a), { setFieldValue: i } = r, c = e || o.relation, p = se((h) => {
+    i(t || a, h);
+  }, [i, t, a]);
+  return /* @__PURE__ */ D("div", { children: [
+    /* @__PURE__ */ n(Ur, { children: `Available ${o.label}` }),
+    /* @__PURE__ */ n(c, { selected: s, available: !0, onAssignChange: p, disableCellRedirect: o.disableCellRedirect, readOnly: o.readOnly }),
+    /* @__PURE__ */ n(Ur, { children: `Assigned ${o.label}` }),
+    /* @__PURE__ */ n(c, { selected: s, assigned: !0, onAssignChange: p, disableCellRedirect: o.disableCellRedirect, readOnly: o.readOnly })
   ] });
-}, Hi = ({ field: e, formik: t, orientation: r = "row", label: o, lookups: a, fieldConfigs: s = {}, mode: i, ...d }) => {
-  const h = (y) => {
-    t.setFieldValue(e, y.target.value);
-  }, C = a ? a[d.column.lookup] : [], u = Et(), p = t.touched[e] && !!t.errors[e], l = i !== "copy" && s.disabled;
-  return /* @__PURE__ */ v(me, { children: [
-    /* @__PURE__ */ v(gr, { component: "fieldset", error: p, children: [
-      /* @__PURE__ */ n(jo, { component: "legend", children: o }),
+}, Wi = ({ field: e, formik: t, orientation: r = "row", label: a, lookups: o, fieldConfigs: s = {}, mode: i, ...c }) => {
+  const p = (b) => {
+    t.setFieldValue(e, b.target.value);
+  }, h = o ? o[c.column.lookup] : [], y = dt(), u = t.touched[e] && !!t.errors[e], l = i !== "copy" && s.disabled;
+  return /* @__PURE__ */ D(fe, { children: [
+    /* @__PURE__ */ D(yr, { component: "fieldset", error: u, children: [
+      /* @__PURE__ */ n($a, { component: "legend", children: a }),
       /* @__PURE__ */ n(
-        yr,
+        br,
         {
           row: r === "row",
-          "aria-label": o,
+          "aria-label": a,
           name: e,
           value: t.values[e],
-          onChange: h,
-          children: C?.map((y, c) => /* @__PURE__ */ n(
-            ct,
+          onChange: p,
+          children: h?.map((b, f) => /* @__PURE__ */ n(
+            Xe,
             {
-              value: y.value,
-              control: /* @__PURE__ */ n(yt, {}),
-              label: y.label,
+              value: b.value,
+              control: /* @__PURE__ */ n(st, {}),
+              label: b.label,
               disabled: l
             },
-            c
+            f
           ))
         }
       )
     ] }),
-    p && /* @__PURE__ */ n(Ct, { style: { color: u.palette.error.main }, children: t.errors[e] })
+    u && /* @__PURE__ */ n(ut, { style: { color: y.palette.error.main }, children: t.errors[e] })
   ] });
-}, Wi = {
+}, Ki = {
   limitTags: 5
-}, qi = Ge.memo(({ column: e, field: t, formik: r, lookups: o, dependsOn: a = [], fieldConfigs: s = {}, mode: i, model: d, ...h }) => {
-  const C = cn({ column: e, formik: r, lookups: o, dependsOn: a, model: d, isAutoComplete: !0 });
-  let u = r.values[t] || [];
-  Array.isArray(u) || (u = u.split(", ").map(Number));
-  const p = C.filter((c) => u.includes(c.value)) || [], l = i !== "copy" && s.disabled, y = (c, f) => {
-    let E = f?.map((x) => x.value) || [];
+}, qi = Le.memo(({ column: e, field: t, formik: r, lookups: a, dependsOn: o = [], fieldConfigs: s = {}, mode: i, model: c, ...p }) => {
+  const h = mn({ column: e, formik: r, lookups: a, dependsOn: o, model: c, isAutoComplete: !0 });
+  let y = r.values[t] || [];
+  Array.isArray(y) || (y = y.split(", ").map(Number));
+  const u = h.filter((f) => y.includes(f.value)) || [], l = i !== "copy" && s.disabled, b = (f, d) => {
+    let E = d?.map((T) => T.value) || [];
     e.dataFormat !== "array" && (E = E.length ? E.join(", ") : ""), r.setFieldValue(t, E);
   };
-  return /* @__PURE__ */ v(
-    Wt,
+  return /* @__PURE__ */ D(
+    Kt,
     {
       fullWidth: !0,
       variant: "standard",
       error: r.touched[t] && !!r.errors[t],
       children: [
         /* @__PURE__ */ n(
-          Zr,
+          an,
           {
-            ...h,
+            ...p,
             multiple: !0,
             id: t,
-            limitTags: e.limitTags || Wi.limitTags,
-            options: C || [],
-            getOptionLabel: (c) => c.label || "",
-            defaultValue: p,
-            renderInput: (c) => /* @__PURE__ */ n(jt, { ...c, variant: "standard" }),
-            onChange: y,
-            value: p,
+            limitTags: e.limitTags || Ki.limitTags,
+            options: h || [],
+            getOptionLabel: (f) => f.label || "",
+            defaultValue: u,
+            renderInput: (f) => /* @__PURE__ */ n(Ht, { ...f, variant: "standard" }),
+            onChange: b,
+            value: u,
             size: "small",
             disabled: l
           }
         ),
-        r.touched[t] && r.errors[t] && /* @__PURE__ */ n(Ct, { children: r.errors[t] })
+        r.touched[t] && r.errors[t] && /* @__PURE__ */ n(ut, { children: r.errors[t] })
       ]
     },
     t
   );
-}), Ki = "#182eb5", Yi = [
+}), Yi = "#182eb5", Ji = [
   { label: "Sunday", value: 0, display: "S" },
   { label: "Monday", value: 1, display: "M" },
   { label: "Tuesday", value: 2, display: "T" },
@@ -2718,16 +2732,16 @@ const Gi = bt.memo(({ column: e, field: t, formik: r, lookups: o, dependsOn: a =
   { label: "Thursday", value: 4, display: "T" },
   { label: "Friday", value: 5, display: "F" },
   { label: "Saturday", value: 6, display: "S" }
-], Ji = Ho(Wo)(({ theme: e, isSelected: t }) => ({
+], Zi = _a(Va)(({ theme: e, isSelected: t }) => ({
   width: 34,
   height: 34,
   padding: 1,
   margin: 1,
-  backgroundColor: t ? Ki : "#ffffff",
-  border: `1px solid ${xa[500]}`,
+  backgroundColor: t ? Yi : "#ffffff",
+  border: `1px solid ${Do[500]}`,
   color: t ? "white" : "black"
-})), Zi = ({ day: e, onClick: t, isSelected: r }) => /* @__PURE__ */ n(
-  Ji,
+})), Qi = ({ day: e, onClick: t, isSelected: r }) => /* @__PURE__ */ n(
+  Zi,
   {
     onClick: () => t(e.value),
     isSelected: r,
@@ -2735,75 +2749,75 @@ const Gi = bt.memo(({ column: e, field: t, formik: r, lookups: o, dependsOn: a =
     children: e.display
   },
   e.value
-), Qi = ({ name: e, field: t, formik: r, expired: o }) => {
-  const { setFieldValue: a } = r, { value: s } = r.getFieldProps(e || t), i = "1000001", d = "0111110", h = "0".repeat(7), [C, u] = F(s || h), [p, l] = F(() => s ? s === i ? i : s === d ? d : "Custom" : ""), [y, c] = F(!1), f = Ft((D) => {
-    if (Array.isArray(D)) {
-      let w = h;
-      for (const P of D)
-        w = w.substring(0, P) + "1" + w.substring(P + 1);
-      u(w), a(e || t, w), c(!0);
+), Xi = ({ name: e, field: t, formik: r, expired: a }) => {
+  const { setFieldValue: o } = r, { value: s } = r.getFieldProps(e || t), i = "1000001", c = "0111110", p = "0".repeat(7), [h, y] = O(s || p), [u, l] = O(() => s ? s === i ? i : s === c ? c : "Custom" : ""), [b, f] = O(!1), d = se((P) => {
+    if (Array.isArray(P)) {
+      let S = p;
+      for (const x of P)
+        S = S.substring(0, x) + "1" + S.substring(x + 1);
+      y(S), o(e || t, S), f(!0);
     } else {
-      let w = y ? h : C;
-      const P = w.slice(0, D) + (w[D] === "1" ? "0" : "1") + w.slice(D + 1);
-      u(P), a(e || t, P), l("Custom"), c(!1);
+      let S = b ? p : h;
+      const x = S.slice(0, P) + (S[P] === "1" ? "0" : "1") + S.slice(P + 1);
+      y(x), o(e || t, x), l("Custom"), f(!1);
     }
-  }, [y, h, C, e, t, a]), E = Et(), x = r.touched[t] && !!r.errors[t];
-  return /* @__PURE__ */ v(me, { children: [
-    /* @__PURE__ */ n(gr, { component: "fieldset", error: x, children: /* @__PURE__ */ v(
-      yr,
+  }, [b, p, h, e, t, o]), E = dt(), T = r.touched[t] && !!r.errors[t];
+  return /* @__PURE__ */ D(fe, { children: [
+    /* @__PURE__ */ n(yr, { component: "fieldset", error: T, children: /* @__PURE__ */ D(
+      br,
       {
         row: !0,
         name: e || t,
-        value: p,
-        onChange: (D) => {
-          const w = D.target.value;
-          l(w), w !== "Custom" ? (u(w), a(e || t, w), c(!0)) : (u(h), a(e || t, h), c(!1));
+        value: u,
+        onChange: (P) => {
+          const S = P.target.value;
+          l(S), S !== "Custom" ? (y(S), o(e || t, S), f(!0)) : (y(p), o(e || t, p), f(!1));
         },
         children: [
-          /* @__PURE__ */ n(ct, { value: i, control: /* @__PURE__ */ n(yt, {}), label: "Weekends (Sat - Sun)", onClick: () => f([0, 6]) }),
-          /* @__PURE__ */ n(ct, { value: d, control: /* @__PURE__ */ n(yt, {}), label: "Weekdays (Mon - Fri)", onClick: () => f([1, 2, 3, 4, 5]) }),
-          /* @__PURE__ */ n(ct, { value: "Custom", control: /* @__PURE__ */ n(yt, {}), label: "Specific days" }),
-          Yi.map((D, w) => /* @__PURE__ */ n(
-            Zi,
+          /* @__PURE__ */ n(Xe, { value: i, control: /* @__PURE__ */ n(st, {}), label: "Weekends (Sat - Sun)", onClick: () => d([0, 6]) }),
+          /* @__PURE__ */ n(Xe, { value: c, control: /* @__PURE__ */ n(st, {}), label: "Weekdays (Mon - Fri)", onClick: () => d([1, 2, 3, 4, 5]) }),
+          /* @__PURE__ */ n(Xe, { value: "Custom", control: /* @__PURE__ */ n(st, {}), label: "Specific days" }),
+          Ji.map((P, S) => /* @__PURE__ */ n(
+            Qi,
             {
-              day: D,
-              onClick: () => f(w),
-              isSelected: p === "Custom" && C[w] === "1",
-              disabled: o
+              day: P,
+              onClick: () => d(S),
+              isSelected: u === "Custom" && h[S] === "1",
+              disabled: a
             },
-            D.value
+            P.value
           ))
         ]
       }
     ) }),
-    x && /* @__PURE__ */ n(Ct, { style: { color: E.palette.error.main }, children: r.errors[t] })
+    T && /* @__PURE__ */ n(ut, { style: { color: E.palette.error.main }, children: r.errors[t] })
   ] });
-}, Xi = ({ isAdd: e, column: t, field: r, formik: o, otherProps: a, fieldConfigs: s = {}, mode: i }) => {
-  const d = Et();
-  let h = o.values[r] || [];
-  Array.isArray(h) || (h = h.split(",").map((l) => l.trim()));
-  const C = Ge.useMemo(() => i === "copy" ? !0 : typeof s.disabled < "u" ? s.disabled : typeof t.disabled == "function" ? t.disabled({ isAdd: e, formik: o }) : !!t.disabled, [i, s.disabled, t.disabled]), u = t.hasDefault && !e ? [h[0]] : [], p = Ft((l, y, c, f = {}) => {
-    const E = y.pop()?.trim();
-    y.includes(E) || y.push(E), u && u.includes(f.option) && c === "removeOption" && (y = [f.option]), t.dataFormat !== "array" && (y = y.length ? y.join(",") : ""), o.setFieldValue(r, y);
-  }, [o, r]);
-  return /* @__PURE__ */ v(
-    Wt,
+}, el = ({ isAdd: e, column: t, field: r, formik: a, otherProps: o, fieldConfigs: s = {}, mode: i }) => {
+  const c = dt();
+  let p = a.values[r] || [];
+  Array.isArray(p) || (p = p.split(",").map((l) => l.trim()));
+  const h = Le.useMemo(() => i === "copy" ? !0 : typeof s.disabled < "u" ? s.disabled : typeof t.disabled == "function" ? t.disabled({ isAdd: e, formik: a }) : !!t.disabled, [i, s.disabled, t.disabled]), y = t.hasDefault && !e ? [p[0]] : [], u = se((l, b, f, d = {}) => {
+    const E = b.pop()?.trim();
+    b.includes(E) || b.push(E), y && y.includes(d.option) && f === "removeOption" && (b = [d.option]), t.dataFormat !== "array" && (b = b.length ? b.join(",") : ""), a.setFieldValue(r, b);
+  }, [a, r]);
+  return /* @__PURE__ */ D(
+    Kt,
     {
       fullWidth: !0,
       variant: "standard",
-      error: o.touched[r] && !!o.errors[r],
+      error: a.touched[r] && !!a.errors[r],
       children: [
         /* @__PURE__ */ n(
-          Zr,
+          an,
           {
-            ...a,
+            ...o,
             multiple: !0,
             id: r,
             freeSolo: !0,
-            value: h,
+            value: p,
             options: [],
             renderInput: (l) => /* @__PURE__ */ n(
-              jt,
+              Ht,
               {
                 ...l,
                 variant: "standard",
@@ -2811,34 +2825,34 @@ const Gi = bt.memo(({ column: e, field: t, formik: r, lookups: o, dependsOn: a =
                   ...l.InputProps,
                   sx: {
                     ...l.InputProps?.sx,
-                    ...C && { backgroundColor: d.palette?.action?.disabled }
+                    ...h && { backgroundColor: c.palette?.action?.disabled }
                   }
                 }
               }
             ),
-            onChange: p,
+            onChange: u,
             size: "small",
-            renderTags: (l, y) => l.map((c, f) => {
-              const { key: E, ...x } = y({ index: f });
+            renderTags: (l, b) => l.map((f, d) => {
+              const { key: E, ...T } = b({ index: d });
               return /* @__PURE__ */ n(
-                wa,
+                xo,
                 {
-                  label: c,
-                  ...x,
-                  disabled: u.includes(c)
+                  label: f,
+                  ...T,
+                  disabled: y.includes(f)
                 },
                 E
               );
             }),
-            disabled: C
+            disabled: h
           }
         ),
-        o.touched[r] && o.errors[r] && /* @__PURE__ */ n(Ct, { children: o.errors[r] })
+        a.touched[r] && a.errors[r] && /* @__PURE__ */ n(ut, { children: a.errors[r] })
       ]
     },
     r
   );
-}, es = (e = []) => {
+}, tl = (e = []) => {
   const t = {};
   return e.forEach((r) => {
     r.ParentId && t[r.ParentId] ? t[r.ParentId].children.push({
@@ -2854,139 +2868,139 @@ const Gi = bt.memo(({ column: e, field: t, formik: r, lookups: o, dependsOn: a =
     };
   }), Object.values(t);
 };
-function ts({ column: e, field: t, formik: r, lookups: o, fieldConfigs: a, mode: s }) {
-  const i = o ? o[e.lookup] : [], d = es(i), h = r.values[t]?.length ? r.values[t].split(", ") : [];
-  let C;
-  return s !== "copy" && (C = a?.disabled), /* @__PURE__ */ n(ut, { sx: { minHeight: 350 }, children: /* @__PURE__ */ n(
-    Ta,
+function rl({ column: e, field: t, formik: r, lookups: a, fieldConfigs: o, mode: s }) {
+  const i = a ? a[e.lookup] : [], c = tl(i), p = r.values[t]?.length ? r.values[t].split(", ") : [];
+  let h;
+  return s !== "copy" && (h = o?.disabled), /* @__PURE__ */ n(He, { sx: { minHeight: 350 }, children: /* @__PURE__ */ n(
+    vo,
     {
-      selectedItems: h,
-      onSelectedItemsChange: (p, l) => {
+      selectedItems: p,
+      onSelectedItemsChange: (u, l) => {
         r.setFieldValue(t, l?.join(", ") || "");
       },
-      disabled: C,
+      disabled: h,
       multiSelect: !0,
       checkboxSelection: !0,
-      children: d.map((p) => /* @__PURE__ */ n(Ir, { itemId: p.value, label: p.label, children: p.children.map((l) => /* @__PURE__ */ n(Ir, { itemId: l.value, label: l.label }, l.value)) }, p.value))
+      children: c.map((u) => /* @__PURE__ */ n(kr, { itemId: u.value, label: u.label, children: u.children.map((l) => /* @__PURE__ */ n(kr, { itemId: l.value, label: l.label }, l.value)) }, u.value))
     }
   ) });
 }
-const rs = { maxLength: 500 }, { errorMapping: ns } = dt, os = 1024 * 1024;
-function as({ column: e, field: t, formik: r }) {
-  const o = r.values[t] || "", { stateData: a } = We(), { maxSize: s, formats: i } = e, { uploadApi: d, mediaApi: h, Url: C } = a?.gridSettings?.permissions, [u, p] = F({
+const nl = { maxLength: 500 }, { errorMapping: al } = et, ol = 1024 * 1024;
+function il({ column: e, field: t, formik: r }) {
+  const a = r.values[t] || "", { stateData: o } = Be(), { maxSize: s, formats: i } = e, { uploadApi: c, mediaApi: p, Url: h } = o?.gridSettings?.permissions, [y, u] = O({
     isExternal: "no",
     selectedFile: null
-  }), [l, y] = F(!1), c = qt(), { getParams: f, useParams: E } = Kt(), { associationId: x } = E() || f, D = x?.split("-")[0] || 1, w = (B) => {
-    const te = B.target.value;
-    p({
-      ...u,
-      isExternal: te,
+  }), [l, b] = O(!1), f = qt(), { getParams: d, useParams: E } = Dr(), { associationId: T } = E() || d, P = T?.split("-")[0] || 1, S = (N) => {
+    const J = N.target.value;
+    u({
+      ...y,
+      isExternal: J,
       selectedFile: null
     }), r.setFieldValue(t, r.values[t]);
-  }, P = (B) => {
-    r.setFieldValue(t, B.target.value);
-  }, L = (B) => {
-    const te = B.target.files[0];
-    if (te) {
-      if (s && te.size > s * os) {
-        c.showError(`File size exceeds the maximum limit of ${s} MB.`);
+  }, x = (N) => {
+    r.setFieldValue(t, N.target.value);
+  }, L = (N) => {
+    const J = N.target.files[0];
+    if (J) {
+      if (s && J.size > s * ol) {
+        f.showError(`File size exceeds the maximum limit of ${s} MB.`);
         return;
       }
-      if (Array.isArray(i) && !i.includes(te.type)) {
-        c.showError(`Invalid file format. Allowed formats: ${i.join(", ")}.`);
+      if (Array.isArray(i) && !i.includes(J.type)) {
+        f.showError(`Invalid file format. Allowed formats: ${i.join(", ")}.`);
         return;
       }
-      p((Z) => ({ ...Z, selectedFile: te }));
+      u((K) => ({ ...K, selectedFile: J }));
     }
-  }, J = async () => {
-    if (u.selectedFile) {
-      y(!0);
+  }, z = async () => {
+    if (y.selectedFile) {
+      b(!0);
       try {
-        const B = new FormData();
-        B.append("file", u.selectedFile), B.append("DocumentGroupId", r.values.DocumentGroupId), B.append("AssociationId", D);
-        const Z = (await vt({
+        const N = new FormData();
+        N.append("file", y.selectedFile), N.append("DocumentGroupId", r.values.DocumentGroupId), N.append("AssociationId", P);
+        const K = (await tt({
           method: "POST",
-          url: d,
-          data: B,
+          url: c,
+          data: N,
           headers: { "Content-Type": "multipart/form-data" },
           credentials: "include"
         })).data || {};
-        if (!Z.success) {
-          c.showError(Z.message || "Upload failed");
+        if (!K.success) {
+          f.showError(K.message || "Upload failed");
           return;
         }
-        const R = h + "/" + Z.filePath;
-        r.setFieldValue(t, R);
-      } catch (B) {
-        const te = (B.message.match(/status code (\d{3})/) || [])[1];
-        c.showError(ns[te]);
+        const k = p + "/" + K.filePath;
+        r.setFieldValue(t, k);
+      } catch (N) {
+        const J = (N.message.match(/status code (\d{3})/) || [])[1];
+        f.showError(al[J]);
       } finally {
-        y(!1);
+        b(!1);
       }
     }
-  }, j = new URL(C, window.location.origin).hostname.toLowerCase();
-  bt.useEffect(() => {
-    p({
-      ...u,
-      isExternal: o.toLowerCase().includes(j) ? "no" : "yes"
+  }, ie = new URL(h, window.location.origin).hostname.toLowerCase();
+  ct.useEffect(() => {
+    u({
+      ...y,
+      isExternal: a.toLowerCase().includes(ie) ? "no" : "yes"
     });
-  }, [o, p]);
-  const ee = r.values[t]?.length > (e.max || rs.maxLength), oe = ee ? "red" : "";
-  return /* @__PURE__ */ v(Re, { children: [
-    /* @__PURE__ */ v(Re, { sx: { display: "flex", alignItems: "center", marginBottom: 2 }, children: [
-      /* @__PURE__ */ n(Ne, { variant: "body1", sx: { width: "150px", marginRight: 2 }, children: "External Link?" }),
-      /* @__PURE__ */ v(
-        yr,
+  }, [a, u]);
+  const le = r.values[t]?.length > (e.max || nl.maxLength), Y = le ? "red" : "";
+  return /* @__PURE__ */ D(Te, { children: [
+    /* @__PURE__ */ D(Te, { sx: { display: "flex", alignItems: "center", marginBottom: 2 }, children: [
+      /* @__PURE__ */ n(xe, { variant: "body1", sx: { width: "150px", marginRight: 2 }, children: "External Link?" }),
+      /* @__PURE__ */ D(
+        br,
         {
           row: !0,
-          value: u.isExternal,
-          onChange: w,
+          value: y.isExternal,
+          onChange: S,
           "aria-label": "is-external-link",
           name: "is-external-link",
           children: [
-            /* @__PURE__ */ n(ct, { value: "yes", control: /* @__PURE__ */ n(yt, {}), label: "Yes" }),
-            /* @__PURE__ */ n(ct, { value: "no", control: /* @__PURE__ */ n(yt, {}), label: "No" })
+            /* @__PURE__ */ n(Xe, { value: "yes", control: /* @__PURE__ */ n(st, {}), label: "Yes" }),
+            /* @__PURE__ */ n(Xe, { value: "no", control: /* @__PURE__ */ n(st, {}), label: "No" })
           ]
         }
       )
     ] }),
-    /* @__PURE__ */ v(Re, { sx: { display: "flex", alignItems: "center", marginBottom: 2 }, children: [
-      /* @__PURE__ */ n(Ne, { variant: "body1", sx: { width: "150px", marginRight: 2 }, children: "Document Link" }),
-      /* @__PURE__ */ v(Re, { sx: { flex: 1, display: "flex", flexDirection: "column" }, children: [
-        u.isExternal === "yes" ? /* @__PURE__ */ n(
+    /* @__PURE__ */ D(Te, { sx: { display: "flex", alignItems: "center", marginBottom: 2 }, children: [
+      /* @__PURE__ */ n(xe, { variant: "body1", sx: { width: "150px", marginRight: 2 }, children: "Document Link" }),
+      /* @__PURE__ */ D(Te, { sx: { flex: 1, display: "flex", flexDirection: "column" }, children: [
+        y.isExternal === "yes" ? /* @__PURE__ */ n(
           Vt,
           {
             fullWidth: !0,
-            value: o,
+            value: a,
             sx: {
               "& .MuiOutlinedInput-root": {
-                "& fieldset": { borderColor: oe },
-                "&.Mui-focused fieldset": { borderColor: oe },
-                "&:hover fieldset": { borderColor: oe }
+                "& fieldset": { borderColor: Y },
+                "&.Mui-focused fieldset": { borderColor: Y },
+                "&:hover fieldset": { borderColor: Y }
               }
             },
-            onChange: P,
+            onChange: x,
             placeholder: "Enter external link"
           }
         ) : /* @__PURE__ */ n(
           Vt,
           {
             fullWidth: !0,
-            value: o,
+            value: a,
             placeholder: "Link autopopulated once uploaded",
             InputProps: { readOnly: !0 }
           }
         ),
-        ee && /* @__PURE__ */ v(Ne, { sx: { color: "red" }, children: [
+        le && /* @__PURE__ */ D(xe, { sx: { color: "red" }, children: [
           "Maximum allowed length for the document link is ",
           e.max,
           " characters."
         ] })
       ] })
     ] }),
-    u.isExternal === "no" && /* @__PURE__ */ v(Re, { sx: { display: "flex", alignItems: "center", gap: 2 }, children: [
-      /* @__PURE__ */ v(
-        lt,
+    y.isExternal === "no" && /* @__PURE__ */ D(Te, { sx: { display: "flex", alignItems: "center", gap: 2 }, children: [
+      /* @__PURE__ */ D(
+        Qe,
         {
           variant: "outlined",
           component: "label",
@@ -2997,46 +3011,46 @@ function as({ column: e, field: t, formik: r }) {
           ]
         }
       ),
-      u.selectedFile && /* @__PURE__ */ n(Ie, { title: u.selectedFile.name, arrow: !0, children: /* @__PURE__ */ n(Ne, { variant: "body2", children: u.selectedFile.name.length > 20 ? `${u.selectedFile.name.substring(0, 20)}...` : u.selectedFile.name }) }),
+      y.selectedFile && /* @__PURE__ */ n(De, { title: y.selectedFile.name, arrow: !0, children: /* @__PURE__ */ n(xe, { variant: "body2", children: y.selectedFile.name.length > 20 ? `${y.selectedFile.name.substring(0, 20)}...` : y.selectedFile.name }) }),
       /* @__PURE__ */ n(
-        lt,
+        Qe,
         {
           variant: "contained",
           color: "primary",
-          onClick: J,
-          disabled: !u.selectedFile || l,
-          children: l ? /* @__PURE__ */ n(qo, { size: 24, color: "inherit" }) : "Upload File"
+          onClick: z,
+          disabled: !y.selectedFile || l,
+          children: l ? /* @__PURE__ */ n(za, { size: 24, color: "inherit" }) : "Upload File"
         }
       )
     ] })
   ] });
 }
-const is = ({ field: e, formik: t }) => {
-  const [r, o] = Ge.useState({}), a = ln(r, 300);
-  Ge.useEffect(() => {
+const ll = ({ field: e, formik: t }) => {
+  const [r, a] = Le.useState({}), o = fn(r, 300);
+  Le.useEffect(() => {
     if (t.values[e])
       try {
         const i = JSON.parse(t.values[e]);
-        o(i);
+        a(i);
       } catch {
-        o({});
+        a({});
       }
-  }, [t.values[e]]), Ge.useEffect(() => {
-    const i = JSON.stringify(a);
+  }, [t.values[e]]), Le.useEffect(() => {
+    const i = JSON.stringify(o);
     t.values[e] !== i && t.setFieldValue(e, i);
-  }, [a, e, t, t.values[e]]);
-  const s = (i, d) => {
-    const h = { ...r, [i]: d };
-    o(h);
+  }, [o, e, t, t.values[e]]);
+  const s = (i, c) => {
+    const p = { ...r, [i]: c };
+    a(p);
   };
   return /* @__PURE__ */ n(
-    Wt,
+    Kt,
     {
       fullWidth: !0,
       variant: "standard",
       error: t.touched[e] && !!t.errors[e],
       style: { marginBottom: "1rem" },
-      children: Object.keys(r).map((i) => /* @__PURE__ */ v(
+      children: Object.keys(r).map((i) => /* @__PURE__ */ D(
         "div",
         {
           style: {
@@ -3046,17 +3060,17 @@ const is = ({ field: e, formik: t }) => {
             marginBottom: "0.5rem"
           },
           children: [
-            /* @__PURE__ */ v(At, { variant: "body1", sx: { width: "180px", marginRight: 2 }, children: [
+            /* @__PURE__ */ D(vt, { variant: "body1", sx: { width: "180px", marginRight: 2 }, children: [
               i,
               ":"
             ] }),
             /* @__PURE__ */ n(
-              Sa,
+              wo,
               {
                 id: i,
                 name: i,
                 value: r[i],
-                onChange: (d) => s(i, d.target.value),
+                onChange: (c) => s(i, c.target.value),
                 fullWidth: !0,
                 style: { flex: 2 }
               }
@@ -3068,168 +3082,168 @@ const is = ({ field: e, formik: t }) => {
     },
     e
   );
-}, ss = {
-  boolean: Ii,
-  select: Gi,
-  string: Ut,
-  number: ki,
+}, sl = {
+  boolean: Mi,
+  select: ji,
+  string: Gt,
+  number: $i,
   password: _i,
-  date: $i,
-  dateTime: Vi,
-  time: Ui,
-  oneToMany: ji,
-  radio: Hi,
+  date: Vi,
+  dateTime: zi,
+  time: Gi,
+  oneToMany: Hi,
+  radio: Wi,
   autocomplete: qi,
-  dayRadio: Qi,
-  email: Ut,
-  chipInput: Xi,
-  treeCheckbox: ts,
-  fileUpload: as,
-  json: is
-}, _r = { paddingTop: "2.5px", paddingBottom: "2.5px" }, ls = Da("span")({
+  dayRadio: Xi,
+  email: Gt,
+  chipInput: el,
+  treeCheckbox: rl,
+  fileUpload: il,
+  json: ll
+}, jr = { paddingTop: "2.5px", paddingBottom: "2.5px" }, cl = To("span")({
   color: "red !important"
-}), cs = ({ tabColumns: e, model: t, formik: r, data: o, onChange: a, combos: s, lookups: i, fieldConfigs: d, mode: h, handleSubmit: C }) => {
-  const [u, p] = Ge.useState(/* @__PURE__ */ new Set()), { activeStep: l, setActiveStep: y } = Ge.useContext(un), c = {};
-  for (let P = 0, L = t.columns.length; P < L; P++) {
-    const { field: J, skip: j } = t.columns[P];
-    j && (c[j.step] = r.values[J]);
+}), ul = ({ tabColumns: e, model: t, formik: r, data: a, onChange: o, combos: s, lookups: i, fieldConfigs: c, mode: p, handleSubmit: h }) => {
+  const [y, u] = Le.useState(/* @__PURE__ */ new Set()), { activeStep: l, setActiveStep: b } = Le.useContext(gn), f = {};
+  for (let x = 0, L = t.columns.length; x < L; x++) {
+    const { field: z, skip: ie } = t.columns[x];
+    ie && (f[ie.step] = r.values[z]);
   }
-  const f = (P) => u.has(P) || c[P], E = () => {
-    for (let P = l + 1; P < e.length; P++)
-      if (!f(P))
+  const d = (x) => y.has(x) || f[x], E = () => {
+    for (let x = l + 1; x < e.length; x++)
+      if (!d(x))
         return !1;
     return !0;
-  }, x = () => {
-    let P = l + 1;
-    for (; c[P]; )
-      P++;
-    p((L) => new Set(L).add(l)), P >= e.length || E() ? C() : y(P);
-  }, D = () => {
-    let P = l - 1;
-    for (; c[P] && P > 0; )
-      P--;
-    y(P);
+  }, T = () => {
+    let x = l + 1;
+    for (; f[x]; )
+      x++;
+    u((L) => new Set(L).add(l)), x >= e.length || E() ? h() : b(x);
+  }, P = () => {
+    let x = l - 1;
+    for (; f[x] && x > 0; )
+      x--;
+    b(x);
   };
   if (!e?.length)
     return null;
-  const w = e[l];
-  return /* @__PURE__ */ v(me, { children: [
-    /* @__PURE__ */ n(Ca, { activeStep: l, sx: { marginBottom: "20px" }, children: e.map(({ title: P, key: L }, J) => /* @__PURE__ */ n(Ea, { completed: f(J), children: /* @__PURE__ */ n(va, { children: /* @__PURE__ */ n(Ne, { sx: { fontSize: "20px" }, children: P }) }) }, L)) }),
-    /* @__PURE__ */ v(Ge.Fragment, { children: [
-      /* @__PURE__ */ n(dn, { formElements: w.items, model: t, formik: r, data: o, onChange: a, combos: s, lookups: i, fieldConfigs: d, mode: h }),
-      /* @__PURE__ */ v(ut, { sx: { display: "flex", flexDirection: "row", pt: 2, mr: 2 }, children: [
-        l !== 0 ? /* @__PURE__ */ v(Se, { color: "inherit", disabled: l === 0, onClick: D, variant: "contained", sx: { mr: 2 }, children: [
+  const S = e[l];
+  return /* @__PURE__ */ D(fe, { children: [
+    /* @__PURE__ */ n(bo, { activeStep: l, sx: { marginBottom: "20px" }, children: e.map(({ title: x, key: L }, z) => /* @__PURE__ */ n(Co, { completed: d(z), children: /* @__PURE__ */ n(Eo, { children: /* @__PURE__ */ n(xe, { sx: { fontSize: "20px" }, children: x }) }) }, L)) }),
+    /* @__PURE__ */ D(Le.Fragment, { children: [
+      /* @__PURE__ */ n(hn, { formElements: S.items, model: t, formik: r, data: a, onChange: o, combos: s, lookups: i, fieldConfigs: c, mode: p }),
+      /* @__PURE__ */ D(He, { sx: { display: "flex", flexDirection: "row", pt: 2, mr: 2 }, children: [
+        l !== 0 ? /* @__PURE__ */ D(Ce, { color: "inherit", disabled: l === 0, onClick: P, variant: "contained", sx: { mr: 2 }, children: [
           " ",
           "Back"
         ] }) : null,
-        /* @__PURE__ */ n(Se, { onClick: x, variant: "contained", children: E() ? "Finish" : "Next" })
+        /* @__PURE__ */ n(Ce, { onClick: T, variant: "contained", children: E() ? "Finish" : "Next" })
       ] })
     ] })
   ] });
-}, dn = ({ formElements: e, model: t, formik: r, data: o, onChange: a, combos: s, lookups: i, fieldConfigs: d, mode: h, isAdd: C }) => e?.length ? /* @__PURE__ */ n(me, { children: e.map(({ Component: u, column: p, field: l, label: y, otherProps: c }, f) => {
-  const E = typeof p.relation == "function";
-  return /* @__PURE__ */ v(sr, { container: !0, spacing: 2, sx: { marginTop: "1rem", marginBottom: "1rem" }, alignItems: E ? "flex-start" : "center", children: [
-    p?.showLabel !== !1 ? /* @__PURE__ */ n(sr, { size: { xs: 3 }, sx: _r, children: /* @__PURE__ */ v(Ne, { sx: { fontSize: "16px", fontWeight: "bold" }, children: [
-      p.label || l,
+}, hn = ({ formElements: e, model: t, formik: r, data: a, onChange: o, combos: s, lookups: i, fieldConfigs: c, mode: p, isAdd: h }) => e?.length ? /* @__PURE__ */ n(fe, { children: e.map(({ Component: y, column: u, field: l, label: b, otherProps: f }, d) => {
+  const E = typeof u.relation == "function";
+  return /* @__PURE__ */ D(ur, { container: !0, spacing: 2, sx: { marginTop: "1rem", marginBottom: "1rem" }, alignItems: E ? "flex-start" : "center", children: [
+    u?.showLabel !== !1 ? /* @__PURE__ */ n(ur, { size: { xs: 3 }, sx: jr, children: /* @__PURE__ */ D(xe, { sx: { fontSize: "16px", fontWeight: "bold" }, children: [
+      u.label || l,
       ": ",
-      p.required && /* @__PURE__ */ n(ls, { children: "*" })
+      u.required && /* @__PURE__ */ n(cl, { children: "*" })
     ] }) }) : null,
-    /* @__PURE__ */ n(sr, { size: { xs: E ? 12 : 9 }, sx: _r, children: /* @__PURE__ */ n(u, { isAdd: C, model: t, fieldConfigs: d[l], mode: h, column: p, field: l, label: y, formik: r, data: o, onChange: a, combos: s, lookups: i, ...c }) })
-  ] }, f);
-}) }) : null, ds = function({ columns: e, tabs: t = {}, id: r, searchParams: o }) {
-  const a = [], s = {};
-  for (const d in t)
-    s[d] = [];
-  for (const d of e) {
-    const h = d.type;
-    if (d.label === null)
+    /* @__PURE__ */ n(ur, { size: { xs: E ? 12 : 9 }, sx: jr, children: /* @__PURE__ */ n(y, { isAdd: h, model: t, fieldConfigs: c[l], mode: p, column: u, field: l, label: b, formik: r, data: a, onChange: o, combos: s, lookups: i, ...f }) })
+  ] }, d);
+}) }) : null, dl = function({ columns: e, tabs: t = {}, id: r, searchParams: a }) {
+  const o = [], s = {};
+  for (const c in t)
+    s[c] = [];
+  for (const c of e) {
+    const p = c.type;
+    if (c.label === null)
       continue;
-    const { field: C, label: u, tab: p } = d, l = {};
-    d.options && (l.options = d.options), d.dependsOn && (l.dependsOn = d.dependsOn);
-    const y = ss[h];
-    if (!y || d.hideInAddGrid && r === "0")
+    const { field: h, label: y, tab: u } = c, l = {};
+    c.options && (l.options = c.options), c.dependsOn && (l.dependsOn = c.dependsOn);
+    const b = sl[p];
+    if (!b || c.hideInAddGrid && r === "0")
       continue;
-    (p && t[p] ? s[p] : a).push({ Component: y, field: C, label: u, column: { ...d, readOnly: o.has("showRelation") || d.readOnly }, otherProps: l });
+    (u && t[u] ? s[u] : o).push({ Component: b, field: h, label: y, column: { ...c, readOnly: a.has("showRelation") || c.readOnly }, otherProps: l });
   }
   const i = [];
-  for (const d in s)
-    i.push({ key: d, title: t[d], items: s[d] });
-  return { formElements: a, tabColumns: i };
-}, us = ({ model: e, formik: t, data: r, combos: o, onChange: a, lookups: s, id: i, fieldConfigs: d, mode: h, handleSubmit: C }) => {
-  const u = dt.emptyIdValues.includes(i), { formElements: p, tabColumns: l } = Ge.useMemo(() => {
-    const y = e.formConfig?.showTabbed, c = new URLSearchParams(window.location.search), { formElements: f, tabColumns: E } = ds({ columns: e.columns, tabs: y ? e.tabs : {}, id: i, searchParams: c });
-    return { formElements: f, tabColumns: E, showTabs: y && E.length > 0 };
+  for (const c in s)
+    i.push({ key: c, title: t[c], items: s[c] });
+  return { formElements: o, tabColumns: i };
+}, pl = ({ model: e, formik: t, data: r, combos: a, onChange: o, lookups: s, id: i, fieldConfigs: c, mode: p, handleSubmit: h }) => {
+  const y = et.emptyIdValues.includes(i), { formElements: u, tabColumns: l } = Le.useMemo(() => {
+    const b = e.formConfig?.showTabbed, f = new URLSearchParams(window.location.search), { formElements: d, tabColumns: E } = dl({ columns: e.columns, tabs: b ? e.tabs : {}, id: i, searchParams: f });
+    return { formElements: d, tabColumns: E, showTabs: b && E.length > 0 };
   }, [e]);
-  return /* @__PURE__ */ v("div", { children: [
-    /* @__PURE__ */ n(dn, { isAdd: u, formElements: p, model: e, formik: t, data: r, onChange: a, combos: o, lookups: s, fieldConfigs: d, mode: h }),
-    /* @__PURE__ */ n("div", { style: { marginTop: "20px" }, children: /* @__PURE__ */ n(cs, { tabColumns: l, model: e, formik: t, data: r, onChange: a, combos: o, lookups: s, fieldConfigs: d, mode: h, handleSubmit: C }) })
+  return /* @__PURE__ */ D("div", { children: [
+    /* @__PURE__ */ n(hn, { isAdd: y, formElements: u, model: e, formik: t, data: r, onChange: o, combos: a, lookups: s, fieldConfigs: c, mode: p }),
+    /* @__PURE__ */ n("div", { style: { marginTop: "20px" }, children: /* @__PURE__ */ n(ul, { tabColumns: l, model: e, formik: t, data: r, onChange: o, combos: a, lookups: s, fieldConfigs: c, mode: p, handleSubmit: h }) })
   ] });
 };
-function ps(e) {
-  const { children: t, value: r, index: o, ...a } = e;
+function fl(e) {
+  const { children: t, value: r, index: a, ...o } = e;
   return /* @__PURE__ */ n(
     "div",
     {
       role: "tabpanel",
-      hidden: r !== o,
-      id: `simple-tabpanel-${o}`,
-      "aria-labelledby": `simple-tab-${o}`,
-      ...a,
-      children: r === o && /* @__PURE__ */ n(ut, { sx: { p: 3 }, children: t })
+      hidden: r !== a,
+      id: `simple-tabpanel-${a}`,
+      "aria-labelledby": `simple-tab-${a}`,
+      ...o,
+      children: r === a && /* @__PURE__ */ n(He, { sx: { p: 3 }, children: t })
     }
   );
 }
-function fs(e) {
+function ml(e) {
   return {
     id: `simple-tab-${e}`,
     "aria-controls": `simple-tabpanel-${e}`
   };
 }
-const ms = Vr(({ relation: e, parentFilters: t, parent: r, where: o, models: a, readOnly: s }) => {
-  const i = a.find(({ name: C }) => C === e);
+const hl = Kr(({ relation: e, parentFilters: t, parent: r, where: a, models: o, readOnly: s }) => {
+  const i = o.find(({ name: h }) => h === e);
   if (!i) return null;
-  const d = { ...i, hideBreadcrumb: !0 }, h = d instanceof zt ? d : new zt(d);
-  return h ? /* @__PURE__ */ n(
-    h.ChildGrid,
+  const c = { ...i, hideBreadcrumb: !0 }, p = c instanceof Ut ? c : new Ut(c);
+  return p ? /* @__PURE__ */ n(
+    p.ChildGrid,
     {
       readOnly: s,
       parentFilters: t,
       parent: r,
-      model: d,
-      where: o,
+      model: c,
+      where: a,
       isChildGrid: !0
     }
   ) : null;
-}), hs = bt.memo(({ relations: e, parent: t, where: r = [], models: o, relationFilters: a, readOnly: s }) => {
-  const [i, d] = F(0);
-  return /* @__PURE__ */ v(ut, { sx: { width: "100%" }, children: [
-    /* @__PURE__ */ n(ut, { sx: { borderBottom: 1, borderColor: "divider" }, children: /* @__PURE__ */ n(Aa, { value: i, onChange: (C, u) => {
-      d(u);
-    }, "aria-label": "relations tabs", children: e.map((C, u) => {
-      const p = o.find(({ name: y }) => y === C) || {}, l = p.listTitle || p.title || C;
+}), gl = ct.memo(({ relations: e, parent: t, where: r = [], models: a, relationFilters: o, readOnly: s }) => {
+  const [i, c] = O(0);
+  return /* @__PURE__ */ D(He, { sx: { width: "100%" }, children: [
+    /* @__PURE__ */ n(He, { sx: { borderBottom: 1, borderColor: "divider" }, children: /* @__PURE__ */ n(Ao, { value: i, onChange: (h, y) => {
+      c(y);
+    }, "aria-label": "relations tabs", children: e.map((h, y) => {
+      const u = a.find(({ name: b }) => b === h) || {}, l = u.listTitle || u.title || h;
       return /* @__PURE__ */ n(
-        Oa,
+        So,
         {
           label: l,
-          ...fs(u)
+          ...ml(y)
         },
-        C
+        h
       );
     }) }) }),
-    e.map((C, u) => /* @__PURE__ */ n(ps, { value: i, index: u, children: /* @__PURE__ */ n(
-      ms,
+    e.map((h, y) => /* @__PURE__ */ n(fl, { value: i, index: y, children: /* @__PURE__ */ n(
+      hl,
       {
         readOnly: s,
-        relation: C,
-        models: o,
-        parentFilters: a[C] || [],
+        relation: h,
+        models: a,
+        parentFilters: o[h] || [],
         parent: t,
         where: r
       },
-      C
-    ) }, C))
+      h
+    ) }, h))
   ] });
-}), un = Gt(1), gs = {}, Te = {
+}), gn = jt(1), yl = {}, be = {
   object: "object",
   function: "function",
   baseData: "baseData",
@@ -3238,192 +3252,192 @@ const ms = Vr(({ relation: e, parentFilters: t, parent: r, where: o, models: a, 
   copy: "Copy",
   edit: "Edit",
   number: "number"
-}, ys = ({
+}, bl = ({
   model: e,
   api: t,
   models: r,
-  relationFilters: o = {},
-  permissions: a = {},
-  Layout: s = us,
+  relationFilters: a = {},
+  permissions: o = {},
+  Layout: s = pl,
   baseSaveData: i = {},
-  sx: d,
-  readOnly: h,
-  beforeSubmit: C,
-  deletePromptText: u
+  sx: c,
+  readOnly: p,
+  beforeSubmit: h,
+  deletePromptText: y
 }) => {
-  const p = e.formTitle || e.title, { navigate: l, getParams: y, useParams: c, pathname: f } = Kt(), { relations: E = [] } = e, { dispatchData: x, stateData: D } = We(), w = c() || y, { id: P = "" } = w, L = P.split("-")[0], J = new URLSearchParams(window.location.search), j = J.has(Te.baseData) && J.get(Te.baseData);
-  if (j) {
-    const k = JSON.parse(j);
-    typeof k === Te.object && k !== null && (i = { ...i, ...k });
+  const u = e.formTitle || e.title, { navigate: l, getParams: b, useParams: f, pathname: d } = Dr(), { relations: E = [] } = e, { dispatchData: T, stateData: P } = Be(), S = f() || b, { id: x = "" } = S, L = x.split("-")[0], z = new URLSearchParams(window.location.search), ie = z.has(be.baseData) && z.get(be.baseData);
+  if (ie) {
+    const R = JSON.parse(ie);
+    typeof R === be.object && R !== null && (i = { ...i, ...R });
   }
-  const [ee, oe] = F(!0), [B, te] = F({}), [Z, R] = F(null), [Y, H] = F(!1), I = qt(), [K, Q] = F(null), [X, Ce] = F(0), [re, Ee] = F(!1), [Oe, ot] = F(null), [Le, ke] = F(""), _e = D?.gridSettings?.permissions?.Url || "", $e = typeof e.applyFieldConfig === Te.function ? e.applyFieldConfig({ data: B, lookups: Z }) : gs, Ae = be(() => `${_e}${e.api || t || ""}`, [_e, e.api, t]), { mode: pt } = D.dataForm, xt = D.getUserData || {}, ft = {
+  const [le, Y] = O(!0), [N, J] = O({}), [K, k] = O(null), [re, W] = O(!1), _ = qt(), [$, j] = O(null), [ue, F] = O(0), [I, de] = O(!1), [ae, he] = O(null), [Oe, wt] = O(""), ke = P?.gridSettings?.permissions?.Url || "", $e = typeof e.applyFieldConfig === be.function ? e.applyFieldConfig({ data: N, lookups: K }) : yl, pt = me(() => `${ke}${e.api || t || ""}`, [ke, e.api, t]), { mode: Ke } = P.dataForm, _e = P.getUserData || {}, Yt = {
     add: !0,
     edit: !0,
     delete: !0,
     ...e.permissions,
-    ...a
-  }, { canEdit: at } = en({
-    userData: xt,
+    ...o
+  }, { canEdit: Jt } = pn({
+    userData: _e,
     model: e,
-    userDefinedPermissions: ft
-  }), { hideBreadcrumb: he = !1, navigateBack: M } = e, $ = () => {
-    let k;
-    switch (typeof M) {
-      case Te.function:
-        k = M({ params: w, searchParams: J, data: B });
+    userDefinedPermissions: Yt
+  }), { hideBreadcrumb: St = !1, navigateBack: Ve } = e, oe = () => {
+    let R;
+    switch (typeof Ve) {
+      case be.function:
+        R = Ve({ params: S, searchParams: z, data: N });
         break;
-      case Te.number:
-      case Te.string:
-        k = M;
+      case be.number:
+      case be.string:
+        R = Ve;
         break;
       default:
-        k = f.substring(0, f.lastIndexOf("/"));
+        R = d.substring(0, d.lastIndexOf("/"));
         break;
     }
-    l(k);
-  }, ve = be(() => dt.emptyIdValues.includes(L), [L]), m = be(() => ve ? { ...e.initialValues, ...B, ...i } : { ...i, ...e.initialValues, ...B }, [e.initialValues, B, L]);
-  ue(() => {
-    if (!_e) return;
-    Q(e.getValidationSchema({ id: L, snackbar: I }));
-    const k = P.split("-");
-    tn({
+    l(R);
+  }, ft = me(() => et.emptyIdValues.includes(L), [L]), At = me(() => ft ? { ...e.initialValues, ...N, ...i } : { ...i, ...e.initialValues, ...N }, [e.initialValues, N, L]);
+  ce(() => {
+    if (!ke) return;
+    j(e.getValidationSchema({ id: L, snackbar: _ }));
+    const R = x.split("-");
+    zt({
       ...{
-        api: t || Ae,
+        api: t || pt,
         model: e,
-        setError: qe
+        setError: Ot
       },
-      id: k.length > 1 ? k[1] : k[0],
-      setIsLoading: oe,
-      setActiveRecord: ye
+      id: R.length > 1 ? R[1] : R[0],
+      setIsLoading: Y,
+      setActiveRecord: mt
     });
-  }, [L, P, e, _e]);
-  const se = Kr({
+  }, [L, x, e, ke]);
+  const ze = tn({
     enableReinitialize: !0,
-    initialValues: m,
-    validationSchema: K,
+    initialValues: At,
+    validationSchema: $,
     validateOnBlur: !1,
-    onSubmit: async (k, { resetForm: De }) => {
-      Object.keys(k).forEach((ne) => {
-        typeof k[ne] === Te.string && (k[ne] = k[ne].trim());
-      }), oe(!0), nn({
+    onSubmit: async (R, { resetForm: q }) => {
+      Object.keys(R).forEach((ee) => {
+        typeof R[ee] === be.string && (R[ee] = R[ee].trim());
+      }), Y(!0), Er({
         id: L,
-        api: Ae,
-        values: k,
-        setIsLoading: oe,
-        setError: I.showError
-      }).then((ne) => {
-        if (!ne) return;
+        api: pt,
+        values: R,
+        setIsLoading: Y,
+        setError: _.showError
+      }).then((ee) => {
+        if (!ee) return;
         if (e.reloadOnSave)
           return window.location.reload();
-        const Qe = ne.info ? ne.info : `Record ${L === 0 ? "Added" : "Updated"} Successfully.`;
-        I.showMessage(Qe), M !== !1 && $();
-      }).catch((ne) => {
-        I.showError(
+        const Ge = ee.info ? ee.info : `Record ${L === 0 ? "Added" : "Updated"} Successfully.`;
+        _.showMessage(Ge), Ve !== !1 && oe();
+      }).catch((ee) => {
+        _.showError(
           "An error occured.",
-          ne
-        ), e.reloadOnSave && De();
-      }).finally(() => oe(!1));
+          ee
+        ), e.reloadOnSave && q();
+      }).finally(() => Y(!1));
     }
-  }), { dirty: Be } = se, Pe = () => {
-    se.resetForm(), Ee(!1), $();
-  }, qe = function(k, De) {
-    I.showError(k, De), $();
-  }, ye = function({ id: k, title: De, record: ne, lookups: Qe }) {
-    const Xe = P.indexOf("-") > -1, et = !k || k === "0", Yt = et ? Te.create : Xe ? Te.copy : Te.edit, mt = et ? "" : ne[e.linkColumn], Ve = [{ text: e.breadCrumbs }, { text: Yt }];
-    Xe && (ne[e.linkColumn] = ""), e.columns.forEach((It) => {
-      It.skipCopy && Xe && (ne[It.field] = "");
-    }), te(ne), R(Qe), mt !== "" && Ve.push({ text: mt }), x({
-      type: z.PAGE_TITLE_DETAILS,
+  }), { dirty: m } = ze, rt = () => {
+    ze.resetForm(), de(!1), oe();
+  }, Ot = function(R, q) {
+    _.showError(R, q), oe();
+  }, mt = function({ id: R, title: q, record: ee, lookups: Ge }) {
+    const Ue = x.indexOf("-") > -1, at = !R || R === "0", qe = at ? be.create : Ue ? be.copy : be.edit, It = at ? "" : ee[e.linkColumn], Ye = [{ text: e.breadCrumbs }, { text: qe }];
+    Ue && (ee[e.linkColumn] = ""), e.columns.forEach((ve) => {
+      ve.skipCopy && Ue && (ee[ve.field] = "");
+    }), J(ee), k(Ge), It !== "" && Ye.push({ text: It }), T({
+      type: Z.PAGE_TITLE_DETAILS,
       payload: {
         showBreadcrumbs: !0,
-        breadcrumbs: Ve
+        breadcrumbs: Ye
       }
     });
-  }, de = function(k) {
-    Be ? Ee(!0) : $(), k.preventDefault();
-  }, ae = async function() {
+  }, Zt = function(R) {
+    m ? de(!0) : oe(), R.preventDefault();
+  }, ht = async function() {
     try {
-      H(!0), await rn({
+      W(!0), await Cr({
         id: L,
         api: t || e.api,
-        setIsLoading: oe,
-        setError: I.showError,
-        setErrorMessage: ke
-      }) === !0 && (I.showMessage("Record Deleted Successfully."), $());
+        setIsLoading: Y,
+        setError: _.showError,
+        setErrorMessage: wt
+      }) === !0 && (_.showMessage("Record Deleted Successfully."), oe());
     } catch {
-      I.showError("An error occured, please try after some time.");
+      _.showError("An error occured, please try after some time.");
     } finally {
-      H(!1);
+      W(!1);
     }
-  }, le = () => {
-    ke(null), H(!1);
+  }, Pe = () => {
+    wt(null), W(!1);
   };
-  if (ee)
-    return /* @__PURE__ */ n(ut, { sx: { display: "flex", pt: "20%", justifyContent: "center" }, children: /* @__PURE__ */ n(ua, {}) });
-  const Dt = function(k) {
-    const { name: De, value: ne } = k.target;
-    te({ ...B, [De]: ne });
-  }, xe = async function(k) {
-    k && k.preventDefault(), typeof C === Te.function && await C({ formik: se });
-    const { errors: De } = se;
-    se.handleSubmit();
-    const ne = Object.keys(De)[0], Qe = De[ne];
-    Qe && I.showError(Qe, null, "error");
-    const Xe = e.columns.find(
-      (et) => et.field === ne
+  if (le)
+    return /* @__PURE__ */ n(He, { sx: { display: "flex", pt: "20%", justifyContent: "center" }, children: /* @__PURE__ */ n(co, {}) });
+  const nt = function(R) {
+    const { name: q, value: ee } = R.target;
+    J({ ...N, [q]: ee });
+  }, ge = async function(R) {
+    R && R.preventDefault(), typeof h === be.function && await h({ formik: ze });
+    const { errors: q } = ze;
+    ze.handleSubmit();
+    const ee = Object.keys(q)[0], Ge = q[ee];
+    Ge && _.showError(Ge, null, "error");
+    const Ue = e.columns.find(
+      (at) => at.field === ee
     ) || {};
-    Xe.tab && Ce(Object.keys(e.tabs).indexOf(Xe.tab));
-  }, Ke = [
-    { text: p },
+    Ue.tab && F(Object.keys(e.tabs).indexOf(Ue.tab));
+  }, Qt = [
+    { text: u },
     { text: L === "0" ? "New" : "Update" }
-  ], Ye = Number(L) !== 0 && !!E.length, Je = J.has("showRelation"), Ze = !("canEdit" in B) || B.canEdit, ge = !Ze || B.readOnlyRelations;
-  return u = u || "Are you sure you want to delete ?", /* @__PURE__ */ v(me, { children: [
+  ], Xt = Number(L) !== 0 && !!E.length, Pt = z.has("showRelation"), Ft = !("canEdit" in N) || N.canEdit, gt = !Ft || N.readOnlyRelations;
+  return y = y || "Are you sure you want to delete ?", /* @__PURE__ */ D(fe, { children: [
     /* @__PURE__ */ n(
-      sn,
+      dn,
       {
         navigate: l,
-        title: p,
-        showBreadcrumbs: !he,
-        breadcrumbs: Ke,
+        title: u,
+        showBreadcrumbs: !St,
+        breadcrumbs: Qt,
         model: e
       }
     ),
-    /* @__PURE__ */ n(un.Provider, { value: { activeStep: X, setActiveStep: Ce }, children: /* @__PURE__ */ v(ca, { sx: { padding: 2, ...d }, children: [
-      /* @__PURE__ */ v("form", { children: [
-        /* @__PURE__ */ v(
-          da,
+    /* @__PURE__ */ n(gn.Provider, { value: { activeStep: ue, setActiveStep: F }, children: /* @__PURE__ */ D(lo, { sx: { padding: 2, ...c }, children: [
+      /* @__PURE__ */ D("form", { children: [
+        /* @__PURE__ */ D(
+          so,
           {
             direction: "row",
             spacing: 2,
             justifyContent: "flex-end",
             mb: 1,
             children: [
-              at && Ze && !Je && !h && /* @__PURE__ */ n(
-                Se,
+              Jt && Ft && !Pt && !p && /* @__PURE__ */ n(
+                Ce,
                 {
                   variant: "contained",
                   type: "submit",
                   color: "success",
-                  onClick: xe,
+                  onClick: ge,
                   children: "Save"
                 }
               ),
               /* @__PURE__ */ n(
-                Se,
+                Ce,
                 {
                   variant: "contained",
                   type: "cancel",
                   color: "error",
-                  onClick: de,
+                  onClick: Zt,
                   children: "Cancel"
                 }
               ),
-              a.delete && /* @__PURE__ */ n(
-                Se,
+              o.delete && /* @__PURE__ */ n(
+                Ce,
                 {
                   variant: "contained",
                   color: "error",
-                  onClick: () => H(!0),
+                  onClick: () => W(!0),
                   children: "Delete"
                 }
               )
@@ -3434,37 +3448,37 @@ const ms = Vr(({ relation: e, parentFilters: t, parent: r, where: o, models: a, 
           s,
           {
             model: e,
-            formik: se,
-            data: B,
+            formik: ze,
+            data: N,
             fieldConfigs: $e,
-            onChange: Dt,
-            lookups: Z,
+            onChange: nt,
+            lookups: K,
             id: L,
-            handleSubmit: xe,
-            mode: pt
+            handleSubmit: ge,
+            mode: Ke
           }
         )
       ] }),
-      Le && /* @__PURE__ */ v(
-        je,
+      Oe && /* @__PURE__ */ D(
+        Ne,
         {
-          open: !!Le,
-          onConfirm: le,
-          onCancel: le,
+          open: !!Oe,
+          onConfirm: Pe,
+          onCancel: Pe,
           title: "Info",
           hideCancelButton: !0,
           children: [
             " ",
-            Le
+            Oe
           ]
         }
       ),
       /* @__PURE__ */ n(
-        je,
+        Ne,
         {
-          open: re,
-          onConfirm: Pe,
-          onCancel: () => Ee(!1),
+          open: I,
+          onConfirm: rt,
+          onCancel: () => de(!1),
           title: "Changes not saved",
           okText: "Discard",
           cancelText: "Continue",
@@ -3472,65 +3486,65 @@ const ms = Vr(({ relation: e, parentFilters: t, parent: r, where: o, models: a, 
         }
       ),
       /* @__PURE__ */ n(
-        je,
+        Ne,
         {
-          open: Y,
-          onConfirm: ae,
+          open: re,
+          onConfirm: ht,
           onCancel: () => {
-            H(!1), ot(null);
+            W(!1), he(null);
           },
-          title: Oe ? "Error Deleting Record" : "Confirm Delete",
-          children: u
+          title: ae ? "Error Deleting Record" : "Confirm Delete",
+          children: y
         }
       ),
-      Ye ? /* @__PURE__ */ n(
-        hs,
+      Xt ? /* @__PURE__ */ n(
+        gl,
         {
-          readOnly: ge,
+          readOnly: gt,
           models: r,
-          relationFilters: o,
+          relationFilters: a,
           relations: E,
           parent: e.name || e.title || ""
         }
       ) : null
     ] }) })
   ] });
-}, _t = {
+}, kt = {
   password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/,
   nonAlphaNumeric: /[^a-zA-Z0-9]/g,
   compareValidatorRegex: /^compare:(.+)$/,
   email: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
-}, bs = {}, $r = !0, Cs = {
+}, Cl = {}, Hr = !0, El = {
   string: "",
   boolean: !1,
   radio: !1,
   oneToMany: ""
 };
-class zt {
+class Ut {
   static defaultPermissions = {
     add: !0,
     edit: !0,
     delete: !0
   };
   constructor(t) {
-    const { title: r = "", controllerType: o } = t;
-    let { api: a, idProperty: s = a + "Id" } = t;
+    const { title: r = "", controllerType: a } = t;
+    let { api: o, idProperty: s = o + "Id" } = t;
     const i = "module" in t ? t.module : r.replace(/[^\w\s]/gi, "");
-    a || (a = `${r.replaceAll(_t.nonAlphaNumeric, "-").toLowerCase()}`, s = r.replaceAll(" ", "") + "Id"), a = o === "cs" ? `${a}.ashx` : `${a}`;
-    const d = { ...t.defaultValues }, h = i || r;
+    o || (o = `${r.replaceAll(kt.nonAlphaNumeric, "-").toLowerCase()}`, s = r.replaceAll(" ", "") + "Id"), o = a === "cs" ? `${o}.ashx` : `${o}`;
+    const c = { ...t.defaultValues }, p = i || r;
     Object.assign(this, {
       standard: !0,
-      name: h,
-      permissions: { ...zt.defaultPermissions },
+      name: p,
+      permissions: { ...Ut.defaultPermissions },
       idProperty: s,
-      linkColumn: `${h}Name`,
+      linkColumn: `${p}Name`,
       overrideFileName: r,
-      preferenceId: h,
-      tableName: h,
+      preferenceId: p,
+      tableName: p,
       module: i,
       ...t,
-      api: a
-    }), this.columnVisibilityModel = this._getColumnVisibilityModel(), this.defaultValues = this._getDefaultValues(d);
+      api: o
+    }), this.columnVisibilityModel = this._getColumnVisibilityModel(), this.defaultValues = this._getDefaultValues(c);
   }
   _getColumnVisibilityModel() {
     const t = {};
@@ -3540,112 +3554,113 @@ class zt {
   }
   _getDefaultValues(t) {
     for (const r of this.columns) {
-      const o = r.field || r.id;
-      t[o] = r.defaultValue === void 0 ? Cs[r.type] || "" : r.defaultValue;
+      const a = r.field || r.id;
+      t[a] = r.defaultValue === void 0 ? El[r.type] || "" : r.defaultValue;
     }
     return t;
   }
   getValidationSchema({ id: t }) {
-    const { columns: r } = this, o = {};
-    for (const a of r) {
-      const { field: s, label: i, header: d, type: h = "string", requiredIfNew: C = !1, required: u = !1, min: p = "", max: l = "", validate: y } = a, c = i || d || s;
-      if (!c)
+    const { columns: r } = this, a = {};
+    for (const o of r) {
+      const { field: s, label: i, header: c, type: p = "string", requiredIfNew: h = !1, required: y = !1, min: u = "", max: l = "", validate: b } = o, f = i || c || s;
+      if (!f)
         continue;
-      let f;
-      switch (h) {
+      let d;
+      switch (p) {
         case "string":
-          f = ce.string().nullable().trim().label(c), p && !isNaN(Number(p)) && (f = f.min(Number(p), `${c} must be at least ${p} characters long`)), l && !isNaN(Number(l)) && (f = f.max(Number(l), `${c} must be at most ${l} characters long`)), u && (f = f.trim().required(`${c} is required`));
+          d = ne.string().nullable().trim().label(f), u && !isNaN(Number(u)) && (d = d.min(Number(u), `${f} must be at least ${u} characters long`)), l && !isNaN(Number(l)) && (d = d.max(Number(l), `${f} must be at most ${l} characters long`)), y && (d = d.trim().required(`${f} is required`));
           break;
         case "boolean":
-          f = ce.bool().nullable().transform((E, x) => x === "" ? null : E).label(c);
+          d = ne.bool().nullable().transform((E, T) => T === "" ? null : E).label(f);
           break;
         case "radio":
         case "dayRadio":
-          f = ce.mixed().label(c).required(`Select at least one option for ${c}`);
+          d = ne.mixed().label(f).required(`Select at least one option for ${f}`);
           break;
         case "date":
-          f = ce.date().nullable().transform((E, x) => x === "" || x === null ? null : E).label(c).required(`${c} is required`);
+          d = ne.date().nullable().transform((E, T) => T === "" || T === null ? null : E).label(f).required(`${f} is required`);
           break;
         case "dateTime":
-          f = ce.date().nullable().transform((E, x) => x === "" || x === null ? null : E).label(c);
+          d = ne.date().nullable().transform((E, T) => T === "" || T === null ? null : E).label(f);
           break;
         case "select":
         case "autocomplete":
-          u ? f = ce.string().trim().label(c).required(`Select at least one ${c}`) : f = ce.string().nullable();
+          y ? d = ne.string().trim().label(f).required(`Select at least one ${f}`) : d = ne.string().nullable();
           break;
         case "password":
-          f = ce.string().label(c).test("ignore-asterisks", `${c} must be a valid password.`, (E) => {
+          d = ne.string().label(f).test("ignore-asterisks", `${f} must be a valid password.`, (E) => {
             if (E === "******") return !0;
-            const x = Number(p) || 8, D = Number(l) || 50, w = a.regex || _t.password;
-            return ce.string().min(x, `${c} must be at least ${x} characters`).max(D, `${c} must be at most ${D} characters`).matches(
-              w,
-              `${c} must contain at least one lowercase letter, one uppercase letter, one digit, and one special character`
+            const T = Number(u) || 8, P = Number(l) || 50, S = o.regex || kt.password;
+            return ne.string().min(T, `${f} must be at least ${T} characters`).max(P, `${f} must be at most ${P} characters`).matches(
+              S,
+              `${f} must contain at least one lowercase letter, one uppercase letter, one digit, and one special character`
             ).isValidSync(E);
           });
           break;
         case "email":
-          f = ce.string().trim().matches(
-            a.regex || _t.email,
+          d = ne.string().trim().matches(
+            o.regex || kt.email,
             "Email must be a valid email"
           );
           break;
         case "number":
-          u ? f = ce.number().label(c).required(`${c} is required.`) : f = ce.number().nullable(), p !== void 0 && p !== "" && !isNaN(Number(p)) && (f = f.min(Number(p), `${c} must be greater than or equal to ${p}`)), l !== void 0 && l !== "" && !isNaN(Number(l)) && (f = f.max(Number(l), `${c} must be less than or equal to ${l}`));
+          y ? d = ne.number().label(f).required(`${f} is required.`) : d = ne.number().nullable(), u !== void 0 && u !== "" && !isNaN(Number(u)) && (d = d.min(Number(u), `${f} must be greater than or equal to ${u}`)), l !== void 0 && l !== "" && !isNaN(Number(l)) && (d = d.max(Number(l), `${f} must be less than or equal to ${l}`));
           break;
         case "fileUpload":
-          f = ce.string().trim().label(c);
+          d = ne.string().trim().label(f);
           break;
         default:
-          f = ce.mixed().nullable().label(c);
+          d = ne.mixed().nullable().label(f);
           break;
       }
-      if (u && h !== "string" && (f = f.required(`${c} is required`)), C && (!t || t === "") && (f = f.trim().required(`${c} is required`)), y) {
-        const E = _t.compareValidatorRegex.exec(y);
+      if (y && p !== "string" && (d = d.required(`${f} is required`)), h && (!t || t === "") && (d = d.trim().required(`${f} is required`)), b) {
+        const E = kt.compareValidatorRegex.exec(b);
         if (E) {
-          const x = E[1], D = r.find(
-            (w) => (w.formField === x || w.field) === x
+          const T = E[1], P = r.find(
+            (S) => (S.formField === T || S.field) === T
           );
-          f = f.oneOf(
-            [ce.ref(x)],
-            `${c} must match ${D.label}`
+          d = d.oneOf(
+            [ne.ref(T)],
+            `${f} must match ${P.label}`
           );
         }
       }
-      o[s] = f;
+      a[s] = d;
     }
-    return ce.object({ ...o, ...this.validationSchema });
+    return ne.object({ ...a, ...this.validationSchema });
   }
-  Form = ({ match: t, ...r }) => /* @__PURE__ */ n(ys, { model: this, Layout: this.Layout, ...r });
-  Grid = ({ match: t, ...r }) => /* @__PURE__ */ n(Br, { model: this, showRowsSelected: $r, ...r });
-  ChildGrid = (t) => /* @__PURE__ */ v(me, { children: [
-    /* @__PURE__ */ n(Br, { model: this, ...t, customStyle: bs, showRowsSelected: $r }),
-    /* @__PURE__ */ n(Ko, { orientation: "horizontal", sx: { mt: 2 } })
+  Form = ({ match: t, ...r }) => /* @__PURE__ */ n(bl, { model: this, Layout: this.Layout, ...r });
+  Grid = ({ match: t, ...r }) => /* @__PURE__ */ n(zr, { model: this, showRowsSelected: Hr, ...r });
+  ChildGrid = (t) => /* @__PURE__ */ D(fe, { children: [
+    /* @__PURE__ */ n(zr, { model: this, ...t, customStyle: Cl, showRowsSelected: Hr }),
+    /* @__PURE__ */ n(Ga, { orientation: "horizontal", sx: { mt: 2 } })
   ] });
 }
 export {
-  je as DialogComponent,
-  Br as GridBase,
+  Ne as DialogComponent,
+  zr as GridBase,
   li as HelpModal,
-  Rr as MuiTypography,
-  sn as PageTitle,
-  kl as RouterProvider,
-  Qr as SnackbarContext,
-  Bl as SnackbarProvider,
-  Ll as StateProvider,
-  zt as UiModel,
-  ja as daDKGrid,
-  Wa as deDEGrid,
-  Ka as elGRGrid,
-  Ja as esESGrid,
-  Qa as frFRGrid,
-  Pt as httpRequest,
-  ei as itITGrid,
-  si as locales,
-  oi as ptPT,
-  ri as trTRGrid,
-  Ua as useMobile,
-  Kt as useRouter,
+  _r as MuiTypography,
+  dn as PageTitle,
+  _s as RouterProvider,
+  on as SnackbarContext,
+  Bs as SnackbarProvider,
+  $s as StateProvider,
+  Ut as UiModel,
+  ks as crudHelper,
+  Uo as daDKGrid,
+  Ho as deDEGrid,
+  Ko as elGRGrid,
+  Yo as esESGrid,
+  Zo as frFRGrid,
+  _t as httpRequest,
+  Xo as itITGrid,
+  ii as locales,
+  ni as ptPT,
+  ti as trTRGrid,
+  Vo as useMobile,
+  Dr as useRouter,
   qt as useSnackbar,
-  We as useStateContext
+  Be as useStateContext
 };
 //# sourceMappingURL=index.js.map
