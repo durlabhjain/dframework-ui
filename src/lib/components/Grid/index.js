@@ -1,9 +1,5 @@
-import Button from '@mui/material/Button';
 import {
     DataGridPremium,
-    Toolbar,
-    ColumnsPanelTrigger,
-    FilterPanelTrigger,
     getGridDateOperators,
     GRID_CHECKBOX_SELECTION_COL_DEF,
     getGridStringOperators,
@@ -15,34 +11,28 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIcon from '@mui/icons-material/FileCopy';
 import ArticleIcon from '@mui/icons-material/Article';
 import EditIcon from '@mui/icons-material/Edit';
-import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import React, { useMemo, useEffect, memo, useRef, useState, useCallback } from 'react';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import Typography from '@mui/material/Typography';
 import { useSnackbar } from '../SnackBar/index';
 import { DialogComponent } from '../Dialog/index';
 import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
 import { Footer } from './footer';
 import template from './template';
-import { Tooltip, Box, Badge } from "@mui/material";
+import { Tooltip, Box } from "@mui/material";
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import PageTitle from '../PageTitle';
 import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
 import actionsStateProvider from '../useRouter/actions';
-import GridPreferences from './GridPreference';
 import CustomDropdownMenu from './CustomDropdownMenu';
+import CustomToolbar from './GridToolbar';
 import { getPermissions } from '../utils';
 import HistoryIcon from '@mui/icons-material/History';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Checkbox from '@mui/material/Checkbox';
 import { useTranslation } from 'react-i18next';
-import { convertDefaultSort, CustomExportButton, areEqual } from './helper';
+import { convertDefaultSort, areEqual } from './helper';
 import { styled } from '@mui/material/styles';
-import ViewColumnIcon from '@mui/icons-material/ViewColumn';
-import FilterListIcon from '@mui/icons-material/FilterList';
 
 const defaultPageSize = 50;
 const sortRegex = /(\w+)( ASC| DESC)?/i;
@@ -98,20 +88,6 @@ const DeleteContentText = styled('span')({
     textOverflow: 'ellipsis'
 });
 
-const ButtonWithMargin = styled(Button)({
-    margin: '6px'
-});
-
-const GridToolBar = styled(Toolbar)({
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1.5rem',
-    flexWrap: 'nowrap',
-    whiteSpace: 'nowrap',
-    minHeight: 'auto',
-    borderBottom: 'none'
-});
-
 const CustomCheckBox = ({ params, selectedSet, handleSelectRow, idProperty }) => {
     const rowId = params.row[idProperty];
     const isChecked = selectedSet.has(rowId);
@@ -131,115 +107,6 @@ const CustomCheckBox = ({ params, selectedSet, handleSelectRow, idProperty }) =>
     );
 };
 
-const CustomToolbar = function (props) {
-    const {
-        model,
-        data,
-        currentPreference,
-        isReadOnly,
-        canAdd,
-        forAssignment,
-        showAddIcon,
-        onAdd,
-        selectionApi,
-        selectedSet,
-        selectAll,
-        available,
-        onAssign,
-        assigned,
-        onUnassign,
-        effectivePermissions,
-        clearFilters,
-        handleExport,
-        preferenceKey,
-        apiRef,
-        tTranslate,
-        tOpts,
-        filterModel,
-        onPreferenceChange,
-        toolbarItems
-    } = props;
-
-    const addText = model.customAddText || (model.title ? `Add ${model.title}` : 'Add');
-    const activeFilterCount = filterModel?.items?.length || 0;
-
-    return (
-        <div
-            style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '10px'
-            }}
-        >
-            <div>
-                {model.gridSubTitle && <Typography variant="h6" component="h3" textAlign="center" sx={{ ml: 1 }}> {tTranslate(model.gridSubTitle, tOpts)}</Typography>}
-                {currentPreference && model.showPreferenceInHeader && <Typography className="preference-name-text" variant="h6" component="h6" textAlign="center" sx={{ ml: 1 }} >{tTranslate('Applied Preference', tOpts)}: {currentPreference}</Typography>}
-                {(isReadOnly || (!canAdd && !forAssignment)) && <Typography variant="h6" component="h3" textAlign="center" sx={{ ml: 1 }} > {!canAdd || isReadOnly ? "" : model.title}</Typography>}
-                {!forAssignment && canAdd && !isReadOnly && <ButtonWithMargin startIcon={!showAddIcon ? null : <AddIcon />} onClick={onAdd} size="medium" variant="contained" >{tTranslate(addText, tOpts)}</ButtonWithMargin>}
-                {(selectionApi.length && data.records.length) ? (
-                    <ButtonWithMargin
-                        onClick={selectAll}
-                        size="medium"
-                        variant="contained"
-                    >
-                        {selectedSet.size === data.records.length ? tTranslate("Deselect All", tOpts) : tTranslate("Select All", tOpts)}
-                    </ButtonWithMargin>) :
-                    <></>
-                }
-                {available && <ButtonWithMargin startIcon={!showAddIcon ? null : <AddIcon />} onClick={onAssign} size="medium" variant="contained"  >{tTranslate("Assign", tOpts)}</ButtonWithMargin>}
-                {assigned && <ButtonWithMargin startIcon={!showAddIcon ? null : <RemoveIcon />} onClick={onUnassign} size="medium" variant="contained"  >{tTranslate("Remove", tOpts)}</ButtonWithMargin>}
-            </div>
-            <GridToolBar {...props}>
-                {effectivePermissions.showColumnsOrder && (
-                    <ColumnsPanelTrigger
-                        render={(triggerProps) => (
-                            <Button
-                                {...triggerProps}
-                                startIcon={<ViewColumnIcon />}
-                                size="small"
-                                variant="text"
-                            >
-                                {tTranslate("COLUMNS", tOpts)}
-                            </Button>
-                        )}
-                    />
-                )}
-                {effectivePermissions.filter && (<>
-                    <FilterPanelTrigger
-                        render={(triggerProps) => (
-                            <Button
-                                {...triggerProps}
-                                startIcon={
-                                    <Badge badgeContent={activeFilterCount} color="primary">
-                                        <FilterListIcon />
-                                    </Badge>
-                                }
-                                size="small"
-                                variant="text"
-                            >
-                                {tTranslate("FILTERS", tOpts)}
-                            </Button>
-                        )}
-                    />
-                    <Button startIcon={<FilterListOffIcon />} onClick={clearFilters} size="small">{tTranslate("CLEAR FILTER", tOpts)}</Button>
-                </>)}
-
-                {effectivePermissions.export && (
-                    <CustomExportButton handleExport={handleExport} showPivotExportBtn={model.pivotApi} exportFormats={model.exportFormats || {}} tTranslate={tTranslate} tOpts={tOpts} />
-                )}
-                {toolbarItems}
-                {preferenceKey &&
-                    <GridPreferences 
-                        gridRef={apiRef} 
-                        onPreferenceChange={onPreferenceChange} 
-                        t={tTranslate}
-                        tOpts={tOpts}
-                    />
-                }
-            </GridToolBar>
-        </div >
-    );
-};
 
 const GridBase = memo(({
     model,
@@ -1056,6 +923,8 @@ const GridBase = memo(({
                                 tOpts,
                                 idProperty,
                                 filterModel,
+                                setFilterModel,
+                                dataRef,
                                 onPreferenceChange,
                                 toolbarItems
                             },
