@@ -8,7 +8,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import Typography from '@mui/material/Typography';
-import { Badge } from "@mui/material";
+import { Badge, Box } from "@mui/material";
 import FilterListOffIcon from '@mui/icons-material/FilterListOff';
 import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -59,7 +59,8 @@ const CustomToolbar = function (props) {
         setFilterModel,
         onPreferenceChange,
         toolbarItems,
-        gridColumns
+        gridColumns,
+        customExportConfig
     } = props;
 
     const addText = model.customAddText || (model.title ? `Add ${model.title}` : 'Add');
@@ -70,6 +71,7 @@ const CustomToolbar = function (props) {
     const lookupData = data?.lookups || {};
 
     return (
+        <>
         <div
             style={{
                 display: 'flex',
@@ -95,21 +97,6 @@ const CustomToolbar = function (props) {
                 {available && <ButtonWithMargin startIcon={!showAddIcon ? null : <AddIcon />} onClick={onAssign} size="medium" variant="contained"  >{tTranslate("Assign", tOpts)}</ButtonWithMargin>}
                 {assigned && <ButtonWithMargin startIcon={!showAddIcon ? null : <RemoveIcon />} onClick={onUnassign} size="medium" variant="contained"  >{tTranslate("Remove", tOpts)}</ButtonWithMargin>}
             </div>
-            {toolbarFilterColumns.length > 0 && (
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                    {toolbarFilterColumns.map((column) => (
-                        <ToolbarFilter
-                            key={column.field}
-                            column={column}
-                            filterModel={filterModel}
-                            setFilterModel={setFilterModel}
-                            lookupData={lookupData}
-                            tTranslate={tTranslate}
-                            tOpts={tOpts}
-                        />
-                    ))}
-                </div>
-            )}
             <GridToolBar {...props}>
                 {effectivePermissions.showColumnsOrder && (
                     <ColumnsPanelTrigger
@@ -146,7 +133,7 @@ const CustomToolbar = function (props) {
                 </>)}
 
                 {effectivePermissions.export && (
-                    <CustomExportButton handleExport={handleExport} showPivotExportBtn={model.pivotApi} exportFormats={model.exportFormats || {}} tTranslate={tTranslate} tOpts={tOpts} />
+                    <CustomExportButton handleExport={handleExport} showPivotExportBtn={model.pivotApi} exportFormats={model.exportFormats || {}} tTranslate={tTranslate} tOpts={tOpts} customExportConfig={customExportConfig} />
                 )}
                 {toolbarItems}
                 {preferenceKey &&
@@ -160,6 +147,24 @@ const CustomToolbar = function (props) {
                 }
             </GridToolBar>
         </div >
+        <Box sx={{display: 'flex', justifyContent: 'flex-start', padding: '0 10px 10px 10px' }}>
+        {toolbarFilterColumns.length > 0 && (
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    {toolbarFilterColumns.map((column) => (
+                        <ToolbarFilter
+                            key={column.field}
+                            column={column}
+                            filterModel={filterModel}
+                            setFilterModel={setFilterModel}
+                            lookupData={lookupData}
+                            tTranslate={tTranslate}
+                            tOpts={tOpts}
+                        />
+                    ))}
+                </div>
+            )}
+            </Box>
+        </>
     );
 };
 

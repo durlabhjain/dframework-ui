@@ -28,7 +28,7 @@ const ToolbarFilter = ({
     }, [filterModel, column.field]);
 
     // Get current filter value - use ?? to properly handle falsy but valid values like 0, false, ""
-    const filterValue = existingFilter?.value ?? (column.toolbarFilter?.defaultFilterValue ?? '');
+    const filterValue = existingFilter?.value ?? '';
 
     // Handle filter change - use functional update to avoid filterModel dependency
     const handleFilterChange = useCallback((newValue) => {
@@ -37,13 +37,39 @@ const ToolbarFilter = ({
         setFilterModel((prevFilterModel) => {
             const currentItems = prevFilterModel?.items || [];
 
-            // If value is empty, remove filter
+            // If value is empty, check if we should restore default value or remove filter
             if (newValue === '' || newValue === null || (Array.isArray(newValue) && newValue.length === 0)) {
-                const newItems = currentItems.filter((item) => item.field !== column.field);
-                return {
-                    ...prevFilterModel,
-                    items: newItems,
-                };
+                // For defaultToClient columns, never restore defaults - allow them to be cleared
+                if (column.defaultToClient) {
+                    // Remove the filter for defaultToClient columns
+                    const newItems = currentItems.filter((item) => item.field !== column.field);
+                    return {
+                        ...prevFilterModel,
+                        items: newItems,
+                    };
+                } else if (column.toolbarFilter?.defaultFilterValue && 
+                    ((Array.isArray(column.toolbarFilter.defaultFilterValue) && column.toolbarFilter.defaultFilterValue.length > 0) ||
+                     (!Array.isArray(column.toolbarFilter.defaultFilterValue) && column.toolbarFilter.defaultFilterValue !== ''))) {
+                    // For toolbar filters with defaults, restore the default
+                    const newFilter = {
+                        field: column.field,
+                        operator: operator,
+                        value: column.toolbarFilter.defaultFilterValue,
+                        type: column.type,
+                    };
+                    const otherFilters = currentItems.filter((item) => item.field !== column.field);
+                    return {
+                        ...prevFilterModel,
+                        items: [...otherFilters, newFilter],
+                    };
+                } else {
+                    // No default value, remove the filter
+                    const newItems = currentItems.filter((item) => item.field !== column.field);
+                    return {
+                        ...prevFilterModel,
+                        items: newItems,
+                    };
+                }
             }
 
             // Update or add filter
@@ -186,21 +212,31 @@ const ToolbarFilter = ({
 
             case 'select':
             case 'lookup':
-                const options = column.customLookup || lookupData?.[column.lookup] || [];
-                const normalizedOptions = typeof column.lookup === 'string'
-                    ? options.map((option) => ({
-                        label: option?.label || '',
-                        value: option?.value ?? ''
-                    }))
-                    : options;
+                // Support both lookup and comboType - comboType takes precedence
+                const lookupKey = column.comboType || column.lookup;
+                const options = column.customLookup || lookupData?.[lookupKey] || [];
+                const normalizedOptions = options.map((option) => ({
+                    label: option?.label || option?.DisplayValue || '',
+                    value: option?.value ?? option?.LookupId ?? ''
+                }));
 
                 const isMultiple = existingFilter?.operator === 'isAnyOf' || column.toolbarFilter?.defaultOperator === 'isAnyOf';
+                
+                // Ensure value is correct type based on multiple state
+                let selectValue = filterValue;
+                if (isMultiple) {
+                    // For multiple select, ensure value is always an array
+                    selectValue = Array.isArray(filterValue) ? filterValue : (filterValue ? [filterValue] : []);
+                } else {
+                    // For single select, ensure value is not an array
+                    selectValue = Array.isArray(filterValue) ? (filterValue.length > 0 ? filterValue[0] : '') : (filterValue ?? '');
+                }
 
                 return (
                     <FormControl variant="standard" sx={{ minWidth: 150 }}>
                         <InputLabel>{tTranslate(label, tOpts)}</InputLabel>
                         <Select
-                            value={isMultiple ? (filterValue ?? []) : (filterValue ?? '')}
+                            value={selectValue}
                             onChange={(e) => handleFilterChange(e.target.value)}
                             multiple={isMultiple}
                             size="small"
