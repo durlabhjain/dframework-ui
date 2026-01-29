@@ -42,7 +42,7 @@ const CustomToolbar = function (props) {
         showAddIcon,
         onAdd,
         selectionApi,
-        selectedSet,
+        rowSelectionModel,
         selectAll,
         available,
         onAssign,
@@ -88,7 +88,7 @@ const CustomToolbar = function (props) {
                         size="medium"
                         variant="contained"
                     >
-                        {selectedSet.size === data.records.length ? tTranslate("Deselect All", tOpts) : tTranslate("Select All", tOpts)}
+                        {rowSelectionModel.ids.size === data.records.length ? tTranslate("Deselect All", tOpts) : tTranslate("Select All", tOpts)}
                     </ButtonWithMargin>) :
                     <></>
                 }
@@ -152,6 +152,7 @@ const CustomToolbar = function (props) {
                 {preferenceKey &&
                     <GridPreferences 
                         gridRef={apiRef} 
+                        preferenceKey={preferenceKey}
                         onPreferenceChange={onPreferenceChange} 
                         t={tTranslate}
                         tOpts={tOpts}
