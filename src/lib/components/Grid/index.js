@@ -15,7 +15,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIcon from '@mui/icons-material/FileCopy';
 import ArticleIcon from '@mui/icons-material/Article';
 import EditIcon from '@mui/icons-material/Edit';
-import HandymanIcon from '@mui/icons-material/Handyman';
 import React, { useMemo, useEffect, memo, useRef, useState, useCallback } from 'react';
 import { useSnackbar } from '../SnackBar/index';
 import { DialogComponent } from '../Dialog/index';
@@ -51,8 +50,7 @@ const actionTypes = {
     Download: "Download"
 };
 const iconMapper = {
-    'article': <ArticleIcon />,
-    'handyman': <HandymanIcon />
+    'article': <ArticleIcon />
 };
 const constants = {
     gridFilterModel: { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' },
@@ -295,29 +293,17 @@ const GridBase = memo(({
             "valueOptions": "lookup",
             "valueFormatter": (value, row, column) => {
                 if (!value) return '';
+
                 const lookupData = dataRef.current.lookups || {};
-                // Support both lookup and comboType - comboType takes precedence
                 const lookupKey = column.comboType || column.lookup;
                 const lookupItems = lookupData[lookupKey] || [];
-                
-                // If no lookup items available, return the value as-is
-                if (lookupItems.length === 0) {
-                    return value;
-                }
-                
-                // Try to find by value (ID)
-                let lookupItem = lookupItems.find(item => item.value == value);
-                
-                // If not found by value, check if the value is already a label
-                if (!lookupItem) {
-                    lookupItem = lookupItems.find(item => item.label === value);
-                    if (lookupItem) {
-                        // Value is already a label, return it
-                        return value;
-                    }
-                }
-                
-                return lookupItem ? lookupItem.label : '';
+                if (lookupItems.length === 0) return value;
+                // Find item by value (ID) first, then by label if not found
+                const lookupItem = lookupItems.find(item =>
+                    item.value == value || item.label === value
+                );
+                // If found by value, return label; if found by label, return the original value
+                return lookupItem ? (lookupItem.value == value ? lookupItem.label : value) : '';
             }
         },
         "string": {
@@ -355,14 +341,7 @@ const GridBase = memo(({
         const column = map[field];
         // Support both lookup and comboType - comboType takes precedence
         const lookupKey = column?.comboType || column?.lookup;
-        const options = lookupData[lookupKey] || [];
-        
-        // Debug logging to help identify issues
-        if (!options.length && lookupKey) {
-            console.warn(`No lookup options found for field "${field}" with lookupKey "${lookupKey}". Available lookups:`, Object.keys(lookupData));
-        }
-        
-        return options;
+        return lookupData[lookupKey] || [];
     }, []);
 
     useEffect(() => {

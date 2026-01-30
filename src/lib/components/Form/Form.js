@@ -192,7 +192,7 @@ const Form = ({
           * By default, the form navigates back to the grid after save/cancel operations.
           * This behavior can be controlled by setting navigateBack "false" / false in model config which disables navigation completely.
           */
-          if (isInlineMode && onCustomSaveSuccess) {
+          if (onCustomSaveSuccess) {
             onCustomSaveSuccess();
           } else {
             navigateBack !== false && handleNavigation();
@@ -215,7 +215,7 @@ const Form = ({
   const handleDiscardChanges = () => {
     formik.resetForm();
     setIsDiscardDialogOpen(false);
-    if (isInlineMode && onCustomCancel) {
+    if (onCustomCancel) {
       onCustomCancel();
     } else {
       navigateBack !== false && handleNavigation();
@@ -258,7 +258,7 @@ const Form = ({
     if (formik.dirty && recordEditable) {
       setIsDiscardDialogOpen(true);
     } else {
-      if (isInlineMode && onCustomCancel) {
+      if (onCustomCancel) {
         onCustomCancel();
       } else {
         navigateBack !== false && handleNavigation();
