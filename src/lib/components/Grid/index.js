@@ -165,13 +165,13 @@ const GridBase = memo(({
     const tOpts = { t: translate, i18n };
     const [errorMessage, setErrorMessage] = useState('');
     const [sortModel, setSortModel] = useState(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
-        const initialFilterModel = { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' };
-        if (model.defaultFilters) {
-            initialFilterModel.items = [];
-            model.defaultFilters.forEach((ele) => {
-                initialFilterModel.items.push(ele);
-            });
-        }
+    const initialFilterModel = { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' };
+    if (model.defaultFilters) {
+        initialFilterModel.items = [];
+        model.defaultFilters.forEach((ele) => {
+            initialFilterModel.items.push(ele);
+        });
+    }
     const [filterModel, setFilterModel] = useState({ ...initialFilterModel });
     
     // Debounce filter model for API calls while keeping UI responsive for 500ms
@@ -206,6 +206,8 @@ const GridBase = memo(({
     const [currentPreference, setCurrentPreference] = useState(null);
     const [preferencesReady, setPreferencesReady] = useState(!preferenceKey);
     const backendApi = api || model.api;
+    // State for single expanded detail panel row
+    const [expandedRowId, setExpandedRowId] = useState(null);
 
     useEffect(() => {
         if (!apiRef.current) return;
@@ -428,7 +430,7 @@ const GridBase = memo(({
                 overrides.cellClassName = 'mui-grid-linkColumn';
             }
             const headerName = tTranslate(column.gridLabel || column.label, tOpts);
-            finalColumns.push({ ...column, ...overrides,  headerName, description: headerName });
+            finalColumns.push({ ...column, ...overrides, headerName, description: headerName });
             if (column.pinned) {
                 pinnedColumns[column.pinned === constants.right ? constants.right : constants.left].push(column.field);
             }
@@ -465,7 +467,7 @@ const GridBase = memo(({
             if (showHistory) {
                 actions.push(<GridActionsCellItem icon={<Tooltip title="History"><HistoryIcon /> </Tooltip>} data-action={actionTypes.History} label="History" color="primary" />);
             }
-            if( customActions.length) {
+            if (customActions.length) {
                 actions.push(...Array(customActions.length).fill(null)); // Placeholder for custom actions
             }
             // Custom actions are now handled in getActions with showCondition evaluation
@@ -511,9 +513,9 @@ const GridBase = memo(({
                             rowActions.push(
                                 <GridActionsCellItem
                                     icon={<Tooltip title={action}>{
-                                        typeof icon === 'string' ? (iconMapper[icon] || <span style={{ fontSize: "medium" }}>{icon}</span>) : 
-                                        typeof icon === 'function' ? icon({ tTranslate, tOpts }) : 
-                                        <CopyIcon />
+                                        typeof icon === 'string' ? (iconMapper[icon] || <span style={{ fontSize: "medium" }}>{icon}</span>) :
+                                            typeof icon === 'function' ? icon({ tTranslate, tOpts }) :
+                                                <CopyIcon />
                                     }</Tooltip>}
                                     data-action={action}
                                     label={action}
@@ -699,7 +701,7 @@ const GridBase = memo(({
     const fetchData = (action = "list", extraParams = {}, contentType, columns, isPivotExport, isElasticExport) => {
         const { pageSize, page } = paginationModel;
 
-        const baseUrl =  buildUrl(model.controllerType, isPivotExport ? model.pivotApi : backendApi);
+        const baseUrl = buildUrl(model.controllerType, isPivotExport ? model.pivotApi : backendApi);
 
         if (assigned || available) {
             extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(",") : selected;
@@ -807,8 +809,15 @@ const GridBase = memo(({
                 return;
             }
             switch (action) {
-                case actionTypes.Edit:
-                    return openForm({ id: record[idProperty], record });
+                case actionTypes.Edit: {
+                    if (model.getDetailPanelContent) {
+                        const rowId = record[idProperty];
+                        setExpandedRowId(prevId => prevId === rowId ? null : rowId);
+                        return;
+                    } else {
+                        return openForm({ id: record[idProperty], record });
+                    }
+                }
                 case actionTypes.Copy:
                     return openForm({ id: record[idProperty], mode: 'copy' });
                 case actionTypes.Delete:
@@ -846,7 +855,7 @@ const GridBase = memo(({
     }, [isReadOnly, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, searchParams, gridTitle, getApiEndpoint, handleDownload, openForm]);
 
     const handleDelete = async function () {
-        const baseUrl =  buildUrl(model.controllerType, backendApi);
+        const baseUrl = buildUrl(model.controllerType, backendApi);
         const result = await deleteRecord({ id: record.id, api: baseUrl, setIsLoading, setError: snackbar.showError, setErrorMessage });
         if (result === true) {
             setIsDeleting(false);
@@ -911,7 +920,7 @@ const GridBase = memo(({
             );
         }
 
-        const baseUrl =  buildUrl(model.controllerType, backendApi);
+        const baseUrl = buildUrl(model.controllerType, backendApi);
         try {
             const result = await saveRecord({
                 id: 0,
@@ -1108,6 +1117,9 @@ const GridBase = memo(({
                             },
                             "& .MuiDataGrid-virtualScroller ": {
                                 zIndex: 2,
+                            },
+                            "& .MuiDataGrid-detailPanelToggleCell, & .MuiDataGrid-cell--withRenderer.MuiDataGrid-cell--detailPanelToggle": {
+                                display: 'none'
                             }
                         }}
                         headerFilters={showHeaderFilters}
@@ -1208,6 +1220,25 @@ const GridBase = memo(({
                                 columnVisibilityModel: visibilityModel
                             },
                             pinnedColumns: pinnedColumns
+                        }}
+                        getDetailPanelContent={model.getDetailPanelContent ? (params) =>
+                            model.getDetailPanelContent({
+                                ...params,
+                                additionalProps: {
+                                    overrideFileName: model.overrideFileName || '',
+                                    isRationalized: model.isRationalized || false
+                                },
+                                onRefresh: () => {
+                                    // Close the expanded panel and refresh data
+                                    setExpandedRowId(null);
+                                    fetchData();
+                                }
+                            })
+                            : undefined
+                        }
+                        detailPanelExpandedRowIds={new Set(expandedRowId ? [expandedRowId] : [])}
+                        onDetailPanelExpandedRowIdsChange={(ids) => {
+                            setExpandedRowId(ids.size > 0 ? [...ids].pop() : null);
                         }}
                         localeText={{
                             filterValueTrue: tTranslate('Yes', tOpts),

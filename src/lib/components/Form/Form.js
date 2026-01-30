@@ -43,7 +43,11 @@ const Form = ({
   sx,
   readOnly,
   beforeSubmit,
-  deletePromptText
+  deletePromptText,
+  isInlineMode = false,
+  inlineId = null,
+  onCustomCancel,
+  onCustomSaveSuccess
 }) => {
   const formTitle = model.formTitle || model.title;
   const { navigate, getParams, useParams, pathname } = useRouter();
@@ -52,7 +56,7 @@ const Form = ({
   const params = useParams() || getParams;
   const isCSController = model.controllerType === 'cs';
   const { id: idWithOptions = "" } = params;
-  const id =  isCSController ? utils.getCSControllerIdParam(params) : idWithOptions.split("-")[0];
+  const id =  inlineId || (isCSController ? utils.getCSControllerIdParam(params) : idWithOptions.split("-")[0]);
   const searchParams = new URLSearchParams(window.location.search);
   const baseDataFromParams = searchParams.has(consts.baseData) && searchParams.get(consts.baseData);
   if (baseDataFromParams) {
@@ -144,7 +148,7 @@ const Form = ({
       dispatchData
     });
 
-  }, [id, idWithOptions, model, url]);
+  }, [id, idWithOptions, model, url, isInlineMode]);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -170,7 +174,7 @@ const Form = ({
       }
       saveRecord({
         id,
-        api: gridApi,
+        api: isCSController ? api : gridApi,
         values: values,
         setIsLoading,
         setError: snackbar.showError,
@@ -188,8 +192,12 @@ const Form = ({
           * By default, the form navigates back to the grid after save/cancel operations.
           * This behavior can be controlled by setting navigateBack "false" / false in model config which disables navigation completely.
           */
-          navigateBack !== false && handleNavigation();
-          resetForm({ values: formik.values});
+          if (isInlineMode && onCustomSaveSuccess) {
+            onCustomSaveSuccess();
+          } else {
+            navigateBack !== false && handleNavigation();
+          }
+          resetForm({ values: formik.values });
         })
         .catch((err) => {
           snackbar.showError(
@@ -207,7 +215,11 @@ const Form = ({
   const handleDiscardChanges = () => {
     formik.resetForm();
     setIsDiscardDialogOpen(false);
-    navigateBack !== false && handleNavigation();
+    if (isInlineMode && onCustomCancel) {
+      onCustomCancel();
+    } else {
+      navigateBack !== false && handleNavigation();
+    }
   };
 
   const errorOnLoad = function (title, error) {
@@ -246,7 +258,11 @@ const Form = ({
     if (formik.dirty && recordEditable) {
       setIsDiscardDialogOpen(true);
     } else {
-      navigateBack !== false && handleNavigation();
+      if (isInlineMode && onCustomCancel) {
+        onCustomCancel();
+      } else {
+        navigateBack !== false && handleNavigation();
+      }
     }
     event.preventDefault();
   };

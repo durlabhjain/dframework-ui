@@ -224,6 +224,527 @@ export default function App() {
 | `toolbarFilter`    | `object`                   | Configuration for displaying an always-visible filter in the toolbar. Properties: `defaultOperator`, `defaultFilterValue`, `label`. [See Toolbar Filters Documentation](./docs/ToolbarFilters.md)                        | -               | `No`       |
 
 
+## CS Controller Type and Default Client Value
+
+The DFramework UI library supports different backend controller types and provides mechanisms for setting default client values. This section explains how to configure CS (Controller Service) controllers and use default client values in both Grid and Form components.
+
+### CS Controller Type
+
+When `controllerType` is set to `"cs"`, the library switches to CS (Controller Service) mode, which is designed for .NET API backends. This affects how API calls are made and how parameters are formatted.
+
+#### In crud-helper (Grid operations)
+
+When using CS controllers in Grid operations, the library automatically:
+
+1. **URL Construction**: Uses query parameter format instead of REST-style paths
+   ```javascript
+   // Node.js controller (default): /api/users/list
+   // CS controller: /api/users?action=list&asArray=0
+   ```
+
+2. **Parameter Formatting**: Converts filter parameters to CS-compatible format
+   ```javascript
+   // CS controllers use filter[index][field], filter[index][data][type], etc.
+   // Instead of JSON payload format
+   ```
+
+3. **Sorting**: Maps sort parameters to CS format
+   ```javascript
+   // requestData.sort = sortField
+   // requestData.dir = sortDirection
+   ```
+
+#### In Form Component
+
+When using CS controllers in Form operations:
+
+1. **ID Extraction**: Uses `getCSControllerIdParam()` utility to extract IDs from route parameters
+   ```javascript
+   // For URL: /users/123/edit
+   // Extracts ID from wildcard parameter (*)
+   const id = utils.getCSControllerIdParam(params);
+   ```
+
+2. **API URL Building**: Uses `buildUrl()` with controller type
+   ```javascript
+   api = isCSController ? buildUrl(model.controllerType, model.api) : api;
+   ```
+
+#### Configuration Example
+
+```javascript
+const csModel = new UiModel({
+  title: "Users",
+  api: "UserController",
+  controllerType: "cs",  // Enables CS controller mode
+  columns: [
+    { field: "UserId", type: "number", label: "ID" },
+    { field: "UserName", type: "string", label: "Username" }
+  ]
+});
+```
+
+### Default Client Value
+
+The `defaultClientValue` feature allows you to set default values for client-related fields automatically. This is particularly useful when you need to associate records with a specific client by default.
+
+#### Usage in Models
+
+```javascript
+const clientModel = new UiModel({
+  title: "Projects",
+  api: "ProjectController",
+  defaultClientValue: {
+    ClientId: 123,  // Default client ID
+    ClientName: "Default Client"  // Default client name
+  },
+  columns: [
+    { field: "ProjectId", type: "number", label: "ID" },
+    { field: "ProjectName", type: "string", label: "Project Name" },
+    { field: "ClientId", type: "number", label: "Client ID" }
+  ]
+});
+```
+
+#### How it Works
+
+1. **Form Initialization**: When creating new records, `defaultClientValue` properties are automatically merged into the form's initial values
+2. **Data Saving**: Default values are included when saving new records
+3. **Override Prevention**: Users can still override these defaults, but they provide sensible starting values
+
+#### Integration with Authentication
+
+Default client values often work with user authentication context:
+
+```javascript
+// In a real application, you might get client info from user context
+const getDefaultClientValue = (userContext) => ({
+  ClientId: userContext.defaultClientId,
+  ClientName: userContext.defaultClientName
+});
+
+const dynamicModel = new UiModel({
+  title: "Tasks",
+  api: "TaskController",
+  defaultClientValue: getDefaultClientValue(currentUser),
+  // ... other configuration
+});
+```
+
+#### Benefits
+
+- **Consistency**: Ensures records are associated with correct clients by default
+- **User Experience**: Reduces manual data entry for common fields
+- **Data Integrity**: Helps maintain proper client relationships
+- **Flexibility**: Can be overridden when needed for specific use cases
+
+## Detail Panel Content and Inline Forms
+
+The DFramework UI library provides powerful capabilities for displaying detailed content within expandable row panels and embedding forms inline. This feature allows you to create rich, interactive detail views without navigating away from the main grid.
+
+### getDetailPanelContent
+
+The `getDetailPanelContent` property allows you to define custom content that appears in an expandable panel below each grid row. This is perfect for showing additional information, related data, or inline editing capabilities.
+
+#### Basic Usage
+
+```javascript
+const detailPanelModel = new UiModel({
+  title: "Orders",
+  api: "OrderController",
+  columns: [
+    { field: "OrderId", type: "number", label: "Order ID" },
+    { field: "CustomerName", type: "string", label: "Customer" },
+    { field: "OrderDate", type: "date", label: "Order Date" }
+  ],
+  
+  // Define custom detail panel content
+  getDetailPanelContent: ({ row, api, onRefresh }) => {
+    return (
+      <Box sx={{ p: 2, backgroundColor: '#f5f5f5' }}>
+        <Typography variant="h6">Order Details</Typography>
+        <Typography>Order ID: {row.OrderId}</Typography>
+        <Typography>Customer: {row.CustomerName}</Typography>
+        <Typography>Total: ${row.TotalAmount}</Typography>
+      </Box>
+    );
+  }
+});
+```
+
+#### Parameters
+
+The `getDetailPanelContent` function receives an object with the following properties:
+
+- **`row`**: The complete data object for the current row
+- **`api`**: The API instance for making additional requests
+- **`onRefresh`**: Function to refresh the grid data and close the panel
+- **`additionalProps`**: Additional properties passed from the model configuration
+
+#### Advanced Example with Inline Form
+
+```javascript
+const alertOverviewModel = new UiModel({
+  title: "Alert Overview",
+  api: 'Alert',
+  controllerType: 'cs',
+  
+  getDetailPanelContent: ({ row, onRefresh }) => {
+    return (
+      <Box sx={{ display: 'flex', gap: 2, p: 2 }}>
+        {/* Image Section */}
+        <Box sx={{ flex: 1 }}>
+          <Box sx={{ 
+            width: '100%', 
+            height: 300, 
+            backgroundColor: '#f0f0f0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 1
+          }}>
+            <img 
+              src={row.ImageUrl || '/placeholder-image.png'} 
+              alt="Alert Preview" 
+              style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'block';
+              }}
+            />
+            <Typography>Image Preview Area</Typography>
+          </Box>
+        </Box>
+
+        {/* Form Section */}
+        <Box sx={{ flex: 1 }}>
+          <UiModel.Form 
+            model={alertOverviewModel} 
+            inlineId={row.AlertId}
+            isInlineMode={true}
+            onSaveSuccess={onRefresh}
+            onCancel={onRefresh}
+          />
+        </Box>
+      </Box>
+    );
+  },
+  
+  columns: [
+    { field: "AlertId", type: 'number', label: "ID" },
+    { field: "AlertTypeId", type: 'lookup', label: "Alert Type" },
+    { field: "StatusId", type: 'radio', label: "Status" }
+  ]
+});
+```
+
+### Inline Forms
+
+Inline forms allow you to embed form functionality directly within other components, such as detail panels, without full page navigation. This is particularly useful for quick edits or when you want to maintain context.
+
+#### Inline Form Props
+
+When using `UiModel.Form` in inline mode, you can pass these additional props:
+
+- **`inlineId`**: The ID of the record to edit (required for editing existing records)
+- **`isInlineMode`**: Set to `true` to enable inline mode
+- **`onSaveSuccess`**: Callback function called when the form saves successfully
+- **`onCancel`**: Callback function called when the form is cancelled
+
+#### Inline Form Behavior
+
+1. **No Navigation**: Unlike standalone forms, inline forms don't trigger page navigation
+2. **Compact Layout**: Forms are optimized for smaller spaces and embedded contexts
+3. **Manual Callbacks**: You must handle save/cancel actions manually via callbacks
+4. **Context Preservation**: Users remain in the same view with all context intact
+
+#### Complete Inline Form Example
+
+```javascript
+import { UiModel } from '@durlabh/dframework-ui';
+import { Box, Card } from '@mui/material';
+
+const inlineFormModel = new UiModel({
+  title: "Quick Edit",
+  api: "ItemController",
+  controllerType: 'cs',
+  saveOnlyModifiedValues: true,
+  showFormPageTitle: false,
+  
+  columns: [
+    { field: "ItemId", type: "number", showOnForm: false },
+    { field: "ItemName", type: "string", label: "Name", required: true },
+    { field: "Status", type: "radio", label: "Status", options: [
+      { value: "active", label: "Active" },
+      { value: "inactive", label: "Inactive" }
+    ]}
+  ]
+});
+
+function DetailPanel({ row, onRefresh }) {
+  return (
+    <Card elevation={1} sx={{ m: 2, p: 2 }}>
+      <UiModel.Form 
+        model={inlineFormModel} 
+        inlineId={row.ItemId}
+        isInlineMode={true}
+        onSaveSuccess={() => {
+          console.log('Item saved successfully');
+          onRefresh(); // Refresh the parent grid
+        }}
+        onCancel={() => {
+          console.log('Edit cancelled');
+          // Handle cancel - maybe close panel or reset state
+        }}
+      />
+    </Card>
+  );
+}
+```
+
+### Integration with Grid Actions
+
+When `getDetailPanelContent` is defined, the Edit action in the grid's action column will expand/collapse the detail panel instead of navigating to a separate form page:
+
+```javascript
+// In the grid, clicking the Edit button will:
+// 1. Expand the detail panel for that row
+// 2. Show the inline form for editing
+// 3. Allow saving/cancelling without leaving the grid view
+```
+
+### Benefits
+
+- **Enhanced UX**: Users can view and edit data without losing context
+- **Space Efficient**: Show more information in less screen real estate
+- **Quick Actions**: Perform edits without full page navigation
+- **Rich Content**: Display images, charts, or complex layouts alongside data
+- **Flexible Layout**: Completely customize the detail panel appearance and behavior
+
+## Field-Level Default Values
+
+The DFramework UI library provides comprehensive support for default values at the field level. Different field types support various default value mechanisms to improve user experience and data consistency.
+
+### Select Field Default Values
+
+Select fields support automatic default selection based on the `IsDefault` property in lookup options:
+
+```javascript
+// Backend should return options with IsDefault flag
+const lookupOptions = [
+  { value: 1, label: "Option A", IsDefault: false },
+  { value: 2, label: "Option B", IsDefault: true },  // This will be selected by default
+  { value: 3, label: "Option C", IsDefault: false }
+];
+
+const model = new UiModel({
+  title: "Items",
+  columns: [
+    {
+      field: "categoryId",
+      type: "select",
+      label: "Category",
+      lookup: "categories"  // Lookup that returns options with IsDefault
+    }
+  ]
+});
+```
+
+**Features:**
+- Automatically selects the option with `IsDefault: true` when no value is set
+- Only works for single-select fields (not multi-select)
+- Can be overridden by user selection
+
+### Boolean Field Default Values
+
+Boolean fields support `defaultValue` property for initial checkbox state:
+
+```javascript
+const model = new UiModel({
+  title: "Settings",
+  columns: [
+    {
+      field: "isActive",
+      type: "boolean",
+      label: "Active",
+      defaultValue: true  // Checkbox will be checked by default
+    },
+    {
+      field: "sendNotifications",
+      type: "boolean",
+      label: "Send Notifications",
+      defaultValue: false  // Checkbox will be unchecked by default
+    }
+  ]
+});
+```
+
+### String Field Default Values
+
+String fields support `defaultValue` for pre-filled text input:
+
+```javascript
+const model = new UiModel({
+  title: "Users",
+  columns: [
+    {
+      field: "country",
+      type: "string",
+      label: "Country",
+      defaultValue: "United States"  // Pre-filled value
+    }
+  ]
+});
+```
+
+### Autocomplete Field Features
+
+Autocomplete fields support advanced multi-select and data formatting options:
+
+```javascript
+const model = new UiModel({
+  title: "Projects",
+  columns: [
+    {
+      field: "tags",
+      type: "autocomplete",
+      label: "Tags",
+      multiSelect: true,  // Enable multi-select
+      dataFormat: "array", // Store as array (default) or comma-separated string
+      limitTags: 3  // Show max 3 tags when not focused
+    },
+    {
+      field: "primaryContact",
+      type: "autocomplete",
+      label: "Primary Contact",
+      singleSelect: true  // Single selection mode
+    }
+  ]
+});
+```
+
+**Data Format Options:**
+- `"array"`: Stores values as array `[1, 2, 3]`
+- `"string"`: Stores values as comma-separated string `"1, 2, 3"`
+
+### Radio Field Features
+
+Radio fields automatically handle value type casting based on the first option:
+
+```javascript
+const model = new UiModel({
+  title: "Priority",
+  columns: [
+    {
+      field: "priority",
+      type: "radio",
+      label: "Priority Level",
+      lookup: "priorities",  // Options with value types (number, string, boolean)
+      orientation: "row"  // "row" or "column" layout
+    }
+  ]
+});
+```
+
+**Automatic Type Casting:**
+- If first option has `value: 1` (number), all values are cast to numbers
+- If first option has `value: "high"` (string), all values are cast to strings
+- If first option has `value: true` (boolean), all values are cast to booleans
+
+### Multi-Select Support
+
+Both select and autocomplete fields support multi-select functionality:
+
+```javascript
+const model = new UiModel({
+  title: "Articles",
+  columns: [
+    {
+      field: "categories",
+      type: "select",
+      label: "Categories",
+      multiSelect: true,  // Enable multi-select for select fields
+      lookup: "articleCategories"
+    },
+    {
+      field: "tags",
+      type: "autocomplete",
+      label: "Tags",
+      multiSelect: true,  // Enable multi-select for autocomplete fields
+      lookup: "articleTags"
+    }
+  ]
+});
+```
+
+### Cascading Lookups (Dependent Fields)
+
+The library supports cascading dropdowns where field options depend on the values of other fields:
+
+```javascript
+const model = new UiModel({
+  title: "Addresses",
+  columns: [
+    {
+      field: "countryId",
+      type: "select",
+      label: "Country",
+      lookup: "countries"
+    },
+    {
+      field: "stateId",
+      type: "select",
+      label: "State",
+      lookup: "states",
+      parentComboField: "countryId",  // Depends on countryId field
+      dependsOn: ["countryId"]  // Array of dependency field names
+    },
+    {
+      field: "cityId",
+      type: "select",
+      label: "City",
+      lookup: "cities",
+      parentComboField: "stateId",  // Depends on stateId field
+      dependsOn: ["countryId", "stateId"]  // Multiple dependencies
+    }
+  ]
+});
+```
+
+**Features:**
+- Options are automatically fetched when dependency values change
+- Empty dependency values clear the dependent field options
+- Supports multiple levels of dependencies
+- Works with both select and autocomplete field types
+
+### Field Configuration and Validation
+
+Fields support dynamic configuration and validation:
+
+```javascript
+const model = new UiModel({
+  title: "Orders",
+  columns: [
+    {
+      field: "discount",
+      type: "number",
+      label: "Discount (%)",
+      min: 0,
+      max: 100,
+      defaultValue: 0
+    },
+    {
+      field: "notes",
+      type: "string",
+      label: "Notes",
+      multiline: true,
+      rows: 4,
+      max: 500  // Maximum character limit
+    }
+  ]
+});
+```
+
 # **Field Components Properties Table**
 
 You can use these components by defining the type in the **Properties** column.
