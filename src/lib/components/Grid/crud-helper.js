@@ -487,14 +487,18 @@ const saveRecord = async function ({ id, api, values, setIsLoading, setError, mo
 
         if (isCSController) {
             // Handle CS controller save
-            const action = model.formActions?.save || 'save';
+            const isNew = !id || id === "0";
+            const action = isNew ? model.formActions?.save || 'save' : model.formActions?.edit || 'quickSave';
             const idProperty = model.idProperty || 'id';
-            const payloadType = model.formPayloadType?.save || 'formPayloadType';
+            const formEditParams = model.formEditParams || 'lineItems';
 
             const requestData = {
                 action,
                 method: 'POST',
-                [payloadType]: [{
+                ...values,
+            };
+            if (!isNew) {
+                requestData[formEditParams] = [{
                     ...values,
                     [idProperty]: id,
                     isQuickSave: true, // Indicate quick save
