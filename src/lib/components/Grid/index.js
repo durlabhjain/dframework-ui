@@ -908,7 +908,7 @@ const GridBase = memo(({
             );
         }
 
-        const baseUrl = buildUrl(model.controllerType, selectionApi || backendApi);
+        const baseUrl = buildUrl(model.controllerType, backendApi);
         try {
             const result = await saveRecord({
                 id: 0,
