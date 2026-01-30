@@ -16,7 +16,6 @@ import CopyIcon from '@mui/icons-material/FileCopy';
 import ArticleIcon from '@mui/icons-material/Article';
 import EditIcon from '@mui/icons-material/Edit';
 import React, { useMemo, useEffect, memo, useRef, useState, useCallback } from 'react';
-import Typography from '@mui/material/Typography';
 import { useSnackbar } from '../SnackBar/index';
 import { DialogComponent } from '../Dialog/index';
 import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
@@ -38,6 +37,7 @@ import Checkbox from '@mui/material/Checkbox';
 import { useTranslation } from 'react-i18next';
 import { convertDefaultSort, areEqual, getDefaultOperator } from './helper';
 import { styled } from '@mui/material/styles';
+import useDebounce from '../../hooks/useDebounce';
 
 const defaultPageSize = 50;
 const sortRegex = /(\w+)( ASC| DESC)?/i;
@@ -151,6 +151,7 @@ const GridBase = memo(({
     onListParamsChange,
     apiRef: propsApiRef,
     baseFilters,
+    defaultDataProp,
     ...props
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
@@ -181,6 +182,10 @@ const GridBase = memo(({
         });
     }
     const [filterModel, setFilterModel] = useState({ ...initialFilterModel });
+    
+    // Debounce filter model for API calls while keeping UI responsive for 500ms
+    const debouncedFilterModel = useDebounce(filterModel, 500);
+    
     const { navigate, getParams, useParams, pathname } = useRouter();
     const { id: idWithOptions } = useParams() || getParams;
     const id = idWithOptions?.split('-')[0];
@@ -189,6 +194,9 @@ const GridBase = memo(({
     const isReadOnly = model.readOnly === true || readOnly;
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
+    const lookupsInitializedRef = useRef(false);
+    const prevLookupsRef = useRef({});
+    const defaultFiltersAppliedRef = useRef(false);
     const showAddIcon = model.showAddIcon === true;
     const toLink = model.columns.filter(({ link }) => Boolean(link)).map(item => item.link);
     const { stateData, dispatchData, formatDate, getApiEndpoint, buildUrl } = useStateContext();
@@ -207,6 +215,8 @@ const GridBase = memo(({
     const [currentPreference, setCurrentPreference] = useState(null);
     const [preferencesReady, setPreferencesReady] = useState(!preferenceKey);
     const backendApi = api || model.api;
+    // State for single expanded detail panel row
+    const [expandedRowId, setExpandedRowId] = useState(null);
 
     useEffect(() => {
         if (!apiRef.current) return;
@@ -279,6 +289,26 @@ const GridBase = memo(({
             "type": "singleSelect",
             "valueOptions": "lookup"
         },
+        "lookup": {
+            "valueOptions": "lookup",
+            "valueFormatter": (value, row, column) => {
+                if (!value) return '';
+
+                const lookupData = dataRef.current.lookups || {};
+                const lookupKey = column.comboType || column.lookup;
+                const lookupItems = lookupData[lookupKey] || [];
+                if (lookupItems.length === 0) return value;
+                // Find item by value (ID) first, then by label if not found
+                const lookupItem = lookupItems.find(item =>
+                    item.value == value || item.label === value
+                );
+                // If found by value, return label; if found by label, return the original value
+                return lookupItem ? (lookupItem.value == value ? lookupItem.label : value) : '';
+            }
+        },
+        "string": {
+            "filterOperators": getGridStringOperators().filter(op => !['doesNotContain', 'doesNotEqual'].includes(op.value))
+        },
         "selection": {
             renderCell: (params) => <CustomCheckBox params={params} handleSelectRow={handleSelectRow} idProperty={idProperty} />
         }
@@ -308,7 +338,10 @@ const GridBase = memo(({
     const lookupOptions = useCallback(({ field, lookupMap: lookupMapParam }) => {
         const lookupData = dataRef.current.lookups || {};
         const map = lookupMapParam || {};
-        return lookupData[map[field]?.lookup] || [];
+        const column = map[field];
+        // Support both lookup and comboType - comboType takes precedence
+        const lookupKey = column?.comboType || column?.lookup;
+        return lookupData[lookupKey] || [];
     }, []);
 
     useEffect(() => {
@@ -373,6 +406,7 @@ const GridBase = memo(({
                                         : {}),
                                     dataRef
                                 }}
+                                defaultDataProp={defaultDataProp}
                                 {...params}
                                 autoHighlight
                             />
@@ -384,7 +418,7 @@ const GridBase = memo(({
                 overrides.cellClassName = 'mui-grid-linkColumn';
             }
             const headerName = tTranslate(column.gridLabel || column.label, tOpts);
-            finalColumns.push({ ...column, ...overrides,  headerName, description: headerName });
+            finalColumns.push({ ...column, ...overrides, headerName, description: headerName });
             if (column.pinned) {
                 pinnedColumns[column.pinned === constants.right ? constants.right : constants.left].push(column.field);
             }
@@ -422,17 +456,9 @@ const GridBase = memo(({
                 actions.push(<GridActionsCellItem icon={<Tooltip title="History"><HistoryIcon /> </Tooltip>} data-action={actionTypes.History} label="History" color="primary" />);
             }
             if (customActions.length) {
-                customActions.forEach(({ icon, action, color }) => {
-                    actions.push(
-                        <GridActionsCellItem
-                            icon={<Tooltip title={action}>{iconMapper[icon] || <CopyIcon />}</Tooltip>}
-                            data-action={action}
-                            label={action}
-                            color={color || "primary"}
-                        />
-                    );
-                });
+                actions.push(...Array(customActions.length).fill(null)); // Placeholder for custom actions
             }
+            // Custom actions are now handled in getActions with showCondition evaluation
         }
         if (documentField.length) {
             actions.push(<GridActionsCellItem icon={<Tooltip title="Download document"><FileDownloadIcon /> </Tooltip>} data-action={actionTypes.Download} label="Download document" color="primary" />);
@@ -442,7 +468,7 @@ const GridBase = memo(({
                 field: 'actions',
                 type: 'actions',
                 label: '',
-                width: actions.length * 50,
+                width: model?.actionWidth || actions.length * 50,
                 hidable: false,
                 getActions: (params) => {
                     const rowActions = [...actions];
@@ -462,6 +488,31 @@ const GridBase = memo(({
                             />
                         );
                     }
+                    
+                    // Add custom actions with showCondition evaluation
+                    if (customActions.length) {
+                        customActions.forEach(({ icon, action, color, showCondition }) => {
+                            if (typeof showCondition === 'function') {
+                                const shouldShow = showCondition(params.row);
+                                if (!shouldShow) {
+                                    return;
+                                }
+                            }
+                            rowActions.push(
+                                <GridActionsCellItem
+                                    icon={<Tooltip title={action}>{
+                                        typeof icon === 'string' ? (iconMapper[icon] || <span style={{ fontSize: "medium" }}>{icon}</span>) :
+                                            typeof icon === 'function' ? icon({ tTranslate, tOpts }) :
+                                                <CopyIcon />
+                                    }</Tooltip>}
+                                    data-action={action}
+                                    label={action}
+                                    color={color || "primary"}
+                                />
+                            );
+                        });
+                    }
+                    
                     return rowActions;
                 }
             });
@@ -470,44 +521,175 @@ const GridBase = memo(({
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate]);
 
-    // Initialize toolbar filters with default values
-    const hasInitializedRef = useRef(false);
-    useEffect(() => {
-        // Only run once on initial mount
-        if (hasInitializedRef.current) return;
-        
-        const toolbarFilterColumns = gridColumns?.filter(col => col.toolbarFilter?.defaultFilterValue !== undefined) || [];
-        if (toolbarFilterColumns.length === 0) return;
 
-        // Check if any toolbar filters already exist in filterModel
-        const hasExistingToolbarFilters = filterModel.items.some(item => 
-            toolbarFilterColumns.some(col => col.field === item.field)
+    // Helper function to check if column is a lookup type
+    const isLookupColumn = (col) =>
+        (col.type === 'lookup' || col.type === 'select' || col.type === 'autocomplete') &&
+        (col.comboType || col.lookup);
+
+    // Helper function to resolve lookup values from ID or Label
+    const resolveLookupValue = (column, clientValue) => {
+        const lookupKey = column.comboType || column.lookup;
+        const options = column.customLookup || dataRef.current.lookups?.[lookupKey] || [];
+
+        if (!options.length) return null;
+
+        // Try to find by ID first, then by label
+        const option = options.find(opt =>
+            opt.value == clientValue || opt.LookupId == clientValue ||
+            opt.label === clientValue || opt.DisplayValue === clientValue
         );
-        if (hasExistingToolbarFilters) {
-            hasInitializedRef.current = true;
-            return;
+
+        return option ? (option.value ?? option.LookupId ?? clientValue) : null;
+    };
+
+    const getDefaultClientFilters = () => {
+        // Get columns that have defaultToClient flag set
+        const defaultClientColumns = gridColumns?.filter(col => col.defaultToClient) || [];
+
+        if (!defaultDataProp || !defaultClientColumns.length) return [];
+
+        // Create filters for defaultToClient columns
+        return defaultClientColumns
+            .map(col => {
+                const clientValue = defaultDataProp[col.field] || defaultDataProp[col.selectField];
+                if (clientValue == null) return null;
+
+                const resolvedValue = isLookupColumn(col) ? resolveLookupValue(col, clientValue) : clientValue;
+                if (resolvedValue == null) return null;
+
+                return {
+                    field: col.field,
+                    operator: getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator),
+                    value: resolvedValue,
+                    type: col.type
+                };
+            })
+            .filter(Boolean);
+    };
+
+    // // Initialize and manage default filters (toolbar + client) - RUNS ON MOUNT AND WHEN LOOKUP DATA CHANGES
+    useEffect(() => {
+
+        // Early returns
+        if (!gridColumns || gridColumns.length === 0) return;
+
+        const toolbarFilterColumns = gridColumns.filter(col => col.toolbarFilter?.defaultFilterValue !== undefined);
+        const defaultClientColumns = gridColumns.filter(col => col.defaultToClient === true);
+
+        if (toolbarFilterColumns.length === 0 && defaultClientColumns.length === 0) return;
+
+        // Categorize columns
+        const lookupClientColumns = defaultClientColumns.filter(isLookupColumn);
+        const nonLookupClientColumns = defaultClientColumns.filter(col => !isLookupColumn(col));
+
+        // Check for new lookup data
+        const currentLookups = data.lookups || {};
+        const prevLookups = prevLookupsRef.current;
+
+        const hasNewLookupData = lookupClientColumns.some(col => {
+            const lookupKey = col.comboType || col.lookup;
+            const hasCurrentData = currentLookups[lookupKey]?.length > 0;
+            const hadPrevData = prevLookups[lookupKey]?.length > 0;
+            return hasCurrentData && !hadPrevData;
+        });
+        prevLookupsRef.current = { ...currentLookups };
+
+        // Determine if we should initialize filters
+        const shouldInitialize = !defaultFiltersAppliedRef.current;
+        const shouldUpdateLookups = hasNewLookupData && !lookupsInitializedRef.current;
+
+        if (!shouldInitialize && !shouldUpdateLookups) return;
+
+        // Helper to check if filter exists using current filter model state
+        const currentFilters = apiRef.current?.state?.filter?.filterModel?.items || [];
+        const filterExists = (field) => currentFilters.some(item => item.field === field);
+
+        // Collect filters to apply and update
+        const filtersToApply = [];
+        const filtersToUpdate = [];
+
+        // Add toolbar filters on first initialization
+        if (shouldInitialize) {
+            toolbarFilterColumns.forEach(col => {
+                if (!filterExists(col.field)) {
+                    filtersToApply.push({
+                        field: col.field,
+                        operator: getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator),
+                        value: col.toolbarFilter.defaultFilterValue,
+                        type: col.type
+                    });
+                }
+            });
         }
 
-        const toolbarFilters = toolbarFilterColumns.map(col => ({
-            field: col.field,
-            operator: getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator),
-            value: col.toolbarFilter.defaultFilterValue,
-            type: col.type
-        }));
+        // Get client filters
+        const clientFilters = getDefaultClientFilters();
 
-        setFilterModel(prev => ({
-            ...prev,
-            items: [...prev.items, ...toolbarFilters]
-        }));
-        
-        hasInitializedRef.current = true;
-    }, [gridColumns]);
+        // Add non-lookup client filters on first initialization
+        if (shouldInitialize) {
+            nonLookupClientColumns.forEach(col => {
+                const clientFilter = clientFilters.find(f => f.field === col.field);
+                if (clientFilter && !filterExists(col.field)) {
+                    filtersToApply.push(clientFilter);
+                }
+            });
+        }
 
+        // Handle lookup-based client filters
+        lookupClientColumns.forEach(col => {
+            const clientFilter = clientFilters.find(f => f.field === col.field);
+            if (!clientFilter) return;
+
+            const existingFilter = currentFilters.find(f => f.field === col.field);
+
+            if (!existingFilter) {
+                // No existing filter - add it
+                filtersToApply.push(clientFilter);
+            } else if (existingFilter.value !== clientFilter.value && shouldUpdateLookups) {
+                // Existing filter needs updating with resolved lookup value
+                filtersToUpdate.push({ existing: existingFilter, updated: clientFilter });
+            }
+        });
+
+        // Apply new filters and update existing ones in a single batch
+        if (filtersToApply.length > 0 || filtersToUpdate.length > 0) {
+            setFilterModel(prev => {
+                let updatedItems = [...prev.items];
+
+                // Update existing filters first
+                if (filtersToUpdate.length > 0) {
+                    updatedItems = updatedItems.map(existingFilter => {
+                        const update = filtersToUpdate.find(f => f.existing === existingFilter);
+                        return update ? { ...existingFilter, value: update.updated.value } : existingFilter;
+                    });
+                }
+
+                // Add new filters
+                if (filtersToApply.length > 0) {
+                    updatedItems = [...updatedItems, ...filtersToApply];
+                }
+
+                return {
+                    ...prev,
+                    items: updatedItems
+                };
+            });
+        }
+
+        // Mark as initialized
+        if (shouldInitialize) {
+            defaultFiltersAppliedRef.current = true;
+        }
+        if (shouldUpdateLookups) {
+            lookupsInitializedRef.current = true;
+        }
+    }, [gridColumns, defaultDataProp, data.lookups]);
 
     const fetchData = (action = "list", extraParams = {}, contentType, columns, isPivotExport, isElasticExport) => {
         const { pageSize, page } = paginationModel;
 
-        const baseUrl =  buildUrl(model.controllerType, isPivotExport ? model.pivotApi : backendApi);
+        const baseUrl = buildUrl(model.controllerType, isPivotExport ? model.pivotApi : backendApi);
 
         if (assigned || available) {
             extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(",") : selected;
@@ -562,7 +744,7 @@ const GridBase = memo(({
 
     const openForm = useCallback(({ id, record = {}, mode }) => {
         if (setActiveRecord) {
-            getRecord({ id, api: backendApi, setIsLoading, setActiveRecord, model, parentFilters, where });
+            getRecord({ id, api: backendApi, setIsLoading, setActiveRecord, model, parentFilters, where, dispatchData });
             return;
         }
         let path = pathname;
@@ -615,8 +797,15 @@ const GridBase = memo(({
                 return;
             }
             switch (action) {
-                case actionTypes.Edit:
-                    return openForm({ id: record[idProperty], record });
+                case actionTypes.Edit: {
+                    if (model.getDetailPanelContent) {
+                        const rowId = record[idProperty];
+                        setExpandedRowId(prevId => prevId === rowId ? null : rowId);
+                        return;
+                    } else {
+                        return openForm({ id: record[idProperty], record });
+                    }
+                }
                 case actionTypes.Copy:
                     return openForm({ id: record[idProperty], mode: 'copy' });
                 case actionTypes.Delete:
@@ -654,7 +843,7 @@ const GridBase = memo(({
     }, [isReadOnly, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, searchParams, gridTitle, getApiEndpoint, handleDownload, openForm]);
 
     const handleDelete = async function () {
-        const baseUrl =  buildUrl(model.controllerType, backendApi);
+        const baseUrl = buildUrl(model.controllerType, backendApi);
         const result = await deleteRecord({ id: record.id, api: baseUrl, setIsLoading, setError: snackbar.showError, setErrorMessage });
         if (result === true) {
             setIsDeleting(false);
@@ -719,7 +908,7 @@ const GridBase = memo(({
             );
         }
 
-        const baseUrl =  buildUrl(model.controllerType, selectionApi || backendApi);
+        const baseUrl = buildUrl(model.controllerType, backendApi);
         try {
             const result = await saveRecord({
                 id: 0,
@@ -841,7 +1030,7 @@ const GridBase = memo(({
     useEffect(() => {
         if (!backendApi || !preferencesReady) return;
         fetchData();
-    }, [paginationModel, model, assigned, available, selected, filterModel, id, additionalFilters, props.extraParams, sortModel, backendApi, gridColumns, parentFilters, isElasticScreen, preferencesReady, baseFilters]);
+    }, [paginationModel, model, assigned, available, selected, debouncedFilterModel, id, additionalFilters, props.extraParams, sortModel, backendApi, gridColumns, parentFilters, isElasticScreen, preferencesReady, baseFilters]);
 
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
@@ -857,26 +1046,36 @@ const GridBase = memo(({
 
     const updateFilters = (e) => {
         const { items } = e;
-        const updatedItems = items.map(item => {
-            const { field, operator, type, value } = item;
-            const column = gridColumns.find(col => col.field === field) || {};
-            const isNumber = column.type === constants.number;
+        const updatedItems = items
+            .map(item => {
+                const { field, operator, type, value } = item;
+                const column = gridColumns.find(col => col.field === field) || {};
+                const isNumber = column.type === constants.Number;
 
-            if (isNumber && value < 0) {
-                return { ...item, value: null };
-            }
-
-            if ((emptyIsAnyOfOperatorFilters.includes(operator)) || (isNumber && !isNaN(value)) || ((!isNumber))) {
-                const isKeywordField = isElasticScreen && gridColumns.filter(element => element.field === field)[0]?.isKeywordField;
-                if (isKeywordField) {
-                    item.filterField = `${item.field}.keyword`;
+                if (isNumber && value < 0) {
+                    return { ...item, value: null };
                 }
-                item.value = ['isEmpty', 'isNotEmpty'].includes(operator) ? null : value;
-                return { ...item, type: column.type };
-            }
-            const updatedValue = isNumber ? null : value;
-            return { field, operator, type, value: updatedValue };
-        });
+
+                if ((emptyIsAnyOfOperatorFilters.includes(operator)) || (isNumber && !isNaN(value)) || ((!isNumber))) {
+                    const isKeywordField = isElasticScreen && gridColumns.filter(element => element.field === field)[0]?.isKeywordField;
+                    if (isKeywordField) {
+                        item.filterField = `${item.field}.keyword`;
+                    }
+                    item.value = ['isEmpty', 'isNotEmpty'].includes(operator) ? null : value;
+                    return { ...item, type: column.type };
+                }
+                const updatedValue = isNumber ? null : value;
+                return { field, operator, type, value: updatedValue };
+            })
+            // Filter out items with empty string values for string fields (except operators that don't need values)
+            .filter(item => {
+                const column = gridColumns.find(col => col.field === item.field) || {};
+                const isNumber = column.type === constants.Number;
+                const isEmptyValueOperator = ['isEmpty', 'isNotEmpty'].includes(item.operator);
+
+                // Keep the item if it's a number field, or if it's an operator that doesn't need a value, or if the value is not an empty string
+                return isNumber || isEmptyValueOperator || (item.value !== '' && item.value !== null && item.value !== undefined);
+            });
         e.items = updatedItems;
         setFilterModel(e);
     };
@@ -913,6 +1112,9 @@ const GridBase = memo(({
                             },
                             "& .MuiDataGrid-virtualScroller ": {
                                 zIndex: 2,
+                            },
+                            "& .MuiDataGrid-detailPanelToggleCell, & .MuiDataGrid-cell--withRenderer.MuiDataGrid-cell--detailPanelToggle": {
+                                display: 'none'
                             }
                         }}
                         headerFilters={showHeaderFilters}
@@ -948,6 +1150,7 @@ const GridBase = memo(({
                             footer: Footer
                         }}
                         slotProps={{
+                            headerFilterCell: { showClearIcon: true },
                             toolbar: {
                                 model,
                                 data,
@@ -976,7 +1179,8 @@ const GridBase = memo(({
                                 filterModel,
                                 setFilterModel,
                                 onPreferenceChange,
-                                toolbarItems
+                                toolbarItems,
+                                customExportConfig: props.customExportConfig
                             },
                             footer: {
                                 pagination: true,
@@ -986,6 +1190,16 @@ const GridBase = memo(({
                             },
                             panel: {
                                 placement: "bottom-end"
+                            },
+                            pagination: {
+                                backIconButtonProps: {
+                                    title: tTranslate('Go to previous page', tOpts),
+                                    'aria-label': tTranslate('Go to previous page', tOpts),
+                                },
+                                nextIconButtonProps: {
+                                    title: tTranslate('Go to next page', tOpts),
+                                    'aria-label': tTranslate('Go to next page', tOpts),
+                                },
                             }
                         }}
                         hideFooterSelectedRowCount={rowsSelected}
@@ -1001,6 +1215,25 @@ const GridBase = memo(({
                                 columnVisibilityModel: visibilityModel
                             },
                             pinnedColumns: pinnedColumns
+                        }}
+                        getDetailPanelContent={model.getDetailPanelContent ? (params) =>
+                            model.getDetailPanelContent({
+                                ...params,
+                                additionalProps: {
+                                    overrideFileName: model.overrideFileName || '',
+                                    isRationalized: model.isRationalized || false
+                                },
+                                onRefresh: () => {
+                                    // Close the expanded panel and refresh data
+                                    setExpandedRowId(null);
+                                    fetchData();
+                                }
+                            })
+                            : undefined
+                        }
+                        detailPanelExpandedRowIds={new Set(expandedRowId ? [expandedRowId] : [])}
+                        onDetailPanelExpandedRowIdsChange={(ids) => {
+                            setExpandedRowId(ids.size > 0 ? [...ids].pop() : null);
                         }}
                         localeText={{
                             filterValueTrue: tTranslate('Yes', tOpts),

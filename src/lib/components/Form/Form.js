@@ -43,15 +43,20 @@ const Form = ({
   sx,
   readOnly,
   beforeSubmit,
-  deletePromptText
+  deletePromptText,
+  isInlineMode = false,
+  inlineId = null,
+  onCustomCancel,
+  onCustomSaveSuccess
 }) => {
   const formTitle = model.formTitle || model.title;
   const { navigate, getParams, useParams, pathname } = useRouter();
   const { relations = [] } = model;
-  const { dispatchData, stateData } = useStateContext();
+  const { dispatchData, stateData, buildUrl } = useStateContext();
   const params = useParams() || getParams;
+  const isCSController = model.controllerType === 'cs';
   const { id: idWithOptions = "" } = params;
-  const id = idWithOptions.split("-")[0];
+  const id =  inlineId || (isCSController ? utils.getCSControllerIdParam(params) : idWithOptions.split("-")[0]);
   const searchParams = new URLSearchParams(window.location.search);
   const baseDataFromParams = searchParams.has(consts.baseData) && searchParams.get(consts.baseData);
   if (baseDataFromParams) {
@@ -113,10 +118,22 @@ const Form = ({
   const initialValues = useMemo(() => isNew
     ? { ...model.initialValues, ...data, ...baseSaveData }
     : { ...baseSaveData, ...model.initialValues, ...data }, [model.initialValues, data, id]);
+  
+  api = isCSController ? buildUrl(model.controllerType, model.api) : api;
 
   useEffect(() => {
     if (!url) return;
-    setValidationSchema(model.getValidationSchema({ id, snackbar }));
+    // Only validate fields that are shown in the form
+    const formFields = model.columns.filter(col => col.showOnForm !== false).map(col => col.field);
+    const fullValidationSchema = model.getValidationSchema({ id, snackbar });
+    
+    // Filter validation schema to only include form fields
+    let filteredSchema = fullValidationSchema;
+    if (model.saveOnlyModifiedValues) {
+      filteredSchema = fullValidationSchema.pick(formFields);
+    }
+    
+    setValidationSchema(filteredSchema);
     const options = idWithOptions.split("-");
     const params = {
       api: api || gridApi,
@@ -125,12 +142,13 @@ const Form = ({
     };
     getRecord({
       ...params,
-      id: options.length > 1 ? options[1] : options[0],
+      id: isCSController ? id : options.length > 1 ? options[1] : options[0],
       setIsLoading,
-      setActiveRecord
+      setActiveRecord,
+      dispatchData
     });
 
-  }, [id, idWithOptions, model, url]);
+  }, [id, idWithOptions, model, url, isInlineMode]);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -138,18 +156,29 @@ const Form = ({
     validationSchema: validationSchema,
     validateOnBlur: false,
     onSubmit: async (values, { resetForm }) => {
+      if (model.saveOnlyModifiedValues) {
+        const formColumns = model.columns.filter(ele => ele.showOnForm !== false)?.map(item => item.field);
+        values = formColumns.reduce((acc, key) => {
+          if (key in values) acc[key] = values[key];
+          return acc;
+        }, {});
+      }
       Object.keys(values).forEach(key => {
         if (typeof values[key] === consts.string) {
           values[key] = values[key].trim();
         }
       });
       setIsLoading(true);
+      if (model.fieldValidation) {
+        values = model.fieldValidation(values); // Apply validation
+      }
       saveRecord({
         id,
-        api: gridApi,
+        api: isCSController ? api : gridApi,
         values: values,
         setIsLoading,
         setError: snackbar.showError,
+        model
       })
         .then((success) => {
           if (!success) return;
@@ -163,8 +192,12 @@ const Form = ({
           * By default, the form navigates back to the grid after save/cancel operations.
           * This behavior can be controlled by setting navigateBack "false" / false in model config which disables navigation completely.
           */
-          navigateBack !== false && handleNavigation();
-          resetForm({ values: formik.values});
+          if (onCustomSaveSuccess) {
+            onCustomSaveSuccess();
+          } else {
+            navigateBack !== false && handleNavigation();
+          }
+          resetForm({ values: formik.values });
         })
         .catch((err) => {
           snackbar.showError(
@@ -182,7 +215,11 @@ const Form = ({
   const handleDiscardChanges = () => {
     formik.resetForm();
     setIsDiscardDialogOpen(false);
-    navigateBack !== false && handleNavigation();
+    if (onCustomCancel) {
+      onCustomCancel();
+    } else {
+      navigateBack !== false && handleNavigation();
+    }
   };
 
   const errorOnLoad = function (title, error) {
@@ -194,7 +231,7 @@ const Form = ({
     const isCopy = idWithOptions.indexOf("-") > -1;
     const isNew = !id || id === "0";
     const pageTitle = isNew ? consts.create : isCopy ? consts.copy : consts.edit;
-    const linkColumn = isNew ? "" : record[model.linkColumn];
+    const linkColumn = isNew ? "" : record[model.breadCrumbColumn || model.linkColumn];
     const breadcrumbs = [{ text: model.breadCrumbs }, { text: pageTitle }];
     if (isCopy) {
       record[model.linkColumn] = "";
@@ -221,7 +258,11 @@ const Form = ({
     if (formik.dirty && recordEditable) {
       setIsDiscardDialogOpen(true);
     } else {
-      navigateBack !== false && handleNavigation();
+      if (onCustomCancel) {
+        onCustomCancel();
+      } else {
+        navigateBack !== false && handleNavigation();
+      }
     }
     event.preventDefault();
   };
@@ -290,15 +331,18 @@ const Form = ({
   const recordEditable = !("canEdit" in data) || data.canEdit;
   const readOnlyRelations = !recordEditable || data.readOnlyRelations;
   deletePromptText = deletePromptText || "Are you sure you want to delete ?";
+  const { showFormPageTitle = true } = model;
   return (
     <>
-      <PageTitle
-        navigate={navigate}
-        title={formTitle}
-        showBreadcrumbs={!hideBreadcrumb}
-        breadcrumbs={breadcrumbs}
-        model={model}
-      />
+      {showFormPageTitle && (
+        <PageTitle
+          navigate={navigate}
+          title={formTitle}
+          showBreadcrumbs={!hideBreadcrumb}
+          breadcrumbs={breadcrumbs}
+          model={model}
+        />
+      )}
       <ActiveStepContext.Provider value={{ activeStep, setActiveStep }}>
         <Paper sx={{ padding: 2, ...sx }}>
           <form>
@@ -336,6 +380,7 @@ const Form = ({
               data={data}
               fieldConfigs={fieldConfigs}
               onChange={handleChange}
+              combos={lookups}
               lookups={lookups}
               id={id}
               handleSubmit={handleSubmit}
