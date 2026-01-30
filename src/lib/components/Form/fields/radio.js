@@ -17,10 +17,11 @@ const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfig
         if (valueType === 'boolean') return Boolean(value);
         return String(value);
     };
+    const { showRadioLabel = true } = column;
     return (
         <>
             <FormControl component="fieldset" error={isError}>
-                <FormLabel id={`${selectField}-label`}>{label}</FormLabel>
+                {showRadioLabel && <FormLabel id={`${selectField}-label`}>{label}</FormLabel>}
                 <RadioGroup
                     row={orientation === "row"}
                     aria-labelledby={`${selectField}-label`}

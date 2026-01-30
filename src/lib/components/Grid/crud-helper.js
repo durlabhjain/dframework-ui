@@ -320,7 +320,7 @@ const getList = async ({ gridColumns, setIsLoading, setData, page, pageSize, sor
                 dataParser: DATA_PARSERS.json 
             });
             if (response.error) {
-                setError(response.message || response.error);
+                setError('Save failed: ' + (response.message || response.error));
                 return;
             }
             // Process response data and merge combo lookups
@@ -495,8 +495,10 @@ const saveRecord = async function ({ id, api, values, setIsLoading, setError, mo
                 action,
                 method: 'POST',
                 [payloadType]: [{
+                    ...values,
                     [idProperty]: id,
-                    ...values
+                    isQuickSave: true, // Indicate quick save
+                    id
                 }]
             };
 
@@ -508,7 +510,8 @@ const saveRecord = async function ({ id, api, values, setIsLoading, setError, mo
             });
 
             if (response.error) {
-                throw new Error(response.error);
+                setError(response.message || response.error);
+                return null;
             }
 
             return response.success !== false ? response : null;
