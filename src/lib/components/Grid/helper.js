@@ -50,19 +50,17 @@ export const CustomExportButton = ({ exportFormats, ...props }) => (
         {exportFormats.xml !== false && <ExportMenuItem {...props} icon={<Code fontSize="small" />} type="XML" contentType="text/xml" />}
         {exportFormats.html !== false && <ExportMenuItem {...props} icon={<Language fontSize="small" />} type="HTML" contentType="text/html" />}
         {exportFormats.json !== false && <ExportMenuItem {...props} icon={<DataObjectIcon fontSize="small" />} type="JSON" contentType="application/json" />}
-        {props.customExportConfig && (
-            Array.isArray(props.customExportConfig)
-                ? props.customExportConfig.map((customExport, index) => (
-                    <ExportMenuItem
-                        key={index}
-                        {...props}
-                        icon={customExport.icon || <TableChart fontSize="small" />}
-                        type={customExport.type}
-                        contentType={customExport.contentType || 'application/json'}
-                        handleExportAction={customExport.handleExportAction}
-                    />
-                ))
-                : <ExportMenuItem {...props} icon={props.customExportConfig.icon || <TableChart fontSize="small" />} type={props.customExportConfig.type} contentType={props.customExportConfig.contentType || 'application/json'} handleExportAction={props.customExportConfig.handleExportAction} />
+        {props.customExportConfig && Array.isArray(props.customExportConfig) && (
+            props.customExportConfig.map((customExport, index) => (
+                <ExportMenuItem
+                    key={index}
+                    {...props}
+                    icon={customExport.icon || <TableChart fontSize="small" />}
+                    type={customExport.type}
+                    contentType={customExport.contentType || 'application/json'}
+                    handleExportAction={customExport.handleExportAction}
+                />
+            ))
         )}
     </GridToolbarExportContainer>
 );
