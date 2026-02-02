@@ -101,8 +101,12 @@ const utils = {
 	 *   undefined if `where` is falsy or empty; otherwise, mutates `filterParams` in place.
 	 */
 	createCSPayload: function (where, filterParams = {}) {
+		const numberTypes = ['number', 'numeric', 'int', 'integer', 'decimal', 'float', 'double'];
 		if (!where || !where.length) return {};
 		where.forEach((ele, index) => {
+			if (numberTypes.includes(ele.type)) {
+				ele.type = 'numeric';
+			}
 			if ((Array.isArray(ele.value) && ele.value?.length) || (!Array.isArray(ele.value) && ele.value) || typeof ele.value === "boolean") {
 				const filterKeyName = `filter[${index}][field]`;
 				filterParams[filterKeyName] = ele.field;
@@ -112,6 +116,13 @@ const utils = {
 
 				const valueKeyName = `filter[${index}][data][value]`;
 				filterParams[valueKeyName] = ele?.operator === 'contains' ? `%${ele.value}` : ele.value;
+
+				if (numberTypes.includes(ele.type)) {
+					const typeKeyName = `filter[${index}][data][comparison]`;
+					filterParams[typeKeyName] = ele?.operator === '=' ? 'eq' : ele?.operator || 'eq';
+					ele.type = 'numeric';
+				}
+
 			}
 		});
 	},

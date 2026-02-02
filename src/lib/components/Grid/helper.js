@@ -24,8 +24,10 @@ export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, t
     const onMenuClick = (e) => {
         // Always use handleExportAction if provided, otherwise fallback to handleExport
         const action = handleExportAction || handleExport;
-        if (action) {
-            action({ callback: handleExport, exportParams: e });
+        if (handleExportAction) {
+            action({ callback: action, exportParams: e });
+        } else {
+            action(e);
         }
     };
     return (

@@ -1073,8 +1073,9 @@ const GridBase = memo(({
                 const isNumber = column.type === constants.Number;
                 const isEmptyValueOperator = ['isEmpty', 'isNotEmpty'].includes(item.operator);
 
-                // Keep the item if it's a number field, or if it's an operator that doesn't need a value, or if the value is not an empty string
-                return isNumber || isEmptyValueOperator || (item.value !== '' && item.value !== null && item.value !== undefined);
+                // Keep the item if it's a number field, or if it's an operator that doesn't need a value,
+                // or if the field exists (user selected a column to filter by)
+                return isNumber || isEmptyValueOperator || item.field;
             });
         e.items = updatedItems;
         setFilterModel(e);
