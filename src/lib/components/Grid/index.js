@@ -286,24 +286,15 @@ const GridBase = memo(({
             renderCell: booleanIconRenderer
         },
         "select": {
-            "type": "singleSelect",
-            "valueOptions": "lookup"
-        },
-        "lookup": {
             "valueOptions": "lookup",
             "valueFormatter": (value, row, column) => {
                 if (!value) return '';
-
                 const lookupData = dataRef.current.lookups || {};
-                const lookupKey = column.comboType || column.lookup;
+                const lookupKey = column.lookup;
                 const lookupItems = lookupData[lookupKey] || [];
                 if (lookupItems.length === 0) return value;
-                // Find item by value (ID) first, then by label if not found
-                const lookupItem = lookupItems.find(item =>
-                    item.value == value || item.label === value
-                );
-                // If found by value, return label; if found by label, return the original value
-                return lookupItem ? (lookupItem.value == value ? lookupItem.label : value) : '';
+                const option = lookupItems.find(opt => opt.value == value);
+                return option ? option.label : value;
             }
         },
         "string": {
@@ -339,9 +330,7 @@ const GridBase = memo(({
         const lookupData = dataRef.current.lookups || {};
         const map = lookupMapParam || {};
         const column = map[field];
-        // Support both lookup and comboType - comboType takes precedence
-        const lookupKey = column?.comboType || column?.lookup;
-        return lookupData[lookupKey] || [];
+        return lookupData[column?.lookup] || [];
     }, []);
 
     useEffect(() => {
@@ -521,170 +510,37 @@ const GridBase = memo(({
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate]);
 
-
-    // Helper function to check if column is a lookup type
-    const isLookupColumn = (col) =>
-        (col.type === 'lookup' || col.type === 'select' || col.type === 'autocomplete') &&
-        (col.comboType || col.lookup);
-
-    // Helper function to resolve lookup values from ID or Label
-    const resolveLookupValue = (column, clientValue) => {
-        const lookupKey = column.comboType || column.lookup;
-        const options = column.customLookup || dataRef.current.lookups?.[lookupKey] || [];
-
-        if (!options.length) return null;
-
-        // Try to find by ID first, then by label
-        const option = options.find(opt =>
-            opt.value == clientValue || opt.LookupId == clientValue ||
-            opt.label === clientValue || opt.DisplayValue === clientValue
-        );
-
-        return option ? (option.value ?? option.LookupId ?? clientValue) : null;
-    };
-
-    const getDefaultClientFilters = () => {
-        // Get columns that have defaultToClient flag set
-        const defaultClientColumns = gridColumns?.filter(col => col.defaultToClient) || [];
-
-        if (!defaultDataProp || !defaultClientColumns.length) return [];
-
-        // Create filters for defaultToClient columns
-        return defaultClientColumns
-            .map(col => {
-                const clientValue = defaultDataProp[col.field] || defaultDataProp[col.selectField];
-                if (clientValue == null) return null;
-
-                const resolvedValue = isLookupColumn(col) ? resolveLookupValue(col, clientValue) : clientValue;
-                if (resolvedValue == null) return null;
-
-                return {
-                    field: col.field,
-                    operator: getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator),
-                    value: resolvedValue,
-                    type: col.type
-                };
-            })
-            .filter(Boolean);
-    };
-
-    // // Initialize and manage default filters (toolbar + client) - RUNS ON MOUNT AND WHEN LOOKUP DATA CHANGES
+    const hasInitializedRef = useRef(false);
     useEffect(() => {
+        // Only run once on initial mount
+        if (hasInitializedRef.current) return;
+        
+        const toolbarFilterColumns = gridColumns?.filter(col => col.toolbarFilter?.defaultFilterValue !== undefined) || [];
+        if (toolbarFilterColumns.length === 0) return;
 
-        // Early returns
-        if (!gridColumns || gridColumns.length === 0) return;
-
-        const toolbarFilterColumns = gridColumns.filter(col => col.toolbarFilter?.defaultFilterValue !== undefined);
-        const defaultClientColumns = gridColumns.filter(col => col.defaultToClient === true);
-
-        if (toolbarFilterColumns.length === 0 && defaultClientColumns.length === 0) return;
-
-        // Categorize columns
-        const lookupClientColumns = defaultClientColumns.filter(isLookupColumn);
-        const nonLookupClientColumns = defaultClientColumns.filter(col => !isLookupColumn(col));
-
-        // Check for new lookup data
-        const currentLookups = data.lookups || {};
-        const prevLookups = prevLookupsRef.current;
-
-        const hasNewLookupData = lookupClientColumns.some(col => {
-            const lookupKey = col.comboType || col.lookup;
-            const hasCurrentData = currentLookups[lookupKey]?.length > 0;
-            const hadPrevData = prevLookups[lookupKey]?.length > 0;
-            return hasCurrentData && !hadPrevData;
-        });
-        prevLookupsRef.current = { ...currentLookups };
-
-        // Determine if we should initialize filters
-        const shouldInitialize = !defaultFiltersAppliedRef.current;
-        const shouldUpdateLookups = hasNewLookupData && !lookupsInitializedRef.current;
-
-        if (!shouldInitialize && !shouldUpdateLookups) return;
-
-        // Helper to check if filter exists using current filter model state
-        const currentFilters = apiRef.current?.state?.filter?.filterModel?.items || [];
-        const filterExists = (field) => currentFilters.some(item => item.field === field);
-
-        // Collect filters to apply and update
-        const filtersToApply = [];
-        const filtersToUpdate = [];
-
-        // Add toolbar filters on first initialization
-        if (shouldInitialize) {
-            toolbarFilterColumns.forEach(col => {
-                if (!filterExists(col.field)) {
-                    filtersToApply.push({
-                        field: col.field,
-                        operator: getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator),
-                        value: col.toolbarFilter.defaultFilterValue,
-                        type: col.type
-                    });
-                }
-            });
+        // Check if any toolbar filters already exist in filterModel
+        const hasExistingToolbarFilters = filterModel.items.some(item => 
+            toolbarFilterColumns.some(col => col.field === item.field)
+        );
+        if (hasExistingToolbarFilters) {
+            hasInitializedRef.current = true;
+            return;
         }
 
-        // Get client filters
-        const clientFilters = getDefaultClientFilters();
+        const toolbarFilters = toolbarFilterColumns.map(col => ({
+            field: col.field,
+            operator: getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator),
+            value: col.toolbarFilter.defaultFilterValue,
+            type: col.type
+        }));
 
-        // Add non-lookup client filters on first initialization
-        if (shouldInitialize) {
-            nonLookupClientColumns.forEach(col => {
-                const clientFilter = clientFilters.find(f => f.field === col.field);
-                if (clientFilter && !filterExists(col.field)) {
-                    filtersToApply.push(clientFilter);
-                }
-            });
-        }
-
-        // Handle lookup-based client filters
-        lookupClientColumns.forEach(col => {
-            const clientFilter = clientFilters.find(f => f.field === col.field);
-            if (!clientFilter) return;
-
-            const existingFilter = currentFilters.find(f => f.field === col.field);
-
-            if (!existingFilter) {
-                // No existing filter - add it
-                filtersToApply.push(clientFilter);
-            } else if (existingFilter.value !== clientFilter.value && shouldUpdateLookups) {
-                // Existing filter needs updating with resolved lookup value
-                filtersToUpdate.push({ existing: existingFilter, updated: clientFilter });
-            }
-        });
-
-        // Apply new filters and update existing ones in a single batch
-        if (filtersToApply.length > 0 || filtersToUpdate.length > 0) {
-            setFilterModel(prev => {
-                let updatedItems = [...prev.items];
-
-                // Update existing filters first
-                if (filtersToUpdate.length > 0) {
-                    updatedItems = updatedItems.map(existingFilter => {
-                        const update = filtersToUpdate.find(f => f.existing === existingFilter);
-                        return update ? { ...existingFilter, value: update.updated.value } : existingFilter;
-                    });
-                }
-
-                // Add new filters
-                if (filtersToApply.length > 0) {
-                    updatedItems = [...updatedItems, ...filtersToApply];
-                }
-
-                return {
-                    ...prev,
-                    items: updatedItems
-                };
-            });
-        }
-
-        // Mark as initialized
-        if (shouldInitialize) {
-            defaultFiltersAppliedRef.current = true;
-        }
-        if (shouldUpdateLookups) {
-            lookupsInitializedRef.current = true;
-        }
-    }, [gridColumns, defaultDataProp, data.lookups]);
+        setFilterModel(prev => ({
+            ...prev,
+            items: [...prev.items, ...toolbarFilters]
+        }));
+        
+        hasInitializedRef.current = true;
+    }, [gridColumns]);
 
     const fetchData = (action = "list", extraParams = {}, contentType, columns, isPivotExport, isElasticExport) => {
         const { pageSize, page } = paginationModel;

@@ -107,6 +107,9 @@ const utils = {
 			if (numberTypes.includes(ele.type)) {
 				ele.type = 'numeric';
 			}
+			if (ele.type === 'select') {
+				ele.type = 'string';
+			}
 			if ((Array.isArray(ele.value) && ele.value?.length) || (!Array.isArray(ele.value) && ele.value) || typeof ele.value === "boolean") {
 				const filterKeyName = `filter[${index}][field]`;
 				filterParams[filterKeyName] = ele.field;

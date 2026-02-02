@@ -13,15 +13,12 @@ const GridOperators = {
 const CustomDropdownMenu = (props) => {
     const { column, item, applyValue, apiRef } = props;
     const lookupData = column?.dataRef?.current?.lookups;
-    
-    // Support both lookup and comboType - comboType takes precedence
-    const lookupKey = column.comboType || column.lookup;
-    let options = column.customLookup || lookupData?.[lookupKey] || [];
+    let options = column.customLookup || lookupData[column.lookup] || [];
 
-    if (typeof lookupKey === 'string') {
-        options = options.map((option) => ({
-            label: option?.label || option?.DisplayValue || '',
-            value: option?.value ?? option?.LookupId ?? ''
+    if (typeof column.lookup === 'string') {
+        options = options.map(({ label, value }) => ({
+            label,
+            value
         }));
     }
 
@@ -61,22 +58,10 @@ const CustomDropdownMenu = (props) => {
             const newitem = currentFieldFilters[0] ? currentFieldFilters[0] : item;
             applyValue({ ...newitem, value: newValue });
         },
-        [apiRef, column.applyZeroFilter, currentFieldFilters, item, applyValue, filterModel.items]
+        [apiRef, column.applyZeroFilter, currentFieldFilters, item, applyValue]
     );
 
-    // Determine if this should be a multiple select based on operator
-    const isMultiple = currentFieldFilters[0]?.operator === GridOperators.IsAnyOf || item?.operator === GridOperators.IsAnyOf;
-    
-    // Get the value from the actual filter only - never apply defaults here
-    // Defaults are applied once during grid initialization in index.js
-    let value = currentFieldFilters[0]?.value ?? item?.value ?? '';
-    
-    // Ensure value matches the multiple state
-    if (isMultiple && !Array.isArray(value)) {
-        value = value ? [value] : [];
-    } else if (!isMultiple && Array.isArray(value)) {
-        value = value.length > 0 ? value[0] : '';
-    }
+    const value = currentFieldFilters[0]?.value ?? '';
 
     return (
         <FormControl variant="standard" className="w-100">
@@ -85,7 +70,7 @@ const CustomDropdownMenu = (props) => {
                 variant="standard"
                 value={value}
                 onChange={(e) => handleFilterChange(e)}
-                multiple={isMultiple}
+                multiple={Array.isArray(value)}
                 MenuProps={{
                     PaperProps: {
                         style: {

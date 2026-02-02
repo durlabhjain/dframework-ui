@@ -44,7 +44,6 @@ const Form = ({
   readOnly,
   beforeSubmit,
   deletePromptText,
-  isInlineMode = false,
   inlineId = null,
   onCustomCancel,
   onCustomSaveSuccess
@@ -119,21 +118,12 @@ const Form = ({
     ? { ...model.initialValues, ...data, ...baseSaveData }
     : { ...baseSaveData, ...model.initialValues, ...data }, [model.initialValues, data, id]);
   
-  api = isCSController ? buildUrl(model.controllerType, model.api) : api;
+  const type = model.controllerType || 'default';
+  api = buildUrl(type, model.api);
 
   useEffect(() => {
     if (!url) return;
-    // Only validate fields that are shown in the form
-    const formFields = model.columns.filter(col => col.showOnForm !== false).map(col => col.field);
-    const fullValidationSchema = model.getValidationSchema({ id, snackbar });
-    
-    // Filter validation schema to only include form fields
-    let filteredSchema = fullValidationSchema;
-    if (model.saveOnlyModifiedValues) {
-      filteredSchema = fullValidationSchema.pick(formFields);
-    }
-    
-    setValidationSchema(filteredSchema);
+    setValidationSchema(model.getValidationSchema({ id, snackbar }));
     const options = idWithOptions.split("-");
     const params = {
       api: api || gridApi,
@@ -148,7 +138,7 @@ const Form = ({
       dispatchData
     });
 
-  }, [id, idWithOptions, model, url, isInlineMode]);
+  }, [id, idWithOptions, model, url]);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -156,22 +146,12 @@ const Form = ({
     validationSchema: validationSchema,
     validateOnBlur: false,
     onSubmit: async (values, { resetForm }) => {
-      if (model.saveOnlyModifiedValues) {
-        const formColumns = model.columns.filter(ele => ele.showOnForm !== false)?.map(item => item.field);
-        values = formColumns.reduce((acc, key) => {
-          if (key in values) acc[key] = values[key];
-          return acc;
-        }, {});
-      }
       Object.keys(values).forEach(key => {
         if (typeof values[key] === consts.string) {
           values[key] = values[key].trim();
         }
       });
       setIsLoading(true);
-      if (model.fieldValidation) {
-        values = model.fieldValidation(values); // Apply validation
-      }
       saveRecord({
         id,
         api: isCSController ? api : gridApi,
@@ -194,10 +174,9 @@ const Form = ({
           */
           if (onCustomSaveSuccess) {
             onCustomSaveSuccess();
-          } else {
-            navigateBack !== false && handleNavigation();
           }
-          resetForm({ values: formik.values });
+          navigateBack !== false && handleNavigation();
+          resetForm({ values: formik.values});
         })
         .catch((err) => {
           snackbar.showError(
@@ -217,9 +196,8 @@ const Form = ({
     setIsDiscardDialogOpen(false);
     if (onCustomCancel) {
       onCustomCancel();
-    } else {
-      navigateBack !== false && handleNavigation();
     }
+    navigateBack !== false && handleNavigation();
   };
 
   const errorOnLoad = function (title, error) {
@@ -380,7 +358,6 @@ const Form = ({
               data={data}
               fieldConfigs={fieldConfigs}
               onChange={handleChange}
-              combos={lookups}
               lookups={lookups}
               id={id}
               handleSubmit={handleSubmit}

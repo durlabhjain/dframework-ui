@@ -67,7 +67,7 @@ const CustomToolbar = function (props) {
     const activeFilterCount = filterModel?.items?.length || 0;
 
     // Get columns that should have toolbar filters
-    const toolbarFilterColumns = gridColumns?.filter(col => col.toolbarFilter) || [];
+    const toolbarFilterColumns = gridColumns?.filter(col => col.toolbarFilter) || []
     const lookupData = data?.lookups || {};
 
     return (

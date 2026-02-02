@@ -1,32 +1,25 @@
 import React from "react";
 import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, FormHelperText, useTheme } from "@mui/material";
 
-const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfigs={}, mode, column, ...otherProps }) => {
+const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfigs={}, mode, ...otherProps }) => {
     const handleChange = (event) => {
         formik.setFieldValue(field, event.target.value);
     }
 
-    const options = lookups ? lookups[column.lookup || column.comboType] : [];
+    const options = lookups ? lookups[otherProps.column.lookup] : [];
     const theme = useTheme();
-    const selectField = column.selectField || field;
-    const isError = formik.touched[selectField] && Boolean(formik.errors[selectField]);
+    const isError = formik.touched[field] && Boolean(formik.errors[field]);
     const isDisabled = mode !== 'copy' && fieldConfigs.disabled;
-    const valueType = options[0] ? typeof options[0].value : 'string';
-    const castValue = (value) => {
-        if (valueType === 'number') return Number(value);
-        if (valueType === 'boolean') return Boolean(value);
-        return String(value);
-    };
-    const { showRadioLabel = true } = column;
+    const { showLegend = true } = otherProps.column || {};
     return (
         <>
             <FormControl component="fieldset" error={isError}>
-                {showRadioLabel && <FormLabel id={`${selectField}-label`}>{label}</FormLabel>}
+                {showLegend && <FormLabel component="legend">{label}</FormLabel>}
                 <RadioGroup
                     row={orientation === "row"}
-                    aria-labelledby={`${selectField}-label`}
-                    name={selectField}
-                    value={castValue(formik.values[selectField])}
+                    aria-label={label}
+                    name={field}
+                    value={formik.values[field]}
                     onChange={handleChange}
                 >
                     {options?.map((option, index) => (
@@ -44,5 +37,4 @@ const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfig
         </>
     );
 };
-
 export default Field;

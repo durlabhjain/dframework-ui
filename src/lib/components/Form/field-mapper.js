@@ -143,7 +143,7 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
                         <Grid container spacing={2} key={key} sx={{ marginTop: "1rem", marginBottom: "1rem" }} alignItems={isGridComponent ? "flex-start" : "center"}>
                             {column?.showLabel !== false ?
                                 <Grid size={{ xs: 3 }} sx={gridContainerStyle}>
-                                    <Typography sx={{ fontSize: "16px", fontWeight: "bold" }}>{column.label || field}: {column.required && <ImportantSpan>*</ImportantSpan>}</Typography>
+                                    <Typography sx={{ fontSize: "16px", fontWeight: "500" }}>{column.label || field}: {column.required && <ImportantSpan>*</ImportantSpan>}</Typography>
                                 </Grid>
                                 : null
                             }
@@ -165,7 +165,7 @@ const getFormConfig = function ({ columns, tabs = {}, id, searchParams }) {
     }
     for (const column of columns) {
         const fieldType = column.formFieldType || column.type;
-        if (column.label === null || column.showOnForm === false) { /* If the field should not be shown in form mode, specify label as null */
+        if (column.label === null) { /* If the field should not be shown in form mode, specify label as null */
             continue;
         }
         const { field, label, tab } = column;
