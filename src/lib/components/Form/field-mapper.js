@@ -164,7 +164,7 @@ const getFormConfig = function ({ columns, tabs = {}, id, searchParams }) {
         tabColumns[tab] = [];
     }
     for (const column of columns) {
-        const fieldType = column.formFieldType || column.type;
+        const fieldType = column.type;
         if (column.label === null) { /* If the field should not be shown in form mode, specify label as null */
             continue;
         }

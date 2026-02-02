@@ -238,9 +238,8 @@ const Form = ({
     } else {
       if (onCustomCancel) {
         onCustomCancel();
-      } else {
-        navigateBack !== false && handleNavigation();
       }
+      navigateBack !== false && handleNavigation();
     }
     event.preventDefault();
   };

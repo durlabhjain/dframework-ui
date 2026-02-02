@@ -7,9 +7,8 @@ const emptyValues = [null, undefined, ''];
 export default function useCascadingLookup({ column, formik, lookups, dependsOn = [], isAutoComplete = false, userSelected, model }) {
     const [options, setOptions] = useState([]);
     const { stateData } = useStateContext();
-    const isCsController = model.controllerType === 'cs';
-    const url = model.api && isCsController ? model.api : stateData?.gridSettings?.permissions?.Url;
-    const api = useMemo(() => `${ isAutoComplete ? url : `${url}${model?.api || ''}`}`, [url, model?.api]);
+    const url = stateData?.gridSettings?.permissions?.Url || '';
+    const api = useMemo(() => `${url}${model?.api || ''}`, [url, model?.api]);
     
     // Memoize dependency values
     const dependencyValues = useMemo(() => {
@@ -24,14 +23,11 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
     // Initial options for non-cascading
     const initialOptions = useMemo(() => {
         if (dependsOn.length) return [];
-        // Check for lookup first, then comboType
-        const lookupKey = column.lookup || column.comboType;
-        return typeof lookupKey === 'string' ? lookups[lookupKey] : lookupKey;
-    }, [column.lookup, column.comboType, lookups, dependsOn]);
+        return typeof column.lookup === 'string' ? lookups[column.lookup] : column.lookup;
+    }, [column.lookup, lookups, dependsOn]);
 
     const fetchOptions = async () => {
-        const lookupKey = column.lookup || column.comboType;
-        if (!lookupKey) return;
+        if (!column.lookup) return;
         // Only fetch if all dependencies have values
         const allDependenciesHaveValues = Object.values(dependencyValues).every(
             value => !emptyValues.includes(value)
@@ -42,12 +38,12 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
         }
         let newOptions = [];
         const requestBody = {
-            lookups: [{ lookup: lookupKey, where: dependencyValues }]
+            lookups: [{ lookup: column.lookup, where: dependencyValues }]
         };
         try {
             const response = await request({ url: `${api}/combo`, params: requestBody, disableLoader: true, jsonPayload: true });
             if (response && response.success && response.lookups) {
-                newOptions = response.lookups[lookupKey] || [];
+                newOptions = response.lookups[column.lookup] || [];
             } else {
                 newOptions = [];
             }
@@ -65,7 +61,7 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
         } else if (isAutoComplete || !userSelected.current) {
             setOptions(initialOptions);
         }
-    }, [dependencyValues, initialOptions, api, column.lookup, column.comboType]);
+    }, [dependencyValues, initialOptions, api, column.lookup]);
 
     return options;
 }

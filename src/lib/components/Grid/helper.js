@@ -20,28 +20,17 @@ export const convertDefaultSort = (defaultSort, constants, sortRegex) => {
 };
 
 // Export menu item component
-export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, icon, handleExportAction }) => {
-    const onMenuClick = (e) => {
-        // Always use handleExportAction if provided, otherwise fallback to handleExport
-        const action = handleExportAction || handleExport;
-        if (handleExportAction) {
-            action({ callback: action, exportParams: e });
-        } else {
-            action(e);
-        }
-    };
-    return (
-        <MenuItem
-            onClick={onMenuClick}
-            data-type={type}
-            data-content-type={contentType}
-            data-is-pivot-export={isPivotExport}
-        >
-            <Box className="grid-icons" sx={{ pointerEvents: 'none', marginTop: 1 }}>{icon}</Box>
-            {tTranslate(type, tOpts)}
-        </MenuItem>
-    );
-}
+export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, icon }) => (
+    <MenuItem
+        onClick={handleExport}
+        data-type={type}
+        data-content-type={contentType}
+        data-is-pivot-export={isPivotExport}
+    >
+        <Box className="grid-icons" sx={{ pointerEvents: 'none', marginTop: 1 }}>{icon}</Box>
+        {tTranslate(type, tOpts)}
+    </MenuItem>
+);
 
 // Custom export button component
 export const CustomExportButton = ({ exportFormats, ...props }) => (
@@ -52,18 +41,6 @@ export const CustomExportButton = ({ exportFormats, ...props }) => (
         {exportFormats.xml !== false && <ExportMenuItem {...props} icon={<Code fontSize="small" />} type="XML" contentType="text/xml" />}
         {exportFormats.html !== false && <ExportMenuItem {...props} icon={<Language fontSize="small" />} type="HTML" contentType="text/html" />}
         {exportFormats.json !== false && <ExportMenuItem {...props} icon={<DataObjectIcon fontSize="small" />} type="JSON" contentType="application/json" />}
-        {props.customExportConfig && Array.isArray(props.customExportConfig) && (
-            props.customExportConfig.map((customExport, index) => (
-                <ExportMenuItem
-                    key={index}
-                    {...props}
-                    icon={customExport.icon || <TableChart fontSize="small" />}
-                    type={customExport.type}
-                    contentType={customExport.contentType || 'application/json'}
-                    handleExportAction={customExport.handleExportAction}
-                />
-            ))
-        )}
     </GridToolbarExportContainer>
 );
 
