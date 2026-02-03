@@ -44,7 +44,7 @@ const Form = ({
   readOnly,
   beforeSubmit,
   deletePromptText,
-  inlineId = null,
+  detailPanelToggleId = null,
   onCustomCancel,
   onCustomSaveSuccess
 }) => {
@@ -55,7 +55,7 @@ const Form = ({
   const params = useParams() || getParams;
   const isCSController = model.controllerType === 'cs';
   const { id: idWithOptions = "" } = params;
-  const id =  inlineId || (isCSController ? utils.getCSControllerIdParam(params) : idWithOptions.split("-")[0]);
+  const id =  detailPanelToggleId || (isCSController ? utils.getCSControllerIdParam(params) : idWithOptions.split("-")[0]);
   const searchParams = new URLSearchParams(window.location.search);
   const baseDataFromParams = searchParams.has(consts.baseData) && searchParams.get(consts.baseData);
   if (baseDataFromParams) {

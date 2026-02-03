@@ -151,7 +151,6 @@ const GridBase = memo(({
     onListParamsChange,
     apiRef: propsApiRef,
     baseFilters,
-    defaultDataProp,
     ...props
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
@@ -395,7 +394,6 @@ const GridBase = memo(({
                                         : {}),
                                     dataRef
                                 }}
-                                defaultDataProp={defaultDataProp}
                                 {...params}
                                 autoHighlight
                             />
@@ -1036,8 +1034,7 @@ const GridBase = memo(({
                                 filterModel,
                                 setFilterModel,
                                 onPreferenceChange,
-                                toolbarItems,
-                                customExportConfig: props.customExportConfig
+                                toolbarItems
                             },
                             footer: {
                                 pagination: true,
@@ -1076,10 +1073,6 @@ const GridBase = memo(({
                         getDetailPanelContent={model.getDetailPanelContent ? (params) =>
                             model.getDetailPanelContent({
                                 ...params,
-                                additionalProps: {
-                                    overrideFileName: model.overrideFileName || '',
-                                    isRationalized: model.isRationalized || false
-                                },
                                 onRefresh: () => {
                                     // Close the expanded panel and refresh data
                                     setExpandedRowId(null);

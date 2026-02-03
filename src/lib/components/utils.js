@@ -107,7 +107,7 @@ const utils = {
 			if (numberTypes.includes(ele.type)) {
 				ele.type = 'numeric';
 			}
-			if (ele.type === 'select') {
+			if (ele.type === 'select' || ele.type === 'singleSelect') {
 				ele.type = 'string';
 			}
 			if ((Array.isArray(ele.value) && ele.value?.length) || (!Array.isArray(ele.value) && ele.value) || typeof ele.value === "boolean") {
