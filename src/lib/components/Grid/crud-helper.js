@@ -1,6 +1,7 @@
 import actionsStateProvider from "../useRouter/actions";
 import utils from "../utils";
 import request, { transport, HTTP_STATUS_CODES, DATA_PARSERS } from "./httpRequest";
+import dayjs from "dayjs";
 
 const dateDataTypes = ['date', 'dateTime'];
 const lookupDataTypes = ['singleSelect', 'radio', 'select', 'lookup'];
@@ -46,7 +47,7 @@ const processResponseData = async ({ responseData, model, dateColumns }) => {
                 const { field, keepLocal, keepLocalDate } = column;
                 if (record[field]) {
                     // Try to parse compact timestamp format first (handles various lengths)
-                    let parsedDate = utils.parseCompactTimestamp(record[field]);
+                    let parsedDate = dayjs(record[field]);
                     
                     // If not compact format, try standard Date parsing
                     if (!parsedDate) {

@@ -10,11 +10,9 @@ const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfig
     const theme = useTheme();
     const isError = formik.touched[field] && Boolean(formik.errors[field]);
     const isDisabled = mode !== 'copy' && fieldConfigs.disabled;
-    const { showLegend = true } = otherProps.column || {};
     return (
         <>
             <FormControl component="fieldset" error={isError}>
-                {showLegend && <FormLabel component="legend">{label}</FormLabel>}
                 {formik.values[field] !== undefined && (
                     <RadioGroup
                         row={orientation === "row"}
