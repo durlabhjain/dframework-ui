@@ -1178,9 +1178,9 @@ const GridBase = memo(({
                             },
                             pinnedColumns: pinnedColumns
                         }}
-                        getDetailPanelContent={getDetailPanelContent}
-                        detailPanelExpandedRowIds={detailPanelExpandedRowIds}
-                        onDetailPanelExpandedRowIdsChange={handleDetailPanelExpanded}
+                        getDetailPanelContent={typeof model.getDetailPanelContent === 'function' ? getDetailPanelContent : undefined}
+                        detailPanelExpandedRowIds={typeof model.getDetailPanelContent === 'function' ? detailPanelExpandedRowIds : undefined}
+                        onDetailPanelExpandedRowIdsChange={typeof model.getDetailPanelContent === 'function' ? handleDetailPanelExpanded : undefined}
                         localeText={localeText}
                         showToolbar={true}
                         columnHeaderHeight={columnHeaderHeight}
