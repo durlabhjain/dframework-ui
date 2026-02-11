@@ -859,3 +859,291 @@ const exampleModel = new UiModel({
 This will add a custom action button with an Article icon to each row. When clicked, it will navigate to the related document page for that row.
 
 **Note:** The `icon` property in `customActions` should be a string that maps to a supported icon name. For example, `"article"` will use the Article icon. If an unknown icon is provided, a default icon will be used.
+
+---
+
+# StateProvider (Framework & State Management)
+
+## Overview
+
+`StateProvider` is the centralized provider that manages both framework utilities and application state. It includes:
+- Loader management (simple on/off - calling methods control via try/finally blocks)
+- dayjs, i18n utilities  
+- Snackbar integration
+- App-level state (page title, user data, timezone, etc.)
+- API endpoint configuration
+
+## Setup
+
+Wrap your application with the required providers:
+
+```js
+import React from "react";
+import { StateProvider, SnackbarProvider } from "@durlabh/dframework-ui";
+
+export default function App() {
+  return (
+    <SnackbarProvider>
+      <StateProvider apiEndpoints={{ default: 'http://localhost:3000/api' }}>
+        {/* Your app components */}
+      </StateProvider>
+    </SnackbarProvider>
+  );
+}
+```
+
+**Important:** 
+- `SnackbarProvider` must wrap `StateProvider` (StateProvider depends on snackbar utilities)
+
+## Using StateProvider
+
+### Loader Management
+
+The loader is **automatically managed by CRUD helper functions** (getList, getRecord, saveRecord, deleteRecord, getLookups). Each CRUD function:
+1. Shows the loader at the start
+2. Wraps all async operations in a try/finally block
+3. Hides the loader in the finally block (guaranteed to run)
+
+The Grid and Form components display the loader state automatically.
+
+**CRUD functions handle loader lifecycle:**
+```js
+import { getList } from "@durlabh/dframework-ui/crud-helper";
+
+// CRUD functions automatically show/hide loader
+await getList({ 
+  model, 
+  gridColumns, 
+  setData, 
+  page, 
+  pageSize 
+});
+// Loader shown before request, hidden after (even on errors)
+```
+
+**For custom operations, use try/finally:**
+```js
+const { showLoader, hideLoader } = useStateContext();
+
+const myCustomOperation = async () => {
+  showLoader();
+  try {
+    await someAsyncOperation();
+    await anotherAsyncOperation();
+  } finally {
+    hideLoader(); // Always hidden, even on exceptions
+  }
+};
+```
+
+### Manual Loader Control (If Needed)
+
+For non-API operations, you can manually control the loader:
+
+```js
+import { useStateContext } from "@durlabh/dframework-ui";
+
+function MyComponent() {
+  const { isLoading, showLoader, hideLoader } = useStateContext();
+  
+  const processData = async () => {
+    showLoader();
+    try {
+      // Heavy processing...
+      await someHeavyOperation();
+    } finally {
+      hideLoader();
+    }
+  };
+  
+  return (
+    <div>
+      {isLoading && <p>Processing...</p>}
+      <button onClick={processData}>Process</button>
+    </div>
+  );
+}
+```
+
+### Accessing Snackbar
+
+Access snackbar for showing messages and errors:
+
+```js
+import { useStateContext } from "@durlabh/dframework-ui";
+
+function MyComponent() {
+  const { showMessage, showError } = useStateContext();
+  
+  const handleAction = () => {
+    showMessage('Success!', 'Operation completed');
+    // or
+    showError('Error!', 'Something went wrong');
+  };
+  
+  return <button onClick={handleAction}>Perform Action</button>;
+}
+```
+
+### App-Level State Management
+
+Use the provided setter methods for app-level state:
+
+```js
+import { useStateContext } from "@durlabh/dframework-ui";
+
+function MyComponent() {
+  const { 
+    setPageTitle, 
+    setUserData, 
+    setTimeZone, 
+    stateData 
+  } = useStateContext();
+  
+  useEffect(() => {
+    setPageTitle({ 
+      titleHeading: 'Dashboard', 
+      title: 'My Dashboard' 
+    });
+    setUserData({ name: 'John Doe', role: 'Admin' });
+    setTimeZone('America/New_York');
+  }, []);
+  
+  return <div>Welcome {stateData.userData?.name}</div>;
+}
+```
+
+### Accessing dayjs
+
+Access the configured dayjs instance with UTC and timezone plugins:
+
+```js
+import { useStateContext } from "@durlabh/dframework-ui";
+
+function MyComponent() {
+  const { dayjs } = useStateContext();
+  
+  const formattedDate = dayjs().format('YYYY-MM-DD');
+  const utcDate = dayjs().utc().format();
+  
+  return <div>Current date: {formattedDate}</div>;
+}
+```
+
+### Accessing i18n
+
+Access translation utilities directly:
+
+```js
+import { useStateContext } from "@durlabh/dframework-ui";
+
+function MyComponent() {
+  const { t, i18n } = useStateContext();
+  
+  return (
+    <div>
+      <h1>{t('welcome')}</h1>
+      <p>Current language: {i18n.language}</p>
+    </div>
+  );
+}
+```
+
+## API Reference
+
+### StateProvider Props
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `apiEndpoints` | `object` | API endpoint configuration (e.g., `{ default: 'http://api.example.com' }`) |
+| `children` | `ReactNode` | Child components |
+
+### useStateContext() Hook
+
+Returns an object with the following properties:
+
+Returns an object with the following properties:
+
+**Loader Management:**
+| Property | Type | Description |
+|----------|------|-------------|
+| `isLoading` | `boolean` | Current loading state |
+| `showLoader` | `() => void` | Function to manually show the loader |
+| `hideLoader` | `() => void` | Function to manually hide the loader |
+
+**Framework Utilities:**
+| Property | Type | Description |
+|----------|------|-------------|
+| `dayjs` | `object` | dayjs instance with UTC and timezone plugins |
+| `t` | `function` | Translation function from i18next |
+| `i18n` | `object` | i18n instance from react-i18next |
+| `showMessage` | `function` | Show a snackbar message |
+| `showError` | `function` | Show an error snackbar |
+
+**App-Level State:**
+| Property | Type | Description |
+|----------|------|-------------|
+| `stateData` | `object` | Application state (pageTitle, userData, locale, timeZone, etc.) |
+| `setPageTitle` | `function` | Set page title |
+| `setUserData` | `function` | Set user data |
+| `setLocale` | `function` | Set application locale |
+| `setTimeZone` | `function` | Set timezone |
+| `setDateTimeFormat` | `function` | Set date/time format |
+| `setModal` | `function` | Set modal state |
+| `setPageBackButton` | `function` | Set page back button |
+
+**API Utilities:**
+| Property | Type | Description |
+|----------|------|-------------|
+| `buildUrl` | `function` | Build API URLs |
+| `getApiEndpoint` | `function` | Get API endpoint by key |
+| `setApiEndpoint` | `function` | Set API endpoint |
+| `formatDate` | `function` | Format dates with timezone support |
+| `systemDateTimeFormat` | `function` | Get system date/time format |
+
+## State Management
+
+StateProvider uses individual setter methods for clean, type-safe state management:
+
+**Setting App-Level State:**
+```js
+const { setPageTitle, setUserData, setLocale, setTimeZone } = useStateContext();
+
+setPageTitle({ title: 'My Page' });
+setUserData(userData);
+setLocale('es');
+setTimeZone('America/New_York');
+```
+
+### Grid and Form Components
+
+Grid and Form components automatically use StateProvider for loader management. No changes are needed in your component code that uses these components.
+
+### Custom HTTP Requests
+
+When using `httpRequest` directly, loader management is automatic via CRUD functions:
+
+```js
+import request from '@durlabh/dframework-ui/httpRequest';
+
+// httpRequest is a pure transport layer - no loader management
+await request({
+  url: '/api/data',
+  params: { id: 1 }
+});
+
+// Loader is managed by CRUD functions
+import { getList } from '@durlabh/dframework-ui/crud-helper';
+getList({ ... }); // Shows/hides loader automatically
+```
+
+## Benefits
+
+1. **Automatic Loader Management**: Loader shows/hides automatically at the point of API call
+2. **Centralized Utilities**: dayjs, i18n, and snackbar available from a single context
+3. **Cleaner Code**: No need to pass showLoader/hideLoader as parameters
+3. **Better Performance**: Eliminates unnecessary re-renders from global state updates
+4. **Cleaner API**: More intuitive `showLoader()`/`hideLoader()` instead of dispatch actions
+5. **Type Safety**: Better TypeScript support with explicit function signatures
+
+---

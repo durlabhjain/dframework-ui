@@ -15,7 +15,6 @@ import FormLayout from "./field-mapper";
 import { useSnackbar } from "../SnackBar";
 import { DialogComponent } from "../Dialog";
 import { useStateContext, useRouter } from "../useRouter/StateProvider";
-import actionsStateProvider from "../useRouter/actions";
 import PageTitle from "../PageTitle";
 import utils, { getPermissions } from "../utils";
 import Relations from "./relations";
@@ -53,7 +52,7 @@ const Form = ({
   const formTitle = model.formTitle || model.title;
   const { navigate, getParams, useParams, pathname } = useRouter();
   const { relations = [] } = model;
-  const { dispatchData, stateData, buildUrl } = useStateContext();
+  const { stateData, buildUrl, setPageTitle: setPageTitleContext } = useStateContext();
   const params = useParams() || getParams;
   const { id: idWithOptions = "" } = params;
   const id = detailPanelId || idWithOptions.split("-")[consts.editIdIndex];
@@ -79,8 +78,9 @@ const Form = ({
     ? model.applyFieldConfig({ data, lookups })
     : defaultFieldConfigs;
   const gridApi = buildUrl(model.controllerType, model.api);
-  const { mode } = stateData.dataForm;
-  const userData = stateData.getUserData || {};
+  // Determine mode from URL pattern: "0-{id}" indicates copy mode
+  const mode = idWithOptions.includes('-') && idWithOptions.split('-')[0] === '0' ? 'copy' : '';
+  const userData = stateData.userData || {};
   const userDefinedPermissions = {
     add: true,
     edit: true,
@@ -133,11 +133,10 @@ const Form = ({
     getRecord({
       ...params,
       id: detailPanelId || (options.length > 1 ? options[consts.loadIdIndex] : id),
-      setActiveRecord,
-      dispatchData
+      setActiveRecord
     });
 
-  }, [id, idWithOptions, model, api, gridApi, detailPanelId, dispatchData]);
+  }, [id, idWithOptions, model, api, gridApi, detailPanelId]);
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -156,8 +155,7 @@ const Form = ({
         api: gridApi,
         values: values,
         setError: snackbar.showError,
-        model,
-        dispatchData
+        model
       })
         .then((success) => {
           if (!success) return;
@@ -227,12 +225,9 @@ const Form = ({
     if (linkColumn !== "") {
       breadcrumbs.push({ text: linkColumn });
     }
-    dispatchData({
-      type: actionsStateProvider.PAGE_TITLE_DETAILS,
-      payload: {
-        showBreadcrumbs: true,
-        breadcrumbs: breadcrumbs
-      }
+    setPageTitleContext({
+      showBreadcrumbs: true,
+      breadcrumbs: breadcrumbs
     });
   };
   const handleFormCancel = useCallback((event) => {

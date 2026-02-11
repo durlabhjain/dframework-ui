@@ -26,7 +26,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import PageTitle from '../PageTitle';
 import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
-import actionsStateProvider from '../useRouter/actions';
 import CustomDropdownMenu from './CustomDropdownMenu';
 import CustomToolbar from './CustomToolbar';
 import { getPermissions } from '../utils';
@@ -195,11 +194,11 @@ const GridBase = memo(({
     const dataRef = useRef(data);
     const showAddIcon = model.showAddIcon === true;
     const toLink = model.columns.filter(({ link }) => Boolean(link)).map(item => item.link);
-    const { stateData, dispatchData, formatDate, getApiEndpoint, buildUrl } = useStateContext();
+    const { stateData, formatDate, getApiEndpoint, buildUrl, isLoading, setPageTitle } = useStateContext();
     const { timeZone } = stateData;
     const effectivePermissions = useMemo(() => ({ ...constants.permissions, ...model.permissions, ...permissions }), [model.permissions, permissions]);
     const emptyIsAnyOfOperatorFilters = ["isEmpty", "isNotEmpty", "isAnyOf"];
-    const userData = stateData.getUserData || {};
+    const userData = stateData.userData || {};
     const documentField = model.columns.find(ele => ele.type === 'fileUpload')?.field || "";
     const userDefinedPermissions = { add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete };
     const { canAdd, canEdit, canDelete } = getPermissions({ userData, model, userDefinedPermissions });
@@ -319,16 +318,13 @@ const GridBase = memo(({
     }, []);
 
     useEffect(() => {
+        // Note: PASS_FILTERS_TO_HEADER was removed as component-specific state
+        // This functionality should be handled locally within the Grid component if needed
         if (props.isChildGrid || !hideTopFilters) {
             return;
         }
-        dispatchData({
-            type: actionsStateProvider.PASS_FILTERS_TO_HEADER, payload: {
-                filterButton: null,
-                hidden: { search: true, operation: true, export: true, print: true, filter: true }
-            }
-        });
-    }, []);
+        // TODO: If filter header communication is needed, implement using local state or props
+    }, [props.isChildGrid, hideTopFilters]);
 
     const createAction = useCallback(
         ({ key, title, icon, color = "primary", disabled, otherProps }) => (
@@ -565,7 +561,32 @@ const GridBase = memo(({
         if (additionalFilters) {
             filters.items = [...(filters.items || []), ...additionalFilters];
         }
-        extraParams = { ...extraParams, ...props.extraParams }; // Merge any custom params passed via component props into extraParams
+        
+        // Merge parentFilters and baseFilters into one parameter
+        const mergedBaseFilters = [];
+        if (Array.isArray(finalBaseFilters)) {
+            mergedBaseFilters.push(...finalBaseFilters);
+        }
+        if (Array.isArray(parentFilters)) {
+            mergedBaseFilters.push(...parentFilters);
+        }
+        
+        // Prepare extraParams with template and configFileName for pivot exports
+        const mergedExtraParams = {
+            ...extraParams,
+            ...props.extraParams, // Merge any custom params passed via component props
+        };
+        
+        // Add template and configFileName for pivot exports
+        if (isPivotExport) {
+            if (model.exportTemplate) {
+                mergedExtraParams.template = model.exportTemplate;
+            }
+            if (model.configFileName) {
+                mergedExtraParams.configFileName = model.configFileName;
+            }
+        }
+        
         const isValidFilters = !filters.items.length || filters.items.every(item => "value" in item && item.value !== undefined);
         if (!isValidFilters) return;
 
@@ -575,18 +596,13 @@ const GridBase = memo(({
             pageSize: !contentType ? pageSize : 1000000,
             sortModel,
             filterModel: filters,
-            controllerType: model.controllerType,
-            api: baseUrl,
             gridColumns,
             model,
-            parentFilters,
-            extraParams,
+            baseFilters: mergedBaseFilters,
+            api: baseUrl, // Pass api separately, not in extraParams
+            extraParams: mergedExtraParams,
             contentType,
-            columns,
-            template: isPivotExport ? model.exportTemplate : null,
-            configFileName: isPivotExport ? model.configFileName : null,
-            baseFilters: finalBaseFilters,
-            isElasticExport
+            columns
         };
         if (typeof onListParamsChange === 'function') {
             onListParamsChange(listParams);
@@ -595,10 +611,7 @@ const GridBase = memo(({
         return getList({
             ...listParams,
             setError: snackbar.showError,
-            setData,
-            dispatchData,
-            showFullScreenLoader,
-            history: navigate,
+            setData
         });
     };
 
@@ -613,18 +626,15 @@ const GridBase = memo(({
         }
         if (mode === "copy") {
             path += "0-" + id;
-            dispatchData({ type: 'UPDATE_FORM_MODE', payload: 'copy' });
-
         } else {
             path += id;
-            dispatchData({ type: 'UPDATE_FORM_MODE', payload: '' });
         }
         if (addUrlParamKey) {
             searchParams.set(addUrlParamKey, record[addUrlParamKey]);
             path += `?${searchParams.toString()}`;
         }
         navigate(path);
-    }, [setActiveRecord, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, dispatchData, getRecord]);
+    }, [setActiveRecord, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -776,8 +786,7 @@ const GridBase = memo(({
                 api: `${baseUrl}/updateMany`,
                 values: { items: selectedRecords },
                 setError: snackbar.showError,
-                model,
-                dispatchData
+                model
             });
 
             if (result) {
@@ -794,7 +803,7 @@ const GridBase = memo(({
             });
             setShowAddConfirmation(false);
         }
-    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, model.controllerType, selectionApi, backendApi, model, dispatchData, fetchData]);
+    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, model.controllerType, selectionApi, backendApi, model, fetchData]);
 
     const onAdd = useCallback(() => {
         if (selectionApi.length > 0) {
@@ -897,13 +906,11 @@ const GridBase = memo(({
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
             return;
         }
-        dispatchData({ type: actionsStateProvider.PAGE_TITLE_DETAILS, payload: { icon: "", titleHeading: model.pageTitle || model.title, title: model.title } });
+        setPageTitle({ icon: "", titleHeading: model.pageTitle || model.title, title: model.title });
         return () => {
-            dispatchData({
-                type: actionsStateProvider.PAGE_TITLE_DETAILS, payload: null
-            });
+            setPageTitle(null);
         };
-    }, []);
+    }, [setPageTitle, model.pageTitle, model.title]);
 
     const updateFilters = useCallback((e) => {
         const { items } = e;
@@ -1177,7 +1184,7 @@ const GridBase = memo(({
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
                         checkboxSelection={forAssignment}
-                        loading={!data.records || stateData.loaderOpen}
+                        loading={!data.records || isLoading}
                         className="pagination-fix"
                         onCellClick={onCellClickHandler}
                         onCellDoubleClick={onCellDoubleClick}

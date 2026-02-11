@@ -1,12 +1,10 @@
-import actionsStateProvider from "../useRouter/actions";
-import request, { DATA_PARSERS } from "./httpRequest";
+import request, { DATA_PARSERS, getErrorMessage } from "./httpRequest";
+import { getStateProviderInstance } from "../useRouter/StateProvider";
 
 const dateDataTypes = ['date', 'dateTime'];
 const lookupDataTypes = ['singleSelect'];
 
 const isLocalTime = (dateValue) => new Date().getTimezoneOffset() === new Date(dateValue).getTimezoneOffset();
-
-const getErrorMessage = (response) => response?.message || response?.info || response?.error;
 
 function shouldApplyFilter(filter) {
     const { operator, value, type } = filter;
@@ -19,144 +17,146 @@ function shouldApplyFilter(filter) {
     return isUnaryOperator || hasValidValue;
 }
 
-const getList = async ({ gridColumns, setData, page, pageSize, sortModel, filterModel, api, parentFilters, action = 'list', setError, extraParams, contentType, columns, controllerType = 'node', template = null, configFileName = null, dispatchData, showFullScreenLoader = false, model, baseFilters = null, isElasticExport, history = null }) => {
-    if (!contentType) {
-        if (showFullScreenLoader) {
-            dispatchData({ type: actionsStateProvider.UPDATE_LOADER_STATE, payload: true });
-        }
+const getList = async ({ gridColumns, setData, page, pageSize, sortModel, filterModel, baseFilters, action = 'list', setError, extraParams = {}, contentType, columns, model, api }) => {
+    // Get framework instance for loader management
+    const framework = getStateProviderInstance();
+    const shouldShowLoader = framework?.showLoader && framework?.hideLoader;
+    
+    // Show loader at start
+    if (shouldShowLoader) {
+        framework.showLoader();
     }
+    
+    try {
+        // Derive API and controllerType from model
+        const finalApi = api || model.api;
+        const controllerType = model.controllerType || 'node';
+        
+        // isElasticExport is true only if action is 'export' AND model.isElasticExport is true
+        const isElasticExport = action === 'export' && model.isElasticExport === true;
 
-    const lookups = [];
-    const lookupWithDeps = []; // for backward compatibility having two lookups arrays
-    const dateColumns = [];
-    gridColumns.forEach(({ lookup, type, field, keepLocal = false, keepLocalDate, filterable = true, dependsOn }) => {
-        if (dateDataTypes.includes(type)) {
-            dateColumns.push({ field, keepLocal, keepLocalDate });
-        }
-        if (!lookup) {
-            return;
-        }
-        if (!lookups.includes(lookup) && lookupDataTypes.includes(type) && filterable) {
-            lookups.push(lookup);
-            lookupWithDeps.push({ lookup, dependsOn });
-        }
-    });
-
-    const where = [];
-    if (filterModel?.items?.length) {
-        filterModel.items.forEach(filter => {
-            if (shouldApplyFilter(filter)) {
-                const { field, operator, filterField } = filter;
-                let { value } = filter;
-                const column = gridColumns.filter((item) => item?.field === filter.field);
-                const type = column[0]?.type;
-                if (type === 'boolean') {
-                    value = (value === 'true' || value === true) ? 1 : 0;
-                } else if (type === 'number') {
-                    value = Array.isArray(value) ? value.filter(e => e) : value;
-                }
-                value = filter.filterValues || value;
-                where.push({
-                    field: filterField || field,
-                    operator,
-                    value,
-                    type
-                });
+        const lookups = [];
+        const lookupWithDeps = []; // for backward compatibility having two lookups arrays
+        const dateColumns = [];
+        gridColumns.forEach(({ lookup, type, field, keepLocal = false, keepLocalDate, filterable = true, dependsOn }) => {
+            if (dateDataTypes.includes(type)) {
+                dateColumns.push({ field, keepLocal, keepLocalDate });
+            }
+            if (!lookup) {
+                return;
+            }
+            if (!lookups.includes(lookup) && lookupDataTypes.includes(type) && filterable) {
+                lookups.push(lookup);
+                lookupWithDeps.push({ lookup, dependsOn });
             }
         });
-    }
-    if (parentFilters) {
-        where.push(...parentFilters);
-    }
 
-    if (baseFilters) {
-        where.push(...baseFilters);
-    }
-    const requestData = {
-        start: page * pageSize,
-        limit: isElasticExport ? model.exportSize : pageSize,
-        ...extraParams,
-        logicalOperator: filterModel.logicOperator,
-        sort: sortModel.map(sort => (sort.filterField || sort.field) + ' ' + sort.sort).join(','),
-        where,
-        isElasticExport,
-        model: model.module,
-        fileName: model.overrideFileName
-    };
-
-    if (lookups.length) {
-        requestData.lookups = lookups.join(',');
-    }
-
-    if (lookupWithDeps.length) {
-        requestData.lookupWithDeps = JSON.stringify(lookupWithDeps);
-    }
-
-    if (model?.limitToSurveyed) {
-        requestData.limitToSurveyed = model?.limitToSurveyed;
-    }
-
-    const headers = {};
-    let url = controllerType === 'cs' ? `${api}?action=${action}&asArray=0` : `${api}/${action}`;
-
-    if (template !== null) {
-        url += `&template=${template}`;
-    }
-    if (configFileName !== null) {
-        url += `&configFileName=${configFileName}`;
-    }
-    if (contentType) {
-        const form = document.createElement("form");
-        requestData.responseType = contentType;
-        requestData.columns = columns;
-        requestData.userTimezoneOffset = -new Date().getTimezoneOffset(); // Negate to get the correct offset for conversion
-        // for manipulating the request payload before sending the request.
-        if (typeof model.createRequestPayload === 'function') {
-            await model.createRequestPayload(requestData, { where, sortModel, page, pageSize, parentFilters, action, url, dataParsers: DATA_PARSERS, model });
-        }
-        form.setAttribute("method", "POST");
-        form.setAttribute("id", "exportForm");
-        form.setAttribute("target", "_blank");
-        if (template === null) {
-            for (const key in requestData) {
-                let v = requestData[key];
-                if (v === undefined || v === null) {
-                    continue;
-                } else if (typeof v !== 'string') {
-                    v = JSON.stringify(v);
+        const where = [];
+        if (filterModel?.items?.length) {
+            filterModel.items.forEach(filter => {
+                if (shouldApplyFilter(filter)) {
+                    const { field, operator, filterField } = filter;
+                    let { value } = filter;
+                    const column = gridColumns.filter((item) => item?.field === filter.field);
+                    const type = column[0]?.type;
+                    if (type === 'boolean') {
+                        value = (value === 'true' || value === true) ? 1 : 0;
+                    } else if (type === 'number') {
+                        value = Array.isArray(value) ? value.filter(e => e) : value;
+                    }
+                    value = filter.filterValues || value;
+                    where.push({
+                        field: filterField || field,
+                        operator,
+                        value,
+                        type
+                    });
                 }
-                const hiddenTag = document.createElement('input');
-                hiddenTag.type = "hidden";
-                hiddenTag.name = key;
-                hiddenTag.value = v;
-                form.append(hiddenTag);
-            }
+            });
         }
-        form.setAttribute('action', requestData.url || url);
-        document.body.appendChild(form);
-        form.submit();
-        setTimeout(() => {
-            document.getElementById("exportForm").remove();
-        }, 3000);
-        return;
-    }
-    try {
+        
+        // Add baseFilters if present (already includes parentFilters merged in Grid component)
+        if (baseFilters && Array.isArray(baseFilters)) {
+            where.push(...baseFilters);
+        }
+
+        const requestData = {
+            start: page * pageSize,
+            limit: isElasticExport ? (model.exportSize || 1000000) : pageSize,
+            ...extraParams,
+            logicalOperator: filterModel.logicOperator,
+            sort: sortModel.map(sort => (sort.filterField || sort.field) + ' ' + sort.sort).join(','),
+            where,
+            isElasticExport,
+            model: model.module,
+            fileName: model.overrideFileName
+        };
+
+        if (lookups.length) {
+            requestData.lookups = lookups.join(',');
+        }
+
+        if (lookupWithDeps.length) {
+            requestData.lookupWithDeps = JSON.stringify(lookupWithDeps);
+        }
+
+        if (model?.limitToSurveyed) {
+            requestData.limitToSurveyed = model?.limitToSurveyed;
+        }
+
+        const headers = {};
+        let url = controllerType === 'cs' ? `${finalApi}?action=${action}&asArray=0` : `${finalApi}/${action}`;
+
+        if (contentType) {
+            const form = document.createElement("form");
+            requestData.responseType = contentType;
+            requestData.columns = columns;
+            requestData.userTimezoneOffset = -new Date().getTimezoneOffset(); // Negate to get the correct offset for conversion
+            // for manipulating the request payload before sending the request.
+            if (typeof model.createRequestPayload === 'function') {
+                await model.createRequestPayload(requestData, { where, sortModel, page, pageSize, baseFilters, action, url, dataParsers: DATA_PARSERS, model });
+            }
+            form.setAttribute("method", "POST");
+            form.setAttribute("id", "exportForm");
+            form.setAttribute("target", "_blank");
+            if (!extraParams.template) {
+                for (const key in requestData) {
+                    let v = requestData[key];
+                    if (v === undefined || v === null) {
+                        continue;
+                    } else if (typeof v !== 'string') {
+                        v = JSON.stringify(v);
+                    }
+                    const hiddenTag = document.createElement('input');
+                    hiddenTag.type = "hidden";
+                    hiddenTag.name = key;
+                    hiddenTag.value = v;
+                    form.append(hiddenTag);
+                }
+            }
+            form.setAttribute('action', requestData.url || url);
+            document.body.appendChild(form);
+            form.submit();
+            setTimeout(() => {
+                document.getElementById("exportForm").remove();
+            }, 3000);
+            return;
+        }
+
         const reqParams = {
             url,
             additionalHeaders: {
                 "Content-Type": "application/json",
                 ...headers
             },
-            dispatchData,
             jsonPayload: true,
             params: requestData,
-            dataParser: DATA_PARSERS.json,
-            history
+            dataParser: DATA_PARSERS.json
         };
 
         // for manipulating the request payload before sending the request.
         if (typeof model.createRequestPayload === 'function') {
-            await model.createRequestPayload(reqParams, { where, sortModel, page, pageSize, parentFilters, action, dataParsers: DATA_PARSERS, model });
+            await model.createRequestPayload(reqParams, { where, sortModel, page, pageSize, baseFilters, action, dataParsers: DATA_PARSERS, model });
         }
         const response = await request(reqParams);
 
@@ -173,7 +173,6 @@ const getList = async ({ gridColumns, setData, page, pageSize, sortModel, filter
             setData(resData);
             return;
         }
-
 
         response.records.forEach(record => {
             dateColumns.forEach(column => {
@@ -199,35 +198,49 @@ const getList = async ({ gridColumns, setData, page, pageSize, sortModel, filter
         setData(response);
     } catch (error) {
         setError('Network failure or server unreachable. Please try again.');
+    } finally {
+        // Always hide loader in finally block
+        if (shouldShowLoader) {
+            framework.hideLoader();
+        }
     }
 };
 
-const getRecord = async ({ api, id, setActiveRecord, model, parentFilters, where = {}, setError, dispatchData }) => {
-    api = api || model.api;
-    const searchParams = new URLSearchParams();
-    const url = `${api}/${id === undefined || id === null ? '-' : id}`;
-    const lookupsToFetch = [];
-    const fields = model.formDef || model.columns;
-    fields?.forEach(field => {
-        if (field.lookup && !lookupsToFetch.includes(field.lookup) && !field.dependsOn) {
-            lookupsToFetch.push(field.lookup);
-        }
-    });
-    searchParams.set("lookups", lookupsToFetch);
-    if (where && Object.keys(where)?.length) {
-        searchParams.set("where", JSON.stringify(where));
+const getRecord = async ({ api, id, setActiveRecord, model, parentFilters, where = {}, setError }) => {
+    // Get framework instance for loader management
+    const framework = getStateProviderInstance();
+    const shouldShowLoader = framework?.showLoader && framework?.hideLoader;
+    
+    // Show loader at start
+    if (shouldShowLoader) {
+        framework.showLoader();
     }
-    const requestData = {
-        url: `${url}?${searchParams.toString()}`,
-        additionalParams: { method: 'GET' },
-        dispatchData,
-        jsonPayload: true
-    };
-
-    if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { id, parentFilters, model, where, api, action: 'load', dataParsers: DATA_PARSERS });
-    }
+    
     try {
+        api = api || model.api;
+        const searchParams = new URLSearchParams();
+        const url = `${api}/${id === undefined || id === null ? '-' : id}`;
+        const lookupsToFetch = [];
+        const fields = model.formDef || model.columns;
+        fields?.forEach(field => {
+            if (field.lookup && !lookupsToFetch.includes(field.lookup) && !field.dependsOn) {
+                lookupsToFetch.push(field.lookup);
+            }
+        });
+        searchParams.set("lookups", lookupsToFetch);
+        if (where && Object.keys(where)?.length) {
+            searchParams.set("where", JSON.stringify(where));
+        }
+        const requestData = {
+            url: `${url}?${searchParams.toString()}`,
+            additionalParams: { method: 'GET' },
+            jsonPayload: true
+        };
+
+        if (typeof model.createRequestPayload === 'function') {
+            await model.createRequestPayload(requestData, { id, parentFilters, model, where, api, action: 'load', dataParsers: DATA_PARSERS });
+        }
+        
         const response = await request(requestData);
         if (response?.error || response?.success === false) {
             const errorMessage = getErrorMessage(response);
@@ -254,6 +267,11 @@ const getRecord = async ({ api, id, setActiveRecord, model, parentFilters, where
         setActiveRecord({ id, title: title, record: { ...defaultValues, ...record, ...parentFilters }, lookups });
     } catch (error) {
         setError('Could not load record', error.message || error.toString());
+    } finally {
+        // Always hide loader in finally block
+        if (shouldShowLoader) {
+            framework.hideLoader();
+        }
     }
 };
 
@@ -287,7 +305,7 @@ const deleteRecord = async function ({ id, api, setError, model }) {
     return result;
 };
 
-const saveRecord = async function ({ id, api, values, setError, model, dispatchData }) {
+const saveRecord = async function ({ id, api, values, setError, model }) {
     let url, method;
 
     if (id !== 0) {
@@ -305,8 +323,7 @@ const saveRecord = async function ({ id, api, values, setError, model, dispatchD
         additionalHeaders: {
             'Content-Type': 'application/json'
         },
-        jsonPayload: true,
-        dispatchData
+        jsonPayload: true
     };
 
     if (typeof model.createRequestPayload === 'function') {
@@ -329,18 +346,28 @@ const saveRecord = async function ({ id, api, values, setError, model, dispatchD
 };
 
 const getLookups = async ({ api, setActiveRecord, model, setError, lookups, scopeId, reqData }) => {
-    api = api || model.api;
-    const searchParams = new URLSearchParams();
-    const url = `${api}/lookups`;
-    searchParams.set("lookups", lookups);
-    searchParams.set("scopeId", scopeId);
-    const requestData = {
-        url: `${url}?${searchParams.toString()}`,
-        additionalParams: { method: 'GET' },
-        jsonPayload: true,
-        ...reqData
-    };
+    // Get framework instance for loader management
+    const framework = getStateProviderInstance();
+    const shouldShowLoader = framework?.showLoader && framework?.hideLoader;
+    
+    // Show loader at start
+    if (shouldShowLoader) {
+        framework.showLoader();
+    }
+    
     try {
+        api = api || model.api;
+        const searchParams = new URLSearchParams();
+        const url = `${api}/lookups`;
+        searchParams.set("lookups", lookups);
+        searchParams.set("scopeId", scopeId);
+        const requestData = {
+            url: `${url}?${searchParams.toString()}`,
+            additionalParams: { method: 'GET' },
+            jsonPayload: true,
+            ...reqData
+        };
+        
         if(typeof model.createRequestPayload === 'function') {
             await model.createRequestPayload(requestData, { model, lookups, scopeId, dataParsers: DATA_PARSERS, action: 'lookups', api });
         }
@@ -359,6 +386,11 @@ const getLookups = async ({ api, setActiveRecord, model, setError, lookups, scop
         setActiveRecord(response);
     } catch (error) {
         setError('Could not load lookups', error.message || error.toString());
+    } finally {
+        // Always hide loader in finally block
+        if (shouldShowLoader) {
+            framework.hideLoader();
+        }
     }
 };
 export {
