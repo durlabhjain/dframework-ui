@@ -4,7 +4,7 @@
 
 ### Removed Backward Compatibility
 
-The framework has removed all backward compatibility aliases and features. This is a major version release with breaking changes.
+The framework has removed backward compatibility aliases and the dispatch pattern. This is a major version release with breaking changes.
 
 #### Breaking Changes:
 
@@ -83,14 +83,14 @@ The framework has removed all backward compatibility aliases and features. This 
    - Loader managed by CRUD helper functions (getList, getRecord, saveRecord, deleteRecord, getLookups)
    - Each CRUD function wraps operations in try/finally blocks to guarantee loader is hidden
    - httpRequest is a pure HTTP transport layer without loader management
-   - **For custom operations**: Use showLoader() before async operations, hideLoader() in finally block
+   - **For custom operations**: Use showLoader() before async operations, showLoader(false) in finally block
    
    ```js
    // CRUD functions handle loader automatically
    await getList({ model, gridColumns, setData, page, pageSize });
    
    // Custom operations - use try/finally pattern
-   const { showLoader, hideLoader } = useStateContext();
+   const { showLoader } = useStateContext();
    
    const myOperation = async () => {
      showLoader();
@@ -98,7 +98,7 @@ The framework has removed all backward compatibility aliases and features. This 
        await asyncOperation1();
        await asyncOperation2();
      } finally {
-       hideLoader(); // Always hidden, even on errors
+       showLoader(false); // Always hidden, even on errors
      }
    };
    ```
@@ -106,6 +106,10 @@ The framework has removed all backward compatibility aliases and features. This 
 8. **State Management**
    - Uses individual useState calls for simplicity (no useReducer)
    - Direct setter methods only - no dispatch pattern
+
+9. **API Endpoints Keys**
+  - File upload and media now use `upload` and `media` keys in `apiEndpoints`
+  - Remove legacy keys like `uploadApi` and `mediaApi`
 
 #### Migration Guide:
 
@@ -128,6 +132,7 @@ The framework has removed all backward compatibility aliases and features. This 
   </StateProvider>
 </SnackbarProvider>
 ```
+---
 
 **Step 2: Update State Access**
 
@@ -135,7 +140,7 @@ The framework has removed all backward compatibility aliases and features. This 
 // Old
 const { stateData } = useStateContext();
 const locale = stateData.dataLocalization;
-const userData = stateData.getUserData;
+const userData = stateData.userData;
 const pageTitle = stateData.pageTitleDetails;
 
 // New (required)
@@ -179,10 +184,7 @@ const { showLoader } = useStateContext();
 
 #### Non-Breaking Changes:
 
-- Grid and Form components work without changes
-- `useFramework()` is an alias for `useStateContext()`
-- `FrameworkProvider` is an alias for `StateProvider`
-- All existing code continues to work with aliases
+- Grid and Form components work without changes if they only use the new StateProvider API
 
 #### Internal Implementation Change (v1.0.7):
 
@@ -208,7 +210,7 @@ The loader management system was refactored to use automatic loader management a
 
 1. **Automatic Loader Management**
    - Loader is now automatically managed by `httpRequest`
-   - No need to pass `showLoader`, `hideLoader`, or `dispatchData`
+   - No need to pass `showLoader`, or `dispatchData`
    - Loader shows before request and hides in finally block
 
 5. **getErrorMessage Utility**
@@ -243,7 +245,7 @@ function App() {
 }
 ```
 
-**Step 2: Remove showLoader/hideLoader from HTTP Requests**
+**Step 2: Remove showLoader from HTTP Requests**
 
 If you're using `httpRequest` directly, remove the loader parameters:
 
@@ -278,10 +280,9 @@ dispatchData({ type: actionsStateProvider.UPDATE_LOADER_STATE, payload: false })
 // After
 import { useFramework } from '@durlabh/dframework-ui';
 
-const { showLoader, hideLoader } = useFramework();
+const { showLoader } = useFramework();
 showLoader();
 // ... do work
-hideLoader();
 ```
 
 **Step 4: Update Loader State Checks**
@@ -315,3 +316,6 @@ const { isLoading } = useFramework();
 - In `updateFilters`, removed CoolR specifc code, `OrderSuggestionHistoryFields`
 - In `onCellClickHandler`, removed custom code for isAcostaController
 - In  `GridBase` removed custom code for `isOrderDetailModalOpen`.
+- Consolidated list/export request setup into `fetchData` to remove duplicate logic from `handleExport`.
+
+---

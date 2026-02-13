@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState, useCallback, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useRef, useState, useCallback, useMemo } from 'react';
 import { locales } from '../mui/locale/localization';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -44,11 +44,11 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   }
 
   function getApiEndpoint(key) {
-    return apiEndpoints.current[key];
+    return apiEndpoints.current[key || "default"] || '';
   }
 
-  function buildUrl(controllerType, url) {
-    const baseUrl = apiEndpoints.current[controllerType || "default"] || '';
+  function buildUrl(url, endpoint) {
+    const baseUrl = apiEndpoints.current[endpoint || "default"] || '';
     return `${baseUrl}${url}`;
   }
 
@@ -56,17 +56,10 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
    * Show loader - simple boolean toggle
    * Calling methods should wrap all async operations in try/finally blocks
    */
-  const showLoader = useCallback(() => {
-    setIsLoading(true);
+  const showLoader = useCallback((flag = true) => {
+    setIsLoading(flag);
   }, []);
 
-  /**
-   * Hide loader - simple boolean toggle
-   * Should be called in finally blocks to ensure loader is always hidden
-   */
-  const hideLoader = useCallback(() => {
-    setIsLoading(false);
-  }, []);
 
   /**
    * Returns the system date and/or time format string based on user preferences and options.
@@ -200,7 +193,6 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     // Loader management
     isLoading,
     showLoader,
-    hideLoader,
     
     // Snackbar utilities
     showMessage: snackbar?.showMessage || snackbarWarning,
@@ -229,14 +221,8 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     setTimeZone,
     setDateTimeFormat,
     setModal
-  }), [stateData, isLoading, showLoader, hideLoader, t, i18n, snackbar, 
+  }), [stateData, isLoading, showLoader, t, i18n, snackbar, 
        setLocale, setPageTitle, setPageBackButton, setUserData, setTimeZone, setDateTimeFormat, setModal]);
-
-  // Store instance for non-React functions
-  useEffect(() => {
-    setStateProviderInstance(contextValue);
-    return () => setStateProviderInstance(null);
-  }, [contextValue]);
 
   return (
     <StateContext.Provider value={contextValue}>
@@ -257,25 +243,6 @@ const useStateContext = () => {
     throw new Error('useStateContext must be used within a StateProvider');
   }
   return context;
-};
-
-// Store state provider instance for use in non-React functions
-let stateProviderInstance = null;
-
-/**
- * Internal function to set state provider instance
- * Called automatically by StateProvider
- */
-export const setStateProviderInstance = (instance) => {
-  stateProviderInstance = instance;
-};
-
-/**
- * Get state provider instance for use in non-React functions
- * This allows httpRequest and other utility functions to access framework features
- */
-export const getStateProviderInstance = () => {
-  return stateProviderInstance;
 };
 
 export { StateProvider, useStateContext, useRouter, RouterProvider };

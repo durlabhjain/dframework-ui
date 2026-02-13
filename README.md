@@ -15,21 +15,42 @@ In Dframework we have create Multple Component for our Use
 
 ```js
 import React from "react";
-import { SnackbarProvider } from "@durlabh/dfamework-ui";
+import { SnackbarProvider } from "@durlabh/dframework-ui";
 export default function App() {
   return (
-    <SnackbarProvider SnackbarProps={{ autoHideDuration: 1000 }}>
+    <SnackbarProvider>
       ******************* Import Your Component ********************
     </SnackbarProvider>
   );
 }
 ```
 
+# Provider Setup (Required)
+
+Wrap your app with `SnackbarProvider` and `StateProvider`.
+
+```js
+import React from "react";
+import { SnackbarProvider, StateProvider } from "@durlabh/dframework-ui";
+
+export default function App() {
+  return (
+    <SnackbarProvider>
+      <StateProvider apiEndpoints={{ default: "/api/", upload: "/upload", media: "/media" }}>
+        ******************* Import Your Component ********************
+      </StateProvider>
+    </SnackbarProvider>
+  );
+}
+```
+
+The keys you define in `apiEndpoints` (like `default`, `upload`, `media`) are used with `buildUrl(url, endpointKey)` to select which base URL to use for a given request.
+
 ## Then use in Your Project
 
 ```js
 import React from "react";
-import { useSnackbar } from "@durlabh/dfamework-ui";
+import { useSnackbar } from "@durlabh/dframework-ui";
 export default function App() {
   const snac = useSnackbar();
   return (
@@ -53,7 +74,7 @@ export default function App() {
 # How we will use the Dialog Component
 
 ```js
-import {DialogComponent} from '@durlabh/dfamework-ui';
+import {DialogComponent} from '@durlabh/dframework-ui';
 import React from 'react'
 import
 export default function App() {
@@ -71,7 +92,7 @@ export default function App() {
 
 ```js
 import React from "react";
-import { UiModel } from "./lib/components/Grid/ui-models";
+import { UiModel } from "@durlabh/dframework-ui";
 export default function App() {
   const surveyModel = new UiModel({
     title: "Questionnaires",
@@ -109,7 +130,7 @@ export default function App() {
 
 ```js
 import React from "react";
-import { UiModel } from "./lib/components/Grid/ui-models";
+import { UiModel } from "@durlabh/dframework-ui";
 export default function App() {
   const surveyModel = new UiModel({
     title: "Questionnaires",
@@ -151,7 +172,7 @@ export default function App() {
 | ---------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------------ |
 | `title`                | `string`            | The title of the grid.                                                                                                                                                                                                                                                                                                                                                                                                                                                             | -                 | Yes          |
 | `columns`              | `array`             | The list of column definitions for the grid.  [Column Properties Table](#column-properties-table)                                                                                                                                                                                                                                                                                                                                                                                  | -                 | Yes          |
-| `formTitle`            | `string`            | Title used in the form layout.                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `title`           | No           |  | `title` | No |
+| `formTitle`            | `string`            | Title used in the form layout.                                                                                                                                                                                                                                                                                                                                                                                                                                                     | `title`           | No           |
 | `gridSubTitle`         | `string`            | Subtitle displayed below the grid title.                                                                                                                                                                                                                                                                                                                                                                                                                                           | -                 | No           |
 | `api`                  | `string`            | The API endpoint to fetch grid data.                                                                                                                                                                                                                                                                                                                                                                                                                                               | `title`           | No           |
 | `idProperty`           | `string`            | Specifies the unique identifier for grid rows.                                                                                                                                                                                                                                                                                                                                                                                                                                     | `api\|\|title`    | No           |
@@ -162,9 +183,9 @@ export default function App() {
 | `readOnly`             | `boolean`           | When `readOnly` is enabled, users won’t be able to open the edit form by double-clicking on the grid, and the action buttons will be hidden.                                                                                                                                                                                                                                                                                                                                       | `false`           | No           |
 | `joinColumn`           | `string`            | Specifies the column used for joining data with a parent grid.                                                                                                                                                                                                                                                                                                                                                                                                                     | -                 | No           |
 | `standard`             | `object \| boolean` | The standard property defines which audit columns appear in the grid. If set to true, all sub-properties will be true; if set to false, all sub-properties will be false. If the user wishes to customize this behavior by enabling or disabling certain columns, they can pass an object. Each key represents a column, which is enabled when set to true and hidden when set to false. See the [Standard Property Columns Table](#standard-property-columns-table ) for details. | `true`            | No           |
-| `controllerType`       | `string`            | Specifies the type of controller. Use "cs" for a .NET API. If no value is provided, it defaults to a Node.js API.                                                                                                                                                                                                                                                                                                                                                                  | Node.js API       | No           |
-| `exportTemplate`             | `string`            | Template configuration name for exporting, templates are stored inside `emailTemplates` directory at root of the project. eg. `exportTemplate: "alert-notification"`                                                                                                                                                                                                                                                                                                                                                                                                                                            | -                 | No           |
-| `pivotApi`             | `string`            | API endpoint for pivot-specific data.                                                                                                                                                                                                                                                                                                                                                                                                                                              | -                 | No           |
+| `exportTemplate`       | `string`            | Template configuration name for pivot export. Templates are stored inside `emailTemplates` at the project root. Example: `exportTemplate: "alert-notification"`.                                                                                                                                                                                                                                                                                                                    | -                 | No           |
+| `configFileName`       | `string`            | Optional config file name passed with pivot export requests.                                                                                                                                                                                                                                                                                                                                                                                                                       | -                 | No           |
+| `pivotApi`             | `string`            | API endpoint used for pivot export requests.                                                                                                                                                                                                                                                                                                                                                                                                                                       | -                 | No           |
 | `preferenceId`         | `string`            | Identifier for saved grid preferences.                                                                                                                                                                                                                                                                                                                                                                                                                                             | -                 | No           |
 | `defaultPreferenceEnums` | `object`            | Enumerations for specific table preferences. [Table Preference Enums Example](./docs/defaultPreferenceEnums.md)                                                                                                                                                                                                                                                                                                                                                                | -                 | No           |
 | `showAddIcon`          | `boolean`           | Indicates if the "Add" button icon should be displayed.                                                                                                                                                                                                                                                                                                                                                                                                                            | `false`            | No           |

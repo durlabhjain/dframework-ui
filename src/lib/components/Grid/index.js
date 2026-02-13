@@ -17,7 +17,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { useMemo, useEffect, memo, useRef, useState, useCallback } from 'react';
 import { useSnackbar } from '../SnackBar/index';
 import { DialogComponent } from '../Dialog/index';
-import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
+import { getList, exportList, getRecord, deleteRecord, saveRecord } from './crud-helper';
 import { Footer } from './footer';
 import template from './template';
 import { Tooltip, Box } from "@mui/material";
@@ -194,7 +194,8 @@ const GridBase = memo(({
     const dataRef = useRef(data);
     const showAddIcon = model.showAddIcon === true;
     const toLink = model.columns.filter(({ link }) => Boolean(link)).map(item => item.link);
-    const { stateData, formatDate, getApiEndpoint, buildUrl, isLoading, setPageTitle } = useStateContext();
+    const { stateData, formatDate, getApiEndpoint, buildUrl, setPageTitle } = useStateContext();
+    const [isLoading, setIsLoading] = useState(false);
     const { timeZone } = stateData;
     const effectivePermissions = useMemo(() => ({ ...constants.permissions, ...model.permissions, ...permissions }), [model.permissions, permissions]);
     const emptyIsAnyOfOperatorFilters = ["isEmpty", "isNotEmpty", "isAnyOf"];
@@ -543,14 +544,11 @@ const GridBase = memo(({
     }, [gridColumns]);
 
 
-    const fetchData = (action = "list", extraParams = {}, contentType, columns, isPivotExport, isElasticExport) => {
+    const fetchData = async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
         const { pageSize, page } = paginationModel;
+        const isExportRequest = Boolean(contentType);
 
-        const baseUrl =  buildUrl(model.controllerType, isPivotExport ? model.pivotApi : backendApi);
-
-        if (assigned || available) {
-            extraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(",") : selected;
-        }
+        const baseUrl = buildUrl(isPivotExport ? model.pivotApi : backendApi);
 
         const filters = { ...filterModel };
         const finalBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
@@ -561,7 +559,7 @@ const GridBase = memo(({
         if (additionalFilters) {
             filters.items = [...(filters.items || []), ...additionalFilters];
         }
-        
+
         // Merge parentFilters and baseFilters into one parameter
         const mergedBaseFilters = [];
         if (Array.isArray(finalBaseFilters)) {
@@ -570,12 +568,16 @@ const GridBase = memo(({
         if (Array.isArray(parentFilters)) {
             mergedBaseFilters.push(...parentFilters);
         }
-        
+
         // Prepare extraParams with template and configFileName for pivot exports
         const mergedExtraParams = {
             ...extraParams,
             ...props.extraParams, // Merge any custom params passed via component props
         };
+
+        if (assigned || available) {
+            mergedExtraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(",") : selected;
+        }
         
         // Add template and configFileName for pivot exports
         if (isPivotExport) {
@@ -586,33 +588,43 @@ const GridBase = memo(({
                 mergedExtraParams.configFileName = model.configFileName;
             }
         }
-        
+
         const isValidFilters = !filters.items.length || filters.items.every(item => "value" in item && item.value !== undefined);
         if (!isValidFilters) return;
 
         const listParams = {
             action,
-            page: !contentType ? page : 0,
-            pageSize: !contentType ? pageSize : 1000000,
+            page: isExportRequest ? 0 : page,
+            pageSize: isExportRequest ? 1000000 : pageSize,
             sortModel,
             filterModel: filters,
             gridColumns,
             model,
             baseFilters: mergedBaseFilters,
-            api: baseUrl, // Pass api separately, not in extraParams
-            extraParams: mergedExtraParams,
-            contentType,
-            columns
+            api: baseUrl,
+            extraParams: mergedExtraParams
         };
         if (typeof onListParamsChange === 'function') {
             onListParamsChange(listParams);
         }
         apiRef.current.listParams = listParams;
-        return getList({
-            ...listParams,
-            setError: snackbar.showError,
-            setData
-        });
+        setIsLoading(true);
+        try {
+            if (!isExportRequest) {
+                return await getList({
+                    ...listParams,
+                    setError: snackbar.showError,
+                    setData
+                });
+            }
+            return exportList({
+                ...listParams,
+                contentType,
+                columns
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const openForm = useCallback(({ id, record = {}, mode }) => {
@@ -713,7 +725,7 @@ const GridBase = memo(({
     }, [isReadOnly, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, searchParams, gridTitle, getApiEndpoint, handleDownload, openForm]);
 
     const handleDelete = useCallback(async () => {
-        const baseUrl = buildUrl(model.controllerType, backendApi);
+        const baseUrl = buildUrl(backendApi);
         const result = await deleteRecord({ id: record.id, api: baseUrl, setError: snackbar.showError, setErrorMessage, model });
         if (result === true) {
             setIsDeleting(false);
@@ -722,7 +734,7 @@ const GridBase = memo(({
         } else {
             setIsDeleting(false);
         }
-    }, [model.controllerType, backendApi, record?.id, snackbar, setErrorMessage, model, fetchData]);
+    }, [backendApi, record?.id, snackbar, setErrorMessage, model, fetchData]);
 
     const clearError = useCallback(() => {
         setErrorMessage(null);
@@ -779,7 +791,8 @@ const GridBase = memo(({
             );
         }
 
-        const baseUrl =  buildUrl(model.controllerType, selectionApi || backendApi);
+        const baseUrl =  buildUrl(selectionApi || backendApi);
+        setIsLoading(true);
         try {
             const result = await saveRecord({
                 id: 0,
@@ -797,13 +810,14 @@ const GridBase = memo(({
         } catch (err) {
             snackbar.showError(err.message || "An error occurred, please try again later.");
         } finally {
+            setIsLoading(false);
             setRowSelectionModel({
                 type: 'include',
                 ids: new Set()
             });
             setShowAddConfirmation(false);
         }
-    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, model.controllerType, selectionApi, backendApi, model, fetchData]);
+    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData]);
 
     const onAdd = useCallback(() => {
         if (selectionApi.length > 0) {
@@ -887,15 +901,13 @@ const GridBase = memo(({
             columns[field] = { field, width: col.width, headerName: col.headerName || col.field, type: col.type, keepLocal: col.keepLocal === true, isParsable: col.isParsable, lookup: col.lookup };
         });
         const action = (model?.formActions?.export || isPivotExport) ? (model?.formActions?.export || 'export') : undefined;
-        fetchData(
+        fetchData({
             action,
-            undefined,
-            e.target.dataset.contentType,
-            columns,
             isPivotExport,
-            isElasticScreen
-        );
-    }, [data?.recordCount, apiRef, gridColumns, snackbar, fetchData, isElasticScreen]);
+            contentType: e.target.dataset.contentType,
+            columns
+        });
+    }, [data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData]);
 
     useEffect(() => {
         if (!backendApi || !preferencesReady) return;
