@@ -58,7 +58,7 @@ const iconMapper = {
 
 const constants = {
     gridFilterModel: { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' },
-    permissions: { edit: true, add: true, export: true, delete: true, showColumnsOrder: true, filter: true },
+    permissions: { edit: true, add: true, export: true, delete: true, showColumnsOrder: true, filter: true, showPreference: true },
     client: 'client',
     server: 'server',
     object: 'object',
@@ -189,7 +189,7 @@ const GridBase = memo(({
     const { id: idWithOptions } = useParams() || getParams;
     const id = idWithOptions?.split('-')[0];
     const apiRef = propsApiRef || useGridApiRef();
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300 } = model;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true } = model;
     const isReadOnly = model.readOnly === true || readOnly;
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
@@ -201,10 +201,27 @@ const GridBase = memo(({
     const emptyIsAnyOfOperatorFilters = ["isEmpty", "isNotEmpty", "isAnyOf"];
     const userData = stateData.getUserData || {};
     const documentField = model.columns.find(ele => ele.type === 'fileUpload')?.field || "";
-    const userDefinedPermissions = { add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete };
-    const { canAdd, canEdit, canDelete } = getPermissions({ userData, model, userDefinedPermissions });
+    const userDefinedPermissions = useMemo(() => ({ add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete }), [effectivePermissions]);
+    const { canAdd, canEdit, canDelete } = useMemo(() => getPermissions({ userData, model, userDefinedPermissions }), [userData, model, userDefinedPermissions]);
+    const showPreference = effectivePermissions.showPreference;
     const tTranslate = model.tTranslate ?? ((key) => key);
-    const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70 } = model;
+    const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disableRowGrouping = true } = model;
+    
+    // Extract column grouping props from model and allow props to override
+    const columnGroupingModel = props.columnGroupingModel ?? model.columnGroupingModel;
+    const experimentalFeatures = props.experimentalFeatures ?? model.experimentalFeatures;
+    
+    // Translate column grouping model header names
+    const translatedColumnGroupingModel = useMemo(() => {
+        if (!columnGroupingModel) return columnGroupingModel;
+        return columnGroupingModel.map(group => ({
+            ...group,
+            headerName: group.headerName ? tTranslate(group.headerName, tOpts) : group.headerName
+        }));
+    }, [columnGroupingModel, translate, tTranslate, tOpts]);
+    
+    const hideFooter = showFooter === false;
+    
     const gridTitle = model.gridTitle || model.title;
     const preferenceKey = getApiEndpoint("GridPreferenceManager") ? (model.preferenceId || model.module?.preferenceId) : null;
     const searchParams = new URLSearchParams(window.location.search);
@@ -215,6 +232,8 @@ const GridBase = memo(({
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
     const enableRowDetailPanel = typeof model.getDetailPanelContent === 'function';
+    const groupingEnabled = Boolean(props.rowGroupingField);
+    const [groupingModel, setGroupingModel] = useState([]);
 
     useEffect(() => {
         if (!apiRef.current) return;
@@ -242,6 +261,8 @@ const GridBase = memo(({
         }
         return {};
     }, [baseDataFromParams]);
+
+    const isLoading = useMemo(() => !data.records, [data.records]);
 
     const handleSelectRow = useCallback(({ row }) => {
         const rowId = row[idProperty];
@@ -317,6 +338,14 @@ const GridBase = memo(({
         const map = lookupMapParam || {};
         return lookupData[map[field]?.lookup] || [];
     }, []);
+
+     useEffect(() => {
+        if (props.rowGroupingField) {
+            setGroupingModel([props.rowGroupingField]);
+        } else {
+            setGroupingModel([]);
+        }
+    }, [props.rowGroupingField]);
 
     useEffect(() => {
         if (props.isChildGrid || !hideTopFilters) {
@@ -476,8 +505,21 @@ const GridBase = memo(({
             if (column.linkTo || column.link) {
                 overrides.cellClassName = 'mui-grid-linkColumn';
             }
-            const headerName = tTranslate(column.gridLabel || column.label, tOpts);
-            finalColumns.push({ ...column, ...overrides, headerName, description: headerName });
+            if (!disableRowGrouping) {
+                overrides.groupable = column.groupable ?? false;
+            }
+            
+            let headerName = tTranslate(column.gridLabel || column.label, tOpts);
+            if (model.customLabelProcessor && typeof model.customLabelProcessor === 'function') {
+                headerName = model.customLabelProcessor({ column, t: tTranslate, tOpts });
+            }
+            
+            finalColumns.push({ 
+                ...column, 
+                ...overrides, 
+                headerName, 
+                description: headerName
+             });
             if (column.pinned) {
                 pinnedColumns[column.pinned === constants.right ? constants.right : constants.left].push(column.field);
             }
@@ -889,9 +931,11 @@ const GridBase = memo(({
     }, [data?.recordCount, apiRef, gridColumns, snackbar, fetchData, isElasticScreen]);
 
     useEffect(() => {
-        if (!backendApi || !preferencesReady) return;
+        if (!backendApi || !preferencesReady && showPreference) return;
+        // Reset records before fetching new data, to prevent multiple grid reloading
+        setData(prev => ({ ...prev, records: null })); 
         fetchData();
-    }, [paginationModel, model, assigned, available, selected, filterModel, id, additionalFilters, props.extraParams, sortModel, backendApi, gridColumns, parentFilters, isElasticScreen, preferencesReady, baseFilters]);
+    }, [paginationModel, model, assigned, available, selected, filterModel, id, additionalFilters, props.extraParams, sortModel, backendApi, gridColumns, parentFilters, isElasticScreen, preferencesReady, baseFilters, showPreference]);
 
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
@@ -943,6 +987,15 @@ const GridBase = memo(({
         });
         setSortModel(sort);
     }, [gridColumns, isElasticScreen, setSortModel]);
+
+    const rowGroupingModelChange = useCallback((groupModel) => {
+        if (!groupModel?.length) {
+            setGroupingModel([]);
+            return;
+        }
+        const updatedGroupModel = groupModel[groupModel.length - 1];
+        setGroupingModel([updatedGroupModel]);
+    }, [ setGroupingModel]);
 
     const pageTitle = title || model.gridTitle || model.title;
     const breadCrumbs = searchParamKey
@@ -1117,7 +1170,8 @@ const GridBase = memo(({
             filterModel,
             setFilterModel,
             onPreferenceChange,
-            toolbarItems
+            toolbarItems,
+            customHeaderComponent: props.customHeaderComponent
         },
         footer: {
             pagination: true,
@@ -1177,7 +1231,7 @@ const GridBase = memo(({
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
                         checkboxSelection={forAssignment}
-                        loading={!data.records || stateData.loaderOpen}
+                        loading={isLoading}
                         className="pagination-fix"
                         onCellClick={onCellClickHandler}
                         onCellDoubleClick={onCellDoubleClick}
@@ -1186,12 +1240,15 @@ const GridBase = memo(({
                         pageSizeOptions={constants.pageSizeOptions}
                         onPaginationModelChange={setPaginationModel}
                         pagination
-                        rowCount={data.recordCount}
+                        rowCount={data.recordCount || data[props.totalProperty] || 0}
+                        hideFooter={hideFooter}
                         rows={data.records || []}
                         sortModel={sortModel}
                         paginationMode={paginationMode}
                         sortingMode={paginationMode}
                         filterMode={paginationMode}
+                        rowGroupingModel={groupingEnabled ? groupingModel : undefined}
+                        onRowGroupingModelChange={rowGroupingModelChange}
                         processRowUpdate={processRowUpdate}
                         keepNonExistentRowsSelected
                         onSortModelChange={updateSort}
@@ -1208,7 +1265,7 @@ const GridBase = memo(({
                         disableDensitySelector={true}
                         apiRef={apiRef}
                         disableAggregation={true}
-                        disableRowGrouping={true}
+                        disableRowGrouping={disableRowGrouping}
                         disableRowSelectionOnClick={disableRowSelectionOnClick}
                         disablePivoting={disablePivoting}
                         filterDebounceMs={debounceTimeOut}
@@ -1221,6 +1278,9 @@ const GridBase = memo(({
                         localeText={localeText}
                         showToolbar={true}
                         columnHeaderHeight={columnHeaderHeight}
+                        {...(translatedColumnGroupingModel && { columnGroupingModel: translatedColumnGroupingModel })}
+                        {...(experimentalFeatures && { experimentalFeatures })}
+                        getRowClassName={props.getRowClassName}
                     />
                 </Box>
                 {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)

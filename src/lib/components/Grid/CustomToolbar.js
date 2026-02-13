@@ -80,6 +80,7 @@ const CustomToolbar = function (props) {
                 }}
             >
                 <div>
+                    {props.customHeaderComponent && props.customHeaderComponent}
                     {model.gridSubTitle && <Typography variant="h6" component="h3" textAlign="center" sx={{ ml: 1 }}> {tTranslate(model.gridSubTitle, tOpts)}</Typography>}
                     {currentPreference && model.showPreferenceInHeader && <Typography className="preference-name-text" variant="h6" component="h6" textAlign="center" sx={{ ml: 1 }} >{tTranslate('Applied Preference', tOpts)}: {currentPreference}</Typography>}
                     {(isReadOnly || (!canAdd && !forAssignment)) && <Typography variant="h6" component="h3" textAlign="center" sx={{ ml: 1 }} > {!canAdd || isReadOnly ? "" : model.title}</Typography>}
@@ -136,7 +137,7 @@ const CustomToolbar = function (props) {
                         <CustomExportButton handleExport={handleExport} showPivotExportBtn={model.pivotApi} exportFormats={model.exportFormats || {}} tTranslate={tTranslate} tOpts={tOpts} />
                     )}
                     {toolbarItems}
-                    {preferenceKey &&
+                    {(preferenceKey && effectivePermissions.showPreference) &&
                         <GridPreferences
                             gridRef={apiRef}
                             preferenceKey={preferenceKey}
