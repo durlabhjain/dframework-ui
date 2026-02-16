@@ -232,7 +232,6 @@ const GridBase = memo(({
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
     const enableRowDetailPanel = typeof model.getDetailPanelContent === 'function';
-    const groupingEnabled = Boolean(props.rowGroupingField);
     const [groupingModel, setGroupingModel] = useState([]);
 
     useEffect(() => {
@@ -1247,7 +1246,7 @@ const GridBase = memo(({
                         paginationMode={paginationMode}
                         sortingMode={paginationMode}
                         filterMode={paginationMode}
-                        rowGroupingModel={groupingEnabled ? groupingModel : undefined}
+                        rowGroupingModel={groupingModel}
                         onRowGroupingModelChange={rowGroupingModelChange}
                         processRowUpdate={processRowUpdate}
                         keepNonExistentRowsSelected
