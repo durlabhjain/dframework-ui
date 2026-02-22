@@ -119,6 +119,14 @@ const Form = ({
     ? { ...model.initialValues, ...data, ...baseSaveData }
     : { ...baseSaveData, ...model.initialValues, ...data }, [model.initialValues, data, id]);
 
+  const formApi = api || gridApi;
+  const idToLoad = useMemo(() => {
+    if (detailPanelId) {
+      return detailPanelId;
+    }
+    const options = idWithOptions.split("-");
+    return options.length > 1 ? options[consts.loadIdIndex] : id;
+  }, [detailPanelId, idWithOptions, id]);
   const loadRecord = useCallback(async () => {
     try {
       const data = await getRecord({
@@ -133,14 +141,10 @@ const Form = ({
   }, [formApi, model, idToLoad]);
   
   useEffect(() => {
-    const formApi = api || gridApi;
-    if (!formApi) return;
     setIsLoading(true);
     setValidationSchema(model.getValidationSchema({ id, snackbar }));
-    const options = idWithOptions.split("-");
     loadRecord();
-
-  }, [id, idWithOptions, model, api, gridApi, detailPanelId]);
+  }, [id, model, formApi, loadRecord, snackbar]);
 
   const formik = useFormik({
     enableReinitialize: true,
