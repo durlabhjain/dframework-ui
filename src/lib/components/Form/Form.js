@@ -128,6 +128,7 @@ const Form = ({
     return options.length > 1 ? options[consts.loadIdIndex] : id;
   }, [detailPanelId, idWithOptions, id]);
   const loadRecord = useCallback(async () => {
+    setIsLoading(true);
     try {
       const data = await getRecord({
         api: formApi,
@@ -137,14 +138,15 @@ const Form = ({
       setActiveRecord(data);
     } catch (error) {
       errorOnLoad('Could not load record', error.message);
+    } finally {
+      setIsLoading(false);
     }
   }, [formApi, model, idToLoad]);
   
   useEffect(() => {
-    setIsLoading(true);
     setValidationSchema(model.getValidationSchema({ id, snackbar }));
     loadRecord();
-  }, [id, model, formApi, loadRecord, snackbar]);
+  }, [id, model, formApi, snackbar]);
 
   const formik = useFormik({
     enableReinitialize: true,
