@@ -629,7 +629,8 @@ const GridBase = memo(({
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
             try {
-                const data = await getRecord({ id, api: backendApi, model, parentFilters, where });
+                const baseUrl = buildUrl(backendApi);
+                const data = await getRecord({ id, api: baseUrl, model, parentFilters, where });
                 setActiveRecord(data);
             } catch (error) {
                 snackbar.showError('Could not load record', error.message);

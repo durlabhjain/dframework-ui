@@ -920,39 +920,50 @@ export default function App() {
 
 ### Loader Management
 
-The loader is **automatically managed by CRUD helper functions** (getList, getRecord, saveRecord, deleteRecord, getLookups). Each CRUD function:
-1. Shows the loader at the start
-2. Wraps all async operations in a try/finally block
-3. Hides the loader in the finally block (guaranteed to run)
+**CRUD helper functions are pure** - they perform the requested operation and either return data or throw an error. They do **not** automatically show or hide any loader.
 
-The Grid and Form components display the loader state automatically.
+**Loader state is controlled by the caller:**
+- The **Grid** and **Form** components manage their own loading state locally when they use CRUD helpers
+- If you call CRUD helpers directly, you are responsible for managing loader state (either with local component state or via the StateProvider loader using `showLoader(true/false)`)
 
-**CRUD functions handle loader lifecycle:**
+**Using CRUD helpers with the StateProvider loader:**
 ```js
+import { useStateContext } from "@durlabh/dframework-ui";
 import { getList } from "@durlabh/dframework-ui/crud-helper";
 
-// CRUD functions automatically show/hide loader
-await getList({ 
-  model, 
-  gridColumns, 
-  setData, 
-  page, 
-  pageSize 
-});
-// Loader shown before request, hidden after (even on errors)
+function MyComponent() {
+  const { showLoader } = useStateContext();
+
+  const loadData = async () => {
+    try {
+      showLoader(true);
+      const data = await getList({
+        model,
+        gridColumns,
+        page,
+        pageSize,
+      });
+      setData(data);
+    } finally {
+      showLoader(false);
+    }
+  };
+  
+  // ...
+}
 ```
 
-**For custom operations, use try/finally:**
+**For custom operations, use try/finally with showLoader(flag):**
 ```js
-const { showLoader, hideLoader } = useStateContext();
+const { showLoader } = useStateContext();
 
 const myCustomOperation = async () => {
-  showLoader();
   try {
+    showLoader(true);
     await someAsyncOperation();
     await anotherAsyncOperation();
   } finally {
-    hideLoader(); // Always hidden, even on exceptions
+    showLoader(false); // Always hidden, even on exceptions
   }
 };
 ```
@@ -1089,8 +1100,7 @@ Returns an object with the following properties:
 | Property | Type | Description |
 |----------|------|-------------|
 | `isLoading` | `boolean` | Current loading state |
-| `showLoader` | `() => void` | Function to manually show the loader |
-| `hideLoader` | `() => void` | Function to manually hide the loader |
+| `showLoader` | `(flag: boolean) => void` | Set loading state; pass `true` to show the loader and `false` to hide it |
 
 **Framework Utilities:**
 | Property | Type | Description |

@@ -44,11 +44,14 @@ The framework has removed backward compatibility aliases and the dispatch patter
    setModal({ status: true });
    ```
 
-3. **Removed action aliases**
-   - `OPEN_MODAL` action alias removed
-   - `PAGE_TITLE_DETAILS` action alias removed  
-   - `USER_DATA` action alias removed
-   - Only new action names supported: `SET_MODAL`, `SET_PAGE_TITLE`, `SET_USER_DATA`
+3. **Removed dispatch/action pattern entirely**
+   - All action-based APIs have been removed from `StateProvider`
+   - Legacy action aliases removed: `OPEN_MODAL`, `PAGE_TITLE_DETAILS`, `USER_DATA`
+   - No action types are supported (including `SET_MODAL`, `SET_PAGE_TITLE`, `SET_USER_DATA`)
+   - Use direct setter methods instead (see section 2 above):
+     - `setModal({ status: true })` instead of any dispatch-based modal updates
+     - `setPageTitle({ title: 'My Page' })` instead of any dispatch-based title updates
+     - `setUserData(userData)` instead of any dispatch-based user data updates
 
 4. **StateProvider State Restructured**
    - **Removed component-specific state** (now local to components):
