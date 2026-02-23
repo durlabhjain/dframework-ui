@@ -38,7 +38,9 @@ import { styled } from '@mui/material/styles';
 
 const defaultPageSize = 50;
 const sortRegex = /(\w+)( ASC| DESC)?/i;
-const recordCounts = 60000;
+const recordCounts = 60_000;
+const exportPage = 0;
+const exportPageSize = 1_000_000;
 const actionTypes = {
     Copy: "Copy",
     Edit: "Edit",
@@ -594,8 +596,8 @@ const GridBase = memo(({
 
         const listParams = {
             action,
-            page: isExportRequest ? 0 : page,
-            pageSize: isExportRequest ? 1000000 : pageSize,
+            page: isExportRequest ? exportPage : page,
+            pageSize: isExportRequest ? exportPageSize : pageSize,
             sortModel,
             filterModel: filters,
             gridColumns,

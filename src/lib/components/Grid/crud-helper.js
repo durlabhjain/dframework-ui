@@ -3,7 +3,6 @@ import request, { DATA_PARSERS, getErrorMessage } from "./httpRequest";
 const dateDataTypes = ['date', 'dateTime'];
 const lookupDataTypes = ['singleSelect'];
 const exportDefaultLimit = 1_000_000;
-const exportFormCleanupDelayMs = 3000;
 
 const isLocalTime = (dateValue) => new Date().getTimezoneOffset() === new Date(dateValue).getTimezoneOffset();
 
@@ -18,7 +17,7 @@ function shouldApplyFilter(filter) {
     return isUnaryOperator || hasValidValue;
 }
 
-const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, baseFilters, action, extraParams = {}, model, api }) => {
+const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, baseFilters, action = 'list', extraParams = {}, model, api }) => {
     const isElasticExport = action === 'export' && model.isElasticExport === true;
 
     const lookups = [];
@@ -122,15 +121,16 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
  *     from this function's perspective and should be handled via server-side logging or a custom UX flow
  *     (e.g. returning an error file or exposing a separate export-status API).
  */
-const getList = async ({ gridColumns, page, pageSize, sortModel, filterModel, baseFilters, action = 'list', extraParams = {}, contentType, columns, model, api }) => {
-    const { requestData, url, where, dateColumns } = buildRequestData({ gridColumns, page, pageSize, sortModel, filterModel, baseFilters, action, extraParams, model, api });
+const getList = async (props = {}) => {
+    const { contentType, columns, extraParams = {}, action = 'list', model } = props;
+    const { requestData, url, where, dateColumns } = buildRequestData(props);
 
     if (contentType) {
         requestData.responseType = contentType;
         requestData.columns = columns;
         requestData.userTimezoneOffset = -new Date().getTimezoneOffset(); // Negate to get the correct offset for conversion
         if (typeof model.createRequestPayload === 'function') {
-            await model.createRequestPayload(requestData, { where, sortModel, page, pageSize, baseFilters, action, url, dataParsers: DATA_PARSERS, model });
+            await model.createRequestPayload(requestData, { where, url, dataParsers: DATA_PARSERS, ...props });
         }
         const form = document.createElement("form");
         form.setAttribute("method", "POST");
@@ -154,7 +154,7 @@ const getList = async ({ gridColumns, page, pageSize, sortModel, filterModel, ba
         form.setAttribute('action', requestData.url || url);
         document.body.appendChild(form);
         form.submit();
-        setTimeout(() => { form.remove(); }, exportFormCleanupDelayMs);
+        setTimeout(() => { form.remove(); }, 0);
         return;
     }
 
@@ -170,7 +170,7 @@ const getList = async ({ gridColumns, page, pageSize, sortModel, filterModel, ba
 
     // for manipulating the request payload before sending the request.
     if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(reqParams, { where, sortModel, page, pageSize, baseFilters, action, dataParsers: DATA_PARSERS, model });
+        await model.createRequestPayload(reqParams, { where, dataParsers: DATA_PARSERS, ...props });
     }
     const response = await request(reqParams);
 
@@ -180,7 +180,7 @@ const getList = async ({ gridColumns, page, pageSize, sortModel, filterModel, ba
 
     // Parse response data if needed custom processing.
     if (typeof model.parseResponsePayload === 'function' && model.parseResponseActions.includes(action)) {
-        return await model.parseResponsePayload({ responseData: response, model, dateColumns, action });
+        return await model.parseResponsePayload({ responseData: response, model, dateColumns, action, ...props });
     }
 
     response.records.forEach(record => {
@@ -211,7 +211,8 @@ const getList = async ({ gridColumns, page, pageSize, sortModel, filterModel, ba
  * Loads a single record by id along with its lookups.
  * Returns { id, title, record, lookups } or throws on error.
  */
-const getRecord = async ({ api, id, model, parentFilters, where = {} }) => {
+const getRecord = async (props = {}) => {
+    let { api, id, model, parentFilters, where = {} } = props;
     api = api || model.api;
     const searchParams = new URLSearchParams();
     const url = `${api}/${id === undefined || id === null ? '-' : id}`;
@@ -233,7 +234,7 @@ const getRecord = async ({ api, id, model, parentFilters, where = {} }) => {
     };
 
     if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { id, parentFilters, model, where, api, action: 'load', dataParsers: DATA_PARSERS });
+        await model.createRequestPayload(requestData, { action: 'load', dataParsers: DATA_PARSERS, ...props });
     }
 
     const response = await request(requestData);
@@ -241,7 +242,7 @@ const getRecord = async ({ api, id, model, parentFilters, where = {} }) => {
         throw new Error(getErrorMessage(response) || 'Load failed');
     }
     if (typeof model.parseResponsePayload === 'function' && model.parseResponseActions.includes('load')) {
-        return await model.parseResponsePayload({ responseData: response, model, action: 'load' });
+        return await model.parseResponsePayload({ responseData: response, model, action: 'load', ...props });
     }
     const { data: record, lookups } = response || {};
     let title = record[model.linkColumn];
@@ -261,7 +262,8 @@ const getRecord = async ({ api, id, model, parentFilters, where = {} }) => {
 /**
  * Deletes a record by id. Returns true on success or throws on error.
  */
-const deleteRecord = async function ({ id, api, model }) {
+const deleteRecord = async function (props = {}) {
+    const { id, api, model } = props;
     if (!id) {
         throw new Error('Delete failed. No active record.');
     }
@@ -271,7 +273,7 @@ const deleteRecord = async function ({ id, api, model }) {
     };
 
     if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { id, model, api, action: 'delete', dataParsers: DATA_PARSERS });
+        await model.createRequestPayload(requestData, { action: 'delete', dataParsers: DATA_PARSERS, ...props });
     }
     const response = await request(requestData);
     if (response?.error || response?.success === false) {
@@ -283,7 +285,8 @@ const deleteRecord = async function ({ id, api, model }) {
 /**
  * Creates or updates a record. Returns the response on success or throws on error.
  */
-const saveRecord = async function ({ id, api, values, model }) {
+const saveRecord = async function (props = {}) {
+    const { id, api, values, model } = props;
     let url, method;
 
     if (id !== 0) {
@@ -305,7 +308,7 @@ const saveRecord = async function ({ id, api, values, model }) {
     };
 
     if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { id, model, values, api, action: 'save', dataParsers: DATA_PARSERS });
+        await model.createRequestPayload(requestData, { action: 'save', dataParsers: DATA_PARSERS, ...props });
     }
 
     const response = await request(requestData);
@@ -318,7 +321,8 @@ const saveRecord = async function ({ id, api, values, model }) {
 /**
  * Fetches lookup data for a given scope. Returns the response or throws on error.
  */
-const getLookups = async ({ api, model, lookups, scopeId, reqData }) => {
+const getLookups = async (props = {}) => {
+    let { api, model, lookups, scopeId, reqData } = props;
     api = api || model.api;
     const searchParams = new URLSearchParams();
     const url = `${api}/lookups`;
@@ -332,7 +336,7 @@ const getLookups = async ({ api, model, lookups, scopeId, reqData }) => {
     };
 
     if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { model, lookups, scopeId, dataParsers: DATA_PARSERS, action: 'lookups', api });
+        await model.createRequestPayload(requestData, { action: 'lookups', dataParsers: DATA_PARSERS, ...props });
     }
     const response = await request(requestData);
     if (response?.error || response?.success === false) {
@@ -340,7 +344,7 @@ const getLookups = async ({ api, model, lookups, scopeId, reqData }) => {
     }
 
     if (typeof model.parseResponsePayload === 'function' && model.parseResponseActions.includes('lookups')) {
-        return await model.parseResponsePayload({ responseData: response, model, action: 'lookups' });
+        return await model.parseResponsePayload({ responseData: response, model, action: 'lookups', ...props });
     }
     return response;
 };
