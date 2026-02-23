@@ -141,12 +141,12 @@ const Form = ({
     } finally {
       setIsLoading(false);
     }
-  }, [formApi, model, idToLoad]);
+  }, [formApi, model, idToLoad, errorOnLoad]);
   
   useEffect(() => {
     setValidationSchema(model.getValidationSchema({ id, snackbar }));
     loadRecord();
-  }, [id, idToLoad, model, formApi, snackbar, setValidationSchema]);
+  }, [id, idToLoad, model, formApi, snackbar, setValidationSchema, loadRecord]);
 
   const formik = useFormik({
     enableReinitialize: true,

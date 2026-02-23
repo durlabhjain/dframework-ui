@@ -26,7 +26,7 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
         return typeof column.lookup === 'string' ? lookups[column.lookup] : column.lookup;
     }, [column.lookup, lookups, dependsOn]);
 
-    const fetchOptions = async () => {
+    const fetchOptions = useCallback(async () => {
         if (!column.lookup) return;
         // Only fetch if all dependencies have values
         const allDependenciesHaveValues = Object.values(dependencyValues).every(
@@ -49,7 +49,7 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
         } catch (error) {
             snackbar.showError('Could not load lookups', error.message);
         }
-    };
+    }, [column.lookup, dependencyValues, api, model, lookups, snackbar]);
 
     // Fetch cascading options
     useEffect(() => {
@@ -58,7 +58,7 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
         } else if (isAutoComplete || !userSelected.current) {
             setOptions(initialOptions || []);
         }
-    }, [dependencyValues, initialOptions, lookups, api, column.lookup]);
+    }, [dependsOn.length, fetchOptions, isAutoComplete, initialOptions]);
 
     return options;
 }
