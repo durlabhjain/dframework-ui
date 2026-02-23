@@ -546,7 +546,7 @@ const GridBase = memo(({
     }, [gridColumns]);
 
 
-    const fetchData = async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
+    const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
         const { pageSize, page } = paginationModel;
         const isExportRequest = Boolean(contentType);
 
@@ -624,7 +624,7 @@ const GridBase = memo(({
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -651,7 +651,7 @@ const GridBase = memo(({
             path += `?${searchParams.toString()}`;
         }
         navigate(path);
-    }, [setActiveRecord, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord]);
+    }, [setActiveRecord, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -917,7 +917,7 @@ const GridBase = memo(({
     useEffect(() => {
         if (!backendApi || !preferencesReady) return;
         fetchData();
-    }, [paginationModel, model, assigned, available, selected, filterModel, id, additionalFilters, props.extraParams, sortModel, backendApi, gridColumns, parentFilters, isElasticScreen, preferencesReady, baseFilters]);
+    }, [backendApi, preferencesReady, fetchData]);
 
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
@@ -927,7 +927,7 @@ const GridBase = memo(({
         return () => {
             setPageTitle(null);
         };
-    }, [setPageTitle, model.pageTitle, model.title]);
+    }, [setPageTitle, model.pageTitle, model.title, props.isChildGrid, forAssignment, updatePageTitle]);
 
     const updateFilters = useCallback((e) => {
         const { items } = e;

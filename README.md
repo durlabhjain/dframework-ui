@@ -976,15 +976,15 @@ For non-API operations, you can manually control the loader:
 import { useStateContext } from "@durlabh/dframework-ui";
 
 function MyComponent() {
-  const { isLoading, showLoader, hideLoader } = useStateContext();
+  const { isLoading, showLoader } = useStateContext();
   
   const processData = async () => {
-    showLoader();
+    showLoader(true);
     try {
       // Heavy processing...
       await someHeavyOperation();
     } finally {
-      hideLoader();
+      showLoader(false);
     }
   };
   
@@ -1174,7 +1174,7 @@ getList({ ... }); // Shows/hides loader automatically
 2. **Centralized Utilities**: dayjs, i18n, and snackbar available from a single context
 3. **Cleaner Code**: No need to pass showLoader/hideLoader as parameters
 3. **Better Performance**: Eliminates unnecessary re-renders from global state updates
-4. **Cleaner API**: More intuitive `showLoader()`/`hideLoader()` instead of dispatch actions
+4. **Cleaner API**: More intuitive `showLoader(true)`/`showLoader(false)` instead of dispatch actions
 5. **Type Safety**: Better TypeScript support with explicit function signatures
 
 ---
