@@ -80,27 +80,29 @@ The framework has removed backward compatibility aliases and the dispatch patter
 
 7. **Loader Management**
    - **Simplified loader management** - no counter, simple on/off
-   - Loader managed by CRUD helper functions (getList, getRecord, saveRecord, deleteRecord, getLookups)
-   - Each CRUD function wraps operations in try/finally blocks to guarantee loader is hidden
+   - Loader is managed by the **calling component** (Grid, Form), not by the CRUD helper functions
+   - CRUD helpers (getList, getRecord, saveRecord, deleteRecord, getLookups) are pure data functions — they return data or throw errors, with no loader side effects
+   - The calling component sets the loader on before calling a CRUD function and clears it in a finally block
    - httpRequest is a pure HTTP transport layer without loader management
-   - **For custom operations**: Use showLoader() before async operations, showLoader(false) in finally block
-   
+
    ```js
-   // CRUD functions handle loader automatically
-   await getList({ model, gridColumns, setData, page, pageSize });
-   
-   // Custom operations - use try/finally pattern
-   const { showLoader } = useStateContext();
-   
-   const myOperation = async () => {
-     showLoader();
-     try {
-       await asyncOperation1();
-       await asyncOperation2();
-     } finally {
-       showLoader(false); // Always hidden, even on errors
-     }
-   };
+   // Calling component manages loader around CRUD calls
+   setIsLoading(true);
+   try {
+     const data = await getList({ model, gridColumns, page, pageSize });
+     setData(data);
+   } finally {
+     setIsLoading(false); // Always hidden, even on errors
+   }
+
+   // Custom operations - same pattern
+   setIsLoading(true);
+   try {
+     await asyncOperation1();
+     await asyncOperation2();
+   } finally {
+     setIsLoading(false);
+   }
    ```
 
 8. **State Management**

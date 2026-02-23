@@ -136,6 +136,9 @@ const getList = async (props = {}) => {
         form.setAttribute("method", "POST");
         form.setAttribute("id", "exportForm");
         form.setAttribute("target", "_blank");
+        // Template-based exports are fully server-driven via the template query param.
+        // Request data (where, sort, limit, etc.) is intentionally omitted — the template
+        // defines the data shape and filtering on the server side.
         if (!extraParams.template) {
             for (const key in requestData) {
                 let v = requestData[key];
