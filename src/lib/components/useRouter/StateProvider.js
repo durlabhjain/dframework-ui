@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useRef, useState, useCallback, useMemo, use } from 'react';
 import { locales } from '../mui/locale/localization';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -47,10 +47,10 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     return apiEndpoints.current[key || "default"] || '';
   }, []);
 
-  function buildUrl(url, endpoint) {
+  const buildUrl = useCallback((url, endpoint) => {
     const baseUrl = apiEndpoints.current[endpoint || "default"] || '';
     return `${baseUrl}${url}`;
-  }
+  }, []);
 
   /**
    * Show loader - simple boolean toggle
@@ -223,7 +223,7 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     setModal
   }), [stateData, isLoading, showLoader, t, i18n, snackbar,
        getApiEndpoint, setApiEndpoint, systemDateTimeFormat, formatDate, useLocalization,
-       setLocale, setPageTitle, setPageBackButton, setUserData, setTimeZone, setDateTimeFormat, setModal]);
+       setLocale, setPageTitle, setPageBackButton, setUserData, setTimeZone, setDateTimeFormat, setModal, buildUrl]);
 
   return (
     <StateContext.Provider value={contextValue}>
