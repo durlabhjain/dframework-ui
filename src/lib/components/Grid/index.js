@@ -190,7 +190,7 @@ const GridBase = memo(({
     const { id: idWithOptions } = useParams() || getParams;
     const id = idWithOptions?.split('-')[0];
     const apiRef = propsApiRef || useGridApiRef();
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300 } = model;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true } = model;
     const isReadOnly = model.readOnly === true || readOnly;
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
@@ -217,6 +217,7 @@ const GridBase = memo(({
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
     const enableRowDetailPanel = typeof model.getDetailPanelContent === 'function';
+    const [groupingModel, setGroupingModel] = useState([]);
 
     useEffect(() => {
         if (!apiRef.current) return;
@@ -229,6 +230,22 @@ const GridBase = memo(({
         setCurrentPreference(preferenceName);
         setPreferencesReady(true);
     }, []);
+
+     
+    // Extract column grouping props from model to override
+    const columnGroupingModel = useMemo(() => {
+        if (!model.columnGroupingModel) return [];
+        return model.columnGroupingModel.map(group => ({
+            ...group,
+            headerName: group.headerName ? tTranslate(group.headerName, tOpts) : group.headerName
+        }));
+    }, [model.columnGroupingModel, tTranslate, tOpts]);
+
+    useEffect(() => {
+        if(Array.isArray(props.rowGroupingField) && props.rowGroupingField.length > 0) {
+            setGroupingModel(props.rowGroupingField);
+        }
+    }, [props.rowGroupingField]);
 
     const baseDataFromParams = searchParams.has('baseData') && searchParams.get('baseData');
     const baseSaveData = useMemo(() => {
@@ -475,7 +492,12 @@ const GridBase = memo(({
             if (column.linkTo || column.link) {
                 overrides.cellClassName = 'mui-grid-linkColumn';
             }
-            const headerName = tTranslate(column.gridLabel || column.label, tOpts);
+
+            if (!disableRowGrouping) {
+                overrides.groupable = column.groupable ?? false;
+            }
+            const headerName = tTranslate((typeof column.gridLabel === 'function' ? column.gridLabel({ column, t: tTranslate, tOpts }) : column.gridLabel) || column.label, tOpts);
+            
             finalColumns.push({ ...column, ...overrides, headerName, description: headerName });
             if (column.pinned) {
                 pinnedColumns[column.pinned === constants.right ? constants.right : constants.left].push(column.field);
@@ -610,7 +632,7 @@ const GridBase = memo(({
             onListParamsChange(listParams);
         }
         apiRef.current.listParams = listParams;
-        setIsLoading(true);
+        if (!isExportRequest) setIsLoading(true);
         try {
             const result = await getList({ ...listParams, contentType, columns });
             if (!isExportRequest && result !== undefined) {
@@ -622,9 +644,9 @@ const GridBase = memo(({
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
             }
         } finally {
-            setIsLoading(false);
+            if (!isExportRequest) setIsLoading(false);
         }
-    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar]);
+    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -1141,7 +1163,8 @@ const GridBase = memo(({
             filterModel,
             setFilterModel,
             onPreferenceChange,
-            toolbarItems
+            toolbarItems,
+            headerActions: props.headerActions
         },
         footer: {
             pagination: true,
@@ -1232,7 +1255,7 @@ const GridBase = memo(({
                         disableDensitySelector={true}
                         apiRef={apiRef}
                         disableAggregation={true}
-                        disableRowGrouping={true}
+                        disableRowGrouping={disableRowGrouping}
                         disableRowSelectionOnClick={disableRowSelectionOnClick}
                         disablePivoting={disablePivoting}
                         filterDebounceMs={debounceTimeOut}
@@ -1245,6 +1268,11 @@ const GridBase = memo(({
                         localeText={localeText}
                         showToolbar={true}
                         columnHeaderHeight={columnHeaderHeight}
+                        hideFooter={!showFooter}
+                        rowGroupingModel={groupingModel}
+                        onRowGroupingModelChange={(model) => setGroupingModel(model)}
+                        getRowClassName={props.getRowClassName}
+                        columnGroupingModel={columnGroupingModel}
                     />
                 </Box>
                 {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
