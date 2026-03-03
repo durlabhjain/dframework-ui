@@ -350,7 +350,7 @@ const GridBase = memo(({
         ({ key, title, icon, color = "primary", disabled, otherProps }) => (
             <GridActionsCellItem
                 key={key}
-                icon={<Tooltip title={tTranslate(title, tOpts)}>{iconMapper[icon] || icon}</Tooltip>}
+                icon={<Tooltip title={title}>{iconMapper[icon] || icon}</Tooltip>}
                 data-action={key}
                 label={title}
                 color={color}
@@ -1007,9 +1007,7 @@ const GridBase = memo(({
                     // Close the expanded panel and refresh data
                     setRowPanelId(null);
                     fetchData();
-                },
-                t: tTranslate,
-                tOpts
+                }
             });
         }
         return null;

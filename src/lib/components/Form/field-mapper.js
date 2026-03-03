@@ -25,7 +25,6 @@ import TreeCheckbox from './fields/treeCheckBox';
 import FileUpload from './fields/fileUpload';
 import JSONInput from './fields/jsonInput';
 import utils from '../utils';
-import { useTranslation } from 'react-i18next';
 
 const fieldMappers = {
     "boolean": BooleanField,
@@ -53,17 +52,8 @@ const ImportantSpan = styled('span')({
   color: 'red !important',
 });
 
-const useModelTranslation = (model) => {
-  const { t: translate, i18n } = useTranslation();
-  const tOpts = React.useMemo(() => ({ t: translate, i18n }), [translate, i18n]);
-  const tTranslate = model?.t ?? model?.tTranslate ?? ((key) => key);
-
-  return { translate, i18n, tOpts, tTranslate };
-};
-
 const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, handleSubmit }) => {
     const [skipped, setSkipped] = React.useState(new Set());
-    const { tOpts, tTranslate } = useModelTranslation(model);
 
     const { activeStep, setActiveStep } = React.useContext(ActiveStepContext);
 
@@ -123,7 +113,7 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
                     return (
                         <Step key={key} completed={isStepSkipped(index)}>
                             <StepLabel>
-                                <Typography sx={{ fontSize: '20px' }}>{tTranslate(title, tOpts)}</Typography>
+                                <Typography sx={{ fontSize: '20px' }}>{title}</Typography>
                             </StepLabel>
                         </Step>
                     );
@@ -132,8 +122,8 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
             <React.Fragment>
                 <RenderColumns formElements={currentStep.items} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
                 <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2, mr: 2 }}>
-                    {activeStep !== 0 ? <Button color="inherit" disabled={activeStep === 0} onClick={handleBack} variant="contained" sx={{ mr: 2 }}>{tTranslate('Back', tOpts)}</Button> : null}
-                    <Button onClick={handleNext} variant="contained">{isLastStep() ? tTranslate('Finish', tOpts) : tTranslate('Next', tOpts)}</Button>
+                    {activeStep !== 0 ? <Button color="inherit" disabled={activeStep === 0} onClick={handleBack} variant="contained" sx={{ mr: 2 }}> {'Back'}</Button> : null}
+                    <Button onClick={handleNext} variant="contained">{isLastStep() ? "Finish" : "Next"}</Button>
                 </Box>
             </React.Fragment>
         </>
@@ -141,7 +131,6 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
 };
 
 const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, isAdd }) => {
-    const { tOpts, tTranslate } = useModelTranslation(model);
     if (!formElements?.length) {
         return null;
     }
@@ -154,7 +143,7 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
                         <Grid container spacing={2} key={key} sx={{ marginTop: "1rem", marginBottom: "1rem" }} alignItems={isGridComponent ? "flex-start" : "center"}>
                             {column?.showLabel !== false ?
                                 <Grid size={{ xs: 3 }} sx={gridContainerStyle}>
-                                    <Typography sx={{ fontSize: "16px", fontWeight: "bold" }} className="form-label">{tTranslate(column.label || field, tOpts)}: {column.required && <ImportantSpan>*</ImportantSpan>}</Typography>
+                                    <Typography sx={{ fontSize: "16px", fontWeight: "bold" }} className="form-label">{column.label || field}: {column.required && <ImportantSpan>*</ImportantSpan>}</Typography>
                                 </Grid>
                                 : null
                             }
