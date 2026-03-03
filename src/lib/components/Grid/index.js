@@ -239,7 +239,7 @@ const GridBase = memo(({
             ...group,
             headerName: group.headerName ? tTranslate(group.headerName, tOpts) : group.headerName
         }));
-    }, [model.columnGroupingModel, tOpts, translate, tTranslate]);
+    }, [model.columnGroupingModel, tOpts, translate]);
 
     useEffect(() => {
         if (Array.isArray(props.rowGroupingField)) {

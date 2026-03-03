@@ -45,7 +45,7 @@ function PageTitle({
 
   return (
     <>
-      <MuiTypography className="print-only" text={tTranslate(titleHeading, tOpts)} />
+      <MuiTypography className="print-only" text={titleHeading} />
       {needToShowBreadcrumbs && (<>
         <Card sx={{ mb: 3 }}>
           <CardContent sx={{ backgroundColor: breadcrumbColor || '#fff' }}>
