@@ -18,6 +18,7 @@ import { useStateContext, useRouter } from "../useRouter/StateProvider";
 import PageTitle from "../PageTitle";
 import utils, { getPermissions } from "../utils";
 import Relations from "./relations";
+import { useTranslation } from "react-i18next";
 export const ActiveStepContext = createContext(1);
 const defaultFieldConfigs = {};
 const consts = {
@@ -50,6 +51,9 @@ const Form = ({
   onSaveSuccess
 }) => {
   const formTitle = model.formTitle || model.title;
+  const { t: translate, i18n } = useTranslation();
+  const tOpts = useMemo(() => ({ t: translate, i18n }), [translate, i18n]);
+  const tTranslate = model?.t ?? model?.tTranslate ?? ((key) => key);
   const { navigate, getParams, useParams, pathname } = useRouter();
   const { relations = [] } = model;
   const { stateData, buildUrl, setPageTitle } = useStateContext();
@@ -337,20 +341,20 @@ const Form = ({
                   type="submit"
                   color="success"
                   onClick={handleSubmit}
-                >{`${"Save"}`}</Button>
+                >{tTranslate("Save", tOpts)}</Button>
               )}
               <Button
                 variant="contained"
                 type="cancel"
                 color="error"
                 onClick={handleFormCancel}
-              >{`${"Cancel"}`}</Button>
+              >{tTranslate("Cancel", tOpts)}</Button>
               {permissions.delete && (
                 <Button
                   variant="contained"
                   color="error"
                   onClick={() => setIsDeleting(true)}
-                >{`${"Delete"}`}</Button>
+                >{tTranslate("Delete", tOpts)}</Button>
               )}
             </Stack>
             <Layout
