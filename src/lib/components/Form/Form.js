@@ -53,7 +53,7 @@ const Form = ({
   const formTitle = model.formTitle || model.title;
   const { t: translate, i18n } = useTranslation();
   const tOpts = useMemo(() => ({ t: translate, i18n }), [translate, i18n]);
-  const tTranslate = model?.tTranslate ?? ((key) => key);
+  const tTranslate = model?.t ?? model?.tTranslate ?? ((key) => key);
   const { navigate, getParams, useParams, pathname } = useRouter();
   const { relations = [] } = model;
   const { stateData, buildUrl, setPageTitle } = useStateContext();
@@ -302,8 +302,8 @@ const Form = ({
   }, [beforeSubmit, formik, model, snackbar, setActiveStep]);
 
   const breadcrumbs = [
-    { text: tTranslate(formTitle, tOpts) },
-    { text: id === "0" ? tTranslate("New", tOpts) : tTranslate("Update", tOpts) }
+    { text: formTitle },
+    { text: id === "0" ? "New" : "Update" }
   ];
   const showRelations = Number(id) !== 0 && Boolean(relations.length);
   const showSaveButton = searchParams.has("showRelation");

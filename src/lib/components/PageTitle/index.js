@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 
 import { Box } from "@mui/material";
 import { withTranslation } from "react-i18next";
@@ -8,7 +8,6 @@ import { Breadcrumbs, Typography, Link as MuiLink, Button, IconButton, Grid } fr
 import HelpIcon from '@mui/icons-material/Help';
 import HelpModal from "../HelpModal";
 import { Card, CardContent } from '@mui/material';
-import { useTranslation } from "react-i18next";
 
 function PageTitle({
   titleHeading,
@@ -22,16 +21,11 @@ function PageTitle({
   breadcrumbs = [],
   enableBackButton = false,
   breadcrumbColor,
-  showHelpButton = false,
-  model
+  showHelpButton = false
 }) {
   const isMobile = useMobile(true);
   const breadcrumbsLasIndex = breadcrumbs.length - 1;
   const needToShowBreadcrumbs = showBreadcrumbs && breadcrumbs.length;
-  const { t: translate, i18n } = useTranslation();
-  const tOpts = useMemo(() => ({ t: translate, i18n }), [translate, i18n]);
-  const tTranslate = model?.tTranslate ?? ((key) => key);
-
   const handleBack = () => {
     navigate(-1);
   };
@@ -63,10 +57,10 @@ function PageTitle({
                 </Breadcrumbs>
               </Grid>
               {(breadcrumbs.length > 1 || enableBackButton) && <Grid sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                <Button variant="contained" onClick={handleBack}>{tTranslate('Back', tOpts)}</Button>
+                <Button variant="contained" onClick={handleBack}>Back</Button>
               </Grid>}
               {showHelpButton && <Grid sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-                <IconButton color="primary" title={tTranslate('Help', tOpts)} size="large">
+                <IconButton color="primary" title='Help' size="large">
                   <HelpIcon fontSize="inherit" />
                 </IconButton>
               </Grid>}
@@ -79,7 +73,7 @@ function PageTitle({
                     <MuiTypography
                       className={`${titleClass} page-text-title`}
                       variant="p"
-                      text={tTranslate(titleHeading, tOpts)}
+                      text={titleHeading}
                       name={name}
                     />
                   </div>
