@@ -1,6 +1,6 @@
 {
   "name": "@durlabh/dframework-ui",
-  "version": "2.0.1",
+  "version": "1.0.6",
   "private": true,
   "type": "module",
   "main": "./index.js",
