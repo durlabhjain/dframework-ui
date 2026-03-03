@@ -242,7 +242,7 @@ const GridBase = memo(({
     }, [model.columnGroupingModel, tOpts, translate]);
 
     useEffect(() => {
-        if (Array.isArray(props.rowGroupingField)) {
+        if (Array.isArray(props.rowGroupingField) && props.rowGroupingField.length > 0) {
             setGroupingModel(props.rowGroupingField);
         }
     }, [props.rowGroupingField]);
@@ -358,7 +358,7 @@ const GridBase = memo(({
                 {...otherProps}
             />
         ),
-        [translate, tOpts, tTranslate]
+        [translate, tOpts]
     );
     const { customActions = [] } = model;
     const actionConfig = useMemo(() => {
@@ -1272,7 +1272,7 @@ const GridBase = memo(({
                         columnHeaderHeight={columnHeaderHeight}
                         hideFooter={!showFooter}
                         rowGroupingModel={groupingModel}
-                        onRowGroupingModelChange={(newGroupingModel) => setGroupingModel(newGroupingModel)}
+                        onRowGroupingModelChange={(model) => setGroupingModel(model)}
                         getRowClassName={props.getRowClassName}
                         columnGroupingModel={columnGroupingModel}
                     />
