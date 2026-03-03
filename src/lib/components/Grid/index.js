@@ -239,10 +239,10 @@ const GridBase = memo(({
             ...group,
             headerName: group.headerName ? tTranslate(group.headerName, tOpts) : group.headerName
         }));
-    }, [model.columnGroupingModel, tTranslate, tOpts]);
+    }, [model.columnGroupingModel, tOpts, translate]);
 
     useEffect(() => {
-        if(Array.isArray(props.rowGroupingField) && props.rowGroupingField.length > 0) {
+        if (Array.isArray(props.rowGroupingField) && props.rowGroupingField.length > 0) {
             setGroupingModel(props.rowGroupingField);
         }
     }, [props.rowGroupingField]);
@@ -350,15 +350,15 @@ const GridBase = memo(({
         ({ key, title, icon, color = "primary", disabled, otherProps }) => (
             <GridActionsCellItem
                 key={key}
-                icon={<Tooltip title={tTranslate(title, tOpts)}>{iconMapper[icon] || icon}</Tooltip>}
+                icon={<Tooltip title={tTranslate(title, tOpts)}>{iconMapper[icon] || icon || tTranslate(title, tOpts)}</Tooltip>}
                 data-action={key}
-                label={title}
+                label={tTranslate(title, tOpts)}
                 color={color}
                 disabled={disabled}
                 {...otherProps}
             />
         ),
-        []
+        [translate, tOpts]
     );
     const { customActions = [] } = model;
     const actionConfig = useMemo(() => {
@@ -1013,7 +1013,7 @@ const GridBase = memo(({
             });
         }
         return null;
-    }, [model.getDetailPanelContent, fetchData]);
+    }, [model.getDetailPanelContent, fetchData, tTranslate, tOpts]);
 
     const localeText =
         useMemo(() => ({
@@ -1187,7 +1187,7 @@ const GridBase = memo(({
                 'aria-label': tTranslate('Go to next page', tOpts),
             },
         }
-    }), [model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems]);
+    }), [model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions]);
 
     const initialState = useMemo(() => ({
         columns: {
@@ -1205,7 +1205,7 @@ const GridBase = memo(({
     return (
         <>
             {showPageTitle !== false && <PageTitle navigate={navigate} showBreadcrumbs={!hideBreadcrumb && !hideBreadcrumbInGrid}
-                breadcrumbs={breadCrumbs} enableBackButton={navigateBack} breadcrumbColor={breadcrumbColor} />}
+                breadcrumbs={breadCrumbs} enableBackButton={navigateBack} breadcrumbColor={breadcrumbColor} model={model} />}
             <Box style={gridStyle || customStyle}>
                 <Box sx={{ display: 'flex', maxHeight: '80vh', flexDirection: 'column' }}>
                     <DataGridPremium
@@ -1280,7 +1280,7 @@ const GridBase = memo(({
                 {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
                 }
                 {isDeleting && !errorMessage && (
-                    <DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title="Confirm Delete">
+                    <DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title={tTranslate("Confirm Delete", tOpts)} okText={tTranslate("Ok", tOpts)} cancelText={tTranslate("Cancel", tOpts)}>
                         <DeleteContentText>
                             {tTranslate("Are you sure you want to delete", tOpts)} {record.name && <Tooltip style={{ display: "inline" }} title={record.name} arrow>
                                 {record.name.length > 30 ? `${record.name.slice(0, 30)}...` : record.name}
@@ -1292,7 +1292,9 @@ const GridBase = memo(({
                         open={showAddConfirmation}
                         onConfirm={handleAddRecords}
                         onCancel={() => setShowAddConfirmation(false)}
-                        title="Confirm Add"
+                        title={tTranslate("Confirm Add", tOpts)}
+                        okText={tTranslate("Ok", tOpts)}
+                        cancelText={tTranslate("Cancel", tOpts)}
                     >
                         <DeleteContentText>
                             {tTranslate("Are you sure you want to add", tOpts)} {rowSelectionModel.ids.size} {tTranslate("records", { count: rowSelectionModel.ids.size, ...tOpts })}?

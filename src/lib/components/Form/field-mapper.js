@@ -56,7 +56,7 @@ const ImportantSpan = styled('span')({
 const useModelTranslation = (model) => {
   const { t: translate, i18n } = useTranslation();
   const tOpts = React.useMemo(() => ({ t: translate, i18n }), [translate, i18n]);
-  const tTranslate = model?.t ?? model?.tTranslate ?? ((key) => key);
+  const tTranslate = model?.tTranslate ?? ((key) => key);
 
   return { translate, i18n, tOpts, tTranslate };
 };
