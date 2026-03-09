@@ -179,7 +179,7 @@ const Form = ({
             onSaveSuccess();
           }
           const message = success.info ? success.info : `Record ${id === 0 ? "Added" : "Updated"} Successfully.`;
-          snackbar.showMessage(message);
+          snackbar.showMessage(tTranslate(message, tOpts));
           /**
           * Handle navigation after form operations
           * By default, the form navigates back to the grid after save/cancel operations.

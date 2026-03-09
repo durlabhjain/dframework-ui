@@ -774,10 +774,10 @@ const GridBase = memo(({
         const baseUrl = buildUrl(backendApi);
         try {
             await deleteRecord({ id: record.id, api: baseUrl, model });
-            snackbar.showMessage('Record Deleted Successfully.');
+            snackbar.showMessage(tTranslate('Record Deleted Successfully.', tOpts));
             fetchData();
         } catch (error) {
-            snackbar.showError('Delete failed', error.message);
+            snackbar.showError(tTranslate('Delete failed', tOpts), error.message);
         } finally {
             setIsDeleting(false);
         }
@@ -850,11 +850,11 @@ const GridBase = memo(({
 
             if (result) {
                 fetchData();
-                const message = result.info ? result.info : "Record Added Successfully.";
+                const message = result.info ? result.info : tTranslate('Record Added Successfully.', tOpts);
                 snackbar.showMessage(message);
             }
         } catch (err) {
-            snackbar.showError(err.message || "An error occurred, please try again later.");
+            snackbar.showError(err.message || tTranslate('An error occurred, please try again later.', tOpts));
         } finally {
             setIsLoading(false);
             setRowSelectionModel({
