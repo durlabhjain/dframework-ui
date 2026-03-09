@@ -11,6 +11,27 @@ import { getDefaultOperator } from './helper';
 
 dayjs.extend(utcPlugin);
 
+const normalizeSelectFilterValue = (value, isMultiple) => {
+    // MUI Select expects:
+    // - an array when `multiple` is true
+    // - a scalar (string/number/boolean) when `multiple` is false
+    // This keeps filter state compatible with both modes, even when legacy
+    // values are present in the model.
+    const isEmptyValue = value === '' || value === null || value === undefined;
+
+    if (isMultiple) {
+        if (Array.isArray(value)) {
+            return value;
+        }
+        return isEmptyValue ? [] : [value];
+    }
+
+    if (Array.isArray(value)) {
+        return value[0] ?? '';
+    }
+    return value ?? '';
+};
+
 const ToolbarFilter = ({
     column,
     filterModel,
@@ -30,13 +51,18 @@ const ToolbarFilter = ({
     // Get current filter value
     // If there's an existing filter, use its value (even if it's falsy like 0, false, "")
     const filterValue = useMemo(() => {
+        const operator = existingFilter?.operator || column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
+        if (['isEmpty', 'isNotEmpty'].includes(operator)) {
+            return '';
+        }
+
         if (!existingFilter) {
             // For multi-select fields, default to empty array
             const isMultiple = column.toolbarFilter?.defaultOperator === 'isAnyOf';
             return isMultiple ? [] : '';
         }
         return existingFilter.value;
-    }, [existingFilter, column.toolbarFilter?.defaultOperator]);
+    }, [existingFilter, column.toolbarFilter?.defaultOperator, column.type]);
     // Handle filter change - use functional update to avoid filterModel dependency
     const handleFilterChange = useCallback((newValue) => {
         const operator = column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
@@ -203,12 +229,13 @@ const ToolbarFilter = ({
                     : options;
 
                 const isMultiple = existingFilter?.operator === 'isAnyOf' || column.toolbarFilter?.defaultOperator === 'isAnyOf';
+                const selectValue = normalizeSelectFilterValue(filterValue, isMultiple);
 
                 return (
                     <FormControl variant="standard" sx={{ minWidth: 150 }}>
                         <InputLabel>{tTranslate(label, tOpts)}</InputLabel>
                         <Select
-                            value={filterValue}
+                            value={selectValue}
                             onChange={(e) => handleFilterChange(e.target.value)}
                             multiple={isMultiple}
                             size="small"

@@ -536,6 +536,19 @@ const GridBase = memo(({
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate]);
 
+    const normalizeFilterValue = ({ operator, rawValue }) => {
+        if (operator !== 'isAnyOf') {
+            return rawValue;
+        }
+        if (Array.isArray(rawValue)) {
+            return rawValue;
+        }
+        if (rawValue === '' || rawValue === null || rawValue === undefined) {
+            return [];
+        }
+        return [rawValue];
+    };
+
     // Initialize toolbar filters with default values
     const hasInitializedRef = useRef(false);
     useEffect(() => {
@@ -553,12 +566,18 @@ const GridBase = memo(({
             return;
         }
 
-        const toolbarFilters = toolbarFilterColumns.map(col => ({
-            field: col.field,
-            operator: getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator),
-            value: col.toolbarFilter.defaultFilterValue,
-            type: col.type
-        }));
+        const toolbarFilters = toolbarFilterColumns.map(col => {
+            const operator = getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator);
+            return {
+                field: col.field,
+                operator,
+                value: normalizeFilterValue({
+                    operator,
+                    rawValue: col.toolbarFilter.defaultFilterValue
+                }),
+                type: col.type
+            };
+        });
 
         setFilterModel(prev => ({
             ...prev,
