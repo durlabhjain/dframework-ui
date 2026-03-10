@@ -148,15 +148,15 @@ const Form = ({
   }, [formApi, model, idToLoad]);
   
   useEffect(() => {
-    setValidationSchema(model.getValidationSchema({ id, snackbar }));
+    setValidationSchema(model.getValidationSchema({ id, snackbar, tTranslate, tOpts }));
     loadRecord();
-  }, [id, idToLoad, model, formApi, snackbar, setValidationSchema, loadRecord]);
+  }, [id, idToLoad, model, formApi, snackbar, setValidationSchema, loadRecord, tTranslate, tOpts]);
 
   const formik = useFormik({
     enableReinitialize: true,
     initialValues,
     validationSchema: validationSchema,
-    validateOnBlur: false,
+    validateOnBlur: model?.validateOnBlur ?? false,
     onSubmit: async (values, { resetForm }) => {
       Object.keys(values).forEach(key => {
         if (typeof values[key] === consts.string) {
