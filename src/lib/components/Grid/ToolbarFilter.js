@@ -11,26 +11,7 @@ import { getDefaultOperator } from './helper';
 
 dayjs.extend(utcPlugin);
 
-const normalizeSelectFilterValue = (value, isMultiple) => {
-    // MUI Select expects:
-    // - an array when `multiple` is true
-    // - a scalar (string/number/boolean) when `multiple` is false
-    // This keeps filter state compatible with both modes, even when legacy
-    // values are present in the model.
-    const isEmptyValue = value === '' || value === null || value === undefined;
 
-    if (isMultiple) {
-        if (Array.isArray(value)) {
-            return value;
-        }
-        return isEmptyValue ? [] : [value];
-    }
-
-    if (Array.isArray(value)) {
-        return value[0] ?? '';
-    }
-    return value ?? '';
-};
 
 const ToolbarFilter = ({
     column,
@@ -229,7 +210,7 @@ const ToolbarFilter = ({
                     : options;
 
                 const isMultiple = existingFilter?.operator === 'isAnyOf' || column.toolbarFilter?.defaultOperator === 'isAnyOf';
-                const selectValue = normalizeSelectFilterValue(filterValue, isMultiple);
+                const selectValue = utils.normalizeFilterValue({ value: filterValue, operator: existingFilter?.operator, isMultiple });
 
                 return (
                     <FormControl variant="standard" sx={{ minWidth: 150 }}>

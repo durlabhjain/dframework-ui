@@ -28,7 +28,7 @@ import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
 import CustomDropdownMenu from './CustomDropdownMenu';
 import CustomToolbar from './CustomToolbar';
-import { getPermissions } from '../utils';
+import utils, { getPermissions } from '../utils';
 import HistoryIcon from '@mui/icons-material/History';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Checkbox from '@mui/material/Checkbox';
@@ -536,19 +536,6 @@ const GridBase = memo(({
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate]);
 
-    const normalizeFilterValue = ({ operator, rawValue }) => {
-        if (operator !== 'isAnyOf') {
-            return rawValue;
-        }
-        if (Array.isArray(rawValue)) {
-            return rawValue;
-        }
-        if (rawValue === '' || rawValue === null || rawValue === undefined) {
-            return [];
-        }
-        return [rawValue];
-    };
-
     // Initialize toolbar filters with default values
     const hasInitializedRef = useRef(false);
     useEffect(() => {
@@ -571,9 +558,9 @@ const GridBase = memo(({
             return {
                 field: col.field,
                 operator,
-                value: normalizeFilterValue({
+                value: utils.normalizeFilterValue({
                     operator,
-                    rawValue: col.toolbarFilter.defaultFilterValue
+                    value: col.toolbarFilter.defaultFilterValue
                 }),
                 type: col.type
             };
