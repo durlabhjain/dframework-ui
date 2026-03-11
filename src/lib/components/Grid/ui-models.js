@@ -73,7 +73,7 @@ class UiModel {
 		return defaultValues;
 	}
 
-	getValidationSchema({ id, tTranslate, tOpts }) {
+	getValidationSchema({ id, tTranslate = (key) => key, tOpts = {} } = {}) {
 		const { columns } = this;
 		const validationConfig = {};
 		for (const column of columns) {

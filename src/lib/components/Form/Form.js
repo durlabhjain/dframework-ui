@@ -148,9 +148,12 @@ const Form = ({
   }, [formApi, model, idToLoad]);
   
   useEffect(() => {
-    setValidationSchema(model.getValidationSchema({ id, snackbar, tTranslate, tOpts }));
     loadRecord();
-  }, [id, idToLoad, model, formApi, snackbar, setValidationSchema, loadRecord, tTranslate, tOpts]);
+  }, [id, idToLoad, model, formApi, loadRecord]);
+
+  useEffect(() => {
+    setValidationSchema(model.getValidationSchema({ id, tTranslate, tOpts }));
+  }, [id, model, setValidationSchema, translate, tOpts, tTranslate]);
 
   const formik = useFormik({
     enableReinitialize: true,
