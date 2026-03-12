@@ -645,7 +645,7 @@ const GridBase = memo(({
                 setData(result);
             }
         } catch (error) {
-            snackbar.showError('An error occurred while fetching data', error.message);
+            snackbar.showError(tTranslate('An error occurred while fetching data', tOpts));
             if (!isExportRequest) {
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
             }
@@ -661,7 +661,7 @@ const GridBase = memo(({
                 const data = await getRecord({ id, api: baseUrl, model, parentFilters, where });
                 setActiveRecord(data);
             } catch (error) {
-                snackbar.showError('Could not load record', error.message);
+                snackbar.showError(tTranslate('Could not load record', tOpts));
             }
             return;
         }
@@ -810,7 +810,7 @@ const GridBase = memo(({
 
     const handleAddRecords = useCallback(async () => {
         if (rowSelectionModel.ids.size < 1) {
-            snackbar.showError("Please select at least one record to proceed");
+            snackbar.showError(tTranslate("Please select at least one record to proceed", tOpts));
             return;
         }
 
@@ -841,7 +841,7 @@ const GridBase = memo(({
                 snackbar.showMessage(message);
             }
         } catch (err) {
-            snackbar.showError(err.message || tTranslate('An error occurred, please try again later.', tOpts));
+            snackbar.showError(err.message || tTranslate('An error occurred, please try after some time.', tOpts));
         } finally {
             setIsLoading(false);
             setRowSelectionModel({
@@ -859,7 +859,7 @@ const GridBase = memo(({
                 return;
             }
             snackbar.showError(
-                "Please select at least one record to proceed"
+              tTranslate("Please select at least one record to proceed", tOpts),
             );
             return;
         }
@@ -910,7 +910,7 @@ const GridBase = memo(({
     const getGridRowId = useCallback((row) => row[idProperty], [idProperty]);
     const handleExport = useCallback((e) => {
         if (data?.recordCount > recordCounts) {
-            snackbar.showMessage('Cannot export more than 60k records, please apply filters or reduce your results using filters');
+            snackbar.showMessage(tTranslate('Cannot export more than 60k records, please apply filters or reduce your results using filters', tOpts));
             return;
         }
         const { orderedFields, columnVisibilityModel, lookup } = apiRef.current.state.columns;
@@ -924,7 +924,7 @@ const GridBase = memo(({
         );
 
         if (visibleColumns.length === 0) {
-            snackbar.showMessage('You cannot export while all columns are hidden... please show at least 1 column before exporting');
+            snackbar.showMessage(tTranslate('You cannot export while all columns are hidden... please show at least 1 column before exporting', tOpts));
             return;
         }
 

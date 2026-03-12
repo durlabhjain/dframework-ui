@@ -193,7 +193,7 @@ const Form = ({
         })
         .catch((err) => {
           snackbar.showError(
-            "An error occured.",
+            tTranslate("An error occurred, please try after some time.", tOpts),
             err
           );
           if (model.reloadOnSave) {
@@ -217,7 +217,7 @@ const Form = ({
 
   const errorOnLoad = useCallback((title, error) => {
     setIsLoading(false);
-    snackbar.showError(title, error);
+    snackbar.showError(tTranslate(title, tOpts), error);
     handleNavigation();
   }, [snackbar, handleNavigation]);
 
@@ -266,11 +266,11 @@ const Form = ({
         model
       });
       if (response === true) {
-        snackbar.showMessage("Record Deleted Successfully.");
+        snackbar.showMessage(tTranslate("Record Deleted Successfully.", tOpts));
         navigateBack !== false && handleNavigation();
       }
     } catch (error) {
-      snackbar.showError("An error occurred, please try after some time.");
+      snackbar.showError(tTranslate("An error occurred, please try after some time.", tOpts), error?.message);
     } finally {
       setIsDeleting(false);
     }
@@ -294,7 +294,7 @@ const Form = ({
     const fieldName = Object.keys(errors)[0];
     const errorMessage = errors[fieldName];
     if (errorMessage) {
-      snackbar.showError(errorMessage, null, "error");
+      snackbar.showError(tTranslate(errorMessage, tOpts), null, "error");
     }
     const fieldConfig = model.columns.find(
       (column) => column.field === fieldName
