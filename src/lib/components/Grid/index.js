@@ -1175,7 +1175,7 @@ const GridBase = memo(({
             headerActions: props.headerActions
         },
         footer: {
-            pagination: true,
+            pagination: model.pagination ?? true,
             apiRef,
             tTranslate,
             tOpts
@@ -1240,7 +1240,7 @@ const GridBase = memo(({
                         paginationModel={paginationModel}
                         pageSizeOptions={constants.pageSizeOptions}
                         onPaginationModelChange={setPaginationModel}
-                        pagination
+                        pagination={model.pagination ?? true}
                         rowCount={data.recordCount}
                         rows={data.records || []}
                         sortModel={sortModel}
