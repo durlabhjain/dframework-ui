@@ -219,7 +219,7 @@ const Form = ({
     setIsLoading(false);
     snackbar.showError(tTranslate(title, tOpts), error);
     handleNavigation();
-  }, [snackbar, handleNavigation]);
+  }, [snackbar, handleNavigation, tTranslate, tOpts]);
 
   const setActiveRecord = function ({ id, title, record, lookups }) {
     const isCopy = idWithOptions.indexOf("-") > -1;
@@ -274,7 +274,7 @@ const Form = ({
     } finally {
       setIsDeleting(false);
     }
-  }, [id, api, model.api, snackbar, setErrorMessage, model, navigateBack, handleNavigation]);
+  }, [id, api, model.api, snackbar, setErrorMessage, model, navigateBack, handleNavigation, tTranslate, tOpts]);
   const clearError = () => {
     setErrorMessage(null)
     setIsDeleting(false);
