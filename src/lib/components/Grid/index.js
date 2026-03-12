@@ -555,21 +555,30 @@ const GridBase = memo(({
 
         const toolbarFilters = toolbarFilterColumns.map(col => {
             const operator = getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator);
+            const normalizedValue = utils.normalizeFilterValue({
+                operator,
+                value: col.toolbarFilter.defaultFilterValue
+            });
             return {
                 field: col.field,
                 operator,
-                value: utils.normalizeFilterValue({
-                    operator,
-                    value: col.toolbarFilter.defaultFilterValue
-                }),
+                value: normalizedValue,
                 type: col.type
             };
+        }).filter(f => {
+            // Skip inserting toolbar filters where normalization produced an empty array,
+            // which historically could result from legacy multi-select defaults (''/null).
+            // An empty array often behaves like 'match none', so avoid adding it.
+            const v = f.value;
+            return !(Array.isArray(v) && v.length === 0);
         });
 
-        setFilterModel(prev => ({
-            ...prev,
-            items: [...prev.items, ...toolbarFilters]
-        }));
+        if (toolbarFilters.length > 0) {
+            setFilterModel(prev => ({
+                ...prev,
+                items: [...prev.items, ...toolbarFilters]
+            }));
+        }
         hasInitializedRef.current = true;
     }, [gridColumns]);
 
@@ -652,7 +661,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest) setIsLoading(false);
         }
-    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters]);
+    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, snackbar]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -679,7 +688,7 @@ const GridBase = memo(({
             path += `?${searchParams.toString()}`;
         }
         navigate(path);
-    }, [setActiveRecord, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar]);
+    }, [setActiveRecord, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -768,7 +777,7 @@ const GridBase = memo(({
         } finally {
             setIsDeleting(false);
         }
-    }, [backendApi, record?.id, snackbar, model, fetchData]);
+    }, [backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts]);
 
     const clearError = useCallback(() => {
         setErrorMessage(null);
@@ -850,7 +859,7 @@ const GridBase = memo(({
             });
             setShowAddConfirmation(false);
         }
-    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData]);
+    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts]);
 
     const onAdd = useCallback(() => {
         if (selectionApi.length > 0) {
@@ -868,7 +877,7 @@ const GridBase = memo(({
         } else {
             openForm({ id: 0 });
         }
-    }, [selectionApi, snackbar, onAddOverride, openForm, rowSelectionModel.ids.size]);
+    }, [selectionApi, snackbar, onAddOverride, openForm, rowSelectionModel.ids.size, tTranslate, tOpts]);
 
     const clearFilters = useCallback(() => {
         if (!filterModel?.items?.length) return;
@@ -940,7 +949,7 @@ const GridBase = memo(({
             contentType: e.target.dataset.contentType,
             columns
         });
-    }, [data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData]);
+    }, [data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
 
     useEffect(() => {
         if (!backendApi || !preferencesReady) return;

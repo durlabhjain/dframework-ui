@@ -302,7 +302,7 @@ const Form = ({
     if (fieldConfig.tab) {
       setActiveStep(Object.keys(model.tabs).indexOf(fieldConfig.tab));
     }
-  }, [beforeSubmit, formik, model, snackbar, setActiveStep]);
+  }, [beforeSubmit, formik, model, snackbar, setActiveStep, tTranslate, tOpts]);
 
   const breadcrumbs = [
     { text: tTranslate(formTitle, tOpts) },
@@ -311,7 +311,7 @@ const Form = ({
   const showRelations = Number(id) !== 0 && Boolean(relations.length);
   const showSaveButton = searchParams.has("showRelation");
   const readOnlyRelations = !recordEditable || data.readOnlyRelations;
-  deletePromptText = deletePromptText || "Are you sure you want to delete ?";
+  deletePromptText = deletePromptText || tTranslate("Are you sure you want to delete ?", tOpts);
   const { showPageTitle = true } = model;
   return (
     <>
