@@ -161,6 +161,7 @@ const GridBase = memo(({
     onRowDoubleClick,
     onRowClick = () => { },
     gridStyle,
+    gridData,
     reRenderKey,
     additionalFilters,
     onCellDoubleClickOverride,
@@ -269,6 +270,12 @@ const GridBase = memo(({
             setGroupingModel(props.rowGroupingField);
         }
     }, [props.rowGroupingField]);
+
+    useEffect(() => {
+        if(Array.isArray(gridData)){
+            setData(prev => ({ ...prev, records: gridData, recordCount: gridData.length }));
+        }
+    }, [gridData]);
 
     const baseDataFromParams = searchParams.has('baseData') && searchParams.get('baseData');
     const baseSaveData = useMemo(() => {
@@ -614,6 +621,7 @@ const GridBase = memo(({
 
 
     const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
+        if (Array.isArray(gridData)) return;
         const { pageSize, page } = paginationModel;
         const isExportRequest = Boolean(contentType);
 
@@ -707,7 +715,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
+    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts, gridData]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
