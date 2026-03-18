@@ -74,8 +74,8 @@ const CustomDropdownMenu = (props) => {
                 MenuProps={{
                     PaperProps: {
                         style: {
-                            height: 'fit-content',
-                            overflow: 'hidden'
+                            maxHeight: 400, 
+                            overflowY: 'auto'
                         }
                     }
                 }}

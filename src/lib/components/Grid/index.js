@@ -534,7 +534,7 @@ const GridBase = memo(({
             pinnedColumns.right.push('actions');
         }
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
-    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate]);
+    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime]);
 
     // Initialize toolbar filters with default values
     const hasInitializedRef = useRef(false);
