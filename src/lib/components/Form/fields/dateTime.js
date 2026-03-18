@@ -13,7 +13,7 @@ const Field = ({ column, field, formik, otherProps }) => {
         fullWidth
         format={systemDateTimeFormat(false, false, stateData.dateTime)}
         name={field}
-        value={dayjs(formik.values[field])}
+        value={formik.values[field] ? dayjs(formik.values[field]): null}
         onChange={(value) => formik.setFieldValue(field, value)}
         onBlur={formik.handleBlur}
         helperText={formik.touched[field] && formik.errors[field]}

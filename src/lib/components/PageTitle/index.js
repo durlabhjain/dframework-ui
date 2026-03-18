@@ -62,7 +62,7 @@ function PageTitle({
                   </Typography>)}
                 </Breadcrumbs>
               </Grid>
-              {(breadcrumbs.length > 1 || enableBackButton) && <Grid sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+              {(enableBackButton) && <Grid sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
                 <Button variant="contained" onClick={handleBack}>{tTranslate('Back', tOpts)}</Button>
               </Grid>}
               {showHelpButton && <Grid sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>

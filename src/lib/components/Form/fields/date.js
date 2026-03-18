@@ -14,8 +14,12 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) =
         fullWidth
         format={systemDateTimeFormat(true, false, stateData.dateTime)}
         name={field}
-        value={dayjs(formik.values[field])}
+        value={formik.values[field] ? dayjs(formik.values[field]) : null}
         onChange={(value) => {
+            if (value === null) {
+                formik.setFieldValue(field, null);
+                return;
+            }
             const adjustedDate = dayjs(value).hour(12);
             const isoString = adjustedDate.toISOString();
             formik.setFieldValue(field, isoString);

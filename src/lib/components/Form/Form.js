@@ -322,6 +322,7 @@ const Form = ({
           showBreadcrumbs={!hideBreadcrumb}
           breadcrumbs={breadcrumbs}
           model={model}
+          enableBackButton={navigateBack !== undefined}
         />
       )}
       <ActiveStepContext.Provider value={{ activeStep, setActiveStep }}>
