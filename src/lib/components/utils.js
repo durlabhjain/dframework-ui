@@ -26,7 +26,7 @@ const utils = {
     // - If the filter is single-valued, return a scalar: if an array was passed,
     //   take the first element; otherwise return the value or an empty string.
     normalizeFilterValue: ({ value, operator, isMultiple }) => {
-        const isEmpty = value === '' || value === null || value === undefined;
+        const isEmpty = ['', null, undefined].includes(value);
         const multiple = operator === 'isAnyOf' || isMultiple;
 
         if (multiple) {

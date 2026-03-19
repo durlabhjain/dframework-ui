@@ -206,7 +206,7 @@ const GridBase = memo(({
     const userDefinedPermissions = { add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete };
     const { canAdd, canEdit, canDelete } = getPermissions({ userData, model, userDefinedPermissions });
     const tTranslate = model.tTranslate ?? ((key) => key);
-    const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70 } = model;
+    const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false } = model;
     const gridTitle = model.gridTitle || model.title;
     const preferenceKey = getApiEndpoint("GridPreferenceManager") ? (model.preferenceId || model.module?.preferenceId) : null;
     const searchParams = new URLSearchParams(window.location.search);
@@ -1184,7 +1184,7 @@ const GridBase = memo(({
             headerActions: props.headerActions
         },
         footer: {
-            pagination: model.pagination ?? true,
+            pagination: disablePagination ?? true,
             apiRef,
             tTranslate,
             tOpts
@@ -1249,7 +1249,7 @@ const GridBase = memo(({
                         paginationModel={paginationModel}
                         pageSizeOptions={constants.pageSizeOptions}
                         onPaginationModelChange={setPaginationModel}
-                        pagination={model.pagination ?? true}
+                        pagination={!disablePagination}
                         rowCount={data.recordCount}
                         rows={data.records || []}
                         sortModel={sortModel}
