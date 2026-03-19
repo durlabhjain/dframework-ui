@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { useStateContext } from '../../useRouter/StateProvider';
@@ -11,6 +11,16 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) =
         return formik.values[field] ? dayjs(formik.values[field]) : null;
     }, [formik.values[field]]);
     
+    const handleChange = useCallback((value) => {
+        if (value === null) {
+            formik.setFieldValue(field, null);
+            return;
+        }
+        const adjustedDate = dayjs(value).hour(12);
+        const isoString = adjustedDate.toISOString();
+        formik.setFieldValue(field, isoString);
+    }, [field, formik]);
+    
     return <DatePicker
         {...otherProps}
         variant="standard"
@@ -20,15 +30,7 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) =
         format={systemDateTimeFormat(true, false, stateData.dateTime)}
         name={field}
         value={dateValue}
-        onChange={(value) => {
-            if (value === null) {
-                formik.setFieldValue(field, null);
-                return;
-            }
-            const adjustedDate = dayjs(value).hour(12);
-            const isoString = adjustedDate.toISOString();
-            formik.setFieldValue(field, isoString);
-        }}
+        onChange={handleChange}
         onBlur={formik.handleBlur}
         helperText={formik.touched[field] && formik.errors[field]}
         minDate={(column.min ? dayjs(column.min) : null)}
