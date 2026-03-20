@@ -159,7 +159,7 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
                                 : null
                             }
                             <Grid size={{ xs: isGridComponent ? 12 : 9 }} sx={gridContainerStyle}>
-                                <Component isAdd={isAdd} model={model} fieldConfigs={fieldConfigs[field]} mode={mode} column={column} field={field} label={label} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} {...otherProps} />
+                                <Component isAdd={isAdd} model={model} fieldConfigs={fieldConfigs[field]} mode={mode} column={column} field={field} label={label} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} tTranslate={tTranslate} tOpts={tOpts} {...otherProps} />
                             </Grid>
                         </Grid >
                     );

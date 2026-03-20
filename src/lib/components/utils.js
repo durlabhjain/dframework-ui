@@ -18,7 +18,30 @@ const utils = {
         edit: "Permission3",
         delete: "Permission4"
     },
-    emptyIdValues: [null, undefined, '', '0', 0]
+    emptyIdValues: [null, undefined, '', '0', 0],
+    // Normalize filter values for filter inputs used by grids/queries.
+    // - If the filter is multi-valued (operator is 'isAnyOf' or `isMultiple` is true),
+    //   ensure an array is returned (empty array for empty input, or wrap single
+    //   values into an array).
+    // - If the filter is single-valued, return a scalar: if an array was passed,
+    //   take the first element; otherwise return the value or an empty string.
+    normalizeFilterValue: ({ value, operator, isMultiple }) => {
+        const isEmpty = ['', null, undefined].includes(value);
+        const multiple = operator === 'isAnyOf' || isMultiple;
+
+        if (multiple) {
+            if (Array.isArray(value)) {
+                return value;
+            }
+            return isEmpty ? [] : [value];
+        }
+
+        if (Array.isArray(value)) {
+            return value[0] ?? '';
+        }
+
+        return value ?? '';
+    }
 }
 export const getPermissions = ({ userData = {}, model, userDefinedPermissions }) => {
     const { permissions = [] } = userData;

@@ -89,7 +89,7 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
       };
       return userDateFormat;
     }
-    return isDateFormatOnly ? 'DD-MM-YYYY' : 'DD-MM-YYYY hh:mm:ss A';
+    return isDateFormatOnly?.split(' ')[0] || 'DD-MM-YYYY';
   }, []);
 
   /**

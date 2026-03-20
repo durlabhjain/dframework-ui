@@ -72,7 +72,16 @@ const LocalizedDatePicker = (props) => {
                         variant: "standard", label: props.label,
                         sx: {
                             marginTop: DATEPICKER_MARGIN_TOP,
-                            marginBottom: DATEPICKER_MARGIN_BOTTOM
+                            marginBottom: DATEPICKER_MARGIN_BOTTOM,
+                            '& .MuiInputLabel-root': {
+                                marginTop: '5px',
+                            },
+                            '& .MuiInput-root': {
+                                marginTop: '5px',
+                            },
+                            '&.MuiFormControl-root.MuiPickersTextField-root': {
+                                marginTop: '-20px',
+                            }
                         }
                     }
                 }}

@@ -73,7 +73,7 @@ class UiModel {
 		return defaultValues;
 	}
 
-	getValidationSchema({ id }) {
+	getValidationSchema({ id, tTranslate = (key) => key, tOpts = {} } = {}) {
 		const { columns } = this;
 		const validationConfig = {};
 		for (const column of columns) {
@@ -88,13 +88,13 @@ class UiModel {
 				case 'string':
 					config = yup.string().nullable().trim().label(formLabel);
 					if (min && !isNaN(Number(min))) {
-						config = config.min(Number(min), `${formLabel} must be at least ${min} characters long`);
+						config = config.min(Number(min), tTranslate(`${formLabel} must be at least ${min} characters long`, tOpts));
 					}
 					if (max && !isNaN(Number(max))) {
-						config = config.max(Number(max), `${formLabel} must be at most ${max} characters long`);
+						config = config.max(Number(max), tTranslate(`${formLabel} must be at most ${max} characters long`, tOpts));
 					}
 					if (required) {
-						config = config.trim().required(`${formLabel} is required`);
+						config = config.trim().required(tTranslate(`${formLabel} is required`, tOpts));
 					}
 					break;
 				case 'boolean':
@@ -108,7 +108,7 @@ class UiModel {
 				case 'dayRadio':
 					config = yup.mixed().label(formLabel);
 					if (required) {
-						config = config.required(`Select at least one option for ${formLabel}`);
+						config = config.required(tTranslate(`Select at least one option for ${formLabel}`, tOpts));
 					}
 					break;
 				case 'date':
@@ -117,7 +117,7 @@ class UiModel {
 						return value;
 					}).label(formLabel);
 					if (required) {
-						config = config.required(`${formLabel} is required`);
+						config = config.required(tTranslate(`${formLabel} is required`, tOpts));
 					}
 					break;
 				case 'dateTime':
@@ -131,13 +131,13 @@ class UiModel {
 						})
 						.label(formLabel); // Set a label for better error messages
 					if (required) {
-						config = config.required(`${formLabel} is required`);
+						config = config.required(tTranslate(`${formLabel} is required`, tOpts));
 					}
 					break;
 				case 'select':
 				case 'autocomplete':
 					if (required) {
-						config = yup.string().trim().label(formLabel).required(`Select at least one ${formLabel}`);
+						config = yup.string().trim().label(formLabel).required(tTranslate(`Select at least one ${formLabel}`, tOpts));
 					} else {
 						config = yup.string().nullable();
 					}
@@ -145,7 +145,7 @@ class UiModel {
 				case 'password':
 					config = yup.string()
 						.label(formLabel)
-						.test("ignore-asterisks", `${formLabel} must be a valid password.`, (value) => {
+						.test("ignore-asterisks", tTranslate(`${formLabel} must be a valid password.`, tOpts), (value) => {
 							// Skip further validations if value is exactly "******"
 							if (value === "******") return true;
 							const minlength = Number(min) || 8;
@@ -153,11 +153,11 @@ class UiModel {
 							const regex = column.regex || regexConfig.password;
 							// Check minimum length, maximum length, and pattern if not "******"
 							return yup.string()
-								.min(minlength, `${formLabel} must be at least ${minlength} characters`)
-								.max(maxlength, `${formLabel} must be at most ${maxlength} characters`)
+								.min(minlength, tTranslate(`${formLabel} must be at least ${minlength} characters`, tOpts))
+								.max(maxlength, tTranslate(`${formLabel} must be at most ${maxlength} characters`, tOpts))
 								.matches(
 									regex,
-									`${formLabel} must contain at least one lowercase letter, one uppercase letter, one digit, and one special character`
+									tTranslate(`${formLabel} must contain at least one lowercase letter, one uppercase letter, one digit, and one special character`, tOpts)
 								)
 								.isValidSync(value);
 						});
@@ -168,20 +168,20 @@ class UiModel {
 						.trim()
 						.matches(
 							(column.regex || regexConfig.email),
-							'Email must be a valid email'
+							tTranslate('Email must be a valid email', tOpts)
 						);
 					break;
 				case 'number':
 					if (required) {
-						config = yup.number().label(formLabel).required(`${formLabel} is required.`);
+						config = yup.number().label(formLabel).required(tTranslate(`${formLabel} is required.`, tOpts));
 					} else {
 						config = yup.number().nullable();
 					}
 					if (min !== undefined && min !== '' && !isNaN(Number(min))) {
-						config = config.min(Number(min), `${formLabel} must be greater than or equal to ${min}`);
+						config = config.min(Number(min), tTranslate(`${formLabel} must be greater than or equal to ${min}`, tOpts));
 					}
 					if (max !== undefined && max !== '' && !isNaN(Number(max))) {
-						config = config.max(Number(max), `${formLabel} must be less than or equal to ${max}`);
+						config = config.max(Number(max), tTranslate(`${formLabel} must be less than or equal to ${max}`, tOpts));
 					}
 					break;
 				case 'fileUpload':
@@ -192,10 +192,10 @@ class UiModel {
 					break;
 			}
 			if (required && type !== "string") {
-				config = config.required(`${formLabel} is required`);
+				config = config.required(tTranslate(`${formLabel} is required`, tOpts));
 			}
 			if (requiredIfNew && (!id || id === '')) {
-				config = config.trim().required(`${formLabel} is required`);
+				config = config.trim().required(tTranslate(`${formLabel} is required`, tOpts));
 			}
 			if (validate) {
 				const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
@@ -206,7 +206,7 @@ class UiModel {
 					);
 					config = config.oneOf(
 						[yup.ref(compareFieldName)],
-						`${formLabel} must match ${compareField.label}`
+						tTranslate(`${formLabel} must match ${compareField.label}`, tOpts)
 					);
 				}
 

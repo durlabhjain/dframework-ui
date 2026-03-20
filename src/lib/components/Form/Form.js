@@ -148,15 +148,18 @@ const Form = ({
   }, [formApi, model, idToLoad]);
   
   useEffect(() => {
-    setValidationSchema(model.getValidationSchema({ id, snackbar }));
     loadRecord();
-  }, [id, idToLoad, model, formApi, snackbar, setValidationSchema, loadRecord]);
+  }, [id, idToLoad, model, formApi, loadRecord]);
+
+  useEffect(() => {
+    setValidationSchema(model.getValidationSchema({ id, tTranslate, tOpts }));
+  }, [id, model, setValidationSchema, translate, tOpts, tTranslate]);
 
   const formik = useFormik({
     enableReinitialize: true,
     initialValues,
     validationSchema: validationSchema,
-    validateOnBlur: false,
+    validateOnBlur: model?.validateOnBlur ?? false,
     onSubmit: async (values, { resetForm }) => {
       Object.keys(values).forEach(key => {
         if (typeof values[key] === consts.string) {
@@ -179,7 +182,7 @@ const Form = ({
             onSaveSuccess();
           }
           const message = success.info ? success.info : `Record ${id === 0 ? "Added" : "Updated"} Successfully.`;
-          snackbar.showMessage(message);
+          snackbar.showMessage(tTranslate(message, tOpts));
           /**
           * Handle navigation after form operations
           * By default, the form navigates back to the grid after save/cancel operations.
@@ -190,7 +193,7 @@ const Form = ({
         })
         .catch((err) => {
           snackbar.showError(
-            "An error occured.",
+            tTranslate("An error occurred, please try after some time.", tOpts),
             err
           );
           if (model.reloadOnSave) {
@@ -214,9 +217,9 @@ const Form = ({
 
   const errorOnLoad = useCallback((title, error) => {
     setIsLoading(false);
-    snackbar.showError(title, error);
+    snackbar.showError(tTranslate(title, tOpts), error);
     handleNavigation();
-  }, [snackbar, handleNavigation]);
+  }, [snackbar, handleNavigation, tTranslate, tOpts]);
 
   const setActiveRecord = function ({ id, title, record, lookups }) {
     const isCopy = idWithOptions.indexOf("-") > -1;
@@ -263,15 +266,15 @@ const Form = ({
         model
       });
       if (response === true) {
-        snackbar.showMessage("Record Deleted Successfully.");
+        snackbar.showMessage(tTranslate("Record Deleted Successfully.", tOpts));
         navigateBack !== false && handleNavigation();
       }
     } catch (error) {
-      snackbar.showError("An error occurred, please try after some time.");
+      snackbar.showError(tTranslate("An error occurred, please try after some time.", tOpts), error?.message);
     } finally {
       setIsDeleting(false);
     }
-  }, [id, api, model.api, snackbar, setErrorMessage, model, navigateBack, handleNavigation]);
+  }, [id, api, model.api, snackbar, setErrorMessage, model, navigateBack, handleNavigation, tTranslate, tOpts]);
   const clearError = () => {
     setErrorMessage(null)
     setIsDeleting(false);
@@ -291,7 +294,7 @@ const Form = ({
     const fieldName = Object.keys(errors)[0];
     const errorMessage = errors[fieldName];
     if (errorMessage) {
-      snackbar.showError(errorMessage, null, "error");
+      snackbar.showError(tTranslate(errorMessage, tOpts), null, "error");
     }
     const fieldConfig = model.columns.find(
       (column) => column.field === fieldName
@@ -299,7 +302,7 @@ const Form = ({
     if (fieldConfig.tab) {
       setActiveStep(Object.keys(model.tabs).indexOf(fieldConfig.tab));
     }
-  }, [beforeSubmit, formik, model, snackbar, setActiveStep]);
+  }, [beforeSubmit, formik, model, snackbar, setActiveStep, tTranslate, tOpts]);
 
   const breadcrumbs = [
     { text: tTranslate(formTitle, tOpts) },
@@ -308,7 +311,7 @@ const Form = ({
   const showRelations = Number(id) !== 0 && Boolean(relations.length);
   const showSaveButton = searchParams.has("showRelation");
   const readOnlyRelations = !recordEditable || data.readOnlyRelations;
-  deletePromptText = deletePromptText || "Are you sure you want to delete ?";
+  deletePromptText = deletePromptText || tTranslate("Are you sure you want to delete ?", tOpts);
   const { showPageTitle = true } = model;
   return (
     <>
@@ -319,6 +322,7 @@ const Form = ({
           showBreadcrumbs={!hideBreadcrumb}
           breadcrumbs={breadcrumbs}
           model={model}
+          enableBackButton={navigateBack !== undefined}
         />
       )}
       <ActiveStepContext.Provider value={{ activeStep, setActiveStep }}>

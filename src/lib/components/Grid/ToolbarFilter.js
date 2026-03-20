@@ -30,13 +30,18 @@ const ToolbarFilter = ({
     // Get current filter value
     // If there's an existing filter, use its value (even if it's falsy like 0, false, "")
     const filterValue = useMemo(() => {
+        const operator = existingFilter?.operator || column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
+        if (['isEmpty', 'isNotEmpty'].includes(operator)) {
+            return '';
+        }
+
         if (!existingFilter) {
             // For multi-select fields, default to empty array
             const isMultiple = column.toolbarFilter?.defaultOperator === 'isAnyOf';
             return isMultiple ? [] : '';
         }
         return existingFilter.value;
-    }, [existingFilter, column.toolbarFilter?.defaultOperator]);
+    }, [existingFilter, column.toolbarFilter?.defaultOperator, column.type]);
     // Handle filter change - use functional update to avoid filterModel dependency
     const handleFilterChange = useCallback((newValue) => {
         const operator = column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
@@ -203,12 +208,13 @@ const ToolbarFilter = ({
                     : options;
 
                 const isMultiple = existingFilter?.operator === 'isAnyOf' || column.toolbarFilter?.defaultOperator === 'isAnyOf';
+                const selectValue = utils.normalizeFilterValue({ value: filterValue, operator: existingFilter?.operator, isMultiple });
 
                 return (
                     <FormControl variant="standard" sx={{ minWidth: 150 }}>
                         <InputLabel>{tTranslate(label, tOpts)}</InputLabel>
                         <Select
-                            value={filterValue}
+                            value={selectValue}
                             onChange={(e) => handleFilterChange(e.target.value)}
                             multiple={isMultiple}
                             size="small"

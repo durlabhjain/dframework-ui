@@ -28,7 +28,7 @@ import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
 import CustomDropdownMenu from './CustomDropdownMenu';
 import CustomToolbar from './CustomToolbar';
-import { getPermissions } from '../utils';
+import utils, { getPermissions } from '../utils';
 import HistoryIcon from '@mui/icons-material/History';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Checkbox from '@mui/material/Checkbox';
@@ -206,7 +206,7 @@ const GridBase = memo(({
     const userDefinedPermissions = { add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete };
     const { canAdd, canEdit, canDelete } = getPermissions({ userData, model, userDefinedPermissions });
     const tTranslate = model.tTranslate ?? ((key) => key);
-    const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70 } = model;
+    const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false } = model;
     const gridTitle = model.gridTitle || model.title;
     const preferenceKey = getApiEndpoint("GridPreferenceManager") ? (model.preferenceId || model.module?.preferenceId) : null;
     const searchParams = new URLSearchParams(window.location.search);
@@ -534,7 +534,7 @@ const GridBase = memo(({
             pinnedColumns.right.push('actions');
         }
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
-    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate]);
+    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime]);
 
     // Initialize toolbar filters with default values
     const hasInitializedRef = useRef(false);
@@ -553,17 +553,32 @@ const GridBase = memo(({
             return;
         }
 
-        const toolbarFilters = toolbarFilterColumns.map(col => ({
-            field: col.field,
-            operator: getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator),
-            value: col.toolbarFilter.defaultFilterValue,
-            type: col.type
-        }));
+        const toolbarFilters = toolbarFilterColumns.map(col => {
+            const operator = getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator);
+            const normalizedValue = utils.normalizeFilterValue({
+                operator,
+                value: col.toolbarFilter.defaultFilterValue
+            });
+            return {
+                field: col.field,
+                operator,
+                value: normalizedValue,
+                type: col.type
+            };
+        }).filter(f => {
+            // Skip inserting toolbar filters where normalization produced an empty array,
+            // which historically could result from legacy multi-select defaults (''/null).
+            // An empty array often behaves like 'match none', so avoid adding it.
+            const v = f.value;
+            return !(Array.isArray(v) && v.length === 0);
+        });
 
-        setFilterModel(prev => ({
-            ...prev,
-            items: [...prev.items, ...toolbarFilters]
-        }));
+        if (toolbarFilters.length > 0) {
+            setFilterModel(prev => ({
+                ...prev,
+                items: [...prev.items, ...toolbarFilters]
+            }));
+        }
         hasInitializedRef.current = true;
     }, [gridColumns]);
 
@@ -639,14 +654,14 @@ const GridBase = memo(({
                 setData(result);
             }
         } catch (error) {
-            snackbar.showError('An error occurred while fetching data', error.message);
+            snackbar.showError(tTranslate('An error occurred while fetching data', tOpts));
             if (!isExportRequest) {
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
             }
         } finally {
             if (!isExportRequest) setIsLoading(false);
         }
-    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters]);
+    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, snackbar]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -655,7 +670,7 @@ const GridBase = memo(({
                 const data = await getRecord({ id, api: baseUrl, model, parentFilters, where });
                 setActiveRecord(data);
             } catch (error) {
-                snackbar.showError('Could not load record', error.message);
+                snackbar.showError(tTranslate('Could not load record', tOpts));
             }
             return;
         }
@@ -673,7 +688,7 @@ const GridBase = memo(({
             path += `?${searchParams.toString()}`;
         }
         navigate(path);
-    }, [setActiveRecord, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar]);
+    }, [setActiveRecord, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -755,14 +770,14 @@ const GridBase = memo(({
         const baseUrl = buildUrl(backendApi);
         try {
             await deleteRecord({ id: record.id, api: baseUrl, model });
-            snackbar.showMessage('Record Deleted Successfully.');
+            snackbar.showMessage(tTranslate('Record Deleted Successfully.', tOpts));
             fetchData();
         } catch (error) {
-            snackbar.showError('Delete failed', error.message);
+            snackbar.showError(tTranslate('Delete failed', tOpts), error.message);
         } finally {
             setIsDeleting(false);
         }
-    }, [backendApi, record?.id, snackbar, model, fetchData]);
+    }, [backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts]);
 
     const clearError = useCallback(() => {
         setErrorMessage(null);
@@ -804,7 +819,7 @@ const GridBase = memo(({
 
     const handleAddRecords = useCallback(async () => {
         if (rowSelectionModel.ids.size < 1) {
-            snackbar.showError("Please select at least one record to proceed");
+            snackbar.showError(tTranslate("Please select at least one record to proceed", tOpts));
             return;
         }
 
@@ -831,11 +846,11 @@ const GridBase = memo(({
 
             if (result) {
                 fetchData();
-                const message = result.info ? result.info : "Record Added Successfully.";
+                const message = result.info ? result.info : tTranslate('Record Added Successfully.', tOpts);
                 snackbar.showMessage(message);
             }
         } catch (err) {
-            snackbar.showError(err.message || "An error occurred, please try again later.");
+            snackbar.showError(err.message || tTranslate('An error occurred, please try after some time.', tOpts));
         } finally {
             setIsLoading(false);
             setRowSelectionModel({
@@ -844,7 +859,7 @@ const GridBase = memo(({
             });
             setShowAddConfirmation(false);
         }
-    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData]);
+    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts]);
 
     const onAdd = useCallback(() => {
         if (selectionApi.length > 0) {
@@ -853,7 +868,7 @@ const GridBase = memo(({
                 return;
             }
             snackbar.showError(
-                "Please select at least one record to proceed"
+              tTranslate("Please select at least one record to proceed", tOpts),
             );
             return;
         }
@@ -862,7 +877,7 @@ const GridBase = memo(({
         } else {
             openForm({ id: 0 });
         }
-    }, [selectionApi, snackbar, onAddOverride, openForm, rowSelectionModel.ids.size]);
+    }, [selectionApi, snackbar, onAddOverride, openForm, rowSelectionModel.ids.size, tTranslate, tOpts]);
 
     const clearFilters = useCallback(() => {
         if (!filterModel?.items?.length) return;
@@ -904,7 +919,7 @@ const GridBase = memo(({
     const getGridRowId = useCallback((row) => row[idProperty], [idProperty]);
     const handleExport = useCallback((e) => {
         if (data?.recordCount > recordCounts) {
-            snackbar.showMessage('Cannot export more than 60k records, please apply filters or reduce your results using filters');
+            snackbar.showMessage(tTranslate('Cannot export more than 60k records, please apply filters or reduce your results using filters', tOpts));
             return;
         }
         const { orderedFields, columnVisibilityModel, lookup } = apiRef.current.state.columns;
@@ -918,7 +933,7 @@ const GridBase = memo(({
         );
 
         if (visibleColumns.length === 0) {
-            snackbar.showMessage('You cannot export while all columns are hidden... please show at least 1 column before exporting');
+            snackbar.showMessage(tTranslate('You cannot export while all columns are hidden... please show at least 1 column before exporting', tOpts));
             return;
         }
 
@@ -934,7 +949,7 @@ const GridBase = memo(({
             contentType: e.target.dataset.contentType,
             columns
         });
-    }, [data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData]);
+    }, [data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
 
     useEffect(() => {
         if (!backendApi || !preferencesReady) return;
@@ -1169,7 +1184,7 @@ const GridBase = memo(({
             headerActions: props.headerActions
         },
         footer: {
-            pagination: true,
+            pagination: disablePagination ?? true,
             apiRef,
             tTranslate,
             tOpts
@@ -1234,7 +1249,7 @@ const GridBase = memo(({
                         paginationModel={paginationModel}
                         pageSizeOptions={constants.pageSizeOptions}
                         onPaginationModelChange={setPaginationModel}
-                        pagination
+                        pagination={!disablePagination}
                         rowCount={data.recordCount}
                         rows={data.records || []}
                         sortModel={sortModel}

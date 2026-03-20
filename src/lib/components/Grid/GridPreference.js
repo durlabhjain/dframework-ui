@@ -11,7 +11,6 @@ import { DataGridPremium, GridActionsCellItem, useGridApiRef } from '@mui/x-data
 import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useSnackbar } from '../SnackBar';
-import { useTranslation } from 'react-i18next';
 import request, { DATA_PARSERS } from './httpRequest';
 import { useStateContext } from '../useRouter/StateProvider';
 import { DialogComponent } from '../Dialog';
@@ -28,14 +27,6 @@ const DIALOG_TYPES = {
     NONE: null
 };
 
-const gridColumns = [
-    { field: "prefName", type: 'string', width: 300, headerName: "Preference Name", sortable: false, filterable: false },
-    { field: "prefDesc", type: 'string', width: 300, headerName: "Preference Description", sortable: false, filterable: false },
-    { field: "isDefault", type: "boolean", width: 100, headerName: "Default", sortable: false, filterable: false },
-    { field: 'editAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={1} icon={<Tooltip title={actionTypes.Edit}><EditIcon /></Tooltip>} tabIndex={1} data-action={actionTypes.Edit} label="Edit" color="primary" />] },
-    { field: 'deleteAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={2} icon={<Tooltip title={actionTypes.Delete}><DeleteIcon /></Tooltip>} tabIndex={2} data-action={actionTypes.Delete} label="Delete" color="error" />] }
-];
-
 const initialValues = {
     prefName: '',
     prefDesc: '',
@@ -51,7 +42,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
     const preferenceApi = getApiEndpoint("GridPreferenceManager");
     const apiRef = useGridApiRef();
     const snackbar = useSnackbar();
-    //const { t } = useTranslation(); // To do: to fix useTranslation directly in next release
     const [dialogState, setDialogState] = useState(DIALOG_TYPES.NONE);
     const [menuAnchorEl, setMenuAnchorEl] = useState(null);
     const [openPreferenceExistsModal, setOpenPreferenceExistsModal] = useState(false);
@@ -64,6 +54,14 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         preferences == null ? [] : preferences.filter(pref => pref.prefId !== 0),
         [preferences]
     );
+
+    const gridColumns = useMemo(() => [
+        { field: "prefName", type: 'string', width: 300, headerName: t("Preference Name", tOpts), sortable: false, filterable: false },
+        { field: "prefDesc", type: 'string', width: 300, headerName: t("Preference Description", tOpts), sortable: false, filterable: false },
+        { field: "isDefault", type: "boolean", width: 100, headerName: t("Default", tOpts), sortable: false, filterable: false },
+        { field: 'editAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={1} icon={<Tooltip title={actionTypes.Edit}><EditIcon /></Tooltip>} tabIndex={1} data-action={actionTypes.Edit} label={t("Edit", tOpts)} color="primary" />] },
+        { field: 'deleteAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={2} icon={<Tooltip title={actionTypes.Delete}><DeleteIcon /></Tooltip>} tabIndex={2} data-action={actionTypes.Delete} label={t("Delete", tOpts)} color="error" />] }
+    ], [t, tOpts]);
 
     const validationSchema = useMemo(() =>
         yup.object({
@@ -255,6 +253,30 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         
         loadAndApply();
     }, [preferenceKey]);
+
+    // Memoize locale text used by the DataGrid to avoid recreating the object on every render
+    const localeText = useMemo(() => ({
+        noRowsLabel: t("No rows", tOpts),
+        columnMenuManageColumns: t('Manage columns', tOpts),
+        columnMenuHideColumn: t('Hide column', tOpts),
+        pinToLeft: t('Pin to left', tOpts),
+        pinToRight: t('Pin to right', tOpts),
+        columnMenuLabel: t('Menu', tOpts),
+        filterPanelRemoveAll: t('Remove all', tOpts),
+        columnsPanelTextFieldLabel: t('Find column', tOpts),
+        columnsPanelTextFieldPlaceholder: t('Column title', tOpts),
+        columnsPanelShowAllButton: t('Show all', tOpts),
+        columnsPanelHideAllButton: t('Hide all', tOpts),
+        booleanCellTrueLabel: t('Yes', tOpts),
+        toolbarColumnsLabel: t('Select columns', tOpts),
+        toolbarExportLabel: t('Export', tOpts),
+        booleanCellFalseLabel: t('No', tOpts),
+        paginationRowsPerPage: t('Rows per page', tOpts),
+        paginationDisplayedRows: ({ from, to, count }) => `${from}–${to} ${t('of', tOpts)} ${count}`,
+        toolbarQuickFilterLabel: t('Search', tOpts),
+        columnsManagementSearchTitle: t('Search', tOpts),
+        columnsManagementNoColumns: t('No columns', tOpts)
+    }), [t, tOpts]);
 
     const isManageDialog = dialogState === DIALOG_TYPES.MANAGE;
     const isFormDialog = dialogState === DIALOG_TYPES.ADD || dialogState === DIALOG_TYPES.EDIT;
@@ -470,6 +492,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
                                         paginationModel
                                     }
                                 }}
+                                localeText={localeText}
                             />
                         </Grid>
                         <Grid size={12}>

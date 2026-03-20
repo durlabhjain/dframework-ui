@@ -7,7 +7,7 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import useCascadingLookup from '../../../hooks/useCascadingLookup';
 
-const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, ...otherProps }) => {
+const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, tTranslate, tOpts, ...otherProps }) => {
     const userSelected = React.useRef(false);
     const { placeHolder } = column;
     const options = useCascadingLookup({ column, formik, lookups, dependsOn, userSelected, model });
@@ -40,7 +40,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
 
     const handleChange = useCallback((event) => {
         if (typeof column.onChange === 'function') {
-            column.onChange({ formik, value: event.target.value, options, event });
+            column.onChange({ formik, value: event.target.value, options, event , t: tTranslate, tOpts});
         }
         formik.handleChange(event);
         userSelected.current = true;
