@@ -33,7 +33,7 @@ export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, t
 );
 
 // Custom export button component
-export const CustomExportButton = ({ exportFormats, ...props }) => (
+export const CustomExportButton = ({ exportFormats, customExportOptions, ...props }) => (
     <GridToolbarExportContainer {...props}>
         {exportFormats.csv !== false && <ExportMenuItem {...props} icon={<GridOn fontSize="small" />} type="CSV" contentType="text/csv" />}
         {exportFormats.excel !== false && <ExportMenuItem {...props} icon={<TableChart fontSize="small" />} type="Excel" contentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />}
@@ -41,6 +41,16 @@ export const CustomExportButton = ({ exportFormats, ...props }) => (
         {exportFormats.xml !== false && <ExportMenuItem {...props} icon={<Code fontSize="small" />} type="XML" contentType="text/xml" />}
         {exportFormats.html !== false && <ExportMenuItem {...props} icon={<Language fontSize="small" />} type="HTML" contentType="text/html" />}
         {exportFormats.json !== false && <ExportMenuItem {...props} icon={<DataObjectIcon fontSize="small" />} type="JSON" contentType="application/json" />}
+        {Array.isArray(customExportOptions) && customExportOptions.map((item, index) => (
+            <ExportMenuItem
+                key={item.key || index}
+                {...props}
+                icon={item.icon || <TableChart fontSize="small" />}
+                type={item.label}
+                contentType={item.contentType || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
+                handleExport={item.handleExport}
+            />
+        ))}
     </GridToolbarExportContainer>
 );
 

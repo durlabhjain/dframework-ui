@@ -390,11 +390,11 @@ const Form = ({
             open={isDiscardDialogOpen}
             onConfirm={handleDiscardChanges}
             onCancel={() => setIsDiscardDialogOpen(false)}
-            title="Changes not saved"
-            okText="Discard"
-            cancelText="Continue"
+            title={tTranslate("Changes not saved", tOpts)}
+            okText={tTranslate("Discard", tOpts)}
+            cancelText={tTranslate("Continue", tOpts)}
           >
-            {"Would you like to continue to edit or discard changes?"}
+            {tTranslate("Would you like to continue to edit or discard changes?", tOpts)}
           </DialogComponent>
           <DialogComponent
             open={isDeleting}
@@ -403,7 +403,7 @@ const Form = ({
               setIsDeleting(false);
               setDeleteError(null);
             }}
-            title={deleteError ? "Error Deleting Record" : "Confirm Delete"}
+            title={deleteError ? tTranslate("Error Deleting Record", tOpts) : tTranslate("Confirm Delete", tOpts)}
           >{deletePromptText}</DialogComponent>
           {showRelations ? (
             <Relations
