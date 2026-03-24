@@ -1,7 +1,7 @@
 import React from "react";
 import { FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, FormHelperText, useTheme } from "@mui/material";
 
-const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfigs={}, mode, ...otherProps }) => {
+const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfigs={}, mode, tTranslate, tOpts, ...otherProps }) => {
     const handleChange = (event) => {
         formik.setFieldValue(field, event.target.value);
     }
@@ -25,7 +25,7 @@ const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfig
                             key={index}
                             value={option.value}
                             control={<Radio />}
-                            label={option.label}
+                            label={tTranslate(option.label, tOpts)}
                             disabled={isDisabled}
                         />
                     ))}

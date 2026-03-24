@@ -76,8 +76,19 @@ const constants = {
     actions: 'actions',
     function: 'function',
     pageSizeOptions: [5, 10, 20, 50, 100],
-    defaultActionWidth: 50
+    defaultActionWidth: 50 
 };
+// Operators that do not require a value
+const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
+
+// Return only items that are valid for requests (keep no-value operators)
+const filterValidItems = (items) => {
+    return (items || []).filter(item => {
+        if (NO_VALUE_OPERATORS.includes(item.operator)) return true;
+        return item.value !== null && item.value !== undefined && item.value !== '';
+    });
+};
+    
 const auditColumnMappings = [
     { key: 'addCreatedOnColumn', field: 'CreatedOn', type: 'dateTime', header: 'Created On' },
     { key: 'addCreatedByColumn', field: 'CreatedByUser', type: 'string', header: 'Created By' },
@@ -157,6 +168,7 @@ const GridBase = memo(({
     onListParamsChange,
     apiRef: propsApiRef,
     baseFilters,
+    customExportOptions,
     ...props
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
@@ -589,7 +601,10 @@ const GridBase = memo(({
 
         const baseUrl = buildUrl(isPivotExport ? model.pivotApi : backendApi);
 
-        const filters = { ...filterModel };
+        const filters = {
+            ...filterModel,
+            items: filterValidItems(filterModel.items)
+        };
         const finalBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
         if (model.joinColumn && id) {
             finalBaseFilters.push({ field: model.joinColumn, operator: "is", type: "number", value: Number(id) });
@@ -969,27 +984,25 @@ const GridBase = memo(({
     const updateFilters = useCallback((e) => {
         const { items } = e;
         const updatedItems = items.map(item => {
-            const { field, operator, type, value } = item;
+            const { field, operator, value } = item;
             const column = gridColumns.find(col => col.field === field) || {};
             const isNumber = column.type === constants.Number;
+
+            // Note: type and filterField are intentionally not stored on these items; they are added later by the data-fetching layer.
+            if (NO_VALUE_OPERATORS.includes(operator)) {
+                return { ...item, value: null };
+            }
 
             if (isNumber && value < 0) {
                 return { ...item, value: null };
             }
 
-            if ((emptyIsAnyOfOperatorFilters.includes(operator)) || (isNumber && !isNaN(value)) || ((!isNumber))) {
-                const isKeywordField = isElasticScreen && gridColumns.filter(element => element.field === field)[0]?.isKeywordField;
-                if (isKeywordField) {
-                    item.filterField = `${item.field}.keyword`;
-                }
-                item.value = ['isEmpty', 'isNotEmpty'].includes(operator) ? null : value;
-                return { ...item, type: column.type };
+            if ((emptyIsAnyOfOperatorFilters.includes(operator)) || (isNumber && !isNaN(value)) || (!isNumber)) {
+                return { ...item };
             }
-            const updatedValue = isNumber ? null : value;
-            return { field, operator, type, value: updatedValue };
+            return { ...item, value: isNumber ? null : value };
         });
-        e.items = updatedItems;
-        setFilterModel(e);
+        setFilterModel({ ...e, items: updatedItems });
     }, [gridColumns, constants.Number, emptyIsAnyOfOperatorFilters, isElasticScreen, setFilterModel]);
 
     const updateSort = useCallback((e) => {
@@ -1181,7 +1194,8 @@ const GridBase = memo(({
             setFilterModel,
             onPreferenceChange,
             toolbarItems,
-            headerActions: props.headerActions
+            headerActions: props.headerActions,
+            customExportOptions
         },
         footer: {
             pagination: disablePagination ?? true,
@@ -1202,7 +1216,7 @@ const GridBase = memo(({
                 'aria-label': tTranslate('Go to next page', tOpts),
             },
         }
-    }), [model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions]);
+    }), [model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions]);
 
     const initialState = useMemo(() => ({
         columns: {

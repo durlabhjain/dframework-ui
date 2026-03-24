@@ -10,6 +10,21 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) =
     const dateValue = useMemo(() => {
         return formik.values[field] ? dayjs(formik.values[field]) : null;
     }, [formik.values[field]]);
+
+    const minFieldValue = column.minField ? formik.values[column.minField] : undefined;
+    const maxFieldValue = column.maxField ? formik.values[column.maxField] : undefined;
+
+    const minDateValue = useMemo(() => {
+        if (column.min) return dayjs(column.min);
+        if (column.minField && minFieldValue) return dayjs(minFieldValue);
+        return null;
+    }, [column.min, column.minField, minFieldValue]);
+
+    const maxDateValue = useMemo(() => {
+        if (column.max) return dayjs(column.max);
+        if (column.maxField && maxFieldValue) return dayjs(maxFieldValue);
+        return null;
+    }, [column.max, column.maxField, maxFieldValue]);
     
     const handleChange = useCallback((value) => {
         if (value === null) {
@@ -20,6 +35,8 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) =
         const isoString = adjustedDate.toISOString();
         formik.setFieldValue(field, isoString);
     }, [field, formik]);
+
+    const hasError = !!(formik.touched[field] && formik.errors[field]);
     
     return <DatePicker
         {...otherProps}
@@ -33,10 +50,10 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) =
         onChange={handleChange}
         onBlur={formik.handleBlur}
         helperText={formik.touched[field] && formik.errors[field]}
-        minDate={(column.min ? dayjs(column.min) : null)}
-        maxDate={(column.max ? dayjs(column.max) : null)}
+        minDate={minDateValue}
+        maxDate={maxDateValue}
         disabled={isDisabled}
-        slotProps={{ textField: { fullWidth: true, helperText: formik.errors[field], variant: "standard" } }}
+        slotProps={{ textField: { fullWidth: true, helperText: formik.errors[field], variant: "standard", error: hasError } }}
     />
 
 }

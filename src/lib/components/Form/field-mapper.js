@@ -32,6 +32,7 @@ const fieldMappers = {
     "select": SelectField,
     "string": StringField,
     "number": NumberField,
+    "decimal": NumberField,
     "password": PasswordField,
     "date": DateField,
     "dateTime": DateTimeField,

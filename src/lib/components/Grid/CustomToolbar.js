@@ -59,12 +59,24 @@ const CustomToolbar = function (props) {
         setFilterModel,
         onPreferenceChange,
         toolbarItems,
-        gridColumns
+        gridColumns,
+        customExportOptions
     } = props;
 
     const addText = model.customAddText || (model.title ? `Add ${model.title}` : 'Add');
-    const activeFilterCount = filterModel?.items?.length || 0;
 
+    const hasNonEmptyValue = (value) =>
+        value !== null &&
+        value !== undefined &&
+        value !== '' &&
+        !(Array.isArray(value) && value.length === 0);
+
+    const filterValidItems = (items = []) =>
+        items.filter((item) =>
+            ['isEmpty', 'isNotEmpty'].includes(item.operator) || hasNonEmptyValue(item.value)
+        );
+
+    const activeFilterCount = filterValidItems(filterModel?.items || []).length || 0;
     // Get columns that should have toolbar filters
     const toolbarFilterColumns = gridColumns?.filter(col => col.toolbarFilter) || [];
     const lookupData = data?.lookups || {};
@@ -134,7 +146,7 @@ const CustomToolbar = function (props) {
                     </>)}
 
                     {effectivePermissions.export && (
-                        <CustomExportButton handleExport={handleExport} showPivotExportBtn={model.pivotApi} exportFormats={model.exportFormats || {}} tTranslate={tTranslate} tOpts={tOpts} />
+                        <CustomExportButton handleExport={handleExport} showPivotExportBtn={model.pivotApi} exportFormats={model.exportFormats || {}} customExportOptions={customExportOptions} tTranslate={tTranslate} tOpts={tOpts} />
                     )}
                     {toolbarItems}
                     {preferenceKey &&

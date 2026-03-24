@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { TextField, FormControl, Select, MenuItem, InputLabel } from '@mui/material';
+import { TextField, FormControl, Select, MenuItem, InputLabel, Tooltip } from '@mui/material';
 import { DatePicker, DateTimePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -209,6 +209,7 @@ const ToolbarFilter = ({
 
                 const isMultiple = existingFilter?.operator === 'isAnyOf' || column.toolbarFilter?.defaultOperator === 'isAnyOf';
                 const selectValue = utils.normalizeFilterValue({ value: filterValue, operator: existingFilter?.operator, isMultiple });
+                const displayLimit = 1; // Show up to 1 selected options before collapsing into tooltip
 
                 return (
                     <FormControl variant="standard" sx={{ minWidth: 150 }}>
@@ -218,6 +219,31 @@ const ToolbarFilter = ({
                             onChange={(e) => handleFilterChange(e.target.value)}
                             multiple={isMultiple}
                             size="small"
+                            renderValue={(selected) => {
+                                // Normalize selected to array of values
+                                const values = Array.isArray(selected) ? selected : (selected != null && selected !== '' ? [selected] : []);
+                                const labels = values.map((v) => {
+                                    // If the selected item is already an object with a label, use it
+                                    if (v && typeof v === 'object' && 'label' in v) return v.label;
+
+                                    // Compare option values loosely (stringified) to handle type differences
+                                    const opt = normalizedOptions.find((o) => String(o.value) === String(v));
+                                    return opt ? opt.label : '';
+                                }).filter(Boolean);
+
+                                if (labels.length === 0) return '';
+                                if (labels.length <= displayLimit) return labels.join(', ');
+
+                                const firstTwo = labels.slice(0, displayLimit).join(', ');
+                                const remaining = labels.length - displayLimit;
+                                const full = labels.join(', ');
+
+                                return (
+                                    <Tooltip title={full} placement="top">
+                                        <span>{`${firstTwo} +${remaining}`}</span>
+                                    </Tooltip>
+                                );
+                            }}
                         >
                             {normalizedOptions.map((option) => (
                                 <MenuItem key={option.value} value={option.value}>
