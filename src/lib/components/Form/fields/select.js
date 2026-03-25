@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { FormHelperText, useTheme, IconButton, InputAdornment } from '@mui/material';
+import { FormHelperText, useTheme, IconButton, Box } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ClearIcon from '@mui/icons-material/Clear';
 import FormControl from '@mui/material/FormControl';
@@ -69,10 +69,29 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
         userSelected.current = true;
     }, [formik.values[field], column.onChange, options]);
 
-    const hasValue = column.multiSelect
-        ? (Array.isArray(inputValue) && inputValue.length > 0)
-        : (inputValue !== '' && inputValue !== null && inputValue !== undefined &&
-           Array.isArray(options) && options.some(o => String(o.value) === String(inputValue)));
+    // Determine if the current value is valid and should show the clear button
+    const hasValue = useMemo(() => {
+        if (column.multiSelect) {
+            return Array.isArray(inputValue) && inputValue.length > 0;
+        }
+        return inputValue !== '' && inputValue !== null && inputValue !== undefined &&
+               Array.isArray(options) && options.some(o => String(o.value) === String(inputValue));
+    }, [inputValue, column.multiSelect, options]);
+
+    // Determine if any dependency is empty (memoized)
+    const isDependentFieldEmpty = useMemo(() => {
+        if (!Array.isArray(dependsOn) || dependsOn.length === 0) return false;
+        return dependsOn.some(dep => {
+            const val = formik.values?.[dep];
+            if (val == null) return true;
+            if (Array.isArray(val)) return val.length === 0;
+            if (typeof val === 'string' && val.trim() === '') return true;
+            // Treat numeric/string zero as empty for lookup keys (common pattern where 0 means unset)
+            if (val === 0 || val === '0') return true;
+            return false;
+        });
+    // only re-evaluate when the dependent values (not unrelated form fields) change
+    }, [dependsOn, ...(Array.isArray(dependsOn) ? dependsOn.map(dep => formik.values?.[dep]) : [])]);
 
     const clearSelection = useCallback((e) => {
         e.stopPropagation();
@@ -90,35 +109,41 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
             key={field}
             error={formik.touched[field] && formik.errors[field]}
             variant="standard">
-            <InputLabel>{placeHolder ? placeHolder : ""}</InputLabel> 
-            <Select
-                IconComponent={KeyboardArrowDownIcon}
-                {...otherProps}
-                name={field}
-                multiple={column.multiSelect === true}
-                readOnly={column.readOnly === true}
-                value={column.multiSelect ? (Array.isArray(inputValue) ? inputValue : []) : `${inputValue ?? ''}`}
-                onChange={handleChange}
-                onBlur={formik.handleBlur}
-                endAdornment={
-                    hasValue && !column.readOnly ? (
-                        <InputAdornment position="end" sx={{ mr: 2 }}>
-                            <IconButton size="small" onClick={clearSelection} tabIndex={-1}>
-                                <ClearIcon fontSize="small" />
-                            </IconButton>
-                        </InputAdornment>
-                    ) : undefined
-                }
-                sx={{
-                    backgroundColor: column.readOnly ? theme.palette?.action?.disabled : ''
-                }}
-            >
-                {Array.isArray(options) && options.map(option => (
-                    <MenuItem key={option.value} value={option.value} disabled={option.isDisabled}>
-                        {option.label}
-                    </MenuItem>
-                ))}
-            </Select>
+            <InputLabel>{placeHolder ? placeHolder : ""}</InputLabel>
+            <Box sx={{ position: 'relative' }}>
+                <Select
+                    IconComponent={KeyboardArrowDownIcon}
+                    {...otherProps}
+                    name={field}
+                    multiple={column.multiSelect === true}
+                    readOnly={column.readOnly === true}
+                    // Only disable when the column is disableOnEmptyDependentField and at least one dependent field is empty.
+                    disabled={column.disableOnEmptyDependentField  && isDependentFieldEmpty}
+                    value={column.multiSelect ? (Array.isArray(inputValue) ? inputValue : []) : `${inputValue ?? ''}`}
+                    onChange={handleChange}
+                    onBlur={formik.handleBlur}
+                    sx={{
+                        width: '100%',
+                        backgroundColor: column.readOnly ? theme.palette?.action?.disabled : ''
+                    }}
+                >
+                    {Array.isArray(options) && options.map(option => (
+                        <MenuItem key={option.value} value={option.value} disabled={option.isDisabled}>
+                            {option.label}
+                        </MenuItem>
+                    ))}
+                </Select>
+                {hasValue && !column.readOnly && (
+                    <IconButton
+                        size="small"
+                        onClick={clearSelection}
+                        tabIndex={-1}
+                        sx={{ position: 'absolute', right: 24, top: '50%', transform: 'translateY(-50%)', p: '2px' }}
+                    >
+                        <ClearIcon fontSize="small" />
+                    </IconButton>
+                )}
+            </Box>
             <FormHelperText>{formik.touched[field] && formik.errors[field]}</FormHelperText>
         </FormControl>
     );
