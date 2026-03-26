@@ -988,7 +988,7 @@ const GridBase = memo(({
             const column = gridColumns.find(col => col.field === field) || {};
             const isNumber = column.type === constants.Number;
 
-            // Note: type and filterField are intentionally not stored on these items; they are added later by the data-fetching layer.
+            // Handle operators that do not require a value
             if (NO_VALUE_OPERATORS.includes(operator)) {
                 return { ...item, value: null };
             }
