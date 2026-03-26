@@ -48,7 +48,7 @@ export const CustomExportButton = ({ exportFormats, customExportOptions, ...prop
                 icon={item.icon || <TableChart fontSize="small" />}
                 type={item.label}
                 contentType={item.contentType || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
-                handleExport={item.handleExport}
+                handleExport={item.handleExport || props.handleExport}
             />
         ))}
     </GridToolbarExportContainer>

@@ -7,28 +7,20 @@ import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import useCascadingLookup from '../../../hooks/useCascadingLookup';
-import { useStateContext } from '../../useRouter/StateProvider';
 
 const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, tTranslate, tOpts, ...otherProps }) => {
     const userSelected = React.useRef(false);
     const { placeHolder } = column;
     const options = useCascadingLookup({ column, formik, lookups, dependsOn, userSelected, model });
     const theme = useTheme();
-    const { stateData } = useStateContext();
-    const userStateData = stateData?.userData?.userData || stateData?.userData;
-
-    // Memoize the specific user field value so `inputValue` doesn't re-run when unrelated properties on `userStateData` change.
-    const userFieldValue = React.useMemo(() => {
-        return userStateData ? userStateData[column.field] : undefined;
-    }, [userStateData, column.field]);
 
     // Memoize input value processing to avoid recalculation on each render
     const inputValue = useMemo(() => {
         let value = formik.values[field];
 
-        // Handle user state default: if column.setUserDefault key is defined,look it up in userStateData and apply as the field default
-        if (!value && !userSelected.current && column.setUserDefault && userFieldValue !== undefined) {
-            const userDefault = userFieldValue;
+        // Handle default value from column.defaultValue
+        if (!value && !userSelected.current && column.defaultValue !== undefined) {
+            const userDefault = column.defaultValue;
             if (userDefault !== undefined && userDefault !== null && userDefault !== '') {
                 if (options && options.length) {
                     const defaultOption = options.find(o => String(o.value) === String(userDefault));
@@ -40,7 +32,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
             }
         }
 
-        // Handle default value selection
+        // Handle default value selection based on IsDefault property in options
         if (options?.length && !value && !userSelected.current && !column.multiSelect && "IsDefault" in options[0]) {
             const isDefaultOption = options.find(e => e.IsDefault);
             if (isDefaultOption) {
@@ -59,7 +51,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
         }
         
         return value;
-    }, [formik.values[field], options, column.multiSelect, field, column.setUserDefault, userFieldValue]);
+    }, [formik.values[field], options, column.multiSelect, field]);
 
     const handleChange = useCallback((event) => {
         if (typeof column.onChange === 'function') {
@@ -140,7 +132,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
                         tabIndex={-1}
                         sx={{ position: 'absolute', right: 24, top: '50%', transform: 'translateY(-50%)', p: '2px' }}
                     >
-                        <ClearIcon fontSize="small" />
+                        <ClearIcon fontSize="small" aria-label={tTranslate('Clear selection', tOpts)} />
                     </IconButton>
                 )}
             </Box>
