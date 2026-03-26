@@ -26,7 +26,7 @@ const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfig
                             value={option.value}
                             control={<Radio />}
                             label={tTranslate(option.label, tOpts)}
-                            disabled={isDisabled || ((otherProps?.column?.disableForValues || [])?.includes?.(formik.values[field]))}
+                            disabled={isDisabled || ((otherProps?.column?.disableForValues || [])?.includes?.((formik.values[field])))}
                         />
                     ))}
                 </RadioGroup>
