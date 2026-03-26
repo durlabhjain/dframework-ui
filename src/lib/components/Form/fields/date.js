@@ -51,7 +51,7 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) =
         minDate={minDateValue}
         maxDate={maxDateValue}
         disabled={isDisabled}
-        slotProps={{ textField: { fullWidth: true, helperText: formik.errors[field], variant: "standard" } }}
+        slotProps={{ textField: { fullWidth: true, variant: "standard" } }}
     />
 
 }
