@@ -131,8 +131,9 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
                         onClick={clearSelection}
                         tabIndex={-1}
                         sx={{ position: 'absolute', right: 24, top: '50%', transform: 'translateY(-50%)', p: '2px' }}
+                        aria-label={tTranslate('Clear selection', tOpts)}
                     >
-                        <ClearIcon fontSize="small" aria-label={tTranslate('Clear selection', tOpts)} />
+                        <ClearIcon fontSize="small" />
                     </IconButton>
                 )}
             </Box>
