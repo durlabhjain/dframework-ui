@@ -46,7 +46,7 @@ export const CustomExportButton = ({ exportFormats, customExportOptions, ...prop
                 key={item.key || index}
                 {...props}
                 icon={item.icon || <TableChart fontSize="small" />}
-                type={item.label}
+                type={item.label || 'Excel'}
                 contentType={item.contentType || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
                 handleExport={item.handleExport || props.handleExport}
             />
