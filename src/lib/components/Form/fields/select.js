@@ -33,7 +33,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
         }
 
         // Handle default value selection based on IsDefault property in options
-        if (options?.length && !value && !userSelected.current && !column.multiSelect && "IsDefault" in options[0]) {
+        if (options?.length && !value && !column.multiSelect && "IsDefault" in options[0]) {
             const isDefaultOption = options.find(e => e.IsDefault);
             if (isDefaultOption) {
                 value = isDefaultOption.value;
@@ -70,21 +70,6 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
                Array.isArray(options) && options.some(o => String(o.value) === String(inputValue));
     }, [inputValue, column.multiSelect, options]);
 
-    // Determine if any dependency is empty (memoized)
-    const isDependentFieldEmpty = useMemo(() => {
-        if (!Array.isArray(dependsOn) || dependsOn.length === 0) return false;
-        return dependsOn.some(dep => {
-            const val = formik.values?.[dep];
-            if (val == null) return true;
-            if (Array.isArray(val)) return val.length === 0;
-            if (typeof val === 'string' && val.trim() === '') return true;
-            // Treat numeric/string zero as empty for lookup keys (common pattern where 0 means unset)
-            if (val === 0 || val === '0') return true;
-            return false;
-        });
-    // only re-evaluate when the dependent values (not unrelated form fields) change
-    }, [dependsOn, ...(Array.isArray(dependsOn) ? dependsOn.map(dep => formik.values?.[dep]) : [])]);
-
     const clearSelection = useCallback((e) => {
         e.stopPropagation();
         const newValue = column.multiSelect ? [] : '';
@@ -109,8 +94,6 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
                     name={field}
                     multiple={column.multiSelect === true}
                     readOnly={column.readOnly === true}
-                    // Only disable when the column is disableOnEmptyDependentField and at least one dependent field is empty.
-                    disabled={column.disableOnEmptyDependentField  && isDependentFieldEmpty}
                     value={column.multiSelect ? (Array.isArray(inputValue) ? inputValue : []) : `${inputValue ?? ''}`}
                     onChange={handleChange}
                     onBlur={formik.handleBlur}
