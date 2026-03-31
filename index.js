@@ -2624,7 +2624,7 @@ const rl = ({
       customExportOptions: q
     },
     footer: {
-      pagination: Wr ?? !0,
+      pagination: Wr !== !0,
       apiRef: Fe,
       tTranslate: p,
       tOpts: u
