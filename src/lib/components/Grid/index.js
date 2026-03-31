@@ -1202,7 +1202,7 @@ const GridBase = memo(({
             customExportOptions
         },
         footer: {
-            pagination: (disablePagination === true) ? false : true,
+            pagination: disablePagination !== true,
             apiRef,
             tTranslate,
             tOpts
