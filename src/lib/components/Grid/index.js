@@ -1254,7 +1254,8 @@ const GridBase = memo(({
                             },
                             "& .MuiDataGrid-detailPanelToggleCell, & .MuiDataGrid-cell--withRenderer.MuiDataGrid-cell--detailPanelToggle": {
                                 display: 'none'
-                            }
+                            },
+                            ...props.sx
                         }}
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
@@ -1308,6 +1309,7 @@ const GridBase = memo(({
                         onRowGroupingModelChange={(newGroupingModel) => setGroupingModel(newGroupingModel)}
                         getRowClassName={props.getRowClassName}
                         columnGroupingModel={columnGroupingModel}
+                        {...props}
                     />
                 </Box>
                 {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
