@@ -505,6 +505,17 @@ const GridBase = memo(({
                 overrides.cellClassName = 'mui-grid-linkColumn';
             }
 
+            if (column.hyperlinkURL && !column.renderCell) {
+                const { hyperlinkURL, hyperlinkIndex } = column;
+                overrides.renderCell = (params) => {
+                    const { value, row } = params;
+                    if (value === null || value === undefined || value === '') return value;
+                    const urlValue = hyperlinkIndex ? row[hyperlinkIndex] : value;
+                    const hyperlink = hyperlinkURL.replace('{0}', encodeURIComponent(String(urlValue)));
+                    return <a href={hyperlink} rel="noopener noreferrer" target="_blank">{value}</a>;
+                };
+            }
+
             if (!disableRowGrouping) {
                 overrides.groupable = column.groupable ?? false;
             }
@@ -953,9 +964,21 @@ const GridBase = memo(({
         }
 
         const columns = {};
+        const gridColsLookup = Object.fromEntries(gridColumns.map(c => [c.field, c]));
         visibleColumns.forEach(field => {
             const col = lookup[field];
-            columns[field] = { field, width: col.width, headerName: col.headerName || col.field, type: col.type, keepLocal: col.keepLocal === true, isParsable: col.isParsable, lookup: col.lookup };
+            const gridCol = gridColsLookup[field];
+            columns[field] = {
+                field,
+                width: col.width,
+                headerName: gridCol?.headerName || col.headerName || col.field,
+                type: col.type,
+                keepLocal: col.keepLocal === true,
+                isParsable: col.isParsable,
+                lookup: col.lookup,
+                hyperlinkURL: gridCol?.hyperlinkURL,
+                hyperlinkIndex: gridCol?.hyperlinkIndex
+            };
         });
         const action = (model?.formActions?.export || isPivotExport) ? (model?.formActions?.export || 'export') : undefined;
         fetchData({
