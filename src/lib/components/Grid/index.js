@@ -1258,7 +1258,7 @@ const GridBase = memo(({
                                     display: 'none'
                                 }
                             },
-                            propsSx
+                            ...(Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : [])
                         ]}
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
