@@ -955,7 +955,7 @@ const GridBase = memo(({
         const columns = {};
         visibleColumns.forEach(field => {
             const col = lookup[field];
-            columns[field] = { field, width: col.width, headerName: col.headerName || col.field, type: col.type, keepLocal: col.keepLocal === true, isParsable: col.isParsable, lookup: col.lookup };
+            columns[field] = { field, width: col.width, headerName: tTranslate(col.headerName || col.field, tOpts), type: col.type, keepLocal: col.keepLocal === true, isParsable: col.isParsable, lookup: col.lookup, hyperlinkURL: col.hyperlinkURL, hyperlinkIndex: col.hyperlinkIndex };
         });
         const action = (model?.formActions?.export || isPivotExport) ? (model?.formActions?.export || 'export') : undefined;
         fetchData({
