@@ -169,6 +169,7 @@ const GridBase = memo(({
     apiRef: propsApiRef,
     baseFilters,
     customExportOptions,
+    sx: propsSx,
     ...props
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
@@ -1242,21 +1243,23 @@ const GridBase = memo(({
             <Box style={gridStyle || customStyle}>
                 <Box sx={{ display: 'flex', maxHeight: '80vh', flexDirection: 'column' }}>
                     <DataGridPremium
-                        sx={{
-                            "& .MuiTablePagination-selectLabel": {
-                                marginTop: 2
+                        sx={[
+                            {
+                                "& .MuiTablePagination-selectLabel": {
+                                    marginTop: 2
+                                },
+                                "& .MuiTablePagination-displayedRows": {
+                                    marginTop: 2
+                                },
+                                "& .MuiDataGrid-virtualScroller ": {
+                                    zIndex: 2,
+                                },
+                                "& .MuiDataGrid-detailPanelToggleCell, & .MuiDataGrid-cell--withRenderer.MuiDataGrid-cell--detailPanelToggle": {
+                                    display: 'none'
+                                }
                             },
-                            "& .MuiTablePagination-displayedRows": {
-                                marginTop: 2
-                            },
-                            "& .MuiDataGrid-virtualScroller ": {
-                                zIndex: 2,
-                            },
-                            "& .MuiDataGrid-detailPanelToggleCell, & .MuiDataGrid-cell--withRenderer.MuiDataGrid-cell--detailPanelToggle": {
-                                display: 'none'
-                            },
-                            ...props.sx
-                        }}
+                            propsSx
+                        ]}
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
                         checkboxSelection={forAssignment}
