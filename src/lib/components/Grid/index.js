@@ -508,11 +508,11 @@ const GridBase = memo(({
             if (column.hyperlinkURL && !column.renderCell) {
                 const { hyperlinkURL, hyperlinkIndex } = column;
                 overrides.renderCell = (params) => {
-                    const { value, row } = params;
+                    const { value, formattedValue, row } = params;
                     if (value === null || value === undefined || value === '') return value;
                     const urlValue = hyperlinkIndex ? row[hyperlinkIndex] : value;
                     const hyperlink = hyperlinkURL.replace('{0}', encodeURIComponent(String(urlValue)));
-                    return <a href={hyperlink} rel="noopener noreferrer" target="_blank">{value}</a>;
+                    return <a href={hyperlink} rel="noopener noreferrer" target="_blank">{formattedValue ?? value}</a>;
                 };
             }
 
@@ -976,8 +976,8 @@ const GridBase = memo(({
                 keepLocal: col.keepLocal === true,
                 isParsable: col.isParsable,
                 lookup: col.lookup,
-                hyperlinkURL: gridCol?.hyperlinkURL,
-                hyperlinkIndex: gridCol?.hyperlinkIndex
+                hyperlinkURL: col.hyperlinkURL,
+                hyperlinkIndex: col.hyperlinkIndex
             };
         });
         const action = (model?.formActions?.export || isPivotExport) ? (model?.formActions?.export || 'export') : undefined;
