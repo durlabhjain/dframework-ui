@@ -7,7 +7,7 @@ const Field = ({ column, field, formik, otherProps }) => {
     const { systemDateTimeFormat, stateData } = useStateContext();
 
     const dateTimeValue = useMemo(() => {
-        let val = formik.values[field];
+        const val = formik.values[field];
         if (!val) return null;
         let date = new Date(val);
         const userTimezoneOffset = date.getTimezoneOffset() * 60000;
