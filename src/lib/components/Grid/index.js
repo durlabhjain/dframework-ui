@@ -77,8 +77,7 @@ const constants = {
     actions: 'actions',
     function: 'function',
     pageSizeOptions: [5, 10, 20, 50, 100],
-    defaultActionWidth: 50,
-    localDateTimeField: 'localDateTime'
+    defaultActionWidth: 50
 };
 // Operators that do not require a value
 const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
@@ -516,13 +515,9 @@ const GridBase = memo(({
             }
 
             if (column.hyperlinkURL && !column.renderCell) {
-                const { hyperlinkURL, hyperlinkIndex, type } = column;
+                const { hyperlinkURL, hyperlinkIndex } = column;
                 overrides.renderCell = (params) => {
-                    const { formattedValue, row } = params;
-                    let { value } = params;
-                    if (type === constants.localDateTimeField) {
-                        value = utils.getLocalDateTimeValue({ value });
-                    }
+                    const { value, formattedValue, row } = params;
                     if (value === null || value === undefined || value === '') return value;
                     const urlValue = hyperlinkIndex ? row[hyperlinkIndex] : value;
                     const hyperlink = hyperlinkURL.replace('{0}', encodeURIComponent(String(urlValue)));
