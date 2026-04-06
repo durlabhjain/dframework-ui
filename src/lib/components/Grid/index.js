@@ -28,6 +28,7 @@ import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
 import CustomDropdownMenu from './CustomDropdownMenu';
 import CustomToolbar from './CustomToolbar';
+import LocalDateTimeField from '../Form/fields/localDateTime';
 import utils, { getPermissions } from '../utils';
 import HistoryIcon from '@mui/icons-material/History';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -76,7 +77,8 @@ const constants = {
     actions: 'actions',
     function: 'function',
     pageSizeOptions: [5, 10, 20, 50, 100],
-    defaultActionWidth: 50 
+    defaultActionWidth: 50,
+    localDateTimeField: 'localDateTime'
 };
 // Operators that do not require a value
 const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
@@ -88,7 +90,7 @@ const filterValidItems = (items) => {
         return item.value !== null && item.value !== undefined && item.value !== '';
     });
 };
-    
+
 const auditColumnMappings = [
     { key: 'addCreatedOnColumn', field: 'CreatedOn', type: 'dateTime', header: 'Created On' },
     { key: 'addCreatedByColumn', field: 'CreatedByUser', type: 'string', header: 'Created By' },
@@ -169,6 +171,7 @@ const GridBase = memo(({
     apiRef: propsApiRef,
     baseFilters,
     customExportOptions,
+    sx: propsSx,
     ...props
 }) => {
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
@@ -243,7 +246,7 @@ const GridBase = memo(({
         setPreferencesReady(true);
     }, []);
 
-     
+
     // Extract column grouping props from model to override
     const columnGroupingModel = useMemo(() => {
         if (!model.columnGroupingModel) return [];
@@ -309,6 +312,13 @@ const GridBase = memo(({
                 formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, timeZone })
             ),
             "filterOperators": LocalizedDatePicker({ type: "dateTimeLocal", convert: true })
+        },
+        "localDateTime": {
+            renderCell: (params) => <LocalDateTimeField column={params.colDef} field={params.field} formik={{ values: { [params.field]: params.value }, setFieldValue: () => { }, handleBlur: () => { }, touched: {}, errors: {} }} />,
+            "valueFormatter": (value) => (
+                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, isUtc: true })
+            ),
+            "filterOperators": LocalizedDatePicker({ columnType: "datetime", label: tTranslate('Value', tOpts) })
         },
         "boolean": {
             renderCell: booleanIconRenderer
@@ -458,7 +468,7 @@ const GridBase = memo(({
                 overrides.type = 'number';
                 overrides.field = column.field.replace(/s$/, 'Count');
             }
- 
+
             if (updatedColumnType[column.type]) {
                 Object.assign(overrides, updatedColumnType[column.type]);
             }
@@ -506,9 +516,13 @@ const GridBase = memo(({
             }
 
             if (column.hyperlinkURL && !column.renderCell) {
-                const { hyperlinkURL, hyperlinkIndex } = column;
+                const { hyperlinkURL, hyperlinkIndex, type } = column;
                 overrides.renderCell = (params) => {
-                    const { value, formattedValue, row } = params;
+                    const { formattedValue, row } = params;
+                    let { value } = params;
+                    if (type === constants.localDateTimeField) {
+                        value = utils.getLocalDateTimeValue({ value });
+                    }
                     if (value === null || value === undefined || value === '') return value;
                     const urlValue = hyperlinkIndex ? row[hyperlinkIndex] : value;
                     const hyperlink = hyperlinkURL.replace('{0}', encodeURIComponent(String(urlValue)));
@@ -520,7 +534,7 @@ const GridBase = memo(({
                 overrides.groupable = column.groupable ?? false;
             }
             const headerName = tTranslate((typeof column.gridLabel === 'function' ? column.gridLabel({ column, t: tTranslate, tOpts }) : column.gridLabel) || column.label, tOpts);
-            
+
             finalColumns.push({ ...column, ...overrides, headerName, description: headerName });
             if (column.pinned) {
                 pinnedColumns[column.pinned === constants.right ? constants.right : constants.left].push(column.field);
@@ -568,7 +582,7 @@ const GridBase = memo(({
         if (toolbarFilterColumns.length === 0) return;
 
         // Check if any toolbar filters already exist in filterModel
-        const hasExistingToolbarFilters = filterModel.items.some(item => 
+        const hasExistingToolbarFilters = filterModel.items.some(item =>
             toolbarFilterColumns.some(col => col.field === item.field)
         );
         if (hasExistingToolbarFilters) {
@@ -643,7 +657,7 @@ const GridBase = memo(({
         if (assigned || available) {
             mergedExtraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(",") : selected;
         }
-        
+
         // Add template and configFileName for pivot exports
         if (isPivotExport) {
             if (model.exportTemplate) {
@@ -860,7 +874,7 @@ const GridBase = memo(({
             );
         }
 
-        const baseUrl =  buildUrl(selectionApi || backendApi);
+        const baseUrl = buildUrl(selectionApi || backendApi);
         setIsLoading(true);
         try {
             const result = await saveRecord({
@@ -894,7 +908,7 @@ const GridBase = memo(({
                 return;
             }
             snackbar.showError(
-              tTranslate("Please select at least one record to proceed", tOpts),
+                tTranslate("Please select at least one record to proceed", tOpts),
             );
             return;
         }
@@ -1265,20 +1279,23 @@ const GridBase = memo(({
             <Box style={gridStyle || customStyle}>
                 <Box sx={{ display: 'flex', maxHeight: '80vh', flexDirection: 'column' }}>
                     <DataGridPremium
-                        sx={{
-                            "& .MuiTablePagination-selectLabel": {
-                                marginTop: 2
+                        sx={[
+                            {
+                                "& .MuiTablePagination-selectLabel": {
+                                    marginTop: 2
+                                },
+                                "& .MuiTablePagination-displayedRows": {
+                                    marginTop: 2
+                                },
+                                "& .MuiDataGrid-virtualScroller ": {
+                                    zIndex: 2
+                                },
+                                "& .MuiDataGrid-detailPanelToggleCell, & .MuiDataGrid-cell--withRenderer.MuiDataGrid-cell--detailPanelToggle": {
+                                    display: 'none'
+                                },
                             },
-                            "& .MuiTablePagination-displayedRows": {
-                                marginTop: 2
-                            },
-                            "& .MuiDataGrid-virtualScroller ": {
-                                zIndex: 2,
-                            },
-                            "& .MuiDataGrid-detailPanelToggleCell, & .MuiDataGrid-cell--withRenderer.MuiDataGrid-cell--detailPanelToggle": {
-                                display: 'none'
-                            }
-                        }}
+                            ...(Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : [])
+                        ]}
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
                         checkboxSelection={forAssignment}
@@ -1319,9 +1336,9 @@ const GridBase = memo(({
                         filterDebounceMs={debounceTimeOut}
                         initialState={initialState}
                         {...(enableRowDetailPanel && {
-                             getDetailPanelContent,
-                             detailPanelExpandedRowIds,
-                             onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded
+                            getDetailPanelContent,
+                            detailPanelExpandedRowIds,
+                            onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded
                         })}
                         localeText={localeText}
                         showToolbar={true}
