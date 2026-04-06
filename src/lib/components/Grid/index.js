@@ -28,7 +28,6 @@ import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
 import CustomDropdownMenu from './CustomDropdownMenu';
 import CustomToolbar from './CustomToolbar';
-import LocalDateTimeField from '../Form/fields/localDateTime';
 import utils, { getPermissions } from '../utils';
 import HistoryIcon from '@mui/icons-material/History';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -313,7 +312,6 @@ const GridBase = memo(({
             "filterOperators": LocalizedDatePicker({ type: "dateTimeLocal", convert: true })
         },
         "localDateTime": {
-            renderCell: (params) => <LocalDateTimeField column={params.colDef} field={params.field} formik={{ values: { [params.field]: params.value }, setFieldValue: () => { }, handleBlur: () => { }, touched: {}, errors: {} }} />,
             "valueFormatter": (value) => (
                 formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, isUtc: true })
             ),

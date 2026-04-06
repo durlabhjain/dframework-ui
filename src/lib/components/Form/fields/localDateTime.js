@@ -24,7 +24,13 @@ const Field = ({ column, field, formik, otherProps }) => {
         format={systemDateTimeFormat(false, false, stateData.dateTime)}
         name={field}
         value={dateTimeValue}
-        onChange={(value) => formik.setFieldValue(field, value)}
+        onChange={(value) => {
+            if (!value) {
+                formik.setFieldValue(field, null);
+            } else {
+                formik.setFieldValue(field, value.utcOffset(0, true).toISOString());
+            }
+        }}
         onBlur={formik.handleBlur}
         helperText={formik.touched[field] && formik.errors[field]}
         minDateTime={(column.min ? dayjs(column.min) : null)}

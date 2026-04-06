@@ -108,7 +108,7 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     if (!value) return '-';
     const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state); // Pass 'state' as an argument
     if(isUtc) {
-      return dayjs.utc(value, true).format(format);
+      return dayjs.utc(value).format(format);
     }
     if (!timeZone) {
       return dayjs(value).format(format);
