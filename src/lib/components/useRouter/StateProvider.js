@@ -93,19 +93,23 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   }, []);
 
   /**
-   * Formats a date value using the system or user-defined format and optional timezone.
-   *
-   * @param {Object} params - The parameters object.
-   * @param {string|Date} params.value - The date value to format.
-   * @param {boolean} params.useSystemFormat - Whether to use the system date format.
-   * @param {boolean} [params.showOnlyDate=false] - Whether to show only the date part.
-   * @param {string|null|undefined} params.state - The user-defined date/time format string.
-   * @param {string} [params.timeZone] - The timezone to use for formatting.
-   * @returns {string} The formatted date string or '-' if value is falsy.
-   */
-  const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone }) => {
+  * Formats a date value using system or user-defined format with optional timezone and UTC handling.
+  *
+  * @param {Object} params - The parameters object.
+  * @param {string|Date} params.value - The date value to format.
+  * @param {boolean} params.useSystemFormat - Whether to use the system date format.
+  * @param {boolean} [params.showOnlyDate=false] - Whether to show only the date part.
+  * @param {string|null|undefined} params.state - The user-defined date/time format string.
+  * @param {string} [params.timeZone] - The timezone to use for formatting.
+  * @param {boolean} [params.isUtc=false] - Whether to format the date in UTC.
+  * @returns {string} The formatted date string or '-' if value is falsy.
+  */
+  const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, isUtc = false }) => {
     if (!value) return '-';
     const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state); // Pass 'state' as an argument
+    if(isUtc) {
+      return dayjs.utc(value, true).format(format);
+    }
     if (!timeZone) {
       return dayjs(value).format(format);
     }
