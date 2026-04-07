@@ -706,7 +706,7 @@ const GridBase = memo(({
                 setData(result);
             }
         } catch (error) {
-            if (error?.aborted || error?.name === 'AbortError') return;
+            if (error?.aborted || error?.name === 'AbortError' || controller?.signal?.aborted) return;
             snackbar.showError(tTranslate('An error occurred while fetching data', tOpts));
             if (!isExportRequest) {
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
