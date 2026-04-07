@@ -109,12 +109,13 @@ const DATA_PARSERS = Object.freeze({
  * @param {Object} config.params - Request parameters
  * @param {Function} config.history - Navigation function for redirects
  * @param {boolean} config.jsonPayload - Whether to send JSON payload instead of FormData
- * @param {Object} config.additionalParams - Additional fetch parameters
+ * @param {Object} config.additionalParams - Additional fetch parameters (e.g. `{ signal: AbortSignal }` for cancellable requests)
  * @param {Object} config.additionalHeaders - Additional request headers
  * @param {Function} config.dataParser - Parser function to normalize response data (default: DATA_PARSERS.raw)
  * @param {Function} config.onParseError - Custom error handler for parse failures
  * 
- * @returns {Promise<any>} Parsed response data or error object
+ * @returns {Promise<any>} Parsed response data or `{ error: true, message }` object on failure
+ * @throws {DOMException} Throws an `AbortError` when the request is cancelled via an `AbortSignal`.
  * 
  * @example
  * // Basic usage
