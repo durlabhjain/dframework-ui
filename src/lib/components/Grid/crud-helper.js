@@ -178,6 +178,10 @@ const getList = async (props = {}) => {
     }
     const response = await request(reqParams);
 
+    if (response?.aborted) {
+        return response;
+    }
+
     if (response?.error || response?.success === false) {
         throw new Error(getErrorMessage(response) || 'An error occurred while fetching data');
     }
