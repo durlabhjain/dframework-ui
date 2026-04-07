@@ -114,8 +114,8 @@ const DATA_PARSERS = Object.freeze({
  * @param {Function} config.dataParser - Parser function to normalize response data (default: DATA_PARSERS.raw)
  * @param {Function} config.onParseError - Custom error handler for parse failures
  * 
- * @returns {Promise<any>} Parsed response data or `{ error: true, message }` object on failure
- * @throws {DOMException} Throws an `AbortError` when the request is cancelled via an `AbortSignal`.
+ * @returns {Promise<any>} Parsed response data, `{ error: true, message }` on failure,
+ *   or `{ error: true, aborted: true, message }` when the request is cancelled via an `AbortSignal`.
  * 
  * @example
  * // Basic usage
@@ -199,8 +199,9 @@ const request = async ({
 
         return data;
     } catch (ex) {
-        // Propagate AbortError so callers can detect intentional cancellations
-        if (ex.name === 'AbortError') throw ex;
+        if (ex.name === 'AbortError') {
+            return { error: true, aborted: true, message: ex.message || 'Request aborted' };
+        }
         // Only network errors will be caught here
         return { error: true, message: ex.message || 'Network error' };
     }
