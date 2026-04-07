@@ -161,6 +161,7 @@ const getList = async (props = {}) => {
         return;
     }
 
+    const { signal } = props;
     const reqParams = {
         url,
         additionalHeaders: {
@@ -168,7 +169,8 @@ const getList = async (props = {}) => {
         },
         jsonPayload: true,
         params: requestData,
-        dataParser: DATA_PARSERS.json
+        dataParser: DATA_PARSERS.json,
+        ...(signal ? { additionalParams: { signal } } : {})
     };
 
     // for manipulating the request payload before sending the request.
