@@ -198,6 +198,8 @@ const request = async ({
 
         return data;
     } catch (ex) {
+        // Propagate AbortError so callers can detect intentional cancellations
+        if (ex.name === 'AbortError') throw ex;
         // Only network errors will be caught here
         return { error: true, message: ex.message || 'Network error' };
     }
