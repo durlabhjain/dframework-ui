@@ -207,7 +207,7 @@ const GridBase = memo(({
     const isReadOnly = model.readOnly === true || readOnly;
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
-    const fetchAbortControllerRef = useRef(null);
+    const latestFetchIdRef = useRef(0);
     const showAddIcon = model.showAddIcon === true;
     const toLink = model.columns.filter(({ link }) => Boolean(link)).map(item => item.link);
     const { stateData, formatDate, getApiEndpoint, buildUrl, setPageTitle } = useStateContext();
@@ -665,11 +665,7 @@ const GridBase = memo(({
         const isValidFilters = !filters.items.length || filters.items.every(item => "value" in item && item.value !== undefined);
         if (!isValidFilters) return;
 
-        if (fetchAbortControllerRef.current) {
-            fetchAbortControllerRef.current.abort();
-        }
-        fetchAbortControllerRef.current = new AbortController();
-        const { signal } = fetchAbortControllerRef.current;
+        const fetchId = ++latestFetchIdRef.current;
 
         const listParams = {
             action,
@@ -689,12 +685,11 @@ const GridBase = memo(({
         apiRef.current.listParams = listParams;
         if (!isExportRequest) setIsLoading(true);
         try {
-            const result = await getList({ ...listParams, contentType, columns, signal });
-            if (!isExportRequest && result !== undefined) {
+            const result = await getList({ ...listParams, contentType, columns });
+            if (!isExportRequest && result !== undefined && fetchId === latestFetchIdRef.current) {
                 setData(result);
             }
         } catch (error) {
-            if (error.name === 'AbortError') return;
             snackbar.showError(tTranslate('An error occurred while fetching data', tOpts));
             if (!isExportRequest) {
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
