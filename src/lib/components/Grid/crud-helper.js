@@ -122,7 +122,7 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
  *     (e.g. returning an error file or exposing a separate export-status API).
  */
 const getList = async (props = {}) => {
-    const { contentType, columns, extraParams = {}, action = 'list', model } = props;
+    const { contentType, columns, extraParams = {}, action = 'list', model, signal } = props;
     const { requestData, url, where, dateColumns } = buildRequestData(props);
 
     if (contentType) {
@@ -168,7 +168,8 @@ const getList = async (props = {}) => {
         },
         jsonPayload: true,
         params: requestData,
-        dataParser: DATA_PARSERS.json
+        dataParser: DATA_PARSERS.json,
+        additionalParams: signal ? { signal } : {}
     };
 
     // for manipulating the request payload before sending the request.
