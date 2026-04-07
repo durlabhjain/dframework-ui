@@ -713,7 +713,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, snackbar]);
+    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
