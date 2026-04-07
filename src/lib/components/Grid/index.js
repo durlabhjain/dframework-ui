@@ -208,6 +208,12 @@ const GridBase = memo(({
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
     const fetchAbortControllerRef = useRef(null);
+
+    useEffect(() => () => {
+        fetchAbortControllerRef.current?.abort();
+        fetchAbortControllerRef.current = null;
+    }, []);
+
     const showAddIcon = model.showAddIcon === true;
     const toLink = model.columns.filter(({ link }) => Boolean(link)).map(item => item.link);
     const { stateData, formatDate, getApiEndpoint, buildUrl, setPageTitle } = useStateContext();
@@ -666,11 +672,12 @@ const GridBase = memo(({
         if (!isValidFilters) return;
 
         let signal = null;
+        let controller = null;
         if (!isExportRequest) {
             if (fetchAbortControllerRef.current) {
                 fetchAbortControllerRef.current.abort();
             }
-            const controller = new AbortController();
+            controller = new AbortController();
             fetchAbortControllerRef.current = controller;
             signal = controller.signal;
         }
@@ -694,7 +701,7 @@ const GridBase = memo(({
         if (!isExportRequest) setIsLoading(true);
         try {
             const result = await getList({ ...listParams, contentType, columns, signal });
-            if (!isExportRequest && result !== undefined) {
+            if (!isExportRequest && result !== undefined && fetchAbortControllerRef.current === controller) {
                 setData(result);
             }
         } catch (error) {
@@ -704,7 +711,7 @@ const GridBase = memo(({
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
             }
         } finally {
-            if (!isExportRequest) setIsLoading(false);
+            if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
     }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, snackbar]);
 
