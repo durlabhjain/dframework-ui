@@ -105,9 +105,9 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   * @returns {string} The formatted date string or '-' if value is falsy.
   */
   const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, localize = false }) => {
-    if (!value) return '-';
+    if (!value) return null;
     const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state); // Pass 'state' as an argument
-    if(!localize) {
+    if(localize) {
       return dayjs.utc(value).format(format);
     }
     if (!timeZone) {
