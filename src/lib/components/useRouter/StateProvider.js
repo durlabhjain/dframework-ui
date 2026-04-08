@@ -102,7 +102,7 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   * @param {string|null|undefined} params.state - The user-defined date/time format string.
   * @param {string} [params.timeZone] - The timezone to use for formatting.
   * @param {boolean} [params.localize=false] - Whether to localize the date.
-  * @returns {string} The formatted date string or '-' if value is falsy.
+  * @returns {string|null} The formatted date string, or `null` if value is falsy.
   */
   const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, localize = false }) => {
     if (!value) return null;
