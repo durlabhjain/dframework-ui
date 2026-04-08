@@ -15,6 +15,59 @@ function shouldApplyFilter(filter) {
     return isUnaryOperator || hasValidValue;
 }
 
+/**
+ * Executes the createRequestPayload hook if defined on the model.
+ * This helper consolidates the duplicate pattern of building context and calling the hook.
+ *
+ * @param {Object} model - The UiModel instance
+ * @param {Object} context - The context object containing request parameters (url, where, requestData, etc.)
+ * @param {Object} metadata - Additional metadata (action, dataParsers, props, etc.)
+ * @returns {Promise<Object>} The potentially modified context object
+ */
+async function executeRequestHook(model, context, metadata) {
+    if (typeof model.createRequestPayload === 'function') {
+        await model.createRequestPayload(context, metadata);
+    }
+    return context;
+}
+
+/**
+ * Executes the parseResponsePayload hook if defined on the model and action is supported.
+ * This helper consolidates the duplicate pattern of checking and calling the response hook.
+ *
+ * @param {Object} model - The UiModel instance
+ * @param {string} action - The action being performed (list, load, lookups, etc.)
+ * @param {Object} responseData - The response from the API
+ * @param {Object} context - Additional context to pass to the hook (dateColumns, props, etc.)
+ * @returns {Promise<Object>} The potentially transformed response data
+ */
+async function executeResponseHook(model, action, responseData, context = {}) {
+    if (typeof model.parseResponsePayload === 'function' &&
+        model.parseResponseActions?.includes(action)) {
+        return await model.parseResponsePayload({
+            responseData,
+            model,
+            action,
+            ...context
+        });
+    }
+    return responseData;
+}
+
+/**
+ * Validates the response and throws an error if the response indicates failure.
+ * This helper consolidates the duplicate error checking pattern.
+ *
+ * @param {Object} response - The response object to validate
+ * @param {string} defaultMessage - The default error message if none is provided
+ * @throws {Error} If the response contains an error or success is false
+ */
+function validateResponse(response, defaultMessage) {
+    if (response?.error || response?.success === false) {
+        throw new Error(getErrorMessage(response) || defaultMessage);
+    }
+}
+
 const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, baseFilters, action = 'list', extraParams = {}, model, api }) => {
     const isElasticExport = action === 'export' && model.isElasticExport === true;
 
@@ -124,19 +177,14 @@ const getList = async (props = {}) => {
     const { requestData, url, where, dateColumns } = buildRequestData(props);
 
     if (contentType) {
-        // Build context object before assigning to final structure
-        const context = {
+        // Build context object and execute request hook
+        const context = await executeRequestHook(model, {
             where,
             url,
             requestData,
             dataParsers: DATA_PARSERS,
             ...props
-        };
-
-        // Allow hook to modify context properties
-        if (typeof model.createRequestPayload === 'function') {
-            await model.createRequestPayload(context, { action, dataParsers: DATA_PARSERS, ...props });
-        }
+        }, { action, dataParsers: DATA_PARSERS, ...props });
 
         // Apply potentially modified values to requestData
         const finalRequestData = {
@@ -176,19 +224,14 @@ const getList = async (props = {}) => {
         return;
     }
 
-    // Build context object before assigning to final structure
-    const context = {
+    // Build context object and execute request hook
+    const context = await executeRequestHook(model, {
         where,
         url,
         requestData,
         dataParsers: DATA_PARSERS,
         ...props
-    };
-
-    // for manipulating the request payload before sending the request.
-    if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(context, { action, dataParsers: DATA_PARSERS, ...props });
-    }
+    }, { action, dataParsers: DATA_PARSERS, ...props });
 
     // Build final request params from potentially modified context
     const reqParams = {
@@ -211,15 +254,15 @@ const getList = async (props = {}) => {
         return response;
     }
 
-    if (response?.error || response?.success === false) {
-        throw new Error(getErrorMessage(response) || 'An error occurred while fetching data');
+    validateResponse(response, 'An error occurred while fetching data');
+
+    // Execute response hook if defined
+    const parsedResponse = await executeResponseHook(model, action, response, { dateColumns, ...props });
+    if (parsedResponse !== response) {
+        return parsedResponse;
     }
 
-    // Parse response data if needed custom processing.
-    if (typeof model.parseResponsePayload === 'function' && model.parseResponseActions.includes(action)) {
-        return await model.parseResponsePayload({ responseData: response, model, dateColumns, action, ...props });
-    }
-
+    // Default response processing for date columns and display indexes
     response.records.forEach(record => {
         dateColumns.forEach(column => {
             const { field, localize } = column;
@@ -261,19 +304,15 @@ const getRecord = async (props = {}) => {
         searchParams.set("where", JSON.stringify(where));
     }
 
-    // Build context object before assigning to final structure
-    const context = {
+    // Build context object and execute request hook
+    const context = await executeRequestHook(model, {
         url: `${url}?${searchParams.toString()}`,
         method: 'GET',
         where,
         lookupsToFetch,
         dataParsers: DATA_PARSERS,
         ...props
-    };
-
-    if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(context, { action: 'load', dataParsers: DATA_PARSERS, ...props });
-    }
+    }, { action: 'load', dataParsers: DATA_PARSERS, ...props });
 
     // Build final request data from potentially modified context
     const requestData = {
@@ -283,12 +322,15 @@ const getRecord = async (props = {}) => {
     };
 
     const response = await request(requestData);
-    if (response?.error || response?.success === false) {
-        throw new Error(getErrorMessage(response) || 'Load failed');
+    validateResponse(response, 'Load failed');
+
+    // Execute response hook if defined
+    const parsedResponse = await executeResponseHook(model, 'load', response, props);
+    if (parsedResponse !== response) {
+        return parsedResponse;
     }
-    if (typeof model.parseResponsePayload === 'function' && model.parseResponseActions.includes('load')) {
-        return await model.parseResponsePayload({ responseData: response, model, action: 'load', ...props });
-    }
+
+    // Default response processing
     const { data: record, lookups } = response || {};
     let title = record[model.linkColumn];
     const columnConfig = model.columns.find(a => a.field === model.linkColumn);
@@ -313,17 +355,13 @@ const deleteRecord = async function (props = {}) {
         throw new Error('Delete failed. No active record.');
     }
 
-    // Build context object before assigning to final structure
-    const context = {
+    // Build context object and execute request hook
+    const context = await executeRequestHook(model, {
         url: `${api}/${id}`,
         method: 'DELETE',
         dataParsers: DATA_PARSERS,
         ...props
-    };
-
-    if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(context, { action: 'delete', dataParsers: DATA_PARSERS, ...props });
-    }
+    }, { action: 'delete', dataParsers: DATA_PARSERS, ...props });
 
     // Build final request data from potentially modified context
     const requestData = {
@@ -332,9 +370,7 @@ const deleteRecord = async function (props = {}) {
     };
 
     const response = await request(requestData);
-    if (response?.error || response?.success === false) {
-        throw new Error(getErrorMessage(response) || 'Delete failed');
-    }
+    validateResponse(response, 'Delete failed');
     return true;
 };
 
@@ -353,8 +389,8 @@ const saveRecord = async function (props = {}) {
         method = 'POST';
     }
 
-    // Build context object before assigning to final structure
-    const context = {
+    // Build context object and execute request hook
+    const context = await executeRequestHook(model, {
         url,
         method,
         params: values,
@@ -363,11 +399,7 @@ const saveRecord = async function (props = {}) {
         },
         dataParsers: DATA_PARSERS,
         ...props
-    };
-
-    if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(context, { action: 'save', dataParsers: DATA_PARSERS, ...props });
-    }
+    }, { action: 'save', dataParsers: DATA_PARSERS, ...props });
 
     // Build final request data from potentially modified context
     const requestData = {
@@ -379,9 +411,7 @@ const saveRecord = async function (props = {}) {
     };
 
     const response = await request(requestData);
-    if (response?.error || response?.success === false) {
-        throw new Error(getErrorMessage(response) || 'Save failed');
-    }
+    validateResponse(response, 'Save failed');
     return response;
 };
 
@@ -396,8 +426,8 @@ const getLookups = async (props = {}) => {
     searchParams.set("lookups", lookups);
     searchParams.set("scopeId", scopeId);
 
-    // Build context object before assigning to final structure
-    const context = {
+    // Build context object and execute request hook
+    const context = await executeRequestHook(model, {
         url: `${url}?${searchParams.toString()}`,
         method: 'GET',
         lookups,
@@ -405,11 +435,7 @@ const getLookups = async (props = {}) => {
         dataParsers: DATA_PARSERS,
         ...reqData,
         ...props
-    };
-
-    if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(context, { action: 'lookups', dataParsers: DATA_PARSERS, ...props });
-    }
+    }, { action: 'lookups', dataParsers: DATA_PARSERS, ...props });
 
     // Build final request data from potentially modified context
     const requestData = {
@@ -419,14 +445,10 @@ const getLookups = async (props = {}) => {
     };
 
     const response = await request(requestData);
-    if (response?.error || response?.success === false) {
-        throw new Error(getErrorMessage(response) || 'Could not load lookups');
-    }
+    validateResponse(response, 'Could not load lookups');
 
-    if (typeof model.parseResponsePayload === 'function' && model.parseResponseActions.includes('lookups')) {
-        return await model.parseResponsePayload({ responseData: response, model, action: 'lookups', ...props });
-    }
-    return response;
+    // Execute response hook if defined
+    return await executeResponseHook(model, 'lookups', response, props);
 };
 
 export {
