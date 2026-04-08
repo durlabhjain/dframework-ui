@@ -167,7 +167,7 @@ const getList = async (props = {}) => {
         jsonPayload: true,
         params: requestData,
         dataParser: DATA_PARSERS.json,
-        additionalParams: signal ? { signal } : {}
+        signal
     };
 
     // for manipulating the request payload before sending the request.
@@ -231,7 +231,7 @@ const getRecord = async (props = {}) => {
     }
     const requestData = {
         url: `${url}?${searchParams.toString()}`,
-        additionalParams: { method: 'GET' },
+        method: 'GET',
         jsonPayload: true
     };
 
@@ -271,7 +271,7 @@ const deleteRecord = async function (props = {}) {
     }
     const requestData = {
         url: `${api}/${id}`,
-        additionalParams: { method: 'DELETE' }
+        method: 'DELETE'
     };
 
     if (typeof model.createRequestPayload === 'function') {
@@ -301,7 +301,7 @@ const saveRecord = async function (props = {}) {
 
     const requestData = {
         url,
-        additionalParams: { method },
+        method,
         params: values,
         additionalHeaders: {
             'Content-Type': 'application/json'
@@ -332,7 +332,7 @@ const getLookups = async (props = {}) => {
     searchParams.set("scopeId", scopeId);
     const requestData = {
         url: `${url}?${searchParams.toString()}`,
-        additionalParams: { method: 'GET' },
+        method: 'GET',
         jsonPayload: true,
         ...reqData
     };
