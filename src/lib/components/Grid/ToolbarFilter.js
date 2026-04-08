@@ -31,20 +31,18 @@ const ToolbarFilter = ({
     // If there's an existing filter, use its value (even if it's falsy like 0, false, "")
     const filterValue = useMemo(() => {
         const operator = existingFilter?.operator || column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
+        const isMultiple = operator === 'isAnyOf';
         if (['isEmpty', 'isNotEmpty'].includes(operator)) {
             return '';
         }
 
         if (!existingFilter) {
-            // For multi-select fields, default to empty array
-            const isMultiple = column.toolbarFilter?.defaultOperator === 'isAnyOf';
             return isMultiple ? [] : '';
         }
         
         // Ensure we always return a valid controlled value (never undefined)
         const value = existingFilter.value;
         if (value === undefined || value === null) {
-            const isMultiple = operator === 'isAnyOf';
             return isMultiple ? [] : '';
         }
         return value;
