@@ -69,7 +69,7 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
         ...extraParams,
         logicalOperator: filterModel.logicOperator,
         sort: sortModel.map(sort => (sort.filterField || sort.field) + ' ' + sort.sort).join(','),
-        where,
+        // Note: where is excluded here and returned separately to allow modification via createRequestPayload hook
         isElasticExport,
         model: model.module,
         fileName: model.overrideFileName
