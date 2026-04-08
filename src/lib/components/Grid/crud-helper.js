@@ -124,12 +124,29 @@ const getList = async (props = {}) => {
     const { requestData, url, where, dateColumns } = buildRequestData(props);
 
     if (contentType) {
-        requestData.responseType = contentType;
-        requestData.columns = columns;
-        requestData.userTimezoneOffset = -new Date().getTimezoneOffset(); // Negate to get the correct offset for conversion
+        // Build context object before assigning to final structure
+        const context = {
+            where,
+            url,
+            requestData,
+            dataParsers: DATA_PARSERS,
+            ...props
+        };
+
+        // Allow hook to modify context properties
         if (typeof model.createRequestPayload === 'function') {
-            await model.createRequestPayload(requestData, { where, url, dataParsers: DATA_PARSERS, ...props });
+            await model.createRequestPayload(context, { action, dataParsers: DATA_PARSERS, ...props });
         }
+
+        // Apply potentially modified values to requestData
+        const finalRequestData = {
+            ...context.requestData,
+            responseType: contentType,
+            columns,
+            userTimezoneOffset: -new Date().getTimezoneOffset(), // Negate to get the correct offset for conversion
+            where: context.where
+        };
+
         const form = document.createElement("form");
         form.setAttribute("method", "POST");
         form.setAttribute("id", "exportForm");
@@ -138,8 +155,8 @@ const getList = async (props = {}) => {
         // Request data (where, sort, limit, etc.) is intentionally omitted — the template
         // defines the data shape and filtering on the server side.
         if (!extraParams.template) {
-            for (const key in requestData) {
-                let v = requestData[key];
+            for (const key in finalRequestData) {
+                let v = finalRequestData[key];
                 if (v === undefined || v === null) {
                     continue;
                 } else if (typeof v !== 'string') {
@@ -152,28 +169,42 @@ const getList = async (props = {}) => {
                 form.append(hiddenTag);
             }
         }
-        form.setAttribute('action', requestData.url || url);
+        form.setAttribute('action', context.url);
         document.body.appendChild(form);
         form.submit();
         setTimeout(() => { form.remove(); }, 0);
         return;
     }
 
-    const reqParams = {
+    // Build context object before assigning to final structure
+    const context = {
+        where,
         url,
-        additionalHeaders: {
-            "Content-Type": "application/json"
-        },
-        jsonPayload: true,
-        params: requestData,
-        dataParser: DATA_PARSERS.json,
-        signal
+        requestData,
+        dataParsers: DATA_PARSERS,
+        ...props
     };
 
     // for manipulating the request payload before sending the request.
     if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(reqParams, { where, dataParsers: DATA_PARSERS, ...props });
+        await model.createRequestPayload(context, { action, dataParsers: DATA_PARSERS, ...props });
     }
+
+    // Build final request params from potentially modified context
+    const reqParams = {
+        url: context.url,
+        additionalHeaders: {
+            "Content-Type": "application/json"
+        },
+        jsonPayload: true,
+        params: {
+            ...context.requestData,
+            where: context.where
+        },
+        dataParser: DATA_PARSERS.json,
+        signal
+    };
+
     const response = await request(reqParams);
 
     if (response?.aborted) {
@@ -229,15 +260,27 @@ const getRecord = async (props = {}) => {
     if (where && Object.keys(where)?.length) {
         searchParams.set("where", JSON.stringify(where));
     }
-    const requestData = {
+
+    // Build context object before assigning to final structure
+    const context = {
         url: `${url}?${searchParams.toString()}`,
         method: 'GET',
-        jsonPayload: true
+        where,
+        lookupsToFetch,
+        dataParsers: DATA_PARSERS,
+        ...props
     };
 
     if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { action: 'load', dataParsers: DATA_PARSERS, ...props });
+        await model.createRequestPayload(context, { action: 'load', dataParsers: DATA_PARSERS, ...props });
     }
+
+    // Build final request data from potentially modified context
+    const requestData = {
+        url: context.url,
+        method: context.method,
+        jsonPayload: true
+    };
 
     const response = await request(requestData);
     if (response?.error || response?.success === false) {
@@ -269,14 +312,25 @@ const deleteRecord = async function (props = {}) {
     if (!id) {
         throw new Error('Delete failed. No active record.');
     }
-    const requestData = {
+
+    // Build context object before assigning to final structure
+    const context = {
         url: `${api}/${id}`,
-        method: 'DELETE'
+        method: 'DELETE',
+        dataParsers: DATA_PARSERS,
+        ...props
     };
 
     if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { action: 'delete', dataParsers: DATA_PARSERS, ...props });
+        await model.createRequestPayload(context, { action: 'delete', dataParsers: DATA_PARSERS, ...props });
     }
+
+    // Build final request data from potentially modified context
+    const requestData = {
+        url: context.url,
+        method: context.method
+    };
+
     const response = await request(requestData);
     if (response?.error || response?.success === false) {
         throw new Error(getErrorMessage(response) || 'Delete failed');
@@ -299,19 +353,30 @@ const saveRecord = async function (props = {}) {
         method = 'POST';
     }
 
-    const requestData = {
+    // Build context object before assigning to final structure
+    const context = {
         url,
         method,
         params: values,
         additionalHeaders: {
             'Content-Type': 'application/json'
         },
-        jsonPayload: true
+        dataParsers: DATA_PARSERS,
+        ...props
     };
 
     if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { action: 'save', dataParsers: DATA_PARSERS, ...props });
+        await model.createRequestPayload(context, { action: 'save', dataParsers: DATA_PARSERS, ...props });
     }
+
+    // Build final request data from potentially modified context
+    const requestData = {
+        url: context.url,
+        method: context.method,
+        params: context.params,
+        additionalHeaders: context.additionalHeaders,
+        jsonPayload: true
+    };
 
     const response = await request(requestData);
     if (response?.error || response?.success === false) {
@@ -330,16 +395,29 @@ const getLookups = async (props = {}) => {
     const url = `${api}/lookups`;
     searchParams.set("lookups", lookups);
     searchParams.set("scopeId", scopeId);
-    const requestData = {
+
+    // Build context object before assigning to final structure
+    const context = {
         url: `${url}?${searchParams.toString()}`,
         method: 'GET',
-        jsonPayload: true,
-        ...reqData
+        lookups,
+        scopeId,
+        dataParsers: DATA_PARSERS,
+        ...reqData,
+        ...props
     };
 
     if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { action: 'lookups', dataParsers: DATA_PARSERS, ...props });
+        await model.createRequestPayload(context, { action: 'lookups', dataParsers: DATA_PARSERS, ...props });
     }
+
+    // Build final request data from potentially modified context
+    const requestData = {
+        url: context.url,
+        method: context.method,
+        jsonPayload: true
+    };
+
     const response = await request(requestData);
     if (response?.error || response?.success === false) {
         throw new Error(getErrorMessage(response) || 'Could not load lookups');

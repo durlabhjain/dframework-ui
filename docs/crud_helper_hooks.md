@@ -4,47 +4,42 @@ This document covers the changes made to `crud-helper.js` and how to use the `cr
 
 ## `createRequestPayload`
 
-An **async** function defined on the model that is called just before each HTTP request is made. It receives the full request object by reference, so mutations apply directly.
+An **async** function defined on the model that is called before the final HTTP request is constructed. It receives a context object containing all request parameters, which can be modified directly before the final request is built.
 
 ### Signature
 
 ```js
-async createRequestPayload(requestData, context)
+async createRequestPayload(context, metadata)
 ```
 
 ### Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `requestData` | `Object` | The request configuration object that will be passed to the HTTP layer. You can mutate this directly. |
-| `context` | `Object` | Contextual metadata about the current operation (varies by action). |
+| `context` | `Object` | A mutable context object containing request parameters like `url`, `where`, `requestData`, etc. Modify properties on this object to change the final request. |
+| `metadata` | `Object` | Additional contextual metadata about the current operation (includes `action`, `dataParsers`, and all original `props`). |
 
-### Context by Action
+### Context Properties by Action
+
+The `context` object contains different properties depending on the action:
 
 | Action | Context Properties |
 |--------|-------------------|
-| **list** | `{ where, sortModel, page, pageSize, parentFilters, action, dataParsers }` |
-| **export** | `{ where, sortModel, page, pageSize, parentFilters, action, url }` |
-| **load** | `{ id, parentFilters, model, where, api, action: 'load' }` |
-| **save** | `{ id, model, values, api, action: 'save' }` |
-| **delete** | `{ id, model, api, action: 'delete' }` |
-| **lookups** | `{ model, lookups, scopeId, dispatchData }` |
+| **list** | `{ where, url, requestData, dataParsers, ...props }` |
+| **export** | `{ where, url, requestData, dataParsers, ...props }` |
+| **load** | `{ url, method, where, lookupsToFetch, dataParsers, ...props }` |
+| **save** | `{ url, method, params, additionalHeaders, dataParsers, ...props }` |
+| **delete** | `{ url, method, dataParsers, ...props }` |
+| **lookups** | `{ url, method, lookups, scopeId, dataParsers, ...props }` |
 
-### `requestData` Structure
+### How It Works
 
-For most operations, `requestData` contains:
+1. A context object is created with initial values (url, where, requestData, etc.)
+2. `createRequestPayload` is called with this context object
+3. You can modify any properties on the context object
+4. After the hook returns, the final request is built using the modified context values
 
-```js
-{
-    url: String,              // The endpoint URL
-    additionalParams: Object, // e.g. { method: 'GET' }
-    additionalHeaders: Object,// e.g. { 'Content-Type': 'application/json' }
-    params: Object,           // The request body/payload
-    jsonPayload: Boolean,     // Whether to send as JSON
-    dispatchData: Function,   // Redux dispatch function
-    dataParser: Function      // (list only) response parser
-}
-```
+This design ensures that modifications to `where`, `url`, and other parameters apply correctly to the final request, avoiding duplicate assignment and maintaining consistency.
 
 ### Example Usage
 
@@ -58,37 +53,52 @@ const orderModel = new UiModel({
         { field: "total", type: "number", headerName: "Total" }
     ],
 
-    // Modify request before it is sent
-    createRequestPayload: async (requestData, context) => {
-        // Add a custom header
-        requestData.additionalHeaders = {
-            ...requestData.additionalHeaders,
-            'X-Custom-Token': 'my-token'
-        };
-
-        // Add extra params for list requests
-        if (context.action === 'list') {
-            requestData.params.includeArchived = false;
+    // Modify request parameters before the request is constructed
+    createRequestPayload: async (context, metadata) => {
+        // Modify the URL
+        if (metadata.action === 'save') {
+            context.url = `/api/orders/custom-save`;
         }
 
-        // Change the URL for save operations
-        if (context.action === 'save') {
-            requestData.url = `/api/orders/custom-save`;
+        // Modify where filters for list requests
+        if (metadata.action === 'list') {
+            context.where.push({
+                field: 'status',
+                operator: 'equals',
+                value: 'active'
+            });
+        }
+
+        // Modify request data
+        if (context.requestData) {
+            context.requestData.includeArchived = false;
+        }
+
+        // Modify params for save operations
+        if (metadata.action === 'save') {
+            context.params = {
+                ...context.params,
+                lastModifiedBy: 'current-user'
+            };
         }
     }
 });
 ```
 
-### Example: Switching to a Different Data Parser
+### Example: Modifying Where Filters
 
 ```jsx
 const model = new UiModel({
     // ...columns, api, etc.
 
-    createRequestPayload: async (requestData, context) => {
-        if (context.action === 'list') {
-            // Use a different data parser provided in context
-            requestData.dataParser = context.dataParsers.text;
+    createRequestPayload: async (context, metadata) => {
+        if (metadata.action === 'list' || metadata.action === 'export') {
+            // Add additional filters
+            context.where.push({
+                field: 'tenantId',
+                operator: 'equals',
+                value: getCurrentTenantId()
+            });
         }
     }
 });
