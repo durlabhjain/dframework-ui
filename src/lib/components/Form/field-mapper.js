@@ -212,16 +212,8 @@ const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displa
     );
 };
 
-export {
-    BooleanField,
-    StringField,
-    NumberField,
-    PasswordField,
-    DateField,
-    TimeField,
-    SelectField,
-    GridTransfer,
-    fieldMappers
-};
+// Note: Individual field components are not exported as they are only used
+// internally via the fieldMappers mapping. The fieldMappers object is not
+// exported either as it's only used within this module.
 
 export default FormLayout;
