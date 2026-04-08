@@ -304,8 +304,8 @@ const GridBase = memo(({
             "valueOptions": "lookup"
         },
         "date": {
-            "valueFormatter": (value) => (
-                formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime })
+            "valueFormatter": (value, row, column) => (
+                formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime, timeZone: column.localize ? timeZone : null, localize: column.localize })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "date", label: tTranslate('Value', tOpts) })
         },
