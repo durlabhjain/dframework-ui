@@ -112,7 +112,7 @@ async parseResponsePayload({ responseData, model, dateColumns, action })
 |-----------|------|-------------|
 | `responseData` | `Object` | The raw response from the server. |
 | `model` | `Object` | The current UiModel instance. |
-| `dateColumns` | `Array` | *(list only)* Array of `{ field, keepLocal, keepLocalDate }` objects for date columns. Not provided for `load` or `lookups`. |
+| `dateColumns` | `Array` | *(list only)* Array of `{ field, localize }` objects for date/dateTime columns. `localize: true` means the value should be displayed in the user's local timezone; `localize: false` (default) keeps the value in UTC for both display and submission. Not provided for `load` or `lookups`. |
 | `action` | `String` | The current action name (e.g. `list`, `load`, `lookups`). |
 
 ### Return Value
