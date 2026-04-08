@@ -27,24 +27,29 @@ const ToolbarFilter = ({
         return filterModel?.items?.find(item => item.field === column.field);
     }, [filterModel, column.field]);
 
+    const operator = existingFilter?.operator || column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
+    const isMultiple = operator === 'isAnyOf';
+
     // Get current filter value
     // If there's an existing filter, use its value (even if it's falsy like 0, false, "")
     const filterValue = useMemo(() => {
-        const operator = existingFilter?.operator || column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
         if (['isEmpty', 'isNotEmpty'].includes(operator)) {
             return '';
         }
 
         if (!existingFilter) {
-            // For multi-select fields, default to empty array
-            const isMultiple = column.toolbarFilter?.defaultOperator === 'isAnyOf';
             return isMultiple ? [] : '';
         }
-        return existingFilter.value;
-    }, [existingFilter, column.toolbarFilter?.defaultOperator, column.type]);
+        
+        // Ensure we always return a valid controlled value (never undefined)
+        const value = existingFilter.value;
+        if (value === undefined || value === null) {
+            return isMultiple ? [] : '';
+        }
+        return value;
+    }, [existingFilter, isMultiple]);
     // Handle filter change - use functional update to avoid filterModel dependency
     const handleFilterChange = useCallback((newValue) => {
-        const operator = column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
         
         setFilterModel((prevFilterModel) => {
             const currentItems = prevFilterModel?.items || [];
@@ -120,7 +125,6 @@ const ToolbarFilter = ({
     // Render based on column type
     const renderFilterInput = () => {
         const baseLabel = column.toolbarFilter?.label || column.headerName || column.label || column.field;
-        const operator = column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
         const operatorLabel = getOperatorLabel(operator, column.type);
         
         // For number fields, prepend operator symbol. For others, append operator text if verbose
@@ -207,8 +211,7 @@ const ToolbarFilter = ({
                     }))
                     : options;
 
-                const isMultiple = existingFilter?.operator === 'isAnyOf' || column.toolbarFilter?.defaultOperator === 'isAnyOf';
-                const selectValue = utils.normalizeFilterValue({ value: filterValue, operator: existingFilter?.operator, isMultiple });
+                const selectValue = utils.normalizeFilterValue({ value: filterValue, operator, isMultiple });
                 const displayLimit = 1; // Show up to 1 selected options before collapsing into tooltip
 
                 return (
@@ -224,11 +227,11 @@ const ToolbarFilter = ({
                                 const values = Array.isArray(selected) ? selected : (selected != null && selected !== '' ? [selected] : []);
                                 const labels = values.map((v) => {
                                     // If the selected item is already an object with a label, use it
-                                    if (v && typeof v === 'object' && 'label' in v) return v.label;
+                                    if (v && typeof v === 'object' && 'label' in v) return tTranslate(v.label, tOpts);
 
                                     // Compare option values loosely (stringified) to handle type differences
                                     const opt = normalizedOptions.find((o) => String(o.value) === String(v));
-                                    return opt ? opt.label : '';
+                                    return opt ? tTranslate(opt.label, tOpts) : '';
                                 }).filter(Boolean);
 
                                 if (labels.length === 0) return '';
@@ -247,7 +250,7 @@ const ToolbarFilter = ({
                         >
                             {normalizedOptions.map((option) => (
                                 <MenuItem key={option.value} value={option.value}>
-                                    {option.label}
+                                    {tTranslate(option.label, tOpts)}
                                 </MenuItem>
                             ))}
                         </Select>

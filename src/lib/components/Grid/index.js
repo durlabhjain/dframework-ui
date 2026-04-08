@@ -501,6 +501,8 @@ const GridBase = memo(({
                                 }}
                                 {...params}
                                 autoHighlight
+                                tTranslate={tTranslate}
+                                tOpts={tOpts}
                             />
                         )
                         : undefined
@@ -995,7 +997,8 @@ const GridBase = memo(({
                 lookup: col.lookup,
                 hyperlinkURL: col.hyperlinkURL,
                 hyperlinkIndex: col.hyperlinkIndex,
-                localize: col.localize
+                localize: col.localize,
+                exportIndex: col.exportIndex
             };
         });
         const action = (model?.formActions?.export || isPivotExport) ? (model?.formActions?.export || 'export') : undefined;
