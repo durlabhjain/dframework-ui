@@ -8,7 +8,6 @@ dayjs.extend(utc);
 
 const Field = ({ column, field, formik, otherProps }) => {
     const { systemDateTimeFormat, stateData } = useStateContext();
-    debugger
     const dateTimeValue = useMemo(() => {
         const val = formik.values[field];
         if (!val) return null;
