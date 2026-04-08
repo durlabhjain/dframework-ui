@@ -4,8 +4,6 @@ const dateDataTypes = ['date', 'dateTime'];
 const lookupDataTypes = ['singleSelect'];
 const exportDefaultLimit = 1_000_000;
 
-const isLocalTime = (dateValue) => new Date().getTimezoneOffset() === new Date(dateValue).getTimezoneOffset();
-
 function shouldApplyFilter(filter) {
     const { operator, value, type } = filter;
 
@@ -23,9 +21,9 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
     const lookups = [];
     const lookupWithDeps = []; // for backward compatibility having two lookups arrays
     const dateColumns = [];
-    gridColumns.forEach(({ lookup, type, field, keepLocal = false, keepLocalDate, filterable = true, dependsOn }) => {
+    gridColumns.forEach(({ lookup, type, field, localize = false, filterable = true, dependsOn }) => {
         if (dateDataTypes.includes(type)) {
-            dateColumns.push({ field, keepLocal, keepLocalDate });
+            dateColumns.push({ field, localize });
         }
         if (!lookup) {
             return;
@@ -189,14 +187,10 @@ const getList = async (props = {}) => {
 
     response.records.forEach(record => {
         dateColumns.forEach(column => {
-            const { field, keepLocal, keepLocalDate } = column;
+            const { field, localize } = column;
             if (record[field]) {
                 record[field] = new Date(record[field]);
-                if (keepLocalDate) {
-                    const userTimezoneOffset = record[field].getTimezoneOffset() * 60000;
-                    record[field] = new Date(record[field].getTime() + userTimezoneOffset);
-                }
-                if (keepLocal && !isLocalTime(record[field])) {
+                if (localize) {
                     const userTimezoneOffset = record[field].getTimezoneOffset() * 60000;
                     record[field] = new Date(record[field].getTime() + userTimezoneOffset);
                 }
