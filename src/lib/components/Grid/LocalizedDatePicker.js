@@ -23,7 +23,7 @@ const LocalizedDatePicker = (props) => {
     const { systemDateTimeFormat, stateData } = useStateContext();
     const columnType = props?.columnType || props?.type || colDef?.type || 'date';
     const filterFormat = fixedFilterFormat[columnType];
-    const localize = colDef?.localize || props.localize;
+    const localize = colDef?.localize ?? props.localize ?? false;
     const isValidDate = (date) => {
         const parsedDate = dayjs(date);
         return parsedDate.isValid() && parsedDate.year() > 1900;
