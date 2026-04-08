@@ -260,10 +260,8 @@ const ToolbarFilter = ({
             case 'date':
             case 'dateTime':
                 const columnType = column.type;
-                // Normalize column type for fixedFilterFormat lookup (dateTime -> datetime)
-                const normalizedType = columnType === 'dateTime' ? 'datetime' : columnType;
-                const filterFormat = fixedFilterFormat[normalizedType];
-                const format = systemDateTimeFormat(columnType !== 'dateTime', false, stateData.dateTime);
+                const filterFormat = fixedFilterFormat[columnType];
+                const format = systemDateTimeFormat(columnType === 'date', false, stateData.dateTime);
                 const DateComponent = columnType === 'dateTime' ? DateTimePicker : DatePicker;
                 
                 // Parse and validate date value once

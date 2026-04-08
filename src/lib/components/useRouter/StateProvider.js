@@ -101,13 +101,13 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   * @param {boolean} [params.showOnlyDate=false] - Whether to show only the date part.
   * @param {string|null|undefined} params.state - The user-defined date/time format string.
   * @param {string} [params.timeZone] - The timezone to use for formatting.
-  * @param {boolean} [params.isUtc=false] - Whether to format the date in UTC.
+  * @param {boolean} [params.localize=false] - Whether to localize the date.
   * @returns {string} The formatted date string or '-' if value is falsy.
   */
-  const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, isUtc = false }) => {
+  const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, localize = false }) => {
     if (!value) return '-';
     const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state); // Pass 'state' as an argument
-    if(isUtc) {
+    if(!localize) {
       return dayjs.utc(value).format(format);
     }
     if (!timeZone) {

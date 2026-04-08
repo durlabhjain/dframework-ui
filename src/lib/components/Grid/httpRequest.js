@@ -109,12 +109,15 @@ const DATA_PARSERS = Object.freeze({
  * @param {Object} config.params - Request parameters
  * @param {Function} config.history - Navigation function for redirects
  * @param {boolean} config.jsonPayload - Whether to send JSON payload instead of FormData
- * @param {Object} config.additionalParams - Additional fetch parameters
+ * @param {string} [config.method='POST'] - HTTP method (e.g. 'GET', 'POST', 'PUT', 'DELETE')
+ * @param {AbortSignal} [config.signal] - AbortSignal for cancellable requests
+ * @param {Object} config.additionalParams - Additional fetch parameters (rarely needed; prefer named params above)
  * @param {Object} config.additionalHeaders - Additional request headers
  * @param {Function} config.dataParser - Parser function to normalize response data (default: DATA_PARSERS.raw)
  * @param {Function} config.onParseError - Custom error handler for parse failures
- * 
- * @returns {Promise<any>} Parsed response data or error object
+ *
+ * @returns {Promise<any>} Parsed response data, `{ error: true, message }` on failure,
+ *   or `{ error: true, aborted: true, message }` when the request is cancelled via an `AbortSignal`.
  * 
  * @example
  * // Basic usage
@@ -139,7 +142,9 @@ const request = async ({
     url, 
     params = {}, 
     history, 
-    jsonPayload = false, 
+    jsonPayload = false,
+    method = 'POST',
+    signal,
     additionalParams = {}, 
     additionalHeaders = {}, 
     dataParser = DATA_PARSERS.raw,
@@ -150,10 +155,11 @@ const request = async ({
     }
 
     const reqParams = {
-        method: 'POST',
+        method,
         credentials: 'include',
         url: url,
         headers: jsonPayload ? { ...additionalHeaders } : { 'Content-Type': 'multipart/form-data', ...additionalHeaders },
+        ...(signal && { signal }),
         ...additionalParams
     };
 
@@ -198,6 +204,9 @@ const request = async ({
 
         return data;
     } catch (ex) {
+        if (ex.name === 'AbortError') {
+            return { error: true, aborted: true, message: ex.message || 'Request aborted' };
+        }
         // Only network errors will be caught here
         return { error: true, message: ex.message || 'Network error' };
     }

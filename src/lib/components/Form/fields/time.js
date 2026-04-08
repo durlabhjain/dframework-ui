@@ -1,10 +1,13 @@
 import React from 'react';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import dayjs from 'dayjs';
+import utcPlugin from 'dayjs/plugin/utc.js';
+
+dayjs.extend(utcPlugin);
 
 const field = ({ column, field, formik, otherProps }) => {
     let inputValue = formik.values[field];
-    if (column.isUtc) {
+    if (!column.localize && inputValue) {
         inputValue = dayjs.utc(inputValue).utcOffset(dayjs().utcOffset(), true).format();
     }
     return <TimePicker
@@ -14,9 +17,9 @@ const field = ({ column, field, formik, otherProps }) => {
         key={field}
         fullWidth
         name={field}
-        value={dayjs(inputValue)}
+        value={inputValue ? dayjs(inputValue) : null}
         onChange={(value) => {
-            if (column.isUtc) {
+            if (!column.localize) {
                 value = (value && value.isValid()) ? value.format('YYYY-MM-DDTHH:mm:ss') + '.000Z' : null;
             }
             return formik.setFieldValue(field, value);

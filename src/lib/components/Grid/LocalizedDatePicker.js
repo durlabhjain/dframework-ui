@@ -12,26 +12,26 @@ import utils from '../utils';
 dayjs.extend(utcPlugin);
 const componentMap = {
     date: DatePicker,
-    datetime: DateTimePicker,
-    dateTimeLocal: DateTimePicker
+    dateTime: DateTimePicker
 };
 const DATEPICKER_MARGIN_TOP = '-10px';
 const DATEPICKER_MARGIN_BOTTOM = '-16px';
 
 const LocalizedDatePicker = (props) => {
     const { fixedFilterFormat } = utils;
-    const { item, applyValue, convert } = props;
+    const { item, applyValue, convert, colDef } = props;
     const { systemDateTimeFormat, stateData } = useStateContext();
-    const columnType = props?.type || 'date';
+    const columnType = props?.columnType || props?.type || colDef?.type || 'date';
     const filterFormat = fixedFilterFormat[columnType];
+    const localize = colDef?.localize ?? props.localize ?? false;
     const isValidDate = (date) => {
         const parsedDate = dayjs(date);
         return parsedDate.isValid() && parsedDate.year() > 1900;
     };
-    const format = (systemDateTimeFormat((columnType !== "datetime" && columnType !== "dateTimeLocal", false, stateData.dateTime)));
+    const format = systemDateTimeFormat(columnType !== "dateTime", false, stateData.dateTime);
 
     const handleFilterChange = (newValue) => {
-        if (columnType !== "date" && columnType !== "datetime" && columnType !== "dateTimeLocal") return;
+        if (columnType !== "date" && columnType !== "dateTime") return;
         const isPartialDate = (value) => {
             if (typeof value !== 'string') return false;
             return !dayjs(value, format, true).isValid();
@@ -39,7 +39,11 @@ const LocalizedDatePicker = (props) => {
         if (isPartialDate(newValue)) {
             return;
         }
-        if (convert) {
+        if (convert || localize) {
+            if (!newValue) {
+                applyValue({ ...item, value: null });
+                return;
+            }
             newValue = dayjs(newValue).utc();
             applyValue({ ...item, value: newValue });
             return;
@@ -57,9 +61,7 @@ const LocalizedDatePicker = (props) => {
         }
     };
     const ComponentToRender = componentMap[columnType];
-    const Dateformatvalue = columnType === "dateTimeLocal"
-        ? item?.value ? dayjs(item?.value.$d) : null
-        : item?.value ? dayjs(item.value) : null;
+    const Dateformatvalue = item?.value ? dayjs(item.value) : null;
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <ComponentToRender

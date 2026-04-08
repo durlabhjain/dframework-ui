@@ -6,7 +6,6 @@ import NumberField from './fields/number';
 import PasswordField from './fields/password';
 import DateField from './fields/date';
 import DateTimeField from './fields/dateTime';
-import LocalDateTime from './fields/localDateTime';
 import TimeField from './fields/time';
 import SelectField from './fields/select';
 import GridTransfer from './fields/grid-transfer';
@@ -36,7 +35,6 @@ const fieldMappers = {
     "password": PasswordField,
     "date": DateField,
     "dateTime": DateTimeField,
-    "localDateTime": LocalDateTime,
     "time": TimeField,
     "oneToMany": GridTransfer,
     "radio": RadioField,

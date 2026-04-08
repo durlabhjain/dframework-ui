@@ -81,6 +81,9 @@ const constants = {
 // Operators that do not require a value
 const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
 
+// Module-level default translate to avoid creating a new function instance every render
+const defaultTranslate = (key) => key;
+
 // Return only items that are valid for requests (keep no-value operators)
 const filterValidItems = (items) => {
     return (items || []).filter(item => {
@@ -207,6 +210,13 @@ const GridBase = memo(({
     const isReadOnly = model.readOnly === true || readOnly;
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
+    const fetchAbortControllerRef = useRef(null);
+
+    useEffect(() => () => {
+        fetchAbortControllerRef.current?.abort();
+        fetchAbortControllerRef.current = null;
+    }, []);
+
     const showAddIcon = model.showAddIcon === true;
     const toLink = model.columns.filter(({ link }) => Boolean(link)).map(item => item.link);
     const { stateData, formatDate, getApiEndpoint, buildUrl, setPageTitle } = useStateContext();
@@ -218,7 +228,7 @@ const GridBase = memo(({
     const documentField = model.columns.find(ele => ele.type === 'fileUpload')?.field || "";
     const userDefinedPermissions = { add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete };
     const { canAdd, canEdit, canDelete } = getPermissions({ userData, model, userDefinedPermissions });
-    const tTranslate = model.tTranslate ?? ((key) => key);
+    const tTranslate = useMemo(() => model.tTranslate ?? defaultTranslate, [model.tTranslate]);
     const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false } = model;
     const gridTitle = model.gridTitle || model.title;
     const preferenceKey = getApiEndpoint("GridPreferenceManager") ? (model.preferenceId || model.module?.preferenceId) : null;
@@ -294,28 +304,16 @@ const GridBase = memo(({
             "valueOptions": "lookup"
         },
         "date": {
-            "valueFormatter": (value) => (
-                formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime, timeZone })
+            "valueFormatter": (value, row, column) => (
+                formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime, timeZone: column.localize ? timeZone : null, localize: column.localize })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "date", label: tTranslate('Value', tOpts) })
         },
         "dateTime": {
-            "valueFormatter": (value) => (
-                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, timeZone })
+            "valueFormatter": (value, row, column) => (
+                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, timeZone: column.localize ? timeZone : null, localize: column.localize })
             ),
-            "filterOperators": LocalizedDatePicker({ columnType: "datetime", label: tTranslate('Value', tOpts) })
-        },
-        "dateTimeLocal": {
-            "valueFormatter": (value) => (
-                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, timeZone })
-            ),
-            "filterOperators": LocalizedDatePicker({ type: "dateTimeLocal", convert: true })
-        },
-        "localDateTime": {
-            "valueFormatter": (value) => (
-                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, isUtc: true })
-            ),
-            "filterOperators": LocalizedDatePicker({ columnType: "datetime", label: tTranslate('Value', tOpts) })
+            "filterOperators": LocalizedDatePicker({ columnType: "dateTime", label: tTranslate('Value', tOpts) })
         },
         "boolean": {
             renderCell: booleanIconRenderer
@@ -545,9 +543,9 @@ const GridBase = memo(({
                 if (auditColumns[key] === true) {
                     const column = { field, type, headerName: tTranslate(header, tOpts), width: 200 };
                     if (type === constants.dateTime) {
-                        column.filterOperators = LocalizedDatePicker({ columnType: 'date' });
+                        column.filterOperators = LocalizedDatePicker({ columnType: 'dateTime' });
                         column.valueFormatter = gridColumnTypes.dateTime.valueFormatter;
-                        column.keepLocal = true;
+                        column.localize = true;
                     }
                     finalColumns.push(column);
                 }
@@ -666,6 +664,17 @@ const GridBase = memo(({
         const isValidFilters = !filters.items.length || filters.items.every(item => "value" in item && item.value !== undefined);
         if (!isValidFilters) return;
 
+        let signal = null;
+        let controller = null;
+        if (!isExportRequest) {
+            if (fetchAbortControllerRef.current) {
+                fetchAbortControllerRef.current.abort();
+            }
+            controller = new AbortController();
+            fetchAbortControllerRef.current = controller;
+            signal = controller.signal;
+        }
+
         const listParams = {
             action,
             page: isExportRequest ? exportPage : page,
@@ -684,19 +693,21 @@ const GridBase = memo(({
         apiRef.current.listParams = listParams;
         if (!isExportRequest) setIsLoading(true);
         try {
-            const result = await getList({ ...listParams, contentType, columns });
-            if (!isExportRequest && result !== undefined) {
+            const result = await getList({ ...listParams, contentType, columns, signal });
+            if (!isExportRequest && result !== undefined && fetchAbortControllerRef.current === controller) {
+                if (result?.aborted) return;
                 setData(result);
             }
         } catch (error) {
+            if (error?.aborted || error?.name === 'AbortError' || controller?.signal?.aborted) return;
             snackbar.showError(tTranslate('An error occurred while fetching data', tOpts));
             if (!isExportRequest) {
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
             }
         } finally {
-            if (!isExportRequest) setIsLoading(false);
+            if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, snackbar]);
+    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -982,11 +993,11 @@ const GridBase = memo(({
                 width: col.width,
                 headerName: gridCol?.headerName || col.headerName || col.field,
                 type: col.type,
-                keepLocal: col.keepLocal === true,
                 isParsable: col.isParsable,
                 lookup: col.lookup,
                 hyperlinkURL: col.hyperlinkURL,
                 hyperlinkIndex: col.hyperlinkIndex,
+                localize: col.localize,
                 exportIndex: col.exportIndex
             };
         });
