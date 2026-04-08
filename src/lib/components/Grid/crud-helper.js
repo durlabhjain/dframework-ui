@@ -194,7 +194,7 @@ const getList = async (props = {}) => {
             const { field, localize } = column;
             if (record[field]) {
                 record[field] = new Date(record[field]);
-                if (localize) {
+                if (!localize) {
                     const userTimezoneOffset = record[field].getTimezoneOffset() * 60000;
                     record[field] = new Date(record[field].getTime() + userTimezoneOffset);
                 }
