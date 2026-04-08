@@ -65,7 +65,7 @@ const NumberFieldAdornment = () => (
 );
 
 const Field = ({ column, otherProps, formik, field, ...props }) => {
-    const { min, max, readOnly, maxDecimalPrecision } = column;
+    const { min, max, readOnly, precision } = column;
     const theme = useTheme();
 
     const resolvedMin = useMemo(
@@ -110,13 +110,13 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
     const variant = column.variant || 'standard';
     const InputComponent = inputComponentMap[variant];
     const numberFormat = useMemo(() => {
-        if (maxDecimalPrecision !== undefined) {
+        if (precision !== undefined) {
             return {
-                maximumFractionDigits: maxDecimalPrecision
+                maximumFractionDigits: precision
             };
         }
         return undefined;
-    }, [maxDecimalPrecision]);
+    }, [precision]);
 
     return (
         <BaseNumberField.Root
