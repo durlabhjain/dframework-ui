@@ -27,11 +27,12 @@ const ToolbarFilter = ({
         return filterModel?.items?.find(item => item.field === column.field);
     }, [filterModel, column.field]);
 
+    const operator = existingFilter?.operator || column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
+    const isMultiple = operator === 'isAnyOf';
+
     // Get current filter value
     // If there's an existing filter, use its value (even if it's falsy like 0, false, "")
     const filterValue = useMemo(() => {
-        const operator = existingFilter?.operator || column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
-        const isMultiple = operator === 'isAnyOf';
         if (['isEmpty', 'isNotEmpty'].includes(operator)) {
             return '';
         }
@@ -46,10 +47,9 @@ const ToolbarFilter = ({
             return isMultiple ? [] : '';
         }
         return value;
-    }, [existingFilter, column.toolbarFilter?.defaultOperator, column.type]);
+    }, [existingFilter, isMultiple]);
     // Handle filter change - use functional update to avoid filterModel dependency
     const handleFilterChange = useCallback((newValue) => {
-        const operator = column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
         
         setFilterModel((prevFilterModel) => {
             const currentItems = prevFilterModel?.items || [];
@@ -125,7 +125,6 @@ const ToolbarFilter = ({
     // Render based on column type
     const renderFilterInput = () => {
         const baseLabel = column.toolbarFilter?.label || column.headerName || column.label || column.field;
-        const operator = column.toolbarFilter?.defaultOperator || getDefaultOperator(column.type);
         const operatorLabel = getOperatorLabel(operator, column.type);
         
         // For number fields, prepend operator symbol. For others, append operator text if verbose
@@ -212,8 +211,7 @@ const ToolbarFilter = ({
                     }))
                     : options;
 
-                const isMultiple = existingFilter?.operator === 'isAnyOf' || column.toolbarFilter?.defaultOperator === 'isAnyOf';
-                const selectValue = utils.normalizeFilterValue({ value: filterValue, operator: existingFilter?.operator, isMultiple });
+                const selectValue = utils.normalizeFilterValue({ value: filterValue, operator, isMultiple });
                 const displayLimit = 1; // Show up to 1 selected options before collapsing into tooltip
 
                 return (
