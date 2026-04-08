@@ -984,7 +984,8 @@ const GridBase = memo(({
                 isParsable: col.isParsable,
                 lookup: col.lookup,
                 hyperlinkURL: col.hyperlinkURL,
-                hyperlinkIndex: col.hyperlinkIndex
+                hyperlinkIndex: col.hyperlinkIndex,
+                exportIndex: col.exportIndex
             };
         });
         const action = (model?.formActions?.export || isPivotExport) ? (model?.formActions?.export || 'export') : undefined;

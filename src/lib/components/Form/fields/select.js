@@ -75,7 +75,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
         const newValue = column.multiSelect ? [] : '';
         formik.setFieldValue(field, newValue);
         if (typeof column.onChange === 'function') {
-            column.onChange({ formik, value: newValue, options, t: tTranslate, tOpts });
+            column.onChange({ formik, value: newValue, options, event: e, t: tTranslate, tOpts });
         }
         userSelected.current = true;
     }, [column.multiSelect, field, formik, column.onChange, options, tTranslate, tOpts]);

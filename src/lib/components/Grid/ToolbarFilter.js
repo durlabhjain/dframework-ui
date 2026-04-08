@@ -40,7 +40,14 @@ const ToolbarFilter = ({
             const isMultiple = column.toolbarFilter?.defaultOperator === 'isAnyOf';
             return isMultiple ? [] : '';
         }
-        return existingFilter.value;
+        
+        // Ensure we always return a valid controlled value (never undefined)
+        const value = existingFilter.value;
+        if (value === undefined || value === null) {
+            const isMultiple = operator === 'isAnyOf';
+            return isMultiple ? [] : '';
+        }
+        return value;
     }, [existingFilter, column.toolbarFilter?.defaultOperator, column.type]);
     // Handle filter change - use functional update to avoid filterModel dependency
     const handleFilterChange = useCallback((newValue) => {
@@ -224,11 +231,11 @@ const ToolbarFilter = ({
                                 const values = Array.isArray(selected) ? selected : (selected != null && selected !== '' ? [selected] : []);
                                 const labels = values.map((v) => {
                                     // If the selected item is already an object with a label, use it
-                                    if (v && typeof v === 'object' && 'label' in v) return v.label;
+                                    if (v && typeof v === 'object' && 'label' in v) return tTranslate(v.label, tOpts);
 
                                     // Compare option values loosely (stringified) to handle type differences
                                     const opt = normalizedOptions.find((o) => String(o.value) === String(v));
-                                    return opt ? opt.label : '';
+                                    return opt ? tTranslate(opt.label, tOpts) : '';
                                 }).filter(Boolean);
 
                                 if (labels.length === 0) return '';
@@ -247,7 +254,7 @@ const ToolbarFilter = ({
                         >
                             {normalizedOptions.map((option) => (
                                 <MenuItem key={option.value} value={option.value}>
-                                    {option.label}
+                                    {tTranslate(option.label, tOpts)}
                                 </MenuItem>
                             ))}
                         </Select>
