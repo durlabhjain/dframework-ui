@@ -129,7 +129,7 @@ Defines the structure and properties of the grid columns.
 | required        | boolean | Specifies if the column is required.                             |
 | width           | number  | Defines the column width in pixels.                              |
 | pinned          | boolean | Determines if the column is pinned to the left side of the grid. |
-| keepUTC         | boolean | Ensures date values remain in UTC format (for date fields).      |
+| localize         | boolean | Ensures date values remain in UTC format (for date fields).      |
 | filterOperators | array   | Defines filtering options for the column.                        |
 
 ### Example Columns:  
@@ -150,7 +150,7 @@ Defines the structure and properties of the grid columns.
 | field           | Installation                                                   |
 | type            | date                                                           |
 | width           | 120px                                                          |
-| keepUTC         | true                                                           |
+| localize         | true                                                           |
 | filterOperators | `{ "value": "is", "InputComponentProps": { "type": "date" } }` |
 
 ---

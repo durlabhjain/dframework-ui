@@ -302,27 +302,15 @@ const GridBase = memo(({
         },
         "date": {
             "valueFormatter": (value) => (
-                formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime, timeZone })
+                formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "date", label: tTranslate('Value', tOpts) })
         },
         "dateTime": {
-            "valueFormatter": (value) => (
-                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, timeZone })
+            "valueFormatter": (value, row, column) => (
+                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, timeZone: column.localize ? timeZone : null, localize: column.localize })
             ),
-            "filterOperators": LocalizedDatePicker({ columnType: "datetime", label: tTranslate('Value', tOpts) })
-        },
-        "dateTimeLocal": {
-            "valueFormatter": (value) => (
-                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, timeZone })
-            ),
-            "filterOperators": LocalizedDatePicker({ type: "dateTimeLocal", convert: true })
-        },
-        "localDateTime": {
-            "valueFormatter": (value) => (
-                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, isUtc: true })
-            ),
-            "filterOperators": LocalizedDatePicker({ columnType: "datetime", label: tTranslate('Value', tOpts) })
+            "filterOperators": LocalizedDatePicker({ columnType: "dateTime", label: tTranslate('Value', tOpts) })
         },
         "boolean": {
             renderCell: booleanIconRenderer
@@ -550,9 +538,9 @@ const GridBase = memo(({
                 if (auditColumns[key] === true) {
                     const column = { field, type, headerName: tTranslate(header, tOpts), width: 200 };
                     if (type === constants.dateTime) {
-                        column.filterOperators = LocalizedDatePicker({ columnType: 'date' });
+                        column.filterOperators = LocalizedDatePicker({ columnType: 'dateTime' });
                         column.valueFormatter = gridColumnTypes.dateTime.valueFormatter;
-                        column.keepLocal = true;
+                        column.localize = true;
                     }
                     finalColumns.push(column);
                 }
@@ -1000,12 +988,11 @@ const GridBase = memo(({
                 width: col.width,
                 headerName: gridCol?.headerName || col.headerName || col.field,
                 type: col.type,
-                keepLocal: col.keepLocal === true,
                 isParsable: col.isParsable,
                 lookup: col.lookup,
                 hyperlinkURL: col.hyperlinkURL,
                 hyperlinkIndex: col.hyperlinkIndex,
-                keepUTC: col.keepUTC
+                localize: col.localize
             };
         });
         const action = (model?.formActions?.export || isPivotExport) ? (model?.formActions?.export || 'export') : undefined;

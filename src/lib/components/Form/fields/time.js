@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 
 const field = ({ column, field, formik, otherProps }) => {
     let inputValue = formik.values[field];
-    if (column.isUtc) {
+    if (!column.localize) {
         inputValue = dayjs.utc(inputValue).utcOffset(dayjs().utcOffset(), true).format();
     }
     return <TimePicker
@@ -16,7 +16,7 @@ const field = ({ column, field, formik, otherProps }) => {
         name={field}
         value={dayjs(inputValue)}
         onChange={(value) => {
-            if (column.isUtc) {
+            if (!column.localize) {
                 value = (value && value.isValid()) ? value.format('YYYY-MM-DDTHH:mm:ss') + '.000Z' : null;
             }
             return formik.setFieldValue(field, value);
