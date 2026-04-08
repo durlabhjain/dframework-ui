@@ -82,7 +82,7 @@ const CustomDropdownMenu = (props) => {
             >
                 {options?.map((option, index) => (
                     <MenuItem key={index} value={option.value}>
-                        {option.label}
+                        {props.tTranslate(option.label, props.tOpts)}
                     </MenuItem>
                 ))}
             </Select>

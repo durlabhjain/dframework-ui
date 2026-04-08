@@ -503,6 +503,8 @@ const GridBase = memo(({
                                 }}
                                 {...params}
                                 autoHighlight
+                                tTranslate={tTranslate}
+                                tOpts={tOpts}
                             />
                         )
                         : undefined
