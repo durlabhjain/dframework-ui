@@ -28,7 +28,7 @@ const LocalizedDatePicker = (props) => {
         const parsedDate = dayjs(date);
         return parsedDate.isValid() && parsedDate.year() > 1900;
     };
-    const format = (systemDateTimeFormat((columnType !== "dateTime", false, stateData.dateTime)));
+    const format = systemDateTimeFormat(columnType !== "dateTime", false, stateData.dateTime);
 
     const handleFilterChange = (newValue) => {
         if (columnType !== "date" && columnType !== "dateTime") return;
