@@ -129,7 +129,7 @@ Defines the structure and properties of the grid columns.
 | required        | boolean | Specifies if the column is required.                             |
 | width           | number  | Defines the column width in pixels.                              |
 | pinned          | boolean | Determines if the column is pinned to the left side of the grid. |
-| localize         | boolean | Ensures date values remain in UTC format (for date fields).      |
+| localize         | boolean | Controls timezone conversion: `true` displays date values in the user's local timezone (converting from UTC); `false` keeps date values in UTC for both display and submission (no local-time conversion). |
 | filterOperators | array   | Defines filtering options for the column.                        |
 
 ### Example Columns:  

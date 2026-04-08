@@ -21,7 +21,7 @@ const LocalizedDatePicker = (props) => {
     const { fixedFilterFormat } = utils;
     const { item, applyValue, convert, colDef } = props;
     const { systemDateTimeFormat, stateData } = useStateContext();
-    const columnType = props?.type || 'date';
+    const columnType = props?.columnType || props?.type || colDef?.type || 'date';
     const filterFormat = fixedFilterFormat[columnType];
     const localize = colDef?.localize || props.localize;
     const isValidDate = (date) => {

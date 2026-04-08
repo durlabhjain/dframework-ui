@@ -1,6 +1,9 @@
 import React from 'react';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import dayjs from 'dayjs';
+import utcPlugin from 'dayjs/plugin/utc.js';
+
+dayjs.extend(utcPlugin);
 
 const field = ({ column, field, formik, otherProps }) => {
     let inputValue = formik.values[field];
