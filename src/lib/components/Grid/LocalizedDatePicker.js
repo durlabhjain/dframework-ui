@@ -40,6 +40,10 @@ const LocalizedDatePicker = (props) => {
             return;
         }
         if (convert || localize) {
+            if (!newValue) {
+                applyValue({ ...item, value: null });
+                return;
+            }
             newValue = dayjs(newValue).utc();
             applyValue({ ...item, value: newValue });
             return;
