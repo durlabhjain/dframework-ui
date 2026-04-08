@@ -81,6 +81,9 @@ const constants = {
 // Operators that do not require a value
 const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
 
+// Module-level default translate to avoid creating a new function instance every render
+const defaultTranslate = (key) => key;
+
 // Return only items that are valid for requests (keep no-value operators)
 const filterValidItems = (items) => {
     return (items || []).filter(item => {
@@ -225,7 +228,7 @@ const GridBase = memo(({
     const documentField = model.columns.find(ele => ele.type === 'fileUpload')?.field || "";
     const userDefinedPermissions = { add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete };
     const { canAdd, canEdit, canDelete } = getPermissions({ userData, model, userDefinedPermissions });
-    const tTranslate = model.tTranslate ?? ((key) => key);
+    const tTranslate = useMemo(() => model.tTranslate ?? defaultTranslate, [model.tTranslate]);
     const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false } = model;
     const gridTitle = model.gridTitle || model.title;
     const preferenceKey = getApiEndpoint("GridPreferenceManager") ? (model.preferenceId || model.module?.preferenceId) : null;
@@ -694,7 +697,7 @@ const GridBase = memo(({
                 setData(result);
             }
         } catch (error) {
-            if (error?.aborted || error?.name === 'AbortError') return;
+            if (error?.aborted || error?.name === 'AbortError' || controller?.signal?.aborted) return;
             snackbar.showError(tTranslate('An error occurred while fetching data', tOpts));
             if (!isExportRequest) {
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
