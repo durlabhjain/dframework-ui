@@ -191,13 +191,9 @@ const getList = async (props = {}) => {
 
     response.records.forEach(record => {
         dateColumns.forEach(column => {
-            const { field, localize } = column;
+            const { field } = column;
             if (record[field]) {
                 record[field] = new Date(record[field]);
-                if (!localize) {
-                    const userTimezoneOffset = record[field].getTimezoneOffset() * 60000;
-                    record[field] = new Date(record[field].getTime() + userTimezoneOffset);
-                }
             }
         });
         model.columns.forEach(({ field, displayIndex }) => {

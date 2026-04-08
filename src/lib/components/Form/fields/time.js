@@ -7,7 +7,7 @@ dayjs.extend(utcPlugin);
 
 const field = ({ column, field, formik, otherProps }) => {
     let inputValue = formik.values[field];
-    if (!column.localize) {
+    if (!column.localize && inputValue) {
         inputValue = dayjs.utc(inputValue).utcOffset(dayjs().utcOffset(), true).format();
     }
     return <TimePicker
@@ -17,7 +17,7 @@ const field = ({ column, field, formik, otherProps }) => {
         key={field}
         fullWidth
         name={field}
-        value={dayjs(inputValue)}
+        value={inputValue ? dayjs(inputValue) : null}
         onChange={(value) => {
             if (!column.localize) {
                 value = (value && value.isValid()) ? value.format('YYYY-MM-DDTHH:mm:ss') + '.000Z' : null;
