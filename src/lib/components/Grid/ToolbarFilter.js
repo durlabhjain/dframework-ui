@@ -229,7 +229,7 @@ const ToolbarFilter = ({
                                 const values = Array.isArray(selected) ? selected : (selected != null && selected !== '' ? [selected] : []);
                                 const labels = values.map((v) => {
                                     // If the selected item is already an object with a label, use it
-                                    if (v && typeof v === 'object' && 'label' in v) return tTranslate(v.label, tOpts);
+                                    if (v && typeof v === 'object' && 'label' in v) return v.label;
 
                                     // Compare option values loosely (stringified) to handle type differences
                                     const opt = normalizedOptions.find((o) => String(o.value) === String(v));
