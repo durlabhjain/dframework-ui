@@ -78,12 +78,12 @@ import fi from "@mui/material/Tabs";
 const Wn = ir(null), hi = "bottom", mi = "center", gi = yt.forwardRef(function(r, t) {
   return /* @__PURE__ */ a(Va, { elevation: 6, ref: t, variant: "filled", ...r });
 }), Fc = ({ children: e }) => {
-  const [r, t] = R(null), [n, o] = R(!1), [l, s] = R(null), [u, f] = R(null), y = function(c, m, w = "info", x) {
-    typeof c != "string" && (c = c.toString()), m && typeof m != "string" && (m = m.toString()), t(m ? `${c}: ${m}` : c), s(w), o(!0), f(x);
-  }, C = function(c, m, w = "error", x) {
-    y(c, m, w, x);
+  const [r, t] = R(null), [n, o] = R(!1), [l, s] = R(null), [c, f] = R(null), y = function(u, m, w = "info", x) {
+    typeof u != "string" && (u = u.toString()), m && typeof m != "string" && (m = m.toString()), t(m ? `${u}: ${m}` : u), s(w), o(!0), f(x);
+  }, C = function(u, m, w = "error", x) {
+    y(u, m, w, x);
   }, h = function() {
-    o(!1), f(null), u && u();
+    o(!1), f(null), c && c();
   };
   return /* @__PURE__ */ S(ye, { children: [
     /* @__PURE__ */ a(
@@ -97,7 +97,7 @@ const Wn = ir(null), hi = "bottom", mi = "center", gi = yt.forwardRef(function(r
   ] });
 }, Dt = function() {
   return Br(Wn);
-}, _e = ({ open: e, onConfirm: r, title: t = "Confirm", onCancel: n, okText: o, cancelText: l, yesNo: s = !1, children: u, maxWidth: f = "sm", fullWidth: y = !0, ...C }) => (o = o || (s ? "Yes" : "Ok"), l = l || (s ? "No" : "Cancel"), /* @__PURE__ */ S(
+}, _e = ({ open: e, onConfirm: r, title: t = "Confirm", onCancel: n, okText: o, cancelText: l, yesNo: s = !1, children: c, maxWidth: f = "sm", fullWidth: y = !0, ...C }) => (o = o || (s ? "Yes" : "Ok"), l = l || (s ? "No" : "Cancel"), /* @__PURE__ */ S(
   Ga,
   {
     ...C,
@@ -108,8 +108,8 @@ const Wn = ir(null), hi = "bottom", mi = "center", gi = yt.forwardRef(function(r
     maxWidth: f,
     fullWidth: y,
     children: [
-      /* @__PURE__ */ a(Ua, { id: "alert-dialog-title", sx: { fontSize: u ? "inherit" : "1.25rem" }, children: t }),
-      u && /* @__PURE__ */ a(ja, { dividers: !0, children: /* @__PURE__ */ a(Wa, { children: u }) }),
+      /* @__PURE__ */ a(Ua, { id: "alert-dialog-title", sx: { fontSize: c ? "inherit" : "1.25rem" }, children: t }),
+      c && /* @__PURE__ */ a(ja, { dividers: !0, children: /* @__PURE__ */ a(Wa, { children: c }) }),
       (n || r) && /* @__PURE__ */ S(qa, { children: [
         n && /* @__PURE__ */ a(Oe, { onClick: n, children: l }),
         r && /* @__PURE__ */ a(Oe, { onClick: r, autoFocus: !0, children: o })
@@ -142,7 +142,7 @@ const Wn = ir(null), hi = "bottom", mi = "center", gi = yt.forwardRef(function(r
     headers: o = {},
     credentials: l = "include",
     ...s
-  } = e, u = {
+  } = e, c = {
     method: r,
     credentials: l,
     headers: {
@@ -150,8 +150,8 @@ const Wn = ir(null), hi = "bottom", mi = "center", gi = yt.forwardRef(function(r
     },
     ...s
   };
-  n && (o["Content-Type"] === "multipart/form-data" ? (delete u.headers["Content-Type"], u.body = n instanceof FormData ? n : Un(n)) : (u.headers["Content-Type"] = o["Content-Type"] || "application/json", u.body = typeof n == "string" ? n : JSON.stringify(n)));
-  const f = await fetch(t, u), y = f.headers.get("content-type") || {};
+  n && (o["Content-Type"] === "multipart/form-data" ? (delete c.headers["Content-Type"], c.body = n instanceof FormData ? n : Un(n)) : (c.headers["Content-Type"] = o["Content-Type"] || "application/json", c.body = typeof n == "string" ? n : JSON.stringify(n)));
+  const f = await fetch(t, c), y = f.headers.get("content-type") || {};
   return {
     status: f.status,
     data: y.includes("application/json") ? await f.json() : await f.text(),
@@ -179,7 +179,7 @@ const Wn = ir(null), hi = "bottom", mi = "center", gi = yt.forwardRef(function(r
   method: o = "POST",
   signal: l,
   additionalParams: s = {},
-  additionalHeaders: u = {},
+  additionalHeaders: c = {},
   dataParser: f = Le.raw,
   onParseError: y
 }) => {
@@ -189,33 +189,33 @@ const Wn = ir(null), hi = "bottom", mi = "center", gi = yt.forwardRef(function(r
     method: o,
     credentials: "include",
     url: e,
-    headers: n ? { ...u } : { "Content-Type": "multipart/form-data", ...u },
+    headers: n ? { ...c } : { "Content-Type": "multipart/form-data", ...c },
     ...l && { signal: l },
     ...s
   };
   r && Object.keys(r).length > 0 && (C.data = n ? r : Un(r));
   try {
     const h = await Hn(C);
-    let c = h.data;
+    let u = h.data;
     if (h.status === Fr.SESSION_EXPIRED && t) {
       t("/login");
       return;
     }
     if (h.status === Fr.FORBIDDEN)
-      return { error: !0, message: c.message || "Access Denied!" };
+      return { error: !0, message: u.message || "Access Denied!" };
     if (h.status !== Fr.OK)
-      return { error: !0, message: c.message || "An error occurred" };
+      return { error: !0, message: u.message || "An error occurred" };
     try {
-      c = f(c);
+      u = f(u);
     } catch (m) {
-      return y ? y(m, c) : {
+      return y ? y(m, u) : {
         error: !0,
         message: "Failed to parse response data",
         parseError: m.message,
-        rawData: c
+        rawData: u
       };
     }
-    return c;
+    return u;
   } catch (h) {
     return h.name === "AbortError" ? { error: !0, aborted: !0, message: h.message || "Request aborted" } : { error: !0, message: h.message || "Network error" };
   }
@@ -224,10 +224,10 @@ function wi(e) {
   const { operator: r, value: t, type: n } = e, o = ["isEmpty", "isNotEmpty"].includes(r), l = t != null && (t !== "" || n === "number" && t === 0 || n === "boolean" && t === !1);
   return o || l;
 }
-const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o, baseFilters: l, action: s = "list", extraParams: u = {}, model: f, api: y }) => {
-  const C = s === "export" && f.isElasticExport === !0, h = [], c = [], m = [];
+const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o, baseFilters: l, action: s = "list", extraParams: c = {}, model: f, api: y }) => {
+  const C = s === "export" && f.isElasticExport === !0, h = [], u = [], m = [];
   e.forEach(({ lookup: D, type: N, field: B, localize: E = !1, filterable: L = !0, dependsOn: re }) => {
-    yi.includes(N) && m.push({ field: B, localize: E }), D && !h.includes(D) && Ci.includes(N) && L && (h.push(D), c.push({ lookup: D, dependsOn: re }));
+    yi.includes(N) && m.push({ field: B, localize: E }), D && !h.includes(D) && Ci.includes(N) && L && (h.push(D), u.push({ lookup: D, dependsOn: re }));
   });
   const w = [];
   o?.items?.length && o.items.forEach((D) => {
@@ -246,7 +246,7 @@ const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o
   const x = {
     start: r * t,
     limit: C ? f.exportSize || xi : t,
-    ...u,
+    ...c,
     logicalOperator: o.logicOperator,
     sort: n.map((D) => (D.filterField || D.field) + " " + D.sort).join(","),
     where: w,
@@ -254,27 +254,27 @@ const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o
     model: f.module,
     fileName: f.overrideFileName
   };
-  h.length && (x.lookups = h.join(",")), c.length && (x.lookupWithDeps = JSON.stringify(c)), f?.limitToSurveyed && (x.limitToSurveyed = f?.limitToSurveyed);
+  h.length && (x.lookups = h.join(",")), u.length && (x.lookupWithDeps = JSON.stringify(u)), f?.limitToSurveyed && (x.limitToSurveyed = f?.limitToSurveyed);
   let g = `${y}/${s}`;
   const i = new URLSearchParams();
-  u.template && i.append("template", u.template), u.configFileName && i.append("configFileName", u.configFileName);
+  c.template && i.append("template", c.template), c.configFileName && i.append("configFileName", c.configFileName);
   const v = i.toString();
   return v && (g += `?${v}`), { requestData: x, url: g, where: w, dateColumns: m };
 }, Or = async (e = {}) => {
-  const { contentType: r, columns: t, extraParams: n = {}, action: o = "list", model: l, signal: s } = e, { requestData: u, url: f, where: y, dateColumns: C } = vi(e);
+  const { contentType: r, columns: t, extraParams: n = {}, action: o = "list", model: l, signal: s } = e, { requestData: c, url: f, where: y, dateColumns: C } = vi(e);
   if (r) {
-    u.responseType = r, u.columns = t, u.userTimezoneOffset = -(/* @__PURE__ */ new Date()).getTimezoneOffset(), typeof l.createRequestPayload == "function" && await l.createRequestPayload(u, { where: y, url: f, dataParsers: Le, ...e });
+    c.responseType = r, c.columns = t, c.userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone, c.userTimezoneOffset = (/* @__PURE__ */ new Date()).getTimezoneOffset(), typeof l.createRequestPayload == "function" && await l.createRequestPayload(c, { where: y, url: f, dataParsers: Le, ...e });
     const m = document.createElement("form");
     if (m.setAttribute("method", "POST"), m.setAttribute("id", "exportForm"), m.setAttribute("target", "_blank"), !n.template)
-      for (const w in u) {
-        let x = u[w];
+      for (const w in c) {
+        let x = c[w];
         if (x == null)
           continue;
         typeof x != "string" && (x = JSON.stringify(x));
         const g = document.createElement("input");
         g.type = "hidden", g.name = w, g.value = x, m.append(g);
       }
-    m.setAttribute("action", u.url || f), document.body.appendChild(m), m.submit(), setTimeout(() => {
+    m.setAttribute("action", c.url || f), document.body.appendChild(m), m.submit(), setTimeout(() => {
       m.remove();
     }, 0);
     return;
@@ -285,17 +285,17 @@ const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o
       "Content-Type": "application/json"
     },
     jsonPayload: !0,
-    params: u,
+    params: c,
     dataParser: Le.json,
     signal: s
   };
   typeof l.createRequestPayload == "function" && await l.createRequestPayload(h, { where: y, dataParsers: Le, ...e });
-  const c = await rt(h);
-  if (c?.aborted)
-    return c;
-  if (c?.error || c?.success === !1)
-    throw new Error($t(c) || "An error occurred while fetching data");
-  return typeof l.parseResponsePayload == "function" && l.parseResponseActions.includes(o) ? await l.parseResponsePayload({ responseData: c, model: l, dateColumns: C, action: o, ...e }) : (c.records.forEach((m) => {
+  const u = await rt(h);
+  if (u?.aborted)
+    return u;
+  if (u?.error || u?.success === !1)
+    throw new Error($t(u) || "An error occurred while fetching data");
+  return typeof l.parseResponsePayload == "function" && l.parseResponseActions.includes(o) ? await l.parseResponsePayload({ responseData: u, model: l, dateColumns: C, action: o, ...e }) : (u.records.forEach((m) => {
     C.forEach((w) => {
       const { field: x, localize: g } = w;
       if (m[x] && (m[x] = new Date(m[x]), !g)) {
@@ -305,16 +305,16 @@ const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o
     }), l.columns.forEach(({ field: w, displayIndex: x }) => {
       x && (m[w] = m[x]);
     });
-  }), c);
+  }), u);
 }, ar = async (e = {}) => {
   let { api: r, id: t, model: n, parentFilters: o, where: l = {} } = e;
   r = r || n.api;
-  const s = new URLSearchParams(), u = `${r}/${t ?? "-"}`, f = [];
+  const s = new URLSearchParams(), c = `${r}/${t ?? "-"}`, f = [];
   (n.formDef || n.columns)?.forEach((i) => {
     i.lookup && !f.includes(i.lookup) && !i.dependsOn && f.push(i.lookup);
   }), s.set("lookups", f), l && Object.keys(l)?.length && s.set("where", JSON.stringify(l));
   const C = {
-    url: `${u}?${s.toString()}`,
+    url: `${c}?${s.toString()}`,
     method: "GET",
     jsonPayload: !0
   };
@@ -324,15 +324,15 @@ const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o
     throw new Error($t(h) || "Load failed");
   if (typeof n.parseResponsePayload == "function" && n.parseResponseActions.includes("load"))
     return await n.parseResponsePayload({ responseData: h, model: n, action: "load", ...e });
-  const { data: c, lookups: m } = h || {};
-  let w = c[n.linkColumn];
+  const { data: u, lookups: m } = h || {};
+  let w = u[n.linkColumn];
   const x = n.columns.find((i) => i.field === n.linkColumn);
   if (x && x.lookup && m && m[x.lookup] && m[x.lookup]?.length) {
     const i = m[x.lookup].find((v) => v.value === w);
     i && (w = i.label);
   }
   const g = { ...n.defaultValues };
-  return { id: t, title: w, record: { ...g, ...c, ...o }, lookups: m };
+  return { id: t, title: w, record: { ...g, ...u, ...o }, lookups: m };
 }, $r = async function(e = {}) {
   const { id: r, api: t, model: n } = e;
   if (!r)
@@ -350,7 +350,7 @@ const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o
   const { id: r, api: t, values: n, model: o } = e;
   let l, s;
   r !== 0 ? (l = `${t}/${r}`, s = "PUT") : (l = t, s = "POST");
-  const u = {
+  const c = {
     url: l,
     method: s,
     params: n,
@@ -359,18 +359,18 @@ const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o
     },
     jsonPayload: !0
   };
-  typeof o.createRequestPayload == "function" && await o.createRequestPayload(u, { action: "save", dataParsers: Le, ...e });
-  const f = await rt(u);
+  typeof o.createRequestPayload == "function" && await o.createRequestPayload(c, { action: "save", dataParsers: Le, ...e });
+  const f = await rt(c);
   if (f?.error || f?.success === !1)
     throw new Error($t(f) || "Save failed");
   return f;
 }, Yn = async (e = {}) => {
   let { api: r, model: t, lookups: n, scopeId: o, reqData: l } = e;
   r = r || t.api;
-  const s = new URLSearchParams(), u = `${r}/lookups`;
+  const s = new URLSearchParams(), c = `${r}/lookups`;
   s.set("lookups", n), s.set("scopeId", o);
   const f = {
-    url: `${u}?${s.toString()}`,
+    url: `${c}?${s.toString()}`,
     method: "GET",
     jsonPayload: !0,
     ...l
@@ -387,7 +387,7 @@ const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o
   saveRecord: zr,
   getLookups: Yn
 }, Di = ({ pagination: e, apiRef: r, tTranslate: t = (n) => n }) => {
-  const n = r.current.state.pagination.paginationModel.page, o = r.current.state.pagination.paginationModel.pageSize, l = r.current.state.rows.totalRowCount, s = Math.ceil(l / o), { t: u, i18n: f } = wt(), y = { t: u, i18n: f }, [C, h] = R(n + 1), c = function(x) {
+  const n = r.current.state.pagination.paginationModel.page, o = r.current.state.pagination.paginationModel.pageSize, l = r.current.state.rows.totalRowCount, s = Math.ceil(l / o), { t: c, i18n: f } = wt(), y = { t: c, i18n: f }, [C, h] = R(n + 1), u = function(x) {
     let g = x.target?.value;
     g === "" ? h("") : (g = parseInt(g), g = isNaN(g) || g < 1 ? 1 : g, h(g));
   };
@@ -424,7 +424,7 @@ const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o
           type: "number",
           min: 1,
           value: C,
-          onChange: c,
+          onChange: u,
           onKeyPress: w,
           disabled: !l
         }
@@ -434,9 +434,9 @@ const vi = ({ gridColumns: e, page: r, pageSize: t, sortModel: n, filterModel: o
     /* @__PURE__ */ a(Ya, {})
   ] });
 }, Si = /\${((\w+)\.)?(\w+)}/g, Pi = function(e, r, { template: t = Si, keepMissingTags: n = !1 } = {}) {
-  return !e || !r ? e : e.replace(t, function(o, l, s, u) {
+  return !e || !r ? e : e.replace(t, function(o, l, s, c) {
     const f = s ? r[s] || {} : r;
-    return f[u] === void 0 ? n ? o : "" : f[u];
+    return f[c] === void 0 ? n ? o : "" : f[c];
   });
 }, Xt = {
   replaceTags: Pi
@@ -459,11 +459,11 @@ function Fi(e = !1) {
   }), []);
   function l() {
     let s = typeof window.navigator > "u" ? "" : navigator.userAgent;
-    const u = !!s.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i);
+    const c = !!s.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i);
     s = s.toLowerCase();
     const f = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(s);
     let y = null;
-    return window.innerWidth <= window.innerHeight ? y = "portrait" : y = "landscape", { mobile: u, tablet: f, portrait: y === "portrait", landscape: y === "landscape" };
+    return window.innerWidth <= window.innerHeight ? y = "portrait" : y = "landscape", { mobile: c, tablet: f, portrait: y === "portrait", landscape: y === "landscape" };
   }
   return e ? t.mobile : t;
 }
@@ -732,7 +732,7 @@ const Ei = {
 ee.extend(Bn);
 ee.extend(No);
 const Kn = ir(), _n = ir(null), Cn = () => console.warn("SnackbarProvider not found. Wrap StateProvider with SnackbarProvider."), Ac = ({ children: e, apiEndpoints: r = {} }) => {
-  const [t, n] = R("en"), [o, l] = R("MM/DD/YYYY hh:mm:ss A"), [s, u] = R(null), [f, y] = R(null), [C, h] = R(null), [c, m] = R(null), [w, x] = R(""), [g, i] = R(!1), { t: v, i18n: D } = wt(), N = Dt(), B = rr(r), E = T((P, O) => {
+  const [t, n] = R("en"), [o, l] = R("MM/DD/YYYY hh:mm:ss A"), [s, c] = R(null), [f, y] = R(null), [C, h] = R(null), [u, m] = R(null), [w, x] = R(""), [g, i] = R(!1), { t: v, i18n: D } = wt(), N = Dt(), B = rr(r), E = T((P, O) => {
     B.current[P] = O;
   }, []), L = T((P) => B.current[P || "default"] || "", []), re = T((P, O) => `${B.current[O || "default"] || ""}${P}`, []), H = T((P = !0) => {
     i(P);
@@ -744,9 +744,9 @@ const Kn = ir(), _n = ir(null), Cn = () => console.warn("SnackbarProvider not fo
     }
     return P?.split(" ")[0] || "DD-MM-YYYY";
   }, []), te = T(({ value: P, useSystemFormat: O, showOnlyDate: U = !1, state: G, timeZone: X, localize: oe = !1 }) => {
-    if (!P) return "-";
+    if (!P) return null;
     const Se = W(O, U, G);
-    return oe ? X ? ee(P).tz(X).format(Se) : ee(P).format(Se) : ee.utc(P).format(Se);
+    return oe ? X ? ee.utc(P).tz(X).format(Se) : ee.utc(P).local().format(Se) : ee(P).format(Se);
   }, [W]), Q = T(() => {
     const P = t, O = Wi[P];
     function U(G) {
@@ -756,7 +756,7 @@ const Kn = ir(), _n = ir(null), Cn = () => console.warn("SnackbarProvider not fo
   }, [t]), I = T((P) => {
     n(P);
   }, []), ge = T((P) => {
-    u(P);
+    c(P);
   }, []), ae = T((P) => {
     h(P);
   }, []), me = T((P) => {
@@ -773,9 +773,9 @@ const Kn = ir(), _n = ir(null), Cn = () => console.warn("SnackbarProvider not fo
     pageTitle: s,
     modal: f,
     pageBackButton: C,
-    userData: c,
+    userData: u,
     timeZone: w
-  }), [t, o, s, f, C, c, w]), we = q(() => ({
+  }), [t, o, s, f, C, u, w]), we = q(() => ({
     // State data
     stateData: $,
     // Loader management
@@ -832,13 +832,13 @@ const Kn = ir(), _n = ir(null), Cn = () => console.warn("SnackbarProvider not fo
     throw new Error("useStateContext must be used within a StateProvider");
   return e;
 }, Ui = () => {
-  const [e, r] = R(), [t, n] = R(!1), { stateData: o, setModal: l } = je(), s = o.modal, u = 16 / 9;
+  const [e, r] = R(), [t, n] = R(!1), { stateData: o, setModal: l } = je(), s = o.modal, c = 16 / 9;
   let f = (window.outerWidth - 10) / window.innerWidth * 100;
   const y = () => {
     let h = document.getElementById("tutorial-iframe");
     h ? (h = h.offsetWidth, h = h / window.innerWidth) : h = 0.9;
-    const c = window.innerWidth * h * (1 / u), m = window.innerHeight - 180;
-    r(Math.min(c, m));
+    const u = window.innerWidth * h * (1 / c), m = window.innerHeight - 180;
+    r(Math.min(u, m));
   };
   pe(() => {
     s?.status && (n(!0), y());
@@ -893,14 +893,14 @@ function Hi({
   mobileRightComponent: o,
   title: l = "",
   titleClass: s = "text-theme-blue text-max-width",
-  showBreadcrumbs: u,
+  showBreadcrumbs: c,
   breadcrumbs: f = [],
   enableBackButton: y = !1,
   breadcrumbColor: C,
   showHelpButton: h = !1,
-  model: c
+  model: u
 }) {
-  const m = Fi(!0), w = f.length - 1, x = u && f.length, { t: g, i18n: i } = wt(), v = q(() => ({ t: g, i18n: i }), [g, i]), D = c?.tTranslate ?? ((B) => B), N = () => {
+  const m = Fi(!0), w = f.length - 1, x = c && f.length, { t: g, i18n: i } = wt(), v = q(() => ({ t: g, i18n: i }), [g, i]), D = u?.tTranslate ?? ((B) => B), N = () => {
     r(-1);
   };
   return pe(() => {
@@ -985,11 +985,11 @@ const Yi = {
   date: kn,
   dateTime: Nn
 }, Ki = "-10px", _i = "-16px", Ji = (e) => {
-  const { fixedFilterFormat: r } = qe, { item: t, applyValue: n, convert: o, colDef: l } = e, { systemDateTimeFormat: s, stateData: u } = je(), f = e?.columnType || e?.type || l?.type || "date", y = r[f], C = l?.localize ?? e.localize ?? !1, h = (i) => {
+  const { fixedFilterFormat: r } = qe, { item: t, applyValue: n, convert: o, colDef: l } = e, { systemDateTimeFormat: s, stateData: c } = je(), f = l?.type || "date", y = r[f], C = l?.localize ?? e.localize ?? !1, h = (i) => {
     const v = ee(i);
     return v.isValid() && v.year() > 1900;
-  }, c = s(f !== "dateTime", !1, u.dateTime), m = (i) => {
-    if (!(f !== "date" && f !== "dateTime" || ((D) => typeof D != "string" ? !1 : !ee(D, c, !0).isValid())(i))) {
+  }, u = s(f !== "dateTime", !1, c.dateTime), m = (i) => {
+    if (!(f !== "date" && f !== "dateTime" || ((D) => typeof D != "string" ? !1 : !ee(D, u, !0).isValid())(i))) {
       if (o || C) {
         if (!i) {
           n({ ...t, value: null });
@@ -1014,7 +1014,7 @@ const Yi = {
     x,
     {
       fullWidth: !0,
-      format: c,
+      format: u,
       value: g,
       onChange: m,
       slotProps: {
@@ -1037,7 +1037,7 @@ const Yi = {
         }
       },
       localeText: {
-        fieldMonthPlaceholder: () => w(c) === "MMM" ? "MMM" : "MM"
+        fieldMonthPlaceholder: () => w(u) === "MMM" ? "MMM" : "MM"
       }
     }
   ) });
@@ -1049,26 +1049,26 @@ const Yi = {
 }, Qi = (e) => {
   const { column: r, item: t, applyValue: n, apiRef: o } = e, l = r?.dataRef?.current?.lookups;
   let s = r.customLookup || l[r.lookup] || [];
-  typeof r.lookup == "string" && (s = s.map(({ label: h, value: c }) => ({
+  typeof r.lookup == "string" && (s = s.map(({ label: h, value: u }) => ({
     label: h,
-    value: c
+    value: u
   })));
-  const u = An(o, Ka), f = q(
-    () => u.items?.filter((h) => h.field === r.field),
-    [r.field, u.items]
+  const c = An(o, Ka), f = q(
+    () => c.items?.filter((h) => h.field === r.field),
+    [r.field, c.items]
   ), y = T(
     (h) => {
-      let c = h.target.value;
-      if (u.items.length >= 1) {
-        c = c.length === 1 ? c[0] : c;
-        for (const x of u.items)
-          x.field === t.field && (x.operator === Zi.IsAnyOf ? c = Array.isArray(c) ? c : [c] : c = c === 0 ? "0" : c);
+      let u = h.target.value;
+      if (c.items.length >= 1) {
+        u = u.length === 1 ? u[0] : u;
+        for (const x of c.items)
+          x.field === t.field && (x.operator === Zi.IsAnyOf ? u = Array.isArray(u) ? u : [u] : u = u === 0 ? "0" : u);
       }
-      if (c.length === 0 && f[0]) {
+      if (u.length === 0 && f[0]) {
         o.current.deleteFilterItem(f[0]);
         return;
       }
-      const m = c, w = f[0] ? f[0] : t;
+      const m = u, w = f[0] ? f[0] : t;
       n({ ...w, value: m });
     },
     [o, r.applyZeroFilter, f, t, n]
@@ -1089,7 +1089,7 @@ const Yi = {
           }
         }
       },
-      children: s?.map((h, c) => /* @__PURE__ */ a(Ke, { value: h.value, children: e.tTranslate(h.label, e.tOpts) }, c))
+      children: s?.map((h, u) => /* @__PURE__ */ a(Ke, { value: h.value, children: e.tTranslate(h.label, e.tOpts) }, u))
     }
   ) });
 }, Ye = {
@@ -1105,7 +1105,7 @@ const Yi = {
   prefDesc: "",
   isDefault: !1
 }, el = { pageSize: 50, page: 0 }, tl = [5, 10, 20, 50, 100], rl = ({ gridRef: e, preferenceKey: r, onPreferenceChange: t, t: n, tOpts: o }) => {
-  const { getApiEndpoint: l } = je(), s = l("GridPreferenceManager"), u = Tn(), f = Dt(), [y, C] = R(Be.NONE), [h, c] = R(null), [m, w] = R(!1), [x, g] = R({}), [i, v] = R(null), [D, N] = R(null), B = q(
+  const { getApiEndpoint: l } = je(), s = l("GridPreferenceManager"), c = Tn(), f = Dt(), [y, C] = R(Be.NONE), [h, u] = R(null), [m, w] = R(!1), [x, g] = R({}), [i, v] = R(null), [D, N] = R(null), B = q(
     () => i == null ? [] : i.filter((P) => P.prefId !== 0),
     [i]
   ), E = q(() => [
@@ -1117,7 +1117,7 @@ const Yi = {
   ], [n, o]), L = q(() => he.object({
     prefName: he.string().trim(!0).required(n("Preference Name is Required", o)).max(20, n("Maximum Length is ", o) + "20"),
     prefDesc: he.string().max(100, n("Maximum Length is ", o) + "100")
-  }), [n, o]), re = (P) => c(P?.currentTarget), H = () => c(null), W = () => {
+  }), [n, o]), re = (P) => u(P?.currentTarget), H = () => u(null), W = () => {
     C(Be.NONE), H();
   }, te = () => {
     e.current?.initialGridState && (e.current.restoreState(e.current.initialGridState), N(null), t && t(null), H());
@@ -1460,7 +1460,7 @@ const Yi = {
                 },
                 density: "compact",
                 disableDensitySelector: !0,
-                apiRef: u,
+                apiRef: c,
                 disableAggregation: !0,
                 disableRowGrouping: !0,
                 disableRowSelectionOnClick: !0,
@@ -1596,7 +1596,7 @@ const il = ({
   tTranslate: o,
   tOpts: l
 }) => {
-  const { systemDateTimeFormat: s, stateData: u } = je(), { fixedFilterFormat: f } = qe, y = q(() => r?.items?.find((g) => g.field === e.field), [r, e.field]), C = y?.operator || e.toolbarFilter?.defaultOperator || Qn(e.type), h = C === "isAnyOf", c = q(() => {
+  const { systemDateTimeFormat: s, stateData: c } = je(), { fixedFilterFormat: f } = qe, y = q(() => r?.items?.find((g) => g.field === e.field), [r, e.field]), C = y?.operator || e.toolbarFilter?.defaultOperator || Qn(e.type), h = C === "isAnyOf", u = q(() => {
     if (["isEmpty", "isNotEmpty"].includes(C))
       return "";
     if (!y)
@@ -1656,7 +1656,7 @@ const il = ({
           {
             variant: "standard",
             label: o(D, l),
-            value: c,
+            value: u,
             onChange: (I) => m(I.target.value),
             type: "text",
             size: "small",
@@ -1669,7 +1669,7 @@ const il = ({
           {
             variant: "standard",
             label: o(D, l),
-            value: c,
+            value: u,
             onChange: (I) => m(I.target.value),
             type: "text",
             inputProps: { inputMode: "numeric" },
@@ -1678,7 +1678,7 @@ const il = ({
           }
         );
       case "boolean": {
-        const I = c === "" || c === void 0 || c === null ? "" : c === !0 || c === "true" ? "true" : c === !1 || c === "false" ? "false" : "";
+        const I = u === "" || u === void 0 || u === null ? "" : u === !0 || u === "true" ? "true" : u === !1 || u === "false" ? "false" : "";
         return /* @__PURE__ */ S(Ct, { variant: "standard", sx: { minWidth: 150 }, children: [
           /* @__PURE__ */ a(mn, { children: o(D, l) }),
           /* @__PURE__ */ S(
@@ -1706,7 +1706,7 @@ const il = ({
         const N = e.customLookup || n?.[e.lookup] || [], B = typeof e.lookup == "string" ? N.map((I) => ({
           label: I?.label || "",
           value: I?.value ?? ""
-        })) : N, E = qe.normalizeFilterValue({ value: c, operator: C, isMultiple: h }), L = 1;
+        })) : N, E = qe.normalizeFilterValue({ value: u, operator: C, isMultiple: h }), L = 1;
         return /* @__PURE__ */ S(Ct, { variant: "standard", sx: { minWidth: 150 }, children: [
           /* @__PURE__ */ a(mn, { children: o(D, l) }),
           /* @__PURE__ */ a(
@@ -1733,10 +1733,10 @@ const il = ({
         ] });
       case "date":
       case "dateTime":
-        const re = e.type, H = f[re], W = s(re === "date", !1, u.dateTime), te = re === "dateTime" ? jo : Wo;
+        const re = e.type, H = f[re], W = s(re === "date", !1, c.dateTime), te = re === "dateTime" ? jo : Wo;
         let Q = null;
-        if (c) {
-          const I = ee(c);
+        if (u) {
+          const I = ee(u);
           Q = I.isValid() ? I : null;
         }
         return /* @__PURE__ */ a(Ln, { dateAdapter: $n, children: /* @__PURE__ */ a(
@@ -1763,7 +1763,7 @@ const il = ({
           {
             variant: "standard",
             label: o(D, l),
-            value: c,
+            value: u,
             onChange: (I) => m(I.target.value),
             size: "small",
             sx: { minWidth: 150 }
@@ -1789,12 +1789,12 @@ const il = ({
     isReadOnly: o,
     canAdd: l,
     forAssignment: s,
-    showAddIcon: u,
+    showAddIcon: c,
     onAdd: f,
     selectionApi: y,
     rowSelectionModel: C,
     selectAll: h,
-    available: c,
+    available: u,
     onAssign: m,
     assigned: w,
     onUnassign: x,
@@ -1838,7 +1838,7 @@ const il = ({
               " ",
               !l || o ? "" : r.title
             ] }),
-            !s && l && !o && /* @__PURE__ */ a(er, { startIcon: u ? /* @__PURE__ */ a(Mr, {}) : null, onClick: f, size: "medium", variant: "contained", children: B(I, E) }),
+            !s && l && !o && /* @__PURE__ */ a(er, { startIcon: c ? /* @__PURE__ */ a(Mr, {}) : null, onClick: f, size: "medium", variant: "contained", children: B(I, E) }),
             !!e.headerActions && e.headerActions,
             y.length && ue.length ? /* @__PURE__ */ a(
               er,
@@ -1849,8 +1849,8 @@ const il = ({
                 children: C.ids.size === ue.length ? B("Deselect All", E) : B("Select All", E)
               }
             ) : /* @__PURE__ */ a(ye, {}),
-            c && /* @__PURE__ */ a(er, { startIcon: u ? /* @__PURE__ */ a(Mr, {}) : null, onClick: m, size: "medium", variant: "contained", children: B("Assign", E) }),
-            w && /* @__PURE__ */ a(er, { startIcon: u ? /* @__PURE__ */ a(Lo, {}) : null, onClick: x, size: "medium", variant: "contained", children: B("Remove", E) })
+            u && /* @__PURE__ */ a(er, { startIcon: c ? /* @__PURE__ */ a(Mr, {}) : null, onClick: m, size: "medium", variant: "contained", children: B("Assign", E) }),
+            w && /* @__PURE__ */ a(er, { startIcon: c ? /* @__PURE__ */ a(Lo, {}) : null, onClick: x, size: "medium", variant: "contained", children: B("Remove", E) })
           ] }),
           /* @__PURE__ */ S(ll, { ...e, children: [
             g.showColumnsOrder && /* @__PURE__ */ a(
@@ -1980,12 +1980,12 @@ const il = ({
   setActiveRecord: o,
   parentFilters: l,
   parent: s,
-  where: u,
+  where: c,
   title: f,
   showPageTitle: y,
   permissions: C,
   selected: h,
-  assigned: c,
+  assigned: u,
   available: m,
   disableCellRedirect: w = !1,
   onAssignChange: x,
@@ -2266,7 +2266,7 @@ const il = ({
       ...$.extraParams
       // Merge any custom params passed via component props
     };
-    if ((c || m) && (se[c ? "include" : "exclude"] = Array.isArray(h) ? h.join(",") : h), A && (e.exportTemplate && (se.template = e.exportTemplate), e.configFileName && (se.configFileName = e.configFileName)), !(!le.items.length || le.items.every((He) => "value" in He && He.value !== void 0))) return;
+    if ((u || m) && (se[u ? "include" : "exclude"] = Array.isArray(h) ? h.join(",") : h), A && (e.exportTemplate && (se.template = e.exportTemplate), e.configFileName && (se.configFileName = e.configFileName)), !(!le.items.length || le.items.every((He) => "value" in He && He.value !== void 0))) return;
     let Qt = null, tt = null;
     J || (Me.current && Me.current.abort(), tt = new AbortController(), Me.current = tt, Qt = tt.signal);
     const kt = {
@@ -2294,10 +2294,10 @@ const il = ({
     } finally {
       !J && Me.current === tt && Ut(!1);
     }
-  }, [we, gt, e, ze, Re, ce, At, c, m, h, $.extraParams, Ze, Ce, l, ae, Pe, Or, fe, H, p, d]), lt = T(async ({ id: b, record: M = {}, mode: A }) => {
+  }, [we, gt, e, ze, Re, ce, At, u, m, h, $.extraParams, Ze, Ce, l, ae, Pe, Or, fe, H, p, d]), lt = T(async ({ id: b, record: M = {}, mode: A }) => {
     if (o) {
       try {
-        const k = gt(ze), _ = await ar({ id: b, api: k, model: e, parentFilters: l, where: u });
+        const k = gt(ze), _ = await ar({ id: b, api: k, model: e, parentFilters: l, where: c });
         o(_);
       } catch {
         fe.showError(p("Could not load record", d));
@@ -2306,7 +2306,7 @@ const il = ({
     }
     let F = qt;
     F.endsWith("/") || (F += "/"), A === "copy" ? F += "0-" + b : F += b, Yt && (et.set(Yt, M[Yt]), F += `?${et.toString()}`), De(F);
-  }, [o, ze, e, l, u, qt, Yt, et, De, ar, gt, fe, p, d]), an = T(({ documentLink: b }) => {
+  }, [o, ze, e, l, c, qt, Yt, et, De, ar, gt, fe, p, d]), an = T(({ documentLink: b }) => {
     b && window.open(b, "_blank");
   }, []), va = T(async (b, M, A) => {
     let F = b.field === e.linkColumn ? ke.Edit : null;
@@ -2639,7 +2639,7 @@ const il = ({
       selectAll: dn,
       available: m,
       onAssign: cn,
-      assigned: c,
+      assigned: u,
       onUnassign: un,
       effectivePermissions: it,
       clearFilters: sn,
@@ -2676,7 +2676,7 @@ const il = ({
         "aria-label": p("Go to next page", d)
       }
     }
-  }), [e, O, Jr, Z, jr, G, Wt, ln, Qe, oe, dn, m, cn, c, un, it, sn, pn, Bt, Pe, Ce, p, d, de, Re, Te, Xr, I, $.headerActions, j]), ka = q(() => ({
+  }), [e, O, Jr, Z, jr, G, Wt, ln, Qe, oe, dn, m, cn, u, un, it, sn, pn, Bt, Pe, Ce, p, d, de, Re, Te, Xr, I, $.headerActions, j]), ka = q(() => ({
     columns: {
       columnVisibilityModel: ft
     },
@@ -2805,8 +2805,8 @@ const il = ({
     ] })
   ] });
 }, ol), xl = ({ column: e, field: r, formik: t, otherProps: n }) => {
-  const o = (u) => {
-    t.setFieldValue(r, u.target.checked);
+  const o = (c) => {
+    t.setFieldValue(r, c.target.checked);
   }, l = q(() => t.values[r] ?? !!e.defaultValue, [t, e]), s = typeof e.readOnly == "function" ? e.readOnly(t) : e.readOnly;
   return /* @__PURE__ */ S("div", { children: [
     /* @__PURE__ */ a(
@@ -2922,18 +2922,18 @@ const vn = ({ value: e, state: r }) => {
     ]
   }
 ), Dl = ({ column: e, otherProps: r, formik: t, field: n, ...o }) => {
-  const { min: l, max: s, readOnly: u, precision: f } = e, y = vt(), C = q(
+  const { min: l, max: s, readOnly: c, precision: f } = e, y = vt(), C = q(
     () => vn({ value: l, state: t.values }),
     [l, t.values]
   ), h = q(
     () => vn({ value: s, state: t.values }),
     [s, t.values]
-  ), c = q(() => t.values[n] ?? null, [t.values[n]]), [m, w] = R(c), x = ea(m, 400);
+  ), u = q(() => t.values[n] ?? null, [t.values[n]]), [m, w] = R(u), x = ea(m, 400);
   pe(() => {
-    x !== c && t.setFieldValue(n, x);
+    x !== u && t.setFieldValue(n, x);
   }, [x]), pe(() => {
-    c !== m && w(c);
-  }, [c]);
+    u !== m && w(u);
+  }, [u]);
   const g = (L) => {
     w(L);
   }, i = (L) => {
@@ -2951,7 +2951,7 @@ const vn = ({ value: e, state: r }) => {
       onValueChange: g,
       min: C,
       max: h,
-      disabled: u,
+      disabled: c,
       format: E,
       render: (L, re) => /* @__PURE__ */ a(
         Ct,
@@ -2959,7 +2959,7 @@ const vn = ({ value: e, state: r }) => {
           fullWidth: !0,
           ref: L.ref,
           error: t.touched[n] && !!t.errors[n],
-          sx: u ? {
+          sx: c ? {
             backgroundColor: y.palette?.action?.disabled
           } : void 0,
           children: L.children
@@ -3001,12 +3001,12 @@ const vn = ({ value: e, state: r }) => {
 }, Sl = ({ otherProps: e, ...r }) => {
   const [t, n] = yt.useState(!1), o = () => n((f) => !f), l = (f) => {
     f.preventDefault();
-  }, { readOnly: s = !1, disabled: u = !1 } = r.column || {};
+  }, { readOnly: s = !1, disabled: c = !1 } = r.column || {};
   return e = {
     type: t ? "text" : "password",
     InputProps: {
       readOnly: s,
-      disabled: u,
+      disabled: c,
       endAdornment: /* @__PURE__ */ a(Rn, { position: "end", children: /* @__PURE__ */ a(
         Lt,
         {
@@ -3014,7 +3014,7 @@ const vn = ({ value: e, state: r }) => {
           onClick: o,
           onMouseDown: l,
           edge: "end",
-          disabled: u,
+          disabled: c,
           readOnly: s,
           size: "large",
           children: t ? /* @__PURE__ */ a(Qo, {}) : /* @__PURE__ */ a(Xo, {})
@@ -3024,7 +3024,7 @@ const vn = ({ value: e, state: r }) => {
     ...e
   }, /* @__PURE__ */ a(Rr, { otherProps: e, ...r });
 }, Pl = ({ column: e, field: r, formik: t, otherProps: n, fieldConfigs: o = {}, mode: l }) => {
-  const s = l !== "copy" && o.disabled, { systemDateTimeFormat: u, stateData: f } = je(), y = q(() => t.values[r] ? ee(t.values[r]) : null, [t.values[r]]), C = e.minField ? t.values[e.minField] : void 0, h = e.maxField ? t.values[e.maxField] : void 0, c = q(() => e.min ? ee(e.min) : e.minField && C ? ee(C) : null, [e.min, e.minField, C]), m = q(() => e.max ? ee(e.max) : e.maxField && h ? ee(h) : null, [e.max, e.maxField, h]), w = T((x) => {
+  const s = l !== "copy" && o.disabled, { systemDateTimeFormat: c, stateData: f } = je(), y = q(() => t.values[r] ? ee(t.values[r]) : null, [t.values[r]]), C = e.minField ? t.values[e.minField] : void 0, h = e.maxField ? t.values[e.maxField] : void 0, u = q(() => e.min ? ee(e.min) : e.minField && C ? ee(C) : null, [e.min, e.minField, C]), m = q(() => e.max ? ee(e.max) : e.maxField && h ? ee(h) : null, [e.max, e.maxField, h]), w = T((x) => {
     if (x === null) {
       t.setFieldValue(r, null);
       return;
@@ -3040,13 +3040,13 @@ const vn = ({ value: e, state: r }) => {
       readOnly: e?.readOnly === !0,
       key: r,
       fullWidth: !0,
-      format: u(!0, !1, f.dateTime),
+      format: c(!0, !1, f.dateTime),
       name: r,
       value: y,
       onChange: w,
       onBlur: t.handleBlur,
       helperText: t.touched[r] && t.errors[r],
-      minDate: c,
+      minDate: u,
       maxDate: m,
       disabled: s,
       slotProps: { textField: { fullWidth: !0, variant: "standard" } }
@@ -3056,11 +3056,11 @@ const vn = ({ value: e, state: r }) => {
 ee.extend(Bn);
 const Fl = ({ column: e, field: r, formik: t, otherProps: n }) => {
   const { systemDateTimeFormat: o, stateData: l } = je(), s = q(() => {
-    const u = t.values[r];
-    if (!u) return null;
+    const c = t.values[r];
+    if (!c) return null;
     if (e.localize)
-      return ee(u);
-    let f = new Date(u);
+      return ee(c);
+    let f = new Date(c);
     const y = f.getTimezoneOffset() * 6e4;
     return f = new Date(f.getTime() + y), ee(f);
   }, [t.values[r], e]);
@@ -3075,8 +3075,8 @@ const Fl = ({ column: e, field: r, formik: t, otherProps: n }) => {
       format: o(!1, !1, l.dateTime),
       name: r,
       value: s,
-      onChange: (u) => {
-        u ? e.localize ? t.setFieldValue(r, u.toISOString()) : t.setFieldValue(r, u.utcOffset(0, !0).toISOString()) : t.setFieldValue(r, null);
+      onChange: (c) => {
+        c ? e.localize ? t.setFieldValue(r, c.toISOString()) : t.setFieldValue(r, c.utcOffset(0, !0).toISOString()) : t.setFieldValue(r, null);
       },
       onBlur: t.handleBlur,
       helperText: t.touched[r] && t.errors[r],
@@ -3107,7 +3107,7 @@ const El = ({ column: e, field: r, formik: t, otherProps: n }) => {
   );
 }, Al = [null, void 0, ""];
 function ta({ column: e, formik: r, lookups: t, dependsOn: n = [], isAutoComplete: o = !1, userSelected: l, model: s }) {
-  const [u, f] = R([]), { buildUrl: y } = je(), C = Dt(), h = y(s.api), c = q(() => {
+  const [c, f] = R([]), { buildUrl: y } = je(), C = Dt(), h = y(s.api), u = q(() => {
     const x = {};
     if (!n.length) return x;
     for (const g of n)
@@ -3115,7 +3115,7 @@ function ta({ column: e, formik: r, lookups: t, dependsOn: n = [], isAutoComplet
     return x;
   }, n.map((x) => r.values[x])), m = q(() => n.length ? [] : typeof e.lookup == "string" ? t[e.lookup] : e.lookup, [e.lookup, t, n]), w = T(async () => {
     if (!e.lookup) return;
-    if (!Object.values(c).every(
+    if (!Object.values(u).every(
       (g) => !Al.includes(g)
     )) {
       f([]);
@@ -3127,20 +3127,20 @@ function ta({ column: e, formik: r, lookups: t, dependsOn: n = [], isAutoComplet
         model: s,
         lookups: t,
         reqData: {
-          params: { lookups: [{ lookup: e.lookup, where: c }] }
+          params: { lookups: [{ lookup: e.lookup, where: u }] }
         }
       });
       f(g);
     } catch (g) {
       C.showError("Could not load lookups", g.message);
     }
-  }, [e.lookup, c, h, s, t, C]);
+  }, [e.lookup, u, h, s, t, C]);
   return pe(() => {
     n.length ? w() : (o || !l.current) && f(m || []);
-  }, [n.length, w, o, m]), u;
+  }, [n.length, w, o, m]), c;
 }
-const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o = [], model: l, tTranslate: s, tOpts: u, ...f }) => {
-  const y = yt.useRef(!1), { placeHolder: C } = e, h = ta({ column: e, formik: t, lookups: n, dependsOn: o, userSelected: y, model: l }), c = vt(), m = q(() => {
+const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o = [], model: l, tTranslate: s, tOpts: c, ...f }) => {
+  const y = yt.useRef(!1), { placeHolder: C } = e, h = ta({ column: e, formik: t, lookups: n, dependsOn: o, userSelected: y, model: l }), u = vt(), m = q(() => {
     let i = t.values[r];
     if (!i && !y.current && e.defaultValue !== void 0) {
       const v = e.defaultValue;
@@ -3155,12 +3155,12 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
     }
     return e.multiSelect && (!i || i.length === 0 ? i = [] : Array.isArray(i) || (i = i.split(",").map((v) => parseInt(v)))), i;
   }, [t.values[r], h, e.multiSelect, r]), w = T((i) => {
-    typeof e.onChange == "function" && e.onChange({ formik: t, value: i.target.value, options: h, event: i, t: s, tOpts: u }), t.handleChange(i), y.current = !0;
+    typeof e.onChange == "function" && e.onChange({ formik: t, value: i.target.value, options: h, event: i, t: s, tOpts: c }), t.handleChange(i), y.current = !0;
   }, [t.values[r], e.onChange, h]), x = q(() => e.multiSelect ? Array.isArray(m) && m.length > 0 : m !== "" && m !== null && m !== void 0 && Array.isArray(h) && h.some((i) => String(i.value) === String(m)), [m, e.multiSelect, h]), g = T((i) => {
     i.stopPropagation();
     const v = e.multiSelect ? [] : "";
-    t.setFieldValue(r, v), typeof e.onChange == "function" && e.onChange({ formik: t, value: v, options: h, event: i, t: s, tOpts: u }), y.current = !0;
-  }, [e.multiSelect, r, t, e.onChange, h, s, u]);
+    t.setFieldValue(r, v), typeof e.onChange == "function" && e.onChange({ formik: t, value: v, options: h, event: i, t: s, tOpts: c }), y.current = !0;
+  }, [e.multiSelect, r, t, e.onChange, h, s, c]);
   return /* @__PURE__ */ S(
     cr,
     {
@@ -3183,7 +3183,7 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
               onBlur: t.handleBlur,
               sx: {
                 width: "100%",
-                backgroundColor: e.readOnly ? c.palette?.action?.disabled : ""
+                backgroundColor: e.readOnly ? u.palette?.action?.disabled : ""
               },
               children: Array.isArray(h) && h.map((i) => /* @__PURE__ */ a(Vn, { value: i.value, disabled: i.isDisabled, children: i.label }, i.value))
             }
@@ -3195,7 +3195,7 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
               onClick: g,
               tabIndex: -1,
               sx: { position: "absolute", right: 24, top: "50%", transform: "translateY(-50%)", p: "2px" },
-              "aria-label": s("Clear selection", u),
+              "aria-label": s("Clear selection", c),
               children: /* @__PURE__ */ a(ti, { fontSize: "small" })
             }
           )
@@ -3210,19 +3210,19 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
   marginBottom: "10px",
   fontSize: "20px"
 }), Il = ({ component: e, name: r, formik: t, field: n, column: o }) => {
-  const { value: l } = t.getFieldProps(r || n), { setFieldValue: s } = t, u = e || o.relation, f = T((y) => {
+  const { value: l } = t.getFieldProps(r || n), { setFieldValue: s } = t, c = e || o.relation, f = T((y) => {
     s(r || n, y);
   }, [s, r, n]);
   return /* @__PURE__ */ S("div", { children: [
     /* @__PURE__ */ a(Dn, { children: `Available ${o.label}` }),
-    /* @__PURE__ */ a(u, { selected: l, available: !0, onAssignChange: f, disableCellRedirect: o.disableCellRedirect, readOnly: o.readOnly }),
+    /* @__PURE__ */ a(c, { selected: l, available: !0, onAssignChange: f, disableCellRedirect: o.disableCellRedirect, readOnly: o.readOnly }),
     /* @__PURE__ */ a(Dn, { children: `Assigned ${o.label}` }),
-    /* @__PURE__ */ a(u, { selected: l, assigned: !0, onAssignChange: f, disableCellRedirect: o.disableCellRedirect, readOnly: o.readOnly })
+    /* @__PURE__ */ a(c, { selected: l, assigned: !0, onAssignChange: f, disableCellRedirect: o.disableCellRedirect, readOnly: o.readOnly })
   ] });
-}, Ml = ({ field: e, formik: r, orientation: t = "row", label: n, lookups: o, fieldConfigs: l = {}, mode: s, tTranslate: u, tOpts: f, ...y }) => {
+}, Ml = ({ field: e, formik: r, orientation: t = "row", label: n, lookups: o, fieldConfigs: l = {}, mode: s, tTranslate: c, tOpts: f, ...y }) => {
   const C = (x) => {
     r.setFieldValue(e, x.target.value);
-  }, h = o ? o[y.column.lookup] : [], c = vt(), m = r.touched[e] && !!r.errors[e], w = s !== "copy" && l.disabled;
+  }, h = o ? o[y.column.lookup] : [], u = vt(), m = r.touched[e] && !!r.errors[e], w = s !== "copy" && l.disabled;
   return /* @__PURE__ */ S(ye, { children: [
     /* @__PURE__ */ a(Ct, { component: "fieldset", error: m, children: /* @__PURE__ */ a(
       Nr,
@@ -3237,22 +3237,22 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
           {
             value: x.value,
             control: /* @__PURE__ */ a(bt, {}),
-            label: u(x.label, f),
+            label: c(x.label, f),
             disabled: w || (y?.column?.disableForValues || [])?.includes?.(r.values[e])
           },
           g
         ))
       }
     ) }),
-    m && /* @__PURE__ */ a(pt, { style: { color: c.palette.error.main }, children: r.errors[e] })
+    m && /* @__PURE__ */ a(pt, { style: { color: u.palette.error.main }, children: r.errors[e] })
   ] });
 }, Ol = {
   limitTags: 5
-}, Rl = Ge.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o = [], fieldConfigs: l = {}, mode: s, model: u, ...f }) => {
-  const y = ta({ column: e, formik: t, lookups: n, dependsOn: o, model: u, isAutoComplete: !0 });
+}, Rl = Ge.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o = [], fieldConfigs: l = {}, mode: s, model: c, ...f }) => {
+  const y = ta({ column: e, formik: t, lookups: n, dependsOn: o, model: c, isAutoComplete: !0 });
   let C = t.values[r] || [];
   Array.isArray(C) || (C = C.split(", ").map(Number));
-  const h = y.filter((w) => C.includes(w.value)) || [], c = s !== "copy" && l.disabled, m = (w, x) => {
+  const h = y.filter((w) => C.includes(w.value)) || [], u = s !== "copy" && l.disabled, m = (w, x) => {
     let g = x?.map((i) => i.value) || [];
     e.dataFormat !== "array" && (g = g.length ? g.join(", ") : ""), t.setFieldValue(r, g);
   };
@@ -3277,7 +3277,7 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
             onChange: m,
             value: h,
             size: "small",
-            disabled: c
+            disabled: u
           }
         ),
         t.touched[r] && t.errors[r] && /* @__PURE__ */ a(pt, { children: t.errors[r] })
@@ -3311,7 +3311,7 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
   },
   e.value
 ), $l = ({ name: e, field: r, formik: t, expired: n }) => {
-  const { setFieldValue: o } = t, { value: l } = t.getFieldProps(e || r), s = "1000001", u = "0111110", f = "0".repeat(7), [y, C] = R(l || f), [h, c] = R(() => l ? l === s ? s : l === u ? u : "Custom" : ""), [m, w] = R(!1), x = T((v) => {
+  const { setFieldValue: o } = t, { value: l } = t.getFieldProps(e || r), s = "1000001", c = "0111110", f = "0".repeat(7), [y, C] = R(l || f), [h, u] = R(() => l ? l === s ? s : l === c ? c : "Custom" : ""), [m, w] = R(!1), x = T((v) => {
     if (Array.isArray(v)) {
       let D = f;
       for (const N of v)
@@ -3320,7 +3320,7 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
     } else {
       let D = m ? f : y;
       const N = D.slice(0, v) + (D[v] === "1" ? "0" : "1") + D.slice(v + 1);
-      C(N), o(e || r, N), c("Custom"), w(!1);
+      C(N), o(e || r, N), u("Custom"), w(!1);
     }
   }, [m, f, y, e, r, o]), g = vt(), i = t.touched[r] && !!t.errors[r];
   return /* @__PURE__ */ S(ye, { children: [
@@ -3332,11 +3332,11 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
         value: h,
         onChange: (v) => {
           const D = v.target.value;
-          c(D), D !== "Custom" ? (C(D), o(e || r, D), w(!0)) : (C(f), o(e || r, f), w(!1));
+          u(D), D !== "Custom" ? (C(D), o(e || r, D), w(!0)) : (C(f), o(e || r, f), w(!1));
         },
         children: [
           /* @__PURE__ */ a(dt, { value: s, control: /* @__PURE__ */ a(bt, {}), label: "Weekends (Sat - Sun)", onClick: () => x([0, 6]) }),
-          /* @__PURE__ */ a(dt, { value: u, control: /* @__PURE__ */ a(bt, {}), label: "Weekdays (Mon - Fri)", onClick: () => x([1, 2, 3, 4, 5]) }),
+          /* @__PURE__ */ a(dt, { value: c, control: /* @__PURE__ */ a(bt, {}), label: "Weekdays (Mon - Fri)", onClick: () => x([1, 2, 3, 4, 5]) }),
           /* @__PURE__ */ a(dt, { value: "Custom", control: /* @__PURE__ */ a(bt, {}), label: "Specific days" }),
           kl.map((v, D) => /* @__PURE__ */ a(
             Ll,
@@ -3354,10 +3354,10 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
     i && /* @__PURE__ */ a(pt, { style: { color: g.palette.error.main }, children: t.errors[r] })
   ] });
 }, zl = ({ isAdd: e, column: r, field: t, formik: n, otherProps: o, fieldConfigs: l = {}, mode: s }) => {
-  const u = vt();
+  const c = vt();
   let f = n.values[t] || [];
-  Array.isArray(f) || (f = f.split(",").map((c) => c.trim()));
-  const y = Ge.useMemo(() => s === "copy" ? !0 : typeof l.disabled < "u" ? l.disabled : typeof r.disabled == "function" ? r.disabled({ isAdd: e, formik: n }) : !!r.disabled, [s, l.disabled, r.disabled]), C = r.hasDefault && !e ? [f[0]] : [], h = T((c, m, w, x = {}) => {
+  Array.isArray(f) || (f = f.split(",").map((u) => u.trim()));
+  const y = Ge.useMemo(() => s === "copy" ? !0 : typeof l.disabled < "u" ? l.disabled : typeof r.disabled == "function" ? r.disabled({ isAdd: e, formik: n }) : !!r.disabled, [s, l.disabled, r.disabled]), C = r.hasDefault && !e ? [f[0]] : [], h = T((u, m, w, x = {}) => {
     const g = m.pop()?.trim();
     m.includes(g) || m.push(g), C && C.includes(x.option) && w === "removeOption" && (m = [x.option]), r.dataFormat !== "array" && (m = m.length ? m.join(",") : ""), n.setFieldValue(t, m);
   }, [n, t]);
@@ -3377,23 +3377,23 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
             freeSolo: !0,
             value: f,
             options: [],
-            renderInput: (c) => /* @__PURE__ */ a(
+            renderInput: (u) => /* @__PURE__ */ a(
               lr,
               {
-                ...c,
+                ...u,
                 variant: "standard",
                 InputProps: {
-                  ...c.InputProps,
+                  ...u.InputProps,
                   sx: {
-                    ...c.InputProps?.sx,
-                    ...y && { backgroundColor: u.palette?.action?.disabled }
+                    ...u.InputProps?.sx,
+                    ...y && { backgroundColor: c.palette?.action?.disabled }
                   }
                 }
               }
             ),
             onChange: h,
             size: "small",
-            renderTags: (c, m) => c.map((w, x) => {
+            renderTags: (u, m) => u.map((w, x) => {
               const { key: g, ...i } = m({ index: x });
               return /* @__PURE__ */ a(
                 ci,
@@ -3430,28 +3430,28 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
   }), Object.values(r);
 };
 function Gl({ column: e, field: r, formik: t, lookups: n, fieldConfigs: o, mode: l }) {
-  const s = n ? n[e.lookup] : [], u = Vl(s), f = t.values[r]?.length ? t.values[r].split(", ") : [];
+  const s = n ? n[e.lookup] : [], c = Vl(s), f = t.values[r]?.length ? t.values[r].split(", ") : [];
   let y;
   return l !== "copy" && (y = o?.disabled), /* @__PURE__ */ a(nt, { sx: { minHeight: 350 }, children: /* @__PURE__ */ a(
     ui,
     {
       selectedItems: f,
-      onSelectedItemsChange: (h, c) => {
-        t.setFieldValue(r, c?.join(", ") || "");
+      onSelectedItemsChange: (h, u) => {
+        t.setFieldValue(r, u?.join(", ") || "");
       },
       disabled: y,
       multiSelect: !0,
       checkboxSelection: !0,
-      children: u.map((h) => /* @__PURE__ */ a(bn, { itemId: h.value, label: h.label, children: h.children.map((c) => /* @__PURE__ */ a(bn, { itemId: c.value, label: c.label }, c.value)) }, h.value))
+      children: c.map((h) => /* @__PURE__ */ a(bn, { itemId: h.value, label: h.label, children: h.children.map((u) => /* @__PURE__ */ a(bn, { itemId: u.value, label: u.label }, u.value)) }, h.value))
     }
   ) });
 }
 const ql = { maxLength: 500 }, { errorMapping: jl } = qe, Wl = 1024 * 1024;
 function Ul({ column: e, field: r, formik: t }) {
-  const n = t.values[r] || "", { getApiEndpoint: o } = je(), { maxSize: l, formats: s } = e, u = o("upload"), f = o("media"), y = o(), [C, h] = R({
+  const n = t.values[r] || "", { getApiEndpoint: o } = je(), { maxSize: l, formats: s } = e, c = o("upload"), f = o("media"), y = o(), [C, h] = R({
     isExternal: "no",
     selectedFile: null
-  }), [c, m] = R(!1), w = Dt(), { getParams: x, useParams: g } = Vr(), { associationId: i } = g() || x, v = i?.split("-")[0] || 1, D = (W) => {
+  }), [u, m] = R(!1), w = Dt(), { getParams: x, useParams: g } = Vr(), { associationId: i } = g() || x, v = i?.split("-")[0] || 1, D = (W) => {
     const te = W.target.value;
     h({
       ...C,
@@ -3481,7 +3481,7 @@ function Ul({ column: e, field: r, formik: t }) {
         W.append("file", C.selectedFile), W.append("DocumentGroupId", t.values.DocumentGroupId), W.append("AssociationId", v);
         const Q = (await Hn({
           method: "POST",
-          url: u,
+          url: c,
           data: W,
           headers: { "Content-Type": "multipart/form-data" },
           credentials: "include"
@@ -3565,7 +3565,7 @@ function Ul({ column: e, field: r, formik: t }) {
         {
           variant: "outlined",
           component: "label",
-          disabled: c,
+          disabled: u,
           children: [
             "Choose File",
             /* @__PURE__ */ a("input", { type: "file", hidden: !0, onChange: B })
@@ -3579,8 +3579,8 @@ function Ul({ column: e, field: r, formik: t }) {
           variant: "contained",
           color: "primary",
           onClick: E,
-          disabled: !C.selectedFile || c,
-          children: c ? /* @__PURE__ */ a(Fo, { size: 24, color: "inherit" }) : "Upload File"
+          disabled: !C.selectedFile || u,
+          children: u ? /* @__PURE__ */ a(Fo, { size: 24, color: "inherit" }) : "Upload File"
         }
       )
     ] })
@@ -3600,8 +3600,8 @@ const Hl = ({ field: e, formik: r }) => {
     const s = JSON.stringify(o);
     r.values[e] !== s && r.setFieldValue(e, s);
   }, [o, e, r, r.values[e]]);
-  const l = (s, u) => {
-    const f = { ...t, [s]: u };
+  const l = (s, c) => {
+    const f = { ...t, [s]: c };
     n(f);
   };
   return /* @__PURE__ */ a(
@@ -3631,7 +3631,7 @@ const Hl = ({ field: e, formik: r }) => {
                 id: s,
                 name: s,
                 value: t[s],
-                onChange: (u) => l(s, u.target.value),
+                onChange: (c) => l(s, c.target.value),
                 fullWidth: !0,
                 style: { flex: 2 }
               }
@@ -3666,8 +3666,8 @@ const Hl = ({ field: e, formik: r }) => {
 }), ra = (e) => {
   const { t: r, i18n: t } = wt(), n = Ge.useMemo(() => ({ t: r, i18n: t }), [r, t]), o = e?.tTranslate ?? ((l) => l);
   return { translate: r, i18n: t, tOpts: n, tTranslate: o };
-}, _l = ({ tabColumns: e, model: r, formik: t, data: n, onChange: o, combos: l, lookups: s, fieldConfigs: u, mode: f, handleSubmit: y }) => {
-  const [C, h] = Ge.useState(/* @__PURE__ */ new Set()), { tOpts: c, tTranslate: m } = ra(r), { activeStep: w, setActiveStep: x } = Ge.useContext(aa), g = {};
+}, _l = ({ tabColumns: e, model: r, formik: t, data: n, onChange: o, combos: l, lookups: s, fieldConfigs: c, mode: f, handleSubmit: y }) => {
+  const [C, h] = Ge.useState(/* @__PURE__ */ new Set()), { tOpts: u, tTranslate: m } = ra(r), { activeStep: w, setActiveStep: x } = Ge.useContext(aa), g = {};
   for (let E = 0, L = r.columns.length; E < L; E++) {
     const { field: re, skip: H } = r.columns[E];
     H && (g[H.step] = t.values[re]);
@@ -3692,18 +3692,18 @@ const Hl = ({ field: e, formik: r }) => {
     return null;
   const B = e[w];
   return /* @__PURE__ */ S(ye, { children: [
-    /* @__PURE__ */ a(ai, { activeStep: w, sx: { marginBottom: "20px" }, children: e.map(({ title: E, key: L }, re) => /* @__PURE__ */ a(oi, { completed: i(re), children: /* @__PURE__ */ a(ii, { children: /* @__PURE__ */ a(Ne, { sx: { fontSize: "20px" }, children: m(E, c) }) }) }, L)) }),
+    /* @__PURE__ */ a(ai, { activeStep: w, sx: { marginBottom: "20px" }, children: e.map(({ title: E, key: L }, re) => /* @__PURE__ */ a(oi, { completed: i(re), children: /* @__PURE__ */ a(ii, { children: /* @__PURE__ */ a(Ne, { sx: { fontSize: "20px" }, children: m(E, u) }) }) }, L)) }),
     /* @__PURE__ */ S(Ge.Fragment, { children: [
-      /* @__PURE__ */ a(na, { formElements: B.items, model: r, formik: t, data: n, onChange: o, combos: l, lookups: s, fieldConfigs: u, mode: f }),
+      /* @__PURE__ */ a(na, { formElements: B.items, model: r, formik: t, data: n, onChange: o, combos: l, lookups: s, fieldConfigs: c, mode: f }),
       /* @__PURE__ */ S(nt, { sx: { display: "flex", flexDirection: "row", pt: 2, mr: 2 }, children: [
-        w !== 0 ? /* @__PURE__ */ a(Oe, { color: "inherit", disabled: w === 0, onClick: N, variant: "contained", sx: { mr: 2 }, children: m("Back", c) }) : null,
-        /* @__PURE__ */ a(Oe, { onClick: D, variant: "contained", children: v() ? m("Finish", c) : m("Next", c) })
+        w !== 0 ? /* @__PURE__ */ a(Oe, { color: "inherit", disabled: w === 0, onClick: N, variant: "contained", sx: { mr: 2 }, children: m("Back", u) }) : null,
+        /* @__PURE__ */ a(Oe, { onClick: D, variant: "contained", children: v() ? m("Finish", u) : m("Next", u) })
       ] })
     ] })
   ] });
-}, na = ({ formElements: e, model: r, formik: t, data: n, onChange: o, combos: l, lookups: s, fieldConfigs: u, mode: f, isAdd: y }) => {
+}, na = ({ formElements: e, model: r, formik: t, data: n, onChange: o, combos: l, lookups: s, fieldConfigs: c, mode: f, isAdd: y }) => {
   const { tOpts: C, tTranslate: h } = ra(r);
-  return e?.length ? /* @__PURE__ */ a(ye, { children: e.map(({ Component: c, column: m, field: w, label: x, otherProps: g }, i) => {
+  return e?.length ? /* @__PURE__ */ a(ye, { children: e.map(({ Component: u, column: m, field: w, label: x, otherProps: g }, i) => {
     const v = typeof m.relation == "function";
     return /* @__PURE__ */ S(Pr, { container: !0, spacing: 2, sx: { marginTop: "1rem", marginBottom: "1rem" }, alignItems: v ? "flex-start" : "center", children: [
       m?.showLabel !== !1 ? /* @__PURE__ */ a(Pr, { size: { xs: 3 }, sx: Sn, children: /* @__PURE__ */ S(Ne, { sx: { fontSize: "16px", fontWeight: "bold" }, className: "form-label", children: [
@@ -3711,36 +3711,36 @@ const Hl = ({ field: e, formik: r }) => {
         ": ",
         m.required && /* @__PURE__ */ a(Kl, { children: "*" })
       ] }) }) : null,
-      /* @__PURE__ */ a(Pr, { size: { xs: v ? 12 : 9 }, sx: Sn, children: /* @__PURE__ */ a(c, { isAdd: y, model: r, fieldConfigs: u[w], mode: f, column: m, field: w, label: x, formik: t, data: n, onChange: o, combos: l, lookups: s, tTranslate: h, tOpts: C, ...g }) })
+      /* @__PURE__ */ a(Pr, { size: { xs: v ? 12 : 9 }, sx: Sn, children: /* @__PURE__ */ a(u, { isAdd: y, model: r, fieldConfigs: c[w], mode: f, column: m, field: w, label: x, formik: t, data: n, onChange: o, combos: l, lookups: s, tTranslate: h, tOpts: C, ...g }) })
     ] }, i);
   }) }) : null;
 }, Jl = function({ columns: e, tabs: r = {}, id: t, searchParams: n }) {
   const o = [], l = {};
-  for (const u in r)
-    l[u] = [];
-  for (const u of e) {
-    const f = u.type;
-    if (u.label === null)
+  for (const c in r)
+    l[c] = [];
+  for (const c of e) {
+    const f = c.type;
+    if (c.label === null)
       continue;
-    const { field: y, label: C, tab: h } = u, c = {};
-    u.options && (c.options = u.options), u.dependsOn && (c.dependsOn = u.dependsOn);
+    const { field: y, label: C, tab: h } = c, u = {};
+    c.options && (u.options = c.options), c.dependsOn && (u.dependsOn = c.dependsOn);
     const m = Yl[f];
-    if (!m || u.hideInAddGrid && t === "0")
+    if (!m || c.hideInAddGrid && t === "0")
       continue;
-    (h && r[h] ? l[h] : o).push({ Component: m, field: y, label: C, column: { ...u, readOnly: n.has("showRelation") || u.readOnly }, otherProps: c });
+    (h && r[h] ? l[h] : o).push({ Component: m, field: y, label: C, column: { ...c, readOnly: n.has("showRelation") || c.readOnly }, otherProps: u });
   }
   const s = [];
-  for (const u in l)
-    s.push({ key: u, title: r[u], items: l[u] });
+  for (const c in l)
+    s.push({ key: c, title: r[c], items: l[c] });
   return { formElements: o, tabColumns: s };
-}, Zl = ({ model: e, formik: r, data: t, combos: n, onChange: o, lookups: l, id: s, fieldConfigs: u, mode: f, handleSubmit: y }) => {
-  const C = qe.emptyIdValues.includes(s), { formElements: h, tabColumns: c } = Ge.useMemo(() => {
+}, Zl = ({ model: e, formik: r, data: t, combos: n, onChange: o, lookups: l, id: s, fieldConfigs: c, mode: f, handleSubmit: y }) => {
+  const C = qe.emptyIdValues.includes(s), { formElements: h, tabColumns: u } = Ge.useMemo(() => {
     const m = e.formConfig?.showTabbed, w = new URLSearchParams(window.location.search), { formElements: x, tabColumns: g } = Jl({ columns: e.columns, tabs: m ? e.tabs : {}, id: s, searchParams: w });
     return { formElements: x, tabColumns: g, showTabs: m && g.length > 0 };
   }, [e]);
   return /* @__PURE__ */ S("div", { children: [
-    /* @__PURE__ */ a(na, { isAdd: C, formElements: h, model: e, formik: r, data: t, onChange: o, combos: n, lookups: l, fieldConfigs: u, mode: f }),
-    /* @__PURE__ */ a("div", { style: { marginTop: "20px" }, children: /* @__PURE__ */ a(_l, { tabColumns: c, model: e, formik: r, data: t, onChange: o, combos: n, lookups: l, fieldConfigs: u, mode: f, handleSubmit: y }) })
+    /* @__PURE__ */ a(na, { isAdd: C, formElements: h, model: e, formik: r, data: t, onChange: o, combos: n, lookups: l, fieldConfigs: c, mode: f }),
+    /* @__PURE__ */ a("div", { style: { marginTop: "20px" }, children: /* @__PURE__ */ a(_l, { tabColumns: u, model: e, formik: r, data: t, onChange: o, combos: n, lookups: l, fieldConfigs: c, mode: f, handleSubmit: y }) })
   ] });
 };
 function Ql(e) {
@@ -3766,29 +3766,29 @@ function Xl(e) {
 const es = Fn(({ relation: e, parentFilters: r, parent: t, where: n, models: o, readOnly: l }) => {
   const s = o.find(({ name: y }) => y === e);
   if (!s) return null;
-  const u = { ...s, hideBreadcrumb: !0 }, f = u instanceof or ? u : new or(u);
+  const c = { ...s, hideBreadcrumb: !0 }, f = c instanceof or ? c : new or(c);
   return f ? /* @__PURE__ */ a(
     f.ChildGrid,
     {
       readOnly: l,
       parentFilters: r,
       parent: t,
-      model: u,
+      model: c,
       where: n,
       isChildGrid: !0
     }
   ) : null;
 }), ts = yt.memo(({ relations: e, parent: r, where: t = [], models: n, relationFilters: o, readOnly: l }) => {
-  const [s, u] = R(0);
+  const [s, c] = R(0);
   return /* @__PURE__ */ S(nt, { sx: { width: "100%" }, children: [
     /* @__PURE__ */ a(nt, { sx: { borderBottom: 1, borderColor: "divider" }, children: /* @__PURE__ */ a(fi, { value: s, onChange: (y, C) => {
-      u(C);
+      c(C);
     }, "aria-label": "relations tabs", children: e.map((y, C) => {
-      const h = n.find(({ name: m }) => m === y) || {}, c = h.listTitle || h.title || y;
+      const h = n.find(({ name: m }) => m === y) || {}, u = h.listTitle || h.title || y;
       return /* @__PURE__ */ a(
         pi,
         {
-          label: c,
+          label: u,
           ...Xl(C)
         },
         y
@@ -3826,13 +3826,13 @@ const es = Fn(({ relation: e, parentFilters: r, parent: t, where: n, models: o, 
   permissions: o = {},
   Layout: l = Zl,
   baseSaveData: s = {},
-  sx: u,
+  sx: c,
   readOnly: f,
   beforeSubmit: y,
   deletePromptText: C,
   detailPanelId: h = null,
   // Grid Row Detail Panel Id
-  onCancel: c,
+  onCancel: u,
   onSaveSuccess: m
 }) => {
   const w = e.formTitle || e.title, { t: x, i18n: g } = wt(), i = q(() => ({ t: x, i18n: g }), [x, g]), v = e?.tTranslate ?? ((V) => V), { navigate: D, getParams: N, useParams: B, pathname: E } = Vr(), { relations: L = [] } = e, { stateData: re, buildUrl: H, setPageTitle: W } = je(), te = B() || N, { id: Q = "" } = te, I = h || Q.split("-")[be.editIdIndex], ge = new URLSearchParams(window.location.search), ae = ge.has(be.baseData) && ge.get(be.baseData);
@@ -3920,8 +3920,8 @@ const es = Fn(({ relation: e, parentFilters: r, parent: t, where: n, models: o, 
       });
     }
   }), qt = T(() => {
-    Ie.resetForm(), Je(!1), typeof c === be.function && c(), ve !== !1 && Ae();
-  }, [Ie, c, ve, Ae]), dr = T((V, Fe) => {
+    Ie.resetForm(), Je(!1), typeof u === be.function && u(), ve !== !1 && Ae();
+  }, [Ie, u, ve, Ae]), dr = T((V, Fe) => {
     ce(!1), U.showError(v(V, i), Fe), Ae();
   }, [U, Ae, v, i]), At = function({ id: V, title: Fe, record: Z, lookups: Ue }) {
     const $e = Q.indexOf("-") > -1, Me = !V || V === "0", Wt = Me ? be.create : $e ? be.copy : be.edit, Mt = Me ? "" : Z[e.linkColumn], Xe = [{ text: e.breadCrumbs }, { text: Wt }];
@@ -3932,8 +3932,8 @@ const es = Fn(({ relation: e, parentFilters: r, parent: t, where: n, models: o, 
       breadcrumbs: Xe
     });
   }, Pe = T((V) => {
-    Ie.dirty && Ze ? Je(!0) : (typeof c === be.function && c(), ve !== !1 && Ae()), V.preventDefault();
-  }, [Ie.dirty, Ze, c, ve, Ae]), de = T(async () => {
+    Ie.dirty && Ze ? Je(!0) : (typeof u === be.function && u(), ve !== !1 && Ae()), V.preventDefault();
+  }, [Ie.dirty, Ze, u, ve, Ae]), de = T(async () => {
     try {
       O(!0), await $r({
         id: I,
@@ -3978,7 +3978,7 @@ const es = Fn(({ relation: e, parentFilters: r, parent: t, where: n, models: o, 
         enableBackButton: ve !== void 0
       }
     ),
-    /* @__PURE__ */ a(aa.Provider, { value: { activeStep: oe, setActiveStep: Se }, children: /* @__PURE__ */ S(Yo, { sx: { padding: 2, ...u }, children: [
+    /* @__PURE__ */ a(aa.Provider, { value: { activeStep: oe, setActiveStep: Se }, children: /* @__PURE__ */ S(Yo, { sx: { padding: 2, ...c }, children: [
       me ? /* @__PURE__ */ a(nt, { sx: { display: "flex", justifyContent: "center", py: 4 }, children: /* @__PURE__ */ a(_o, {}) }) : /* @__PURE__ */ S("form", { children: [
         /* @__PURE__ */ S(
           Ko,
@@ -4107,16 +4107,16 @@ class or {
     let { api: n, idProperty: o = n + "Id" } = r;
     const l = "module" in r ? r.module : t.replace(/[^\w\s]/gi, "");
     n || (n = `${t.replaceAll(tr.nonAlphaNumeric, "-").toLowerCase()}`, o = t.replaceAll(" ", "") + "Id");
-    const s = { ...r.defaultValues }, u = l || t;
+    const s = { ...r.defaultValues }, c = l || t;
     Object.assign(this, {
       standard: !0,
-      name: u,
+      name: c,
       permissions: { ...or.defaultPermissions },
       idProperty: o,
-      linkColumn: `${u}Name`,
+      linkColumn: `${c}Name`,
       overrideFileName: t,
-      preferenceId: u,
-      tableName: u,
+      preferenceId: c,
+      tableName: c,
       module: l,
       ...r,
       api: n
@@ -4138,29 +4138,29 @@ class or {
   getValidationSchema({ id: r, tTranslate: t = (o) => o, tOpts: n = {} } = {}) {
     const { columns: o } = this, l = {};
     for (const s of o) {
-      const { field: u, label: f, header: y, type: C = "string", requiredIfNew: h = !1, required: c = !1, min: m = "", max: w = "", validate: x } = s, g = f || y || u;
+      const { field: c, label: f, header: y, type: C = "string", requiredIfNew: h = !1, required: u = !1, min: m = "", max: w = "", validate: x } = s, g = f || y || c;
       if (!g || f === null || f === "") continue;
       let i;
       switch (C) {
         case "string":
-          i = he.string().nullable().trim().label(g), m && !isNaN(Number(m)) && (i = i.min(Number(m), t(`${g} must be at least ${m} characters long`, n))), w && !isNaN(Number(w)) && (i = i.max(Number(w), t(`${g} must be at most ${w} characters long`, n))), c && (i = i.trim().required(t(`${g} is required`, n)));
+          i = he.string().nullable().trim().label(g), m && !isNaN(Number(m)) && (i = i.min(Number(m), t(`${g} must be at least ${m} characters long`, n))), w && !isNaN(Number(w)) && (i = i.max(Number(w), t(`${g} must be at most ${w} characters long`, n))), u && (i = i.trim().required(t(`${g} is required`, n)));
           break;
         case "boolean":
           i = he.bool().nullable().transform((v, D) => D === "" ? null : v).label(g);
           break;
         case "radio":
         case "dayRadio":
-          i = he.mixed().label(g), c && (i = i.required(t(`Select at least one option for ${g}`, n)));
+          i = he.mixed().label(g), u && (i = i.required(t(`Select at least one option for ${g}`, n)));
           break;
         case "date":
-          i = he.date().nullable().transform((v, D) => D === "" || D === null ? null : v).label(g), c && (i = i.required(t(`${g} is required`, n)));
+          i = he.date().nullable().transform((v, D) => D === "" || D === null ? null : v).label(g), u && (i = i.required(t(`${g} is required`, n)));
           break;
         case "dateTime":
-          i = he.date().nullable().transform((v, D) => D === "" || D === null ? null : v).label(g), c && (i = i.required(t(`${g} is required`, n)));
+          i = he.date().nullable().transform((v, D) => D === "" || D === null ? null : v).label(g), u && (i = i.required(t(`${g} is required`, n)));
           break;
         case "select":
         case "autocomplete":
-          c ? i = he.string().trim().label(g).required(t(`Select at least one ${g}`, n)) : i = he.string().nullable();
+          u ? i = he.string().trim().label(g).required(t(`Select at least one ${g}`, n)) : i = he.string().nullable();
           break;
         case "password":
           i = he.string().label(g).test("ignore-asterisks", t(`${g} must be a valid password.`, n), (v) => {
@@ -4179,7 +4179,7 @@ class or {
           );
           break;
         case "number":
-          c ? i = he.number().label(g).required(t(`${g} is required.`, n)) : i = he.number().nullable(), m !== void 0 && m !== "" && !isNaN(Number(m)) && (i = i.min(Number(m), t(`${g} must be greater than or equal to ${m}`, n))), w !== void 0 && w !== "" && !isNaN(Number(w)) && (i = i.max(Number(w), t(`${g} must be less than or equal to ${w}`, n)));
+          u ? i = he.number().label(g).required(t(`${g} is required.`, n)) : i = he.number().nullable(), m !== void 0 && m !== "" && !isNaN(Number(m)) && (i = i.min(Number(m), t(`${g} must be greater than or equal to ${m}`, n))), w !== void 0 && w !== "" && !isNaN(Number(w)) && (i = i.max(Number(w), t(`${g} must be less than or equal to ${w}`, n)));
           break;
         case "fileUpload":
           i = he.string().trim().label(g);
@@ -4188,7 +4188,7 @@ class or {
           i = he.mixed().nullable().label(g);
           break;
       }
-      if (c && C !== "string" && (i = i.required(t(`${g} is required`, n))), h && (!r || r === "") && (i = i.trim().required(t(`${g} is required`, n))), x) {
+      if (u && C !== "string" && (i = i.required(t(`${g} is required`, n))), h && (!r || r === "") && (i = i.trim().required(t(`${g} is required`, n))), x) {
         const v = tr.compareValidatorRegex.exec(x);
         if (v) {
           const D = v[1], N = o.find(
@@ -4200,7 +4200,7 @@ class or {
           );
         }
       }
-      l[u] = i;
+      l[c] = i;
     }
     return he.object({ ...l, ...this.validationSchema });
   }
