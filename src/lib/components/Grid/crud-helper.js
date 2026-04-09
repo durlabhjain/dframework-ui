@@ -126,7 +126,7 @@ const getList = async (props = {}) => {
     if (contentType) {
         requestData.responseType = contentType;
         requestData.columns = columns;
-        requestData.userTimezoneOffset = -new Date().getTimezoneOffset(); // Negate to get the correct offset for conversion
+        requestData.userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         if (typeof model.createRequestPayload === 'function') {
             await model.createRequestPayload(requestData, { where, url, dataParsers: DATA_PARSERS, ...props });
         }
