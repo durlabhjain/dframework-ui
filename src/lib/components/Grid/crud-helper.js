@@ -181,16 +181,16 @@ const getList = async (props = {}) => {
         const context = await executeRequestHook(model, {
             where,
             url,
-            requestData,
             dataParsers: DATA_PARSERS,
+            ...{ requestData, columns },
             ...props
         }, { action, dataParsers: DATA_PARSERS, ...props });
 
         // Apply potentially modified values to requestData
         const finalRequestData = {
             ...context.requestData,
+            columns: context.columns,
             responseType: contentType,
-            columns,
             userTimezoneOffset: -new Date().getTimezoneOffset(), // Negate to get the correct offset for conversion
             where: context.where
         };
@@ -233,18 +233,15 @@ const getList = async (props = {}) => {
         ...props
     }, { action, dataParsers: DATA_PARSERS, ...props });
 
-    // Build final request params from potentially modified context
+    // Build final request params from potentially modified context.
+    // Hooks may override jsonPayload, params, dataParser, or additionalHeaders
+    // on the context to customise HTTP behaviour (e.g. FormData for legacy controllers).
     const reqParams = {
         url: context.url,
-        additionalHeaders: {
-            "Content-Type": "application/json"
-        },
-        jsonPayload: true,
-        params: {
-            ...context.requestData,
-            where: context.where
-        },
-        dataParser: DATA_PARSERS.json,
+        additionalHeaders: context.additionalHeaders ?? { "Content-Type": "application/json" },
+        jsonPayload: context.jsonPayload ?? true,
+        params: context.params ?? { ...context.requestData, where: context.where },
+        dataParser: context.dataParser ?? DATA_PARSERS.json,
         signal
     };
 
@@ -314,11 +311,14 @@ const getRecord = async (props = {}) => {
         ...props
     }, { action: 'load', dataParsers: DATA_PARSERS, ...props });
 
-    // Build final request data from potentially modified context
+    // Build final request data from potentially modified context.
+    // Hooks may set params, jsonPayload, or dataParser on context for non-REST controllers.
     const requestData = {
         url: context.url,
         method: context.method,
-        jsonPayload: true
+        jsonPayload: context.jsonPayload ?? true,
+        ...(context.params && { params: context.params }),
+        ...(context.dataParser && { dataParser: context.dataParser }),
     };
 
     const response = await request(requestData);
@@ -363,7 +363,8 @@ const deleteRecord = async function (props = {}) {
         ...props
     }, { action: 'delete', dataParsers: DATA_PARSERS, ...props });
 
-    // Build final request data from potentially modified context
+    // Build final request data from potentially modified context.
+    // Hooks may set params or jsonPayload for non-REST controllers.
     const requestData = {
         url: context.url,
         method: context.method
@@ -407,7 +408,8 @@ const saveRecord = async function (props = {}) {
         method: context.method,
         params: context.params,
         additionalHeaders: context.additionalHeaders,
-        jsonPayload: true
+        jsonPayload: context.jsonPayload ?? true,
+        ...(context.dataParser && { dataParser: context.dataParser }),
     };
 
     const response = await request(requestData);
@@ -437,11 +439,14 @@ const getLookups = async (props = {}) => {
         ...props
     }, { action: 'lookups', dataParsers: DATA_PARSERS, ...props });
 
-    // Build final request data from potentially modified context
+    // Build final request data from potentially modified context.
+    // Hooks may set params or jsonPayload for non-REST controllers.
     const requestData = {
         url: context.url,
         method: context.method,
-        jsonPayload: true
+        jsonPayload: context.jsonPayload ?? true,
+        ...(context.params && { params: context.params }),
+        ...(context.dataParser && { dataParser: context.dataParser }),
     };
 
     const response = await request(requestData);
