@@ -126,7 +126,12 @@ const getList = async (props = {}) => {
     if (contentType) {
         requestData.responseType = contentType;
         requestData.columns = columns;
+        // IANA timezone string is preferred over a numeric offset because the offset changes with DST
+        // (e.g. America/New_York is UTC-5 in winter and UTC-4 in summer). Sending the IANA name lets
+        // the server derive the correct offset for any date in the export range.
+        // userTimezoneOffset is kept for backward compatibility with servers that haven't yet migrated.
         requestData.userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        requestData.userTimezoneOffset = new Date().getTimezoneOffset();
         if (typeof model.createRequestPayload === 'function') {
             await model.createRequestPayload(requestData, { where, url, dataParsers: DATA_PARSERS, ...props });
         }
