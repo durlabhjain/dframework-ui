@@ -28,6 +28,9 @@ async function executeRequestHook(model, context, metadata) {
     if (typeof model.createRequestPayload === 'function') {
         await model.createRequestPayload(context, metadata);
     }
+
+    
+    
     return context;
 }
 
@@ -181,8 +184,9 @@ const getList = async (props = {}) => {
         const context = await executeRequestHook(model, {
             where,
             url,
+            requestData,
             dataParsers: DATA_PARSERS,
-            ...{ requestData, columns },
+            columns,
             ...props
         }, { action, dataParsers: DATA_PARSERS, ...props });
 
@@ -230,6 +234,11 @@ const getList = async (props = {}) => {
         url,
         requestData,
         dataParsers: DATA_PARSERS,
+        dataParser: DATA_PARSERS.json,
+        jsonPayload: true,
+        additionalHeaders: {
+            "Content-Type": "application/json"
+        },
         ...props
     }, { action, dataParsers: DATA_PARSERS, ...props });
 
@@ -238,10 +247,10 @@ const getList = async (props = {}) => {
     // on the context to customise HTTP behaviour (e.g. FormData for legacy controllers).
     const reqParams = {
         url: context.url,
-        additionalHeaders: context.additionalHeaders ?? { "Content-Type": "application/json" },
-        jsonPayload: context.jsonPayload ?? true,
+        additionalHeaders: context.additionalHeaders,
+        jsonPayload: context.jsonPayload,
         params: context.params ?? { ...context.requestData, where: context.where },
-        dataParser: context.dataParser ?? DATA_PARSERS.json,
+        dataParser: context.dataParser,
         signal
     };
 
@@ -435,6 +444,8 @@ const getLookups = async (props = {}) => {
         lookups,
         scopeId,
         dataParsers: DATA_PARSERS,
+        dataParser: DATA_PARSERS.json,
+        jsonPayload: true,
         ...reqData,
         ...props
     }, { action: 'lookups', dataParsers: DATA_PARSERS, ...props });
@@ -444,9 +455,9 @@ const getLookups = async (props = {}) => {
     const requestData = {
         url: context.url,
         method: context.method,
-        jsonPayload: context.jsonPayload ?? true,
-        ...(context.params && { params: context.params }),
-        ...(context.dataParser && { dataParser: context.dataParser }),
+        jsonPayload: context.jsonPayload,
+        params: context.params,
+        dataParser: context.dataParser
     };
 
     const response = await request(requestData);
