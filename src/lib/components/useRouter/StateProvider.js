@@ -108,12 +108,12 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     if (!value) return null;
     const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state); // Pass 'state' as an argument
     if(localize) {
-      return dayjs.utc(value).format(format);
+      if (!timeZone) {
+        return dayjs.utc(value).format(format);
+      }
+      return dayjs.utc(value).tz(timeZone).format(format);
     }
-    if (!timeZone) {
-      return dayjs(value).format(format);
-    }
-    return dayjs(value).tz(timeZone).format(format);
+    return dayjs(value).format(format);
   }, [systemDateTimeFormat]);
 
   /**
