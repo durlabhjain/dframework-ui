@@ -24,14 +24,19 @@ function shouldApplyFilter(filter) {
  * @param {Object} metadata - Additional metadata (action, dataParsers, props, etc.)
  * @returns {Promise<Object>} The potentially modified context object
  */
-async function executeRequestHook(model, context, metadata) {
+async function executeRequestHook(model, context, metadata = {}) {
     if (typeof model.createRequestPayload === 'function') {
         await model.createRequestPayload(context, metadata);
     }
 
-    
-    
-    return context;
+    return {
+        url: context.url,
+        additionalHeaders: context.additionalHeaders,
+        jsonPayload: context.jsonPayload,
+        params: context.params ?? { ...context.requestData, where: context.where },
+        dataParser: context.dataParser,
+        signal: context.signal
+    };
 }
 
 /**
@@ -187,12 +192,13 @@ const getList = async (props = {}) => {
             requestData,
             dataParsers: DATA_PARSERS,
             columns,
+            action,
             ...props
-        }, { action, dataParsers: DATA_PARSERS, ...props });
+        });
 
         // Apply potentially modified values to requestData
         const finalRequestData = {
-            ...context.requestData,
+            ...context.params,
             columns: context.columns,
             responseType: contentType,
             userTimezoneOffset: -new Date().getTimezoneOffset(), // Negate to get the correct offset for conversion
@@ -236,25 +242,15 @@ const getList = async (props = {}) => {
         dataParsers: DATA_PARSERS,
         dataParser: DATA_PARSERS.json,
         jsonPayload: true,
+        action,
+        signal,
         additionalHeaders: {
             "Content-Type": "application/json"
         },
         ...props
-    }, { action, dataParsers: DATA_PARSERS, ...props });
+    });
 
-    // Build final request params from potentially modified context.
-    // Hooks may override jsonPayload, params, dataParser, or additionalHeaders
-    // on the context to customise HTTP behaviour (e.g. FormData for legacy controllers).
-    const reqParams = {
-        url: context.url,
-        additionalHeaders: context.additionalHeaders,
-        jsonPayload: context.jsonPayload,
-        params: context.params ?? { ...context.requestData, where: context.where },
-        dataParser: context.dataParser,
-        signal
-    };
-
-    const response = await request(reqParams);
+    const response = await request(context);
 
     if (response?.aborted) {
         return response;
@@ -316,21 +312,12 @@ const getRecord = async (props = {}) => {
         method: 'GET',
         where,
         lookupsToFetch,
+        action: 'load',
         dataParsers: DATA_PARSERS,
         ...props
-    }, { action: 'load', dataParsers: DATA_PARSERS, ...props });
+    });
 
-    // Build final request data from potentially modified context.
-    // Hooks may set params, jsonPayload, or dataParser on context for non-REST controllers.
-    const requestData = {
-        url: context.url,
-        method: context.method,
-        jsonPayload: context.jsonPayload ?? true,
-        ...(context.params && { params: context.params }),
-        ...(context.dataParser && { dataParser: context.dataParser }),
-    };
-
-    const response = await request(requestData);
+    const response = await request(context);
     validateResponse(response, 'Load failed');
 
     // Execute response hook if defined
@@ -369,17 +356,11 @@ const deleteRecord = async function (props = {}) {
         url: `${api}/${id}`,
         method: 'DELETE',
         dataParsers: DATA_PARSERS,
+        action: 'delete',
         ...props
-    }, { action: 'delete', dataParsers: DATA_PARSERS, ...props });
+    });
 
-    // Build final request data from potentially modified context.
-    // Hooks may set params or jsonPayload for non-REST controllers.
-    const requestData = {
-        url: context.url,
-        method: context.method
-    };
-
-    const response = await request(requestData);
+    const response = await request(context);
     validateResponse(response, 'Delete failed');
     return true;
 };
@@ -404,24 +385,15 @@ const saveRecord = async function (props = {}) {
         url,
         method,
         params: values,
+        action: 'save',
         additionalHeaders: {
             'Content-Type': 'application/json'
         },
         dataParsers: DATA_PARSERS,
         ...props
-    }, { action: 'save', dataParsers: DATA_PARSERS, ...props });
+    });
 
-    // Build final request data from potentially modified context
-    const requestData = {
-        url: context.url,
-        method: context.method,
-        params: context.params,
-        additionalHeaders: context.additionalHeaders,
-        jsonPayload: context.jsonPayload ?? true,
-        ...(context.dataParser && { dataParser: context.dataParser }),
-    };
-
-    const response = await request(requestData);
+    const response = await request(context);
     validateResponse(response, 'Save failed');
     return response;
 };
@@ -446,21 +418,12 @@ const getLookups = async (props = {}) => {
         dataParsers: DATA_PARSERS,
         dataParser: DATA_PARSERS.json,
         jsonPayload: true,
+        action: 'lookups',
         ...reqData,
         ...props
-    }, { action: 'lookups', dataParsers: DATA_PARSERS, ...props });
+    });
 
-    // Build final request data from potentially modified context.
-    // Hooks may set params or jsonPayload for non-REST controllers.
-    const requestData = {
-        url: context.url,
-        method: context.method,
-        jsonPayload: context.jsonPayload,
-        params: context.params,
-        dataParser: context.dataParser
-    };
-
-    const response = await request(requestData);
+    const response = await request(context);
     validateResponse(response, 'Could not load lookups');
 
     // Execute response hook if defined
