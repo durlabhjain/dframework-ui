@@ -162,6 +162,7 @@ const GridBase = memo(({
     onRowClick = () => { },
     gridStyle,
     gridData,
+    gridLookups,
     reRenderKey,
     additionalFilters,
     onCellDoubleClickOverride,
@@ -190,7 +191,7 @@ const GridBase = memo(({
     const visibilityModel = { CreatedOn: false, CreatedByUser: false, ...model.columnVisibilityModel };
     const [showAddConfirmation, setShowAddConfirmation] = useState(false);
     const snackbar = useSnackbar();
-    const paginationMode = model.paginationMode === constants.client ? constants.client : constants.server;
+    const paginationMode = Array.isArray(gridData) || model.paginationMode === constants.client ? constants.client : constants.server;
     const { t: translate, i18n } = useTranslation();
     const tOpts = useMemo(() => ({ t: translate, i18n }), [translate, i18n]);
     const [errorMessage, setErrorMessage] = useState('');
@@ -223,7 +224,12 @@ const GridBase = memo(({
     const { stateData, formatDate, getApiEndpoint, buildUrl, setPageTitle } = useStateContext();
     const [isLoading, setIsLoading] = useState(false);
     const { timeZone } = stateData;
-    const effectivePermissions = useMemo(() => ({ ...constants.permissions, ...model.permissions, ...permissions }), [model.permissions, permissions]);
+    const effectivePermissions = useMemo(() => ({
+        ...constants.permissions,
+        ...model.permissions,
+        ...permissions,
+        ...(Array.isArray(gridData) && { export: false })
+    }), [model.permissions, permissions, gridData]);
     const emptyIsAnyOfOperatorFilters = ["isEmpty", "isNotEmpty", "isAnyOf"];
     const userData = stateData.userData || {};
     const documentField = model.columns.find(ele => ele.type === 'fileUpload')?.field || "";
@@ -273,9 +279,14 @@ const GridBase = memo(({
 
     useEffect(() => {
         if(Array.isArray(gridData)){
-            setData(prev => ({ ...prev, records: gridData, recordCount: gridData.length }));
+            setData(prev => ({
+                ...prev,
+                records: gridData,
+                recordCount: gridData.length,
+                ...(gridLookups && { lookups: gridLookups })
+            }));
         }
-    }, [gridData]);
+    }, [gridData, gridLookups]);
 
     const baseDataFromParams = searchParams.has('baseData') && searchParams.get('baseData');
     const baseSaveData = useMemo(() => {
