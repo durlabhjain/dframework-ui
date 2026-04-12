@@ -97,7 +97,9 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   *
   * @param {Object} params - The parameters object.
   * @param {string|Date} params.value - The date value to format.
-  *   - Strings are always parsed as UTC (server-sent ISO strings are assumed to be UTC).
+  *   - Strings are always parsed as local time (display as-is). This ensures date-only values
+  *     like "2000-01-01" are never shifted by UTC offset. When `localize=true`, timezone
+  *     conversion is applied on top of the parsed local value.
   *   - Date objects behave differently based on `localize`:
   *     * localize=true  → raw UTC Date (as produced by crud-helper); parsed with dayjs.utc().
   *     * localize=false → offset-adjusted Date (pre-shifted by crud-helper); parsed with dayjs().
@@ -111,14 +113,13 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, localize = false }) => {
     if (!value) return null;
     const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state);
-    const isStringValue = typeof value === 'string';
+    // Strings are always parsed as local time to display the value as-is (no UTC offset shift).
+    // Date objects from crud-helper are raw UTC when localize=true, or pre-adjusted when localize=false.
+    const dayjsValue = (typeof value !== 'string' && localize) ? dayjs.utc(value) : dayjs(value);
     if (localize) {
-      if (!timeZone) {
-        return isStringValue ? dayjs(value).local().format(format) : dayjs.utc(value).local().format(format);
-      }
-      return isStringValue ? dayjs(value).tz(timeZone).format(format) : dayjs.utc(value).tz(timeZone).format(format);
+      return timeZone ? dayjsValue.tz(timeZone).format(format) : dayjsValue.local().format(format);
     }
-    return isStringValue ? dayjs.utc(value).format(format) : dayjs(value).format(format);
+    return dayjsValue.format(format);
   }, [systemDateTimeFormat]);
 
   /**
