@@ -111,14 +111,14 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, localize = false }) => {
     if (!value) return null;
     const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state);
-    // Normalize value upfront to a single dayjs object:
-    // - Strings and localize=true Date objects are raw UTC → parse with dayjs.utc().
-    // - localize=false Date objects are already offset-adjusted by crud-helper → parse with dayjs().
-    const dayjsValue = (typeof value === 'string' || localize) ? dayjs.utc(value) : dayjs(value);
+    const isStringValue = typeof value === 'string';
     if (localize) {
-      return timeZone ? dayjsValue.tz(timeZone).format(format) : dayjsValue.local().format(format);
+      if (!timeZone) {
+        return isStringValue ? dayjs(value).local().format(format) : dayjs.utc(value).local().format(format);
+      }
+      return isStringValue ? dayjs(value).tz(timeZone).format(format) : dayjs.utc(value).tz(timeZone).format(format);
     }
-    return dayjsValue.format(format);
+    return isStringValue ? dayjs.utc(value).format(format) : dayjs(value).format(format);
   }, [systemDateTimeFormat]);
 
   /**
