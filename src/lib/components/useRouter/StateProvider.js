@@ -97,9 +97,13 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   *
   * @param {Object} params - The parameters object.
   * @param {string|Date} params.value - The date value to format.
-  *   - Strings are always parsed as local time (display as-is). This ensures date-only values
-  *     like "2000-01-01" are never shifted by UTC offset. When `localize=true`, timezone
-  *     conversion is applied on top of the parsed local value.
+  *   - Strings without explicit timezone info (e.g. "2000-01-01", "2000-01-01T00:00:00") are
+  *     parsed as local time and displayed as-is. This ensures plain date values like birthdays
+  *     are never shifted by UTC offset.
+  *   - Strings with an explicit UTC marker or offset (e.g. "2000-01-01T00:00:00Z",
+  *     "2000-01-01T00:00:00+05:30") are parsed as UTC/offset-aware:
+  *     * localize=false → displayed in UTC (no conversion).
+  *     * localize=true  → converted to the target timezone/local time.
   *   - Date objects behave differently based on `localize`:
   *     * localize=true  → raw UTC Date (as produced by crud-helper); parsed with dayjs.utc().
   *     * localize=false → offset-adjusted Date (pre-shifted by crud-helper); parsed with dayjs().
@@ -113,9 +117,15 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, localize = false }) => {
     if (!value) return null;
     const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state);
-    // Strings are always parsed as local time to display the value as-is (no UTC offset shift).
-    // Date objects from crud-helper are raw UTC when localize=true, or pre-adjusted when localize=false.
-    const dayjsValue = (typeof value !== 'string' && localize) ? dayjs.utc(value) : dayjs(value);
+    const isStringValue = typeof value === 'string';
+    // Detect strings that carry explicit UTC/offset info (e.g. "...Z" or "...+05:30").
+    // Plain strings (date-only or no-tz datetime) are treated as local to display as-is.
+    const hasExplicitTz = isStringValue && /Z$|[+-]\d{2}:?\d{2}$/.test(value);
+    // Use dayjs.utc when: Date object + localize=true (raw UTC from crud-helper),
+    //                  or UTC/offset string + localize=false (preserve the UTC display value).
+    const dayjsValue = (!isStringValue && localize) || (!localize && hasExplicitTz)
+      ? dayjs.utc(value)
+      : dayjs(value);
     if (localize) {
       return timeZone ? dayjsValue.tz(timeZone).format(format) : dayjsValue.local().format(format);
     }
