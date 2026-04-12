@@ -97,6 +97,10 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   *
   * @param {Object} params - The parameters object.
   * @param {string|Date} params.value - The date value to format.
+  *   - Strings are always parsed as UTC (server-sent ISO strings are assumed to be UTC).
+  *   - Date objects behave differently based on `localize`:
+  *     * localize=true  → raw UTC Date (as produced by crud-helper); parsed with dayjs.utc().
+  *     * localize=false → offset-adjusted Date (pre-shifted by crud-helper); parsed with dayjs().
   * @param {boolean} params.useSystemFormat - Whether to use the system date format.
   * @param {boolean} [params.showOnlyDate=false] - Whether to show only the date part.
   * @param {string|null|undefined} params.state - The user-defined date/time format string.
@@ -106,15 +110,15 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   */
   const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, localize = false }) => {
     if (!value) return null;
-    const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state); // Pass 'state' as an argument
-    const isStringValue = typeof value === 'string';
+    const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state);
+    // Normalize value upfront to a single dayjs object:
+    // - Strings and localize=true Date objects are raw UTC → parse with dayjs.utc().
+    // - localize=false Date objects are already offset-adjusted by crud-helper → parse with dayjs().
+    const dayjsValue = (typeof value === 'string' || localize) ? dayjs.utc(value) : dayjs(value);
     if (localize) {
-      if (!timeZone) {
-        return isStringValue ? dayjs(value).local().format(format) : dayjs.utc(value).local().format(format);
-      }
-      return isStringValue ? dayjs(value).tz(timeZone).format(format) : dayjs.utc(value).tz(timeZone).format(format);
+      return timeZone ? dayjsValue.tz(timeZone).format(format) : dayjsValue.local().format(format);
     }
-    return isStringValue ? dayjs.utc(value).format(format) : dayjs(value).format(format);
+    return dayjsValue.format(format);
   }, [systemDateTimeFormat]);
 
   /**
