@@ -26,13 +26,13 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   const [pageBackButton, setPageBackButtonState] = useState(null);
   const [userData, setUserDataState] = useState(null);
   const [timeZone, setTimeZoneState] = useState('');
-  
+
   // Framework functionality - loader management (simple on/off, no counter)
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Framework functionality - i18n
   const { t, i18n } = useTranslation();
-  
+
   // Framework functionality - snackbar
   const snackbar = useSnackbar();
 
@@ -107,13 +107,14 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, localize = false }) => {
     if (!value) return null;
     const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state); // Pass 'state' as an argument
-    if(localize) {
+    const isStringValue = typeof value === 'string';
+    if (localize) {
       if (!timeZone) {
-        return dayjs.utc(value).local().format(format);
+        return isStringValue ? dayjs(value).local().format(format) : dayjs.utc(value).local().format(format);
       }
-      return dayjs.utc(value).tz(timeZone).format(format);
+      return isStringValue ? dayjs(value).tz(timeZone).format(format) : dayjs.utc(value).tz(timeZone).format(format);
     }
-    return dayjs(value).format(format);
+    return isStringValue ? dayjs.utc(value).format(format) : dayjs(value).format(format);
   }, [systemDateTimeFormat]);
 
   /**
@@ -193,30 +194,30 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   const contextValue = useMemo(() => ({
     // State data
     stateData,
-    
+
     // Loader management
     isLoading,
     showLoader,
-    
+
     // Snackbar utilities
     showMessage: snackbar?.showMessage || snackbarWarning,
     showError: snackbar?.showError || snackbarWarning,
-    
+
     // i18n utilities
     dayjs,
     t,
     i18n,
-    
+
     // Date/time utilities
     systemDateTimeFormat,
     formatDate,
     useLocalization,
-    
+
     // API utilities
     getApiEndpoint,
     setApiEndpoint,
     buildUrl,
-    
+
     // App-level state setters with meaningful names
     setLocale,
     setPageTitle,
@@ -226,8 +227,8 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     setDateTimeFormat,
     setModal
   }), [stateData, isLoading, showLoader, t, i18n, snackbar,
-       getApiEndpoint, setApiEndpoint, systemDateTimeFormat, formatDate, useLocalization,
-       setLocale, setPageTitle, setPageBackButton, setUserData, setTimeZone, setDateTimeFormat, setModal, buildUrl]);
+    getApiEndpoint, setApiEndpoint, systemDateTimeFormat, formatDate, useLocalization,
+    setLocale, setPageTitle, setPageBackButton, setUserData, setTimeZone, setDateTimeFormat, setModal, buildUrl]);
 
   return (
     <StateContext.Provider value={contextValue}>
