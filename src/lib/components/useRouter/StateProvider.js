@@ -92,29 +92,30 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     return isDateFormatOnly?.split(' ')[0] || 'DD-MM-YYYY';
   }, []);
 
-  /**
-  * Formats a date value using system or user-defined format with optional timezone and UTC handling.
-  *
-  * @param {Object} params - The parameters object.
-  * @param {string|Date} params.value - The date value to format.
-  *   - Strings without explicit timezone info (e.g. "2000-01-01", "2000-01-01T00:00:00") are
-  *     parsed as local time and displayed as-is. This ensures plain date values like birthdays
-  *     are never shifted by UTC offset.
-  *   - Strings with an explicit UTC marker or offset (e.g. "2000-01-01T00:00:00Z",
-  *     "2000-01-01T00:00:00+05:30") are parsed as UTC/offset-aware:
-  *     * localize=false → displayed in UTC (no conversion).
-  *     * localize=true  → converted to the target timezone/local time.
-  *   - Date objects behave differently based on `localize`:
-  *     * localize=true  → raw UTC Date (as produced by crud-helper); parsed with dayjs.utc().
-  *     * localize=false → offset-adjusted Date (pre-shifted by crud-helper); parsed with dayjs().
-  * @param {boolean} params.useSystemFormat - Whether to use the system date format.
-  * @param {boolean} [params.showOnlyDate=false] - Whether to show only the date part.
-  * @param {string|null|undefined} params.state - The user-defined date/time format string.
-  * @returns {string|null} The formatted date string, or `null` if value is falsy.
-  */
+/**
+   * Formats a date or date-string into a localized or system-defined string format.
+   * * @param {Object} params - The formatting configuration.
+   * @param {string|Date|dayjs.Dayjs} params.value - The date value to format. 
+   * - Strings without offsets are treated as local time.
+   * - Strings with offsets/Z are parsed as specific points in time.
+   * @param {boolean} params.useSystemFormat - If true, ignores `state` and uses the 
+   * globally configured system date/time format.
+   * @param {boolean} [params.showOnlyDate=false] - If true, excludes the time portion 
+   * from the resulting string.
+   * @param {string|null|undefined} params.state - A custom format string (e.g., "DD/MM/YYYY") 
+   * used if `useSystemFormat` is false.
+   * * @returns {string|null} The formatted date string, or `null` if the input value is falsy.
+   * * @example
+   * formatDate({ value: '2023-10-01', useSystemFormat: true });
+   * // Returns "Oct 1, 2023" (depending on system settings)
+   */
   const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state }) => {
     if (!value) return null;
-    const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state); // Pass 'state' as an argument
+
+    // Get the appropriate format string based on system settings or user preference
+    const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state);
+
+    // Parse and format using dayjs
     return dayjs(value).format(format);
   }, [systemDateTimeFormat]);
 
