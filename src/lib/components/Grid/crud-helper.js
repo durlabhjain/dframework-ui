@@ -15,6 +15,72 @@ function shouldApplyFilter(filter) {
     return isUnaryOperator || hasValidValue;
 }
 
+/**
+ * Executes the createRequestPayload hook if defined on the model.
+ * This helper consolidates the duplicate pattern of building context and calling the hook.
+ *
+ * @param {Object} model - The UiModel instance
+ * @param {Object} context - The context object containing request parameters (url, where, requestData, etc.)
+ * @param {Object} metadata - Additional metadata (action, dataParsers, props, etc.)
+ * @returns {Promise<Object>} The potentially modified context object
+ */
+async function executeRequestHook(model, context, metadata = {}) {
+    if (typeof model.createRequestPayload === 'function') {
+        await model.createRequestPayload(context, metadata);
+    }
+    const data = {
+        url: context.url,
+        method: context.method,
+        jsonPayload: context.jsonPayload,
+        dataParser: context.dataParser,
+        signal: context.signal,
+        responseType: context.responseType,
+        columns: context.columns
+    };
+    if (context.action !== 'load' || context.method !== 'GET') {
+        data.params = context.params ?? { ...context.requestData, where: context.where };
+    }
+
+    return data;
+}
+
+/**
+ * Executes the parseResponsePayload hook if defined on the model and action is supported.
+ * This helper consolidates the duplicate pattern of checking and calling the response hook.
+ *
+ * @param {Object} model - The UiModel instance
+ * @param {string} action - The action being performed (list, load, lookups, etc.)
+ * @param {Object} responseData - The response from the API
+ * @param {Object} context - Additional context to pass to the hook (dateColumns, props, etc.)
+ * @returns {Promise<Object>} The potentially transformed response data
+ */
+async function executeResponseHook(model, action, responseData, context = {}) {
+    if (typeof model.parseResponsePayload === 'function' &&
+        model.parseResponseActions?.includes(action)) {
+        return await model.parseResponsePayload({
+            responseData,
+            model,
+            action,
+            ...context
+        });
+    }
+    return responseData;
+}
+
+/**
+ * Validates the response and throws an error if the response indicates failure.
+ * This helper consolidates the duplicate error checking pattern.
+ *
+ * @param {Object} response - The response object to validate
+ * @param {string} defaultMessage - The default error message if none is provided
+ * @throws {Error} If the response contains an error or success is false
+ */
+function validateResponse(response, defaultMessage) {
+    if (response?.error || response?.success === false) {
+        throw new Error(getErrorMessage(response) || defaultMessage);
+    }
+}
+
 const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, baseFilters, action = 'list', extraParams = {}, model, api }) => {
     const isElasticExport = action === 'export' && model.isElasticExport === true;
 
@@ -69,7 +135,7 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
         ...extraParams,
         logicalOperator: filterModel.logicOperator,
         sort: sortModel.map(sort => (sort.filterField || sort.field) + ' ' + sort.sort).join(','),
-        where,
+        // Note: where is excluded here and returned separately to allow modification via createRequestPayload hook
         isElasticExport,
         model: model.module,
         fileName: model.overrideFileName
@@ -124,17 +190,25 @@ const getList = async (props = {}) => {
     const { requestData, url, where, dateColumns } = buildRequestData(props);
 
     if (contentType) {
-        requestData.responseType = contentType;
-        requestData.columns = columns;
-        // IANA timezone string is preferred over a numeric offset because the offset changes with DST
-        // (e.g. America/New_York is UTC-5 in winter and UTC-4 in summer). Sending the IANA name lets
-        // the server derive the correct offset for any date in the export range.
-        // userTimezoneOffset is kept for backward compatibility with servers that haven't yet migrated.
-        requestData.userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        requestData.userTimezoneOffset = new Date().getTimezoneOffset();
-        if (typeof model.createRequestPayload === 'function') {
-            await model.createRequestPayload(requestData, { where, url, dataParsers: DATA_PARSERS, ...props });
-        }
+        // Build context object and execute request hook
+        const context = await executeRequestHook(model, {
+            where,
+            url,
+            requestData,
+            dataParsers: DATA_PARSERS,
+            responseType: contentType,
+            columns,
+            action,
+            ...props
+        });
+
+        // Apply potentially modified values to requestData
+        const finalRequestData = {
+            ...context.params,
+            columns: context.columns,
+            responseType: context.responseType
+        };
+
         const form = document.createElement("form");
         form.setAttribute("method", "POST");
         form.setAttribute("id", "exportForm");
@@ -143,8 +217,8 @@ const getList = async (props = {}) => {
         // Request data (where, sort, limit, etc.) is intentionally omitted — the template
         // defines the data shape and filtering on the server side.
         if (!extraParams.template) {
-            for (const key in requestData) {
-                let v = requestData[key];
+            for (const key in finalRequestData) {
+                let v = finalRequestData[key];
                 if (v === undefined || v === null) {
                     continue;
                 } else if (typeof v !== 'string') {
@@ -157,43 +231,41 @@ const getList = async (props = {}) => {
                 form.append(hiddenTag);
             }
         }
-        form.setAttribute('action', requestData.url || url);
+        form.setAttribute('action', context.url);
         document.body.appendChild(form);
         form.submit();
         setTimeout(() => { form.remove(); }, 0);
         return;
     }
 
-    const reqParams = {
+    // Build context object and execute request hook
+    const context = await executeRequestHook(model, {
+        where,
         url,
+        requestData,
+        dataParsers: DATA_PARSERS,
+        dataParser: DATA_PARSERS.json,
+        jsonPayload: true,
+        action,
+        signal,
         additionalHeaders: {
             "Content-Type": "application/json"
         },
-        jsonPayload: true,
-        params: requestData,
-        dataParser: DATA_PARSERS.json,
-        signal
-    };
+        ...props
+    });
 
-    // for manipulating the request payload before sending the request.
-    if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(reqParams, { where, dataParsers: DATA_PARSERS, ...props });
-    }
-    const response = await request(reqParams);
+    const response = await request(context);
 
     if (response?.aborted) {
         return response;
     }
 
-    if (response?.error || response?.success === false) {
-        throw new Error(getErrorMessage(response) || 'An error occurred while fetching data');
-    }
+    validateResponse(response, 'An error occurred while fetching data');
 
-    // Parse response data if needed custom processing.
-    if (typeof model.parseResponsePayload === 'function' && model.parseResponseActions.includes(action)) {
-        return await model.parseResponsePayload({ responseData: response, model, dateColumns, action, ...props });
-    }
+    // Execute response hook if defined
+    await executeResponseHook(model, action, response, { dateColumns, ...props });
 
+    // Default response processing for date columns and display indexes
     response.records.forEach(record => {
         dateColumns.forEach(column => {
             const { field, localize } = column;
@@ -234,23 +306,25 @@ const getRecord = async (props = {}) => {
     if (where && Object.keys(where)?.length) {
         searchParams.set("where", JSON.stringify(where));
     }
-    const requestData = {
+
+    // Build context object and execute request hook
+    const context = await executeRequestHook(model, {
         url: `${url}?${searchParams.toString()}`,
         method: 'GET',
-        jsonPayload: true
-    };
+        lookupsToFetch,
+        jsonPayload: true,
+        action: 'load',
+        dataParsers: DATA_PARSERS,
+        ...props
+    });
 
-    if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { action: 'load', dataParsers: DATA_PARSERS, ...props });
-    }
+    const response = await request(context);
+    validateResponse(response, 'Load failed');
 
-    const response = await request(requestData);
-    if (response?.error || response?.success === false) {
-        throw new Error(getErrorMessage(response) || 'Load failed');
-    }
-    if (typeof model.parseResponsePayload === 'function' && model.parseResponseActions.includes('load')) {
-        return await model.parseResponsePayload({ responseData: response, model, action: 'load', ...props });
-    }
+    // Execute response hook if defined
+    await executeResponseHook(model, 'load', response, props);
+
+    // Default response processing
     const { data: record, lookups } = response || {};
     let title = record[model.linkColumn];
     const columnConfig = model.columns.find(a => a.field === model.linkColumn);
@@ -274,18 +348,19 @@ const deleteRecord = async function (props = {}) {
     if (!id) {
         throw new Error('Delete failed. No active record.');
     }
-    const requestData = {
-        url: `${api}/${id}`,
-        method: 'DELETE'
-    };
 
-    if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { action: 'delete', dataParsers: DATA_PARSERS, ...props });
-    }
-    const response = await request(requestData);
-    if (response?.error || response?.success === false) {
-        throw new Error(getErrorMessage(response) || 'Delete failed');
-    }
+    // Build context object and execute request hook
+    const context = await executeRequestHook(model, {
+        url: `${api}/${id}`,
+        method: 'DELETE',
+        dataParsers: DATA_PARSERS,
+        jsonPayload: true,
+        action: 'delete',
+        ...props
+    });
+
+    const response = await request(context);
+    validateResponse(response, 'Delete failed');
     return true;
 };
 
@@ -304,24 +379,22 @@ const saveRecord = async function (props = {}) {
         method = 'POST';
     }
 
-    const requestData = {
+    // Build context object and execute request hook
+    const context = await executeRequestHook(model, {
         url,
         method,
         params: values,
+        action: 'save',
+        jsonPayload: true,
         additionalHeaders: {
             'Content-Type': 'application/json'
         },
-        jsonPayload: true
-    };
+        dataParsers: DATA_PARSERS,
+        ...props
+    });
 
-    if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { action: 'save', dataParsers: DATA_PARSERS, ...props });
-    }
-
-    const response = await request(requestData);
-    if (response?.error || response?.success === false) {
-        throw new Error(getErrorMessage(response) || 'Save failed');
-    }
+    const response = await request(context);
+    validateResponse(response, 'Save failed');
     return response;
 };
 
@@ -335,25 +408,26 @@ const getLookups = async (props = {}) => {
     const url = `${api}/lookups`;
     searchParams.set("lookups", lookups);
     searchParams.set("scopeId", scopeId);
-    const requestData = {
+
+    // Build context object and execute request hook
+    const context = await executeRequestHook(model, {
         url: `${url}?${searchParams.toString()}`,
         method: 'GET',
+        lookups,
+        scopeId,
+        dataParsers: DATA_PARSERS,
+        dataParser: DATA_PARSERS.json,
         jsonPayload: true,
-        ...reqData
-    };
+        action: 'lookups',
+        ...reqData,
+        ...props
+    });
 
-    if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(requestData, { action: 'lookups', dataParsers: DATA_PARSERS, ...props });
-    }
-    const response = await request(requestData);
-    if (response?.error || response?.success === false) {
-        throw new Error(getErrorMessage(response) || 'Could not load lookups');
-    }
+    const response = await request(context);
+    validateResponse(response, 'Could not load lookups');
 
-    if (typeof model.parseResponsePayload === 'function' && model.parseResponseActions.includes('lookups')) {
-        return await model.parseResponsePayload({ responseData: response, model, action: 'lookups', ...props });
-    }
-    return response;
+    // Execute response hook if defined
+    return await executeResponseHook(model, 'lookups', response, props);
 };
 
 export {
