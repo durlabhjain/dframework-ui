@@ -312,6 +312,7 @@ const getRecord = async (props = {}) => {
         method: 'GET',
         where,
         lookupsToFetch,
+        jsonPayload: true,
         action: 'load',
         dataParsers: DATA_PARSERS,
         ...props
@@ -356,6 +357,7 @@ const deleteRecord = async function (props = {}) {
         url: `${api}/${id}`,
         method: 'DELETE',
         dataParsers: DATA_PARSERS,
+        jsonPayload: true,
         action: 'delete',
         ...props
     });
@@ -386,6 +388,7 @@ const saveRecord = async function (props = {}) {
         method,
         params: values,
         action: 'save',
+        jsonPayload: true,
         additionalHeaders: {
             'Content-Type': 'application/json'
         },
