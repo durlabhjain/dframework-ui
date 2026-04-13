@@ -6,6 +6,10 @@ import utcPlugin from 'dayjs/plugin/utc.js';
 dayjs.extend(utcPlugin);
 
 const field = ({ column, field, formik, otherProps }) => {
+    let inputValue = formik.values[field];
+    if (!column.localize && inputValue) {
+        inputValue = dayjs.utc(inputValue).utcOffset(dayjs().utcOffset(), true).format();
+    }
     return <TimePicker
         {...otherProps}
         variant="standard"
@@ -13,7 +17,13 @@ const field = ({ column, field, formik, otherProps }) => {
         key={field}
         fullWidth
         name={field}
-        value={formik.values[field]}
+        value={inputValue ? dayjs(inputValue) : null}
+        onChange={(value) => {
+            if (!column.localize) {
+                value = (value && value.isValid()) ? value.format('YYYY-MM-DDTHH:mm:ss') + '.000Z' : null;
+            }
+            return formik.setFieldValue(field, value);
+        }}
         onBlur={formik.handleBlur}
         helperText={formik.touched[field] && formik.errors[field]}
         slotProps={{ textField: { fullWidth: true, helperText: formik.errors[field], variant: "standard" } }}

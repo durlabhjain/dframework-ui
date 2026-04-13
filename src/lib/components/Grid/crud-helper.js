@@ -74,7 +74,9 @@ const dateParser = (value, utc = false) => {
         return new Date(value.slice(0, -1));
     }
 
-    throw new Error("Invalid date " + value);
+    // Fallback for other valid date formats (e.g. ISO without milliseconds, with offset)
+    const parsedValue = new Date(value);
+    return Number.isNaN(parsedValue.getTime()) ? value : parsedValue;
 };
 
 const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, baseFilters, action = 'list', extraParams = {}, model, api }) => {
