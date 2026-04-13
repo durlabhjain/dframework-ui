@@ -110,26 +110,12 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   * @param {boolean} params.useSystemFormat - Whether to use the system date format.
   * @param {boolean} [params.showOnlyDate=false] - Whether to show only the date part.
   * @param {string|null|undefined} params.state - The user-defined date/time format string.
-  * @param {string} [params.timeZone] - The timezone to use for formatting.
-  * @param {boolean} [params.localize=false] - Whether to localize the date.
   * @returns {string|null} The formatted date string, or `null` if value is falsy.
   */
-  const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, localize = false }) => {
+  const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state }) => {
     if (!value) return null;
-    const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state);
-    const isStringValue = typeof value === 'string';
-    // Detect strings that carry explicit UTC/offset info (e.g. "...Z" or "...+05:30").
-    // Plain strings (date-only or no-tz datetime) are treated as local to display as-is.
-    const hasExplicitTz = isStringValue && /Z$|[+-]\d{2}:?\d{2}$/.test(value);
-    // Use dayjs.utc when: Date object + localize=true (raw UTC from crud-helper),
-    //                  or UTC/offset string + localize=false (preserve the UTC display value).
-    const dayjsValue = (!isStringValue && localize) || (!localize && hasExplicitTz)
-      ? dayjs.utc(value)
-      : dayjs(value);
-    if (localize) {
-      return timeZone ? dayjsValue.tz(timeZone).format(format) : dayjsValue.local().format(format);
-    }
-    return dayjsValue.format(format);
+    const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state); // Pass 'state' as an argument
+    return dayjs(value).format(format);
   }, [systemDateTimeFormat]);
 
   /**

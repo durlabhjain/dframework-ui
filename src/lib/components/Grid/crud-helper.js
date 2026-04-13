@@ -15,6 +15,68 @@ function shouldApplyFilter(filter) {
     return isUnaryOperator || hasValidValue;
 }
 
+/**
+ * Parses a date string into a JavaScript Date object based on specific format lengths.
+ * * @param {string} value - The date string to parse.
+ * Supported formats:
+ * - 17 chars: "YYYYMMDDHHmmssSSS" (e.g., "20260413104406000")
+ * - 24 chars: "YYYY-MM-DDTHH:mm:ss.SSSZ" (e.g., "2026-04-13T10:44:06.000Z")
+ * @param {boolean} [utc=false] - If true, treats the input as UTC and returns a localized Date.
+ * If false, treats input as local time (for 17-char) or 
+ * strips the 'Z' (for 24-char) to treat as local.
+ * @returns {Date|string|null} - Returns a Date object, the original value if not a string, or null if empty.
+ * @throws {Error} - Throws error if the string length is not 17 or 24.
+ * * @example
+ * // Length 17: Treat as UTC and convert to local
+ * // Input: "20260413104406000"
+ * dateParser("20260413104406000", true); 
+ * * @example
+ * // Length 24: ISO format
+ * // Input: "2026-04-13T10:44:06.000Z"
+ * dateParser("2026-04-13T10:44:06.000Z", true);
+ */
+const dateParser = (value, utc = false) => {
+    // Validation: Return original value if it's not a string or is undefined/null
+    if (typeof value !== 'string' || value === undefined || value === null) {
+        return value;
+    }
+
+    // Handle empty strings
+    if (value.length === 0) {
+        return null;
+    }
+
+    // Handle "Compact" Format (YYYYMMDDHHmmssSSS)
+    if (value.length === 17) {
+        const year = +value.slice(0, 4);
+        const month = +value.slice(4, 6) - 1; // Months are 0-indexed in JS Date
+        const day = +value.slice(6, 8);
+        const hour = +value.slice(8, 10);
+        const min = +value.slice(10, 12);
+        const sec = +value.slice(12, 14);
+        const ms = +value.slice(14, 17);
+
+        if (utc) {
+            // Create Date as UTC, which the browser automatically localizes
+            return new Date(Date.UTC(year, month, day, hour, min, sec, ms));
+        }
+        // Create Date using system local time
+        return new Date(year, month, day, hour, min, sec, ms);
+    }
+
+    // Handle "ISO" Format (YYYY-MM-DDTHH:mm:ss.SSSZ)
+    if (value.length === 24) {
+        if (utc) {
+            // Standard behavior: 'Z' suffix indicates UTC
+            return new Date(value);
+        }
+        // Slice off the 'Z' to force the constructor to treat it as local time
+        return new Date(value.slice(0, -1));
+    }
+
+    throw new Error("Invalid date " + value);
+};
+
 const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, baseFilters, action = 'list', extraParams = {}, model, api }) => {
     const isElasticExport = action === 'export' && model.isElasticExport === true;
 
@@ -191,18 +253,14 @@ const getList = async (props = {}) => {
 
     // Parse response data if needed custom processing.
     if (typeof model.parseResponsePayload === 'function' && model.parseResponseActions.includes(action)) {
-        return await model.parseResponsePayload({ responseData: response, model, dateColumns, action, ...props });
+        await model.parseResponsePayload({ responseData: response, model, dateColumns, action, ...props });
     }
 
     response.records.forEach(record => {
         dateColumns.forEach(column => {
             const { field, localize } = column;
             if (record[field]) {
-                record[field] = new Date(record[field]);
-                if (!localize) {
-                    const userTimezoneOffset = record[field].getTimezoneOffset() * 60000;
-                    record[field] = new Date(record[field].getTime() + userTimezoneOffset);
-                }
+                record[field] = dateParser(record[field], localize);
             }
         });
         model.columns.forEach(({ field, displayIndex }) => {
