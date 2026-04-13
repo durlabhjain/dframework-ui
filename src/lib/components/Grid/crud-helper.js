@@ -21,12 +21,11 @@ function shouldApplyFilter(filter) {
  *
  * @param {Object} model - The UiModel instance
  * @param {Object} context - The context object containing request parameters (url, where, requestData, etc.)
- * @param {Object} metadata - Additional metadata (action, dataParsers, props, etc.)
  * @returns {Promise<Object>} The potentially modified context object
  */
-async function executeRequestHook(model, context, metadata = {}) {
+async function executeRequestHook(model, context) {
     if (typeof model.createRequestPayload === 'function') {
-        await model.createRequestPayload(context, metadata);
+        await model.createRequestPayload(context);
     }
     const data = {
         url: context.url,
