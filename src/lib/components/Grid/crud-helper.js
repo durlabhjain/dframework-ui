@@ -200,9 +200,7 @@ const getList = async (props = {}) => {
         const finalRequestData = {
             ...context.params,
             columns: context.columns,
-            responseType: contentType,
-            userTimezoneOffset: -new Date().getTimezoneOffset(), // Negate to get the correct offset for conversion
-            where: context.where
+            responseType: contentType
         };
 
         const form = document.createElement("form");
