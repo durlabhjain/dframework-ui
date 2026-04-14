@@ -309,7 +309,7 @@ const getRecord = async (props = {}) => {
         throw new Error(getErrorMessage(response) || 'Load failed');
     }
     if (typeof model.parseResponsePayload === 'function' && model.parseResponseActions.includes('load')) {
-        return await model.parseResponsePayload({ responseData: response, model, action: 'load', ...props });
+        await model.parseResponsePayload({ responseData: response, model, action: 'load', ...props });
     }
     const { data: record, lookups } = response || {};
     let title = record[model.linkColumn];
