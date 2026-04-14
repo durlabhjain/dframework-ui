@@ -270,13 +270,6 @@ const GridBase = memo(({
         }
     }, [props.rowGroupingField]);
 
-    useEffect(() => {
-        dataRef.current = data;
-        if (typeof props.onDataLoaded === 'function') {
-            props.onDataLoaded(data);
-        }
-    }, [data]);
-
     const baseDataFromParams = searchParams.has('baseData') && searchParams.get('baseData');
     const baseSaveData = useMemo(() => {
         if (baseDataFromParams) {
@@ -336,7 +329,10 @@ const GridBase = memo(({
 
     useEffect(() => {
         dataRef.current = data;
-    }, [data]);
+        if (typeof props.onDataLoaded === 'function') {
+            props.onDataLoaded(data);
+        }
+    }, [data, props.onDataLoaded]);
 
     useEffect(() => {
         if (!customFilters || !Object.keys(customFilters).length) return;
