@@ -191,7 +191,8 @@ const GridBase = memo(({
     const visibilityModel = { CreatedOn: false, CreatedByUser: false, ...model.columnVisibilityModel };
     const [showAddConfirmation, setShowAddConfirmation] = useState(false);
     const snackbar = useSnackbar();
-    const paginationMode = Array.isArray(gridData) || model.paginationMode === constants.client ? constants.client : constants.server;
+    const hasGridData = Array.isArray(gridData);
+    const paginationMode = hasGridData || model.paginationMode === constants.client ? constants.client : constants.server;
     const { t: translate, i18n } = useTranslation();
     const tOpts = useMemo(() => ({ t: translate, i18n }), [translate, i18n]);
     const [errorMessage, setErrorMessage] = useState('');
@@ -228,7 +229,7 @@ const GridBase = memo(({
         ...constants.permissions,
         ...model.permissions,
         ...permissions,
-        ...(Array.isArray(gridData) && { export: false })
+        ...(hasGridData && { export: false })
     }), [model.permissions, permissions, gridData]);
     const emptyIsAnyOfOperatorFilters = ["isEmpty", "isNotEmpty", "isAnyOf"];
     const userData = stateData.userData || {};
@@ -278,7 +279,7 @@ const GridBase = memo(({
     }, [props.rowGroupingField]);
 
     useEffect(() => {
-        if(Array.isArray(gridData)){
+        if (hasGridData){
             setData(prev => ({
                 ...prev,
                 records: gridData,
@@ -632,7 +633,6 @@ const GridBase = memo(({
 
 
     const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
-        if (Array.isArray(gridData)) return;
         const { pageSize, page } = paginationModel;
         const isExportRequest = Boolean(contentType);
 
@@ -726,7 +726,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts, gridData]);
+    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
