@@ -332,7 +332,7 @@ const GridBase = memo(({
         if (typeof props.onDataLoaded === 'function') {
             props.onDataLoaded(data);
         }
-    }, [data, props.onDataLoaded]);
+    }, [data]);
 
     useEffect(() => {
         if (!customFilters || !Object.keys(customFilters).length) return;
