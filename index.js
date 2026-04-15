@@ -1,6 +1,6 @@
 import { jsx as a, jsxs as S, Fragment as ye } from "react/jsx-runtime";
 import * as ze from "react";
-import yt, { createContext as ir, useContext as Br, useState as R, useEffect as pe, useRef as rr, useCallback as A, useMemo as q, memo as Pn, useId as La, createElement as kr } from "react";
+import yt, { createContext as ir, useContext as kr, useState as R, useEffect as pe, useRef as rr, useCallback as A, useMemo as q, memo as Pn, useId as La, createElement as Nr } from "react";
 import $a from "@mui/material/Snackbar";
 import Va from "@mui/material/Alert";
 import Me from "@mui/material/Button";
@@ -10,7 +10,7 @@ import qa from "@mui/material/DialogContent";
 import ja from "@mui/material/DialogContentText";
 import Wa from "@mui/material/DialogTitle";
 import * as at from "@mui/x-data-grid-premium";
-import { GridFooterContainer as Ua, GridFooter as Ha, getGridDateOperators as Fn, useGridSelector as En, gridFilterModelSelector as Ya, useGridApiRef as An, GridActionsCellItem as Ar, DataGridPremium as Tn, GridToolbarExportContainer as Ka, Toolbar as _a, ColumnsPanelTrigger as Ja, FilterPanelTrigger as Za, GRID_CHECKBOX_SELECTION_COL_DEF as Qa, getGridStringOperators as Xa, getGridBooleanOperators as eo, useGridApiContext as to, gridRowSelectionStateSelector as ro } from "@mui/x-data-grid-premium";
+import { GridFooterContainer as Ua, GridFooter as Ha, getGridDateOperators as Fn, useGridSelector as En, gridFilterModelSelector as Ya, useGridApiRef as An, GridActionsCellItem as Tr, DataGridPremium as Tn, GridToolbarExportContainer as Ka, Toolbar as _a, ColumnsPanelTrigger as Ja, FilterPanelTrigger as Za, GRID_CHECKBOX_SELECTION_COL_DEF as Qa, getGridStringOperators as Xa, getGridBooleanOperators as eo, useGridApiContext as to, gridRowSelectionStateSelector as ro } from "@mui/x-data-grid-premium";
 import In from "@mui/icons-material/Delete";
 import no from "@mui/icons-material/FileCopy";
 import ao from "@mui/icons-material/Article";
@@ -19,20 +19,20 @@ import nt from "@mui/material/Box";
 import Nt from "@mui/material/Typography";
 import lr from "@mui/material/TextField";
 import { useTranslation as wt, withTranslation as oo } from "react-i18next";
-import { Typography as ke, Dialog as io, DialogTitle as lo, Grid as xe, DialogContent as so, Card as co, CardContent as uo, Breadcrumbs as po, Link as fo, Button as ct, IconButton as Lt, Box as Fe, FormControl as Ct, Select as Tr, MenuItem as Ke, Tooltip as xt, Menu as ho, List as mo, ListItemButton as vr, ListItemIcon as Dr, ListItem as go, ListItemText as bo, TextField as ut, FormControlLabel as dt, Checkbox as yo, Stack as fn, InputLabel as hn, Badge as Co, FormHelperText as pt, useTheme as vt, Input as xo, FilledInput as wo, OutlinedInput as vo, InputAdornment as On, RadioGroup as Nr, Radio as bt, styled as Do, Avatar as So, CircularProgress as Po, Divider as Fo } from "@mui/material";
+import { Typography as ke, Dialog as io, DialogTitle as lo, Grid as xe, DialogContent as so, Card as co, CardContent as uo, Breadcrumbs as po, Link as fo, Button as ct, IconButton as Lt, Box as Fe, FormControl as Ct, Select as Ir, MenuItem as Ke, Tooltip as xt, Menu as ho, List as mo, ListItemButton as Dr, ListItemIcon as Sr, ListItem as go, ListItemText as bo, TextField as ut, FormControlLabel as dt, Checkbox as yo, Stack as fn, InputLabel as hn, Badge as Co, FormHelperText as pt, useTheme as vt, Input as xo, FilledInput as wo, OutlinedInput as vo, InputAdornment as On, RadioGroup as Lr, Radio as bt, styled as Do, Avatar as So, CircularProgress as Po, Divider as Fo } from "@mui/material";
 import Eo from "@mui/icons-material/Check";
-import Ir from "@mui/icons-material/Close";
+import Mr from "@mui/icons-material/Close";
 import Ao from "@mui/icons-material/Help";
-import { Replay as To, Close as Io, GridOn as Mo, TableChart as Sr, Code as Oo, Language as Ro, DataObject as Bo } from "@mui/icons-material";
+import { Replay as To, Close as Io, GridOn as Mo, TableChart as Pr, Code as Oo, Language as Ro, DataObject as Bo } from "@mui/icons-material";
 import ne from "dayjs";
 import Rn from "dayjs/plugin/utc";
 import ko from "dayjs/plugin/timezone";
 import { DatePicker as Bn } from "@mui/x-date-pickers/DatePicker";
 import { DateTimePicker as kn } from "@mui/x-date-pickers/DateTimePicker";
-import Lr from "dayjs/plugin/utc.js";
+import $r from "dayjs/plugin/utc.js";
 import { LocalizationProvider as Nn } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs as Ln } from "@mui/x-date-pickers/AdapterDayjs";
-import Mr from "@mui/icons-material/Add";
+import Or from "@mui/icons-material/Add";
 import No from "@mui/icons-material/Remove";
 import Lo from "@mui/icons-material/FilterListOff";
 import $o from "@mui/icons-material/ViewColumn";
@@ -62,7 +62,7 @@ import ei from "@mui/icons-material/Clear";
 import cr from "@mui/material/FormControl";
 import ti from "@mui/material/InputLabel";
 import ri from "@mui/material/Select";
-import Pr from "@mui/material/Grid";
+import Fr from "@mui/material/Grid";
 import qn from "@mui/material/Autocomplete";
 import ni from "@mui/material/Stepper";
 import ai from "@mui/material/Step";
@@ -96,7 +96,7 @@ const jn = ir(null), fi = "bottom", hi = "center", mi = yt.forwardRef(function(r
     /* @__PURE__ */ a($a, { open: n, autoHideDuration: 6e3, onClose: f, anchorOrigin: { vertical: fi, horizontal: hi }, children: /* @__PURE__ */ a(mi, { severity: i, children: r }) })
   ] });
 }, Dt = function() {
-  return Br(jn);
+  return kr(jn);
 }, _e = ({ open: e, onConfirm: r, title: t = "Confirm", onCancel: n, okText: o, cancelText: i, yesNo: s = !1, children: c, maxWidth: h = "sm", fullWidth: y = !0, ...C }) => (o = o || (s ? "Yes" : "Ok"), i = i || (s ? "No" : "Cancel"), /* @__PURE__ */ S(
   za,
   {
@@ -116,7 +116,7 @@ const jn = ir(null), fi = "bottom", hi = "center", mi = yt.forwardRef(function(r
       ] })
     ]
   }
-)), Fr = {
+)), Er = {
   OK: 200,
   SESSION_EXPIRED: 401,
   FORBIDDEN: 403,
@@ -197,13 +197,13 @@ const jn = ir(null), fi = "bottom", hi = "center", mi = yt.forwardRef(function(r
   try {
     const f = await Un(C);
     let u = f.data;
-    if (f.status === Fr.SESSION_EXPIRED && t) {
+    if (f.status === Er.SESSION_EXPIRED && t) {
       t("/login");
       return;
     }
-    if (f.status === Fr.FORBIDDEN)
+    if (f.status === Er.FORBIDDEN)
       return { error: !0, message: u.message || "Access Denied!" };
-    if (f.status !== Fr.OK)
+    if (f.status !== Er.OK)
       return { error: !0, message: u.message || "An error occurred" };
     try {
       u = h(u);
@@ -273,7 +273,7 @@ const wi = (e, r = !1) => {
   c.template && l.append("template", c.template), c.configFileName && l.append("configFileName", c.configFileName);
   const v = l.toString();
   return v && (g += `?${v}`), { requestData: x, url: g, where: w, dateColumns: m };
-}, Or = async (e = {}) => {
+}, Rr = async (e = {}) => {
   const { contentType: r, columns: t, extraParams: n = {}, action: o = "list", model: i, signal: s } = e, { requestData: c, url: h, where: y, dateColumns: C } = vi(e);
   if (r) {
     c.responseType = r, c.columns = t, c.userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone, c.userTimezoneOffset = (/* @__PURE__ */ new Date()).getTimezoneOffset(), typeof i.createRequestPayload == "function" && await i.createRequestPayload(c, { where: y, url: h, dataParsers: Ne, ...e });
@@ -342,7 +342,7 @@ const wi = (e, r = !1) => {
   }
   const g = { ...n.defaultValues };
   return { id: t, title: w, record: { ...g, ...u, ...o }, lookups: m };
-}, $r = async function(e = {}) {
+}, Vr = async function(e = {}) {
   const { id: r, api: t, model: n } = e;
   if (!r)
     throw new Error("Delete failed. No active record.");
@@ -355,7 +355,7 @@ const wi = (e, r = !1) => {
   if (i?.error || i?.success === !1)
     throw new Error($t(i) || "Delete failed");
   return !0;
-}, Vr = async function(e = {}) {
+}, zr = async function(e = {}) {
   const { id: r, api: t, values: n, model: o } = e;
   let i, s;
   r !== 0 ? (i = `${t}/${r}`, s = "PUT") : (i = t, s = "POST");
@@ -390,10 +390,10 @@ const wi = (e, r = !1) => {
     throw new Error($t(y) || "Could not load lookups");
   return typeof t.parseResponsePayload == "function" && t.parseResponseActions.includes("lookups") ? await t.parseResponsePayload({ responseData: y, model: t, action: "lookups", ...e }) : y;
 }, Ac = {
-  getList: Or,
+  getList: Rr,
   getRecord: ar,
-  deleteRecord: $r,
-  saveRecord: Vr,
+  deleteRecord: Vr,
+  saveRecord: zr,
   getLookups: Hn
 }, Di = ({ pagination: e, apiRef: r, tTranslate: t = (n) => n }) => {
   const n = r.current.state.pagination.paginationModel.page, o = r.current.state.pagination.paginationModel.pageSize, i = r.current.state.rows.totalRowCount, s = Math.ceil(i / o), { t: c, i18n: h } = wt(), y = { t: c, i18n: h }, [C, f] = R(n + 1), u = function(x) {
@@ -835,8 +835,8 @@ const Yn = ir(), Kn = ir(null), yn = () => console.warn("SnackbarProvider not fo
     te
   ]);
   return /* @__PURE__ */ a(Yn.Provider, { value: we, children: e });
-}, Ic = Kn.Provider, zr = () => Br(Kn), qe = () => {
-  const e = Br(Yn);
+}, Ic = Kn.Provider, Gr = () => kr(Kn), qe = () => {
+  const e = kr(Yn);
   if (e === void 0)
     throw new Error("useStateContext must be used within a StateProvider");
   return e;
@@ -989,7 +989,7 @@ const _n = oo()(Hi), Ge = {
     canDelete: t.delete && !!o[[Ge.permissionsMapper.delete]]
   } : { canAdd: t.add, canEdit: t.edit, canDelete: t.delete };
 };
-ne.extend(Lr);
+ne.extend($r);
 const Yi = {
   date: Bn,
   dateTime: kn
@@ -1050,7 +1050,7 @@ const Yi = {
       }
     }
   ) });
-}, Er = (e) => Fn().map((r) => ({
+}, Ar = (e) => Fn().map((r) => ({
   ...r,
   InputComponent: r.InputComponent ? (t) => /* @__PURE__ */ a(Ji, { ...t, ...e }) : void 0
 })), Zi = {
@@ -1083,7 +1083,7 @@ const Yi = {
     [o, r.applyZeroFilter, h, t, n]
   ), C = h[0]?.value ?? "";
   return /* @__PURE__ */ a(Ct, { variant: "standard", className: "w-100", children: /* @__PURE__ */ a(
-    Tr,
+    Ir,
     {
       label: r.field,
       variant: "standard",
@@ -1121,8 +1121,8 @@ const Yi = {
     { field: "prefName", type: "string", width: 300, headerName: n("Preference Name", o), sortable: !1, filterable: !1 },
     { field: "prefDesc", type: "string", width: 300, headerName: n("Preference Description", o), sortable: !1, filterable: !1 },
     { field: "isDefault", type: "boolean", width: 100, headerName: n("Default", o), sortable: !1, filterable: !1 },
-    { field: "editAction", type: "actions", headerName: "", width: 20, getActions: () => [/* @__PURE__ */ a(Ar, { icon: /* @__PURE__ */ a(xt, { title: Ye.Edit, children: /* @__PURE__ */ a(Mn, {}) }), tabIndex: 1, "data-action": Ye.Edit, label: n("Edit", o), color: "primary" }, 1)] },
-    { field: "deleteAction", type: "actions", headerName: "", width: 20, getActions: () => [/* @__PURE__ */ a(Ar, { icon: /* @__PURE__ */ a(xt, { title: Ye.Delete, children: /* @__PURE__ */ a(In, {}) }), tabIndex: 2, "data-action": Ye.Delete, label: n("Delete", o), color: "error" }, 2)] }
+    { field: "editAction", type: "actions", headerName: "", width: 20, getActions: () => [/* @__PURE__ */ a(Tr, { icon: /* @__PURE__ */ a(xt, { title: Ye.Edit, children: /* @__PURE__ */ a(Mn, {}) }), tabIndex: 1, "data-action": Ye.Edit, label: n("Edit", o), color: "primary" }, 1)] },
+    { field: "deleteAction", type: "actions", headerName: "", width: 20, getActions: () => [/* @__PURE__ */ a(Tr, { icon: /* @__PURE__ */ a(xt, { title: Ye.Delete, children: /* @__PURE__ */ a(In, {}) }), tabIndex: 2, "data-action": Ye.Delete, label: n("Delete", o), color: "error" }, 2)] }
   ], [n, o]), L = q(() => he.object({
     prefName: he.string().trim(!0).required(n("Preference Name is Required", o)).max(20, n("Maximum Length is ", o) + "20"),
     prefDesc: he.string().max(100, n("Maximum Length is ", o) + "100")
@@ -1300,16 +1300,16 @@ const Yi = {
           }
         },
         children: [
-          /* @__PURE__ */ S(Ke, { component: vr, dense: !0, onClick: () => se(Re.ADD), children: [
-            /* @__PURE__ */ a(Dr, { children: /* @__PURE__ */ a(Mr, {}) }),
+          /* @__PURE__ */ S(Ke, { component: Dr, dense: !0, onClick: () => se(Re.ADD), children: [
+            /* @__PURE__ */ a(Sr, { children: /* @__PURE__ */ a(Or, {}) }),
             n("Add Preference", o)
           ] }),
-          /* @__PURE__ */ S(Ke, { component: vr, dense: !0, onClick: () => se(Re.MANAGE), children: [
-            /* @__PURE__ */ a(Dr, { children: /* @__PURE__ */ a(mn, {}) }),
+          /* @__PURE__ */ S(Ke, { component: Dr, dense: !0, onClick: () => se(Re.MANAGE), children: [
+            /* @__PURE__ */ a(Sr, { children: /* @__PURE__ */ a(mn, {}) }),
             n("Manage Preferences", o)
           ] }),
-          e.current?.initialGridState && /* @__PURE__ */ S(Ke, { component: vr, dense: !0, divider: l?.length > 0, onClick: () => T(0), children: [
-            /* @__PURE__ */ a(Dr, { children: /* @__PURE__ */ a(Go, {}) }),
+          e.current?.initialGridState && /* @__PURE__ */ S(Ke, { component: Dr, dense: !0, divider: l?.length > 0, onClick: () => T(0), children: [
+            /* @__PURE__ */ a(Sr, { children: /* @__PURE__ */ a(Go, {}) }),
             n("Reset to Default", o)
           ] }),
           l?.length > 0 && l?.map((P) => {
@@ -1428,7 +1428,7 @@ const Yi = {
                     ct,
                     {
                       type: "button",
-                      startIcon: /* @__PURE__ */ a(Ir, {}),
+                      startIcon: /* @__PURE__ */ a(Mr, {}),
                       color: "error",
                       variant: "contained",
                       size: "small",
@@ -1485,7 +1485,7 @@ const Yi = {
               ct,
               {
                 type: "button",
-                startIcon: /* @__PURE__ */ a(Ir, {}),
+                startIcon: /* @__PURE__ */ a(Mr, {}),
                 color: "error",
                 variant: "contained",
                 size: "small",
@@ -1554,8 +1554,8 @@ const Yi = {
   }
 ), al = ({ exportFormats: e, customExportOptions: r, ...t }) => /* @__PURE__ */ S(Ka, { ...t, children: [
   e.csv !== !1 && /* @__PURE__ */ a(st, { ...t, icon: /* @__PURE__ */ a(Mo, { fontSize: "small" }), type: "CSV", contentType: "text/csv" }),
-  e.excel !== !1 && /* @__PURE__ */ a(st, { ...t, icon: /* @__PURE__ */ a(Sr, { fontSize: "small" }), type: "Excel", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
-  t.showPivotExportBtn && /* @__PURE__ */ a(st, { ...t, icon: /* @__PURE__ */ a(Sr, { fontSize: "small" }), type: "Excel With Pivot", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", isPivotExport: !0 }),
+  e.excel !== !1 && /* @__PURE__ */ a(st, { ...t, icon: /* @__PURE__ */ a(Pr, { fontSize: "small" }), type: "Excel", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }),
+  t.showPivotExportBtn && /* @__PURE__ */ a(st, { ...t, icon: /* @__PURE__ */ a(Pr, { fontSize: "small" }), type: "Excel With Pivot", contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", isPivotExport: !0 }),
   e.xml !== !1 && /* @__PURE__ */ a(st, { ...t, icon: /* @__PURE__ */ a(Oo, { fontSize: "small" }), type: "XML", contentType: "text/xml" }),
   e.html !== !1 && /* @__PURE__ */ a(st, { ...t, icon: /* @__PURE__ */ a(Ro, { fontSize: "small" }), type: "HTML", contentType: "text/html" }),
   e.json !== !1 && /* @__PURE__ */ a(st, { ...t, icon: /* @__PURE__ */ a(Bo, { fontSize: "small" }), type: "JSON", contentType: "application/json" }),
@@ -1563,7 +1563,7 @@ const Yi = {
     st,
     {
       ...t,
-      icon: n.icon || /* @__PURE__ */ a(Sr, { fontSize: "small" }),
+      icon: n.icon || /* @__PURE__ */ a(Pr, { fontSize: "small" }),
       type: n.label || "Excel",
       contentType: n.contentType || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       handleExport: n.handleExport || t.handleExport
@@ -1596,7 +1596,7 @@ const Yi = {
     n in e || (t = !1);
   return t;
 };
-ne.extend(Lr);
+ne.extend($r);
 const il = ({
   column: e,
   filterModel: r,
@@ -1691,7 +1691,7 @@ const il = ({
         return /* @__PURE__ */ S(Ct, { variant: "standard", sx: { minWidth: 150 }, children: [
           /* @__PURE__ */ a(hn, { children: o(D, i) }),
           /* @__PURE__ */ S(
-            Tr,
+            Ir,
             {
               value: T,
               onChange: (ge) => {
@@ -1719,7 +1719,7 @@ const il = ({
         return /* @__PURE__ */ S(Ct, { variant: "standard", sx: { minWidth: 150 }, children: [
           /* @__PURE__ */ a(hn, { children: o(D, i) }),
           /* @__PURE__ */ a(
-            Tr,
+            Ir,
             {
               value: E,
               onChange: (T) => m(T.target.value),
@@ -1847,7 +1847,7 @@ const il = ({
               " ",
               !i || o ? "" : r.title
             ] }),
-            !s && i && !o && /* @__PURE__ */ a(er, { startIcon: c ? /* @__PURE__ */ a(Mr, {}) : null, onClick: h, size: "medium", variant: "contained", children: B(T, E) }),
+            !s && i && !o && /* @__PURE__ */ a(er, { startIcon: c ? /* @__PURE__ */ a(Or, {}) : null, onClick: h, size: "medium", variant: "contained", children: B(T, E) }),
             !!e.headerActions && e.headerActions,
             y.length && ce.length ? /* @__PURE__ */ a(
               er,
@@ -1858,7 +1858,7 @@ const il = ({
                 children: C.ids.size === ce.length ? B("Deselect All", E) : B("Select All", E)
               }
             ) : /* @__PURE__ */ a(ye, {}),
-            u && /* @__PURE__ */ a(er, { startIcon: c ? /* @__PURE__ */ a(Mr, {}) : null, onClick: m, size: "medium", variant: "contained", children: B("Assign", E) }),
+            u && /* @__PURE__ */ a(er, { startIcon: c ? /* @__PURE__ */ a(Or, {}) : null, onClick: m, size: "medium", variant: "contained", children: B("Assign", E) }),
             w && /* @__PURE__ */ a(er, { startIcon: c ? /* @__PURE__ */ a(No, {}) : null, onClick: x, size: "medium", variant: "contained", children: B("Remove", E) })
           ] }),
           /* @__PURE__ */ S(ll, { ...e, children: [
@@ -1962,7 +1962,7 @@ const il = ({
   { key: "addCreatedByColumn", field: "CreatedByUser", type: "string", header: "Created By" },
   { key: "addModifiedOnColumn", field: "ModifiedOn", type: "dateTime", header: "Modified On" },
   { key: "addModifiedByColumn", field: "ModifiedByUser", type: "string", header: "Modified By" }
-], yl = (e) => e.value ? /* @__PURE__ */ a(Eo, { style: { color: "green" } }) : /* @__PURE__ */ a(Ir, { style: { color: "gray" } }), Cn = sr("span")({
+], yl = (e) => e.value ? /* @__PURE__ */ a(Eo, { style: { color: "green" } }) : /* @__PURE__ */ a(Mr, { style: { color: "gray" } }), Cn = sr("span")({
   width: "100%",
   whiteSpace: "nowrap",
   overflow: "hidden",
@@ -2028,11 +2028,11 @@ const il = ({
   e.defaultFilters && (Et.items = [], e.defaultFilters.forEach((b) => {
     Et.items.push(b);
   }));
-  const [Oe, Ae] = R({ ...Et }), { navigate: De, getParams: Gt, useParams: Te, pathname: qt } = zr(), { id: dr } = Te() || Gt, At = dr?.split("-")[0], Se = me || An(), { idProperty: de = "id", showHeaderFilters: Tt = !0, disableRowSelectionOnClick: pr = !0, hideTopFilters: It = !0, updatePageTitle: jt = !0, isElasticScreen: mt = !1, navigateBack: fr = !1, selectionApi: Qe = {}, debounceTimeOut: hr = 300, showFooter: z = !0, disableRowGrouping: Pe = !0 } = e, Z = e.readOnly === !0 || ge, Ue = e.allowDoubleClick === !1, Le = rr(M), Ie = rr(null);
+  const [Oe, Ae] = R({ ...Et }), { navigate: De, getParams: Gt, useParams: Te, pathname: qt } = Gr(), { id: dr } = Te() || Gt, At = dr?.split("-")[0], Se = me || An(), { idProperty: de = "id", showHeaderFilters: Tt = !0, disableRowSelectionOnClick: pr = !0, hideTopFilters: It = !0, updatePageTitle: jt = !0, isElasticScreen: mt = !1, navigateBack: fr = !1, selectionApi: Qe = {}, debounceTimeOut: hr = 300, showFooter: z = !0, disableRowGrouping: Pe = !0 } = e, Z = e.readOnly === !0 || ge, Ue = e.allowDoubleClick === !1, Le = rr(M), Ie = rr(null);
   pe(() => () => {
     Ie.current?.abort(), Ie.current = null;
   }, []);
-  const Wt = e.showAddIcon === !0, Mt = e.columns.filter(({ link: b }) => !!b).map((b) => b.link), { stateData: Xe, formatDate: Ot, getApiEndpoint: mr, buildUrl: gt, setPageTitle: gr } = qe(), [aa, Ut] = R(!1), { timeZone: is } = Xe, it = q(() => ({ ...K.permissions, ...e.permissions, ...C }), [e.permissions, C]), Gr = ["isEmpty", "isNotEmpty", "isAnyOf"], oa = Xe.userData || {}, Ht = e.columns.find((b) => b.type === "fileUpload")?.field || "", ia = { add: it.add, edit: it.edit, delete: it.delete }, { canAdd: qr, canEdit: jr, canDelete: Wr } = Jn({ userData: oa, model: e, userDefinedPermissions: ia }), p = q(() => e.tTranslate ?? ml, [e.tTranslate]), { addUrlParamKey: Yt, searchParamKey: Rt, hideBreadcrumb: la = !1, tableName: Ur, showHistory: Hr = !0, hideBreadcrumbInGrid: sa = !1, breadcrumbColor: ca, disablePivoting: ua = !1, columnHeaderHeight: da = 70, disablePagination: Yr = !1 } = e, Kr = e.gridTitle || e.title, Bt = mr("GridPreferenceManager") ? e.preferenceId || e.module?.preferenceId : null, et = new URLSearchParams(window.location.search), [_r, pa] = R(null), [Jr, fa] = R(!Bt), $e = t || e.api, [br, yr] = R(null), ha = q(() => new Set(br ? [br] : []), [br]), ma = typeof e.getDetailPanelContent == "function", [ga, Zr] = R([]);
+  const Wt = e.showAddIcon === !0, Mt = e.columns.filter(({ link: b }) => !!b).map((b) => b.link), { stateData: Xe, formatDate: Ot, getApiEndpoint: mr, buildUrl: gt, setPageTitle: gr } = qe(), [aa, Ut] = R(!1), { timeZone: is } = Xe, it = q(() => ({ ...K.permissions, ...e.permissions, ...C }), [e.permissions, C]), qr = ["isEmpty", "isNotEmpty", "isAnyOf"], oa = Xe.userData || {}, Ht = e.columns.find((b) => b.type === "fileUpload")?.field || "", ia = { add: it.add, edit: it.edit, delete: it.delete }, { canAdd: jr, canEdit: Wr, canDelete: Ur } = Jn({ userData: oa, model: e, userDefinedPermissions: ia }), p = q(() => e.tTranslate ?? ml, [e.tTranslate]), { addUrlParamKey: Yt, searchParamKey: Rt, hideBreadcrumb: la = !1, tableName: Hr, showHistory: Yr = !0, hideBreadcrumbInGrid: sa = !1, breadcrumbColor: ca, disablePivoting: ua = !1, columnHeaderHeight: da = 70, disablePagination: Kr = !1 } = e, _r = e.gridTitle || e.title, Bt = mr("GridPreferenceManager") ? e.preferenceId || e.module?.preferenceId : null, et = new URLSearchParams(window.location.search), [Jr, pa] = R(null), [Zr, fa] = R(!Bt), $e = t || e.api, [br, yr] = R(null), ha = q(() => new Set(br ? [br] : []), [br]), ma = typeof e.getDetailPanelContent == "function", [ga, Cr] = R([]);
   pe(() => {
     Se.current && (Se.current.prefKey = Bt);
   }, [Se, Bt]);
@@ -2043,19 +2043,19 @@ const il = ({
     headerName: b.headerName ? p(b.headerName, d) : b.headerName
   })) : [], [e.columnGroupingModel, d, ot, p]);
   pe(() => {
-    Array.isArray($.rowGroupingField) && Zr($.rowGroupingField);
+    Array.isArray($.rowGroupingField) ? Cr($.rowGroupingField) : Cr([]);
   }, [$.rowGroupingField]);
-  const Cr = et.has("baseData") && et.get("baseData"), Xr = q(() => {
-    if (Cr)
+  const xr = et.has("baseData") && et.get("baseData"), Xr = q(() => {
+    if (xr)
       try {
-        const b = JSON.parse(Cr);
+        const b = JSON.parse(xr);
         if (typeof b === K.object && b !== null)
           return b;
       } catch (b) {
         console.error("Failed to parse baseData from URL:", b);
       }
     return {};
-  }, [Cr]), ya = A(({ row: b }) => {
+  }, [xr]), ya = A(({ row: b }) => {
     const I = b[de];
     je((O) => {
       const F = new Set(O?.ids || []);
@@ -2068,11 +2068,11 @@ const il = ({
     },
     date: {
       valueFormatter: (b, I, O) => Ot({ value: b, useSystemFormat: !0, showOnlyDate: !1, state: Xe.dateTime }),
-      filterOperators: Er({ columnType: "date", label: p("Value", d) })
+      filterOperators: Ar({ columnType: "date", label: p("Value", d) })
     },
     dateTime: {
       valueFormatter: (b, I, O) => Ot({ value: b, useSystemFormat: !1, showOnlyDate: !1, state: Xe.dateTime }),
-      filterOperators: Er({ columnType: "dateTime", label: p("Value", d) })
+      filterOperators: Ar({ columnType: "dateTime", label: p("Value", d) })
     },
     boolean: {
       renderCell: yl
@@ -2086,7 +2086,7 @@ const il = ({
     }
   };
   pe(() => {
-    Le.current = M;
+    Le.current = M, typeof $.onDataLoaded == "function" && $.onDataLoaded(M);
   }, [M]), pe(() => {
     if (!N || !Object.keys(N).length) return;
     if (N.clear) {
@@ -2102,7 +2102,7 @@ const il = ({
   }, [$.isChildGrid, It]);
   const tn = A(
     ({ key: b, title: I, icon: O, color: F = "primary", disabled: k, otherProps: _ }) => /* @__PURE__ */ a(
-      Ar,
+      Tr,
       {
         icon: /* @__PURE__ */ a(xt, { title: p(I, d), children: hl[O] || O || p(I, d) }),
         "data-action": b,
@@ -2121,7 +2121,7 @@ const il = ({
         key: Be.Edit,
         title: "Edit",
         icon: "edit",
-        show: !!jr,
+        show: !!Wr,
         disabled: (I) => I.canEdit === !1
       },
       {
@@ -2135,13 +2135,13 @@ const il = ({
         title: "Delete",
         icon: "delete",
         color: "error",
-        show: !!Wr
+        show: !!Ur
       },
       {
         key: Be.History,
         title: "History",
         icon: "history",
-        show: !!Hr
+        show: !!Yr
       },
       ...Kt
     ), b.push({
@@ -2153,9 +2153,9 @@ const il = ({
   }, [
     G,
     Z,
-    jr,
     Wr,
-    Hr,
+    Ur,
+    Yr,
     it.copy,
     Ht.length,
     Kt
@@ -2172,7 +2172,7 @@ const il = ({
       })
     ),
     [_t, tn]
-  ), { gridColumns: Ce, pinnedColumns: rn, lookupMap: xr } = q(() => {
+  ), { gridColumns: Ce, pinnedColumns: rn, lookupMap: wr } = q(() => {
     let b = r || e.gridColumns || e.columns;
     Q && (b = [...Q, ...b]);
     const I = { left: [Qa.field], right: [] }, O = [], F = {}, k = { ...en, ...e.gridColumnTypes };
@@ -2221,7 +2221,7 @@ const il = ({
     return _ === !0 && (_ = { addCreatedOnColumn: !0, addCreatedByColumn: !0, addModifiedOnColumn: !0, addModifiedByColumn: !0 }), _ && typeof _ === K.object && bl.forEach(({ key: V, field: J, type: oe, header: ie }) => {
       if (_[V] === !0) {
         const re = { field: J, type: oe, headerName: p(ie, d), width: 200 };
-        oe === K.dateTime && (re.filterOperators = Er({ columnType: "dateTime" }), re.valueFormatter = en.dateTime.valueFormatter, re.localize = !0), O.push(re);
+        oe === K.dateTime && (re.filterOperators = Ar({ columnType: "dateTime" }), re.valueFormatter = en.dateTime.valueFormatter, re.localize = !0), O.push(re);
       }
     }), _t.length && (O.push({
       field: "actions",
@@ -2231,15 +2231,15 @@ const il = ({
       getActions: xa,
       headerName: p("Actions", d)
     }), I.right.push("actions")), { gridColumns: O, pinnedColumns: I, lookupMap: F };
-  }, [r, e, s, C, G, Q, ot, Xe?.dateTime]), wr = rr(!1);
+  }, [r, e, s, C, G, Q, ot, Xe?.dateTime]), vr = rr(!1);
   pe(() => {
-    if (wr.current) return;
+    if (vr.current) return;
     const b = Ce?.filter((F) => F.toolbarFilter?.defaultFilterValue !== void 0) || [];
     if (b.length === 0) return;
     if (Oe.items.some(
       (F) => b.some((k) => k.field === F.field)
     )) {
-      wr.current = !0;
+      vr.current = !0;
       return;
     }
     const O = b.map((F) => {
@@ -2260,7 +2260,7 @@ const il = ({
     O.length > 0 && Ae((F) => ({
       ...F,
       items: [...F.items, ...O]
-    })), wr.current = !0;
+    })), vr.current = !0;
   }, [Ce]);
   const Ve = A(async ({ action: b = "list", extraParams: I = {}, isPivotExport: O = !1, contentType: F, columns: k } = {}) => {
     const { pageSize: _, page: V } = we, J = !!F, oe = gt(O ? e.pivotApi : $e), ie = {
@@ -2292,7 +2292,7 @@ const il = ({
     };
     typeof ae == "function" && ae(kt), Se.current.listParams = kt, J || Ut(!0);
     try {
-      const He = await Or({ ...kt, contentType: F, columns: k, signal: Qt });
+      const He = await Rr({ ...kt, contentType: F, columns: k, signal: Qt });
       if (!J && He !== void 0 && Ie.current === tt) {
         if (He?.aborted) return;
         U(He);
@@ -2303,7 +2303,7 @@ const il = ({
     } finally {
       !J && Ie.current === tt && Ut(!1);
     }
-  }, [we, gt, e, $e, Oe, se, At, u, m, f, $.extraParams, Ze, Ce, i, ae, Se, Or, fe, H, p, d]), lt = A(async ({ id: b, record: I = {}, mode: O }) => {
+  }, [we, gt, e, $e, Oe, se, At, u, m, f, $.extraParams, Ze, Ce, i, ae, Se, Rr, fe, H, p, d]), lt = A(async ({ id: b, record: I = {}, mode: O }) => {
     if (o) {
       try {
         const k = gt($e), _ = await ar({ id: b, api: k, model: e, parentFilters: i, where: c });
@@ -2327,7 +2327,7 @@ const il = ({
     if (!Z) {
       if (l && typeof await l({ cellParams: b, event: I, details: O }) !== K.boolean)
         return;
-      const oe = xr[b.field] || {};
+      const oe = wr[b.field] || {};
       if (oe.linkTo) {
         De({
           pathname: Xt.replaceTags(oe.linkTo, k)
@@ -2348,7 +2348,7 @@ const il = ({
           Je(!0), ur({ name: k[e.linkColumn], id: k[de] });
           break;
         case Be.History:
-          return De(`${mr("history")}?tableName=${Ur}&id=${k[de]}&breadCrumb=${Rt ? et.get(Rt) : Kr}`);
+          return De(`${mr("history")}?tableName=${Hr}&id=${k[de]}&breadCrumb=${Rt ? et.get(Rt) : _r}`);
         default:
           const ie = Kt.find((re) => re.action === F && typeof re.onClick === K.function);
           if (ie) {
@@ -2360,14 +2360,14 @@ const il = ({
     }
     if (F === Be.Download && nn({ documentLink: k[Ht] }), !Mt.length)
       return;
-    const { row: _ } = b, V = xr[b.field] || {}, J = {
+    const { row: _ } = b, V = wr[b.field] || {}, J = {
       pathname: Xt.replaceTags(V.linkTo, _)
     };
     e.addRecordToState && (J.state = _), De(J);
-  }, [Z, l, xr, e, de, Ht, De, Mt, Kt, Ur, Rt, et, Kr, mr, nn, lt]), va = A(async () => {
+  }, [Z, l, wr, e, de, Ht, De, Mt, Kt, Hr, Rt, et, _r, mr, nn, lt]), va = A(async () => {
     const b = gt($e);
     try {
-      await $r({ id: We.id, api: b, model: e }), fe.showMessage(p("Record Deleted Successfully.", d)), Ve();
+      await Vr({ id: We.id, api: b, model: e }), fe.showMessage(p("Record Deleted Successfully.", d)), Ve();
     } catch (I) {
       fe.showError(p("Delete failed", d), I.message);
     } finally {
@@ -2403,7 +2403,7 @@ const il = ({
     const F = gt(Qe || $e);
     Ut(!0);
     try {
-      const k = await Vr({
+      const k = await zr({
         id: 0,
         api: `${F}/updateMany`,
         values: { items: O },
@@ -2494,8 +2494,8 @@ const il = ({
     });
   }, [M?.recordCount, Se, Ce, fe, e, Ve, p, d]);
   pe(() => {
-    !$e || !Jr || Ve();
-  }, [$e, Jr, Ve]), pe(() => {
+    !$e || !Zr || Ve();
+  }, [$e, Zr, Ve]), pe(() => {
     if (!($.isChildGrid || G || !jt))
       return gr({ icon: "", titleHeading: e.pageTitle || e.title, title: e.title }), () => {
         gr(null);
@@ -2504,10 +2504,10 @@ const il = ({
   const Ea = A((b) => {
     const { items: I } = b, O = I.map((F) => {
       const { field: k, operator: _, value: V } = F, oe = (Ce.find((ie) => ie.field === k) || {}).type === K.Number;
-      return Qn.includes(_) ? { ...F, value: null } : oe && V < 0 ? { ...F, value: null } : Gr.includes(_) || oe && !isNaN(V) || !oe ? (mt && Ce.filter((re) => re.field === k)[0]?.isKeywordField && (F.filterField = `${F.field}.keyword`), { ...F }) : { ...F, value: oe ? null : V };
+      return Qn.includes(_) ? { ...F, value: null } : oe && V < 0 ? { ...F, value: null } : qr.includes(_) || oe && !isNaN(V) || !oe ? (mt && Ce.filter((re) => re.field === k)[0]?.isKeywordField && (F.filterField = `${F.field}.keyword`), { ...F }) : { ...F, value: oe ? null : V };
     });
     Ae({ ...b, items: O });
-  }, [Ce, K.Number, Gr, mt, Ae]), Aa = A((b) => {
+  }, [Ce, K.Number, qr, mt, Ae]), Aa = A((b) => {
     const I = b.map((O) => {
       const F = Ce.filter((V) => V.field === O.field)[0] || {}, k = mt && F.isKeywordField, _ = { ...O, filterField: k ? `${O.field}.keyword` : O.field };
       return F.dataIndex && (_.filterField = F.dataIndex), _;
@@ -2637,9 +2637,9 @@ const il = ({
     toolbar: {
       model: e,
       data: M,
-      currentPreference: _r,
+      currentPreference: Jr,
       isReadOnly: Z,
-      canAdd: qr,
+      canAdd: jr,
       forAssignment: G,
       showAddIcon: Wt,
       onAdd: on,
@@ -2667,7 +2667,7 @@ const il = ({
       customExportOptions: j
     },
     footer: {
-      pagination: Yr !== !0,
+      pagination: Kr !== !0,
       apiRef: Se,
       tTranslate: p,
       tOpts: d
@@ -2685,7 +2685,7 @@ const il = ({
         "aria-label": p("Go to next page", d)
       }
     }
-  }), [e, M, _r, Z, qr, G, Wt, on, Qe, ue, un, m, sn, u, cn, it, ln, dn, Bt, Se, Ce, p, d, de, Oe, Ae, Qr, T, $.headerActions, j]), Ba = q(() => ({
+  }), [e, M, Jr, Z, jr, G, Wt, on, Qe, ue, un, m, sn, u, cn, it, ln, dn, Bt, Se, Ce, p, d, de, Oe, Ae, Qr, T, $.headerActions, j]), Ba = q(() => ({
     columns: {
       columnVisibilityModel: ft
     },
@@ -2739,7 +2739,7 @@ const il = ({
           paginationModel: we,
           pageSizeOptions: K.pageSizeOptions,
           onPaginationModelChange: P,
-          pagination: !Yr,
+          pagination: !Kr,
           rowCount: M.recordCount,
           rows: M.records || [],
           sortModel: Ze,
@@ -2777,7 +2777,7 @@ const il = ({
           columnHeaderHeight: da,
           hideFooter: !z,
           rowGroupingModel: ga,
-          onRowGroupingModelChange: (b) => Zr(b),
+          onRowGroupingModelChange: (b) => Cr(b),
           getRowClassName: $.getRowClassName,
           columnGroupingModel: ba
         }
@@ -2837,7 +2837,7 @@ const il = ({
     ),
     /* @__PURE__ */ a(pt, { error: t.touched[r] && !!t.errors[r], children: t.touched[r] && t.errors[r] })
   ] }, r);
-}, Rr = ({ column: e, field: r, formik: t, otherProps: n }) => {
+}, Br = ({ column: e, field: r, formik: t, otherProps: n }) => {
   const o = vt(), i = e.rows || (e.multiline ? 5 : 1);
   return /* @__PURE__ */ a(
     lr,
@@ -3031,7 +3031,7 @@ const wn = ({ value: e, state: r }) => {
       ) })
     },
     ...e
-  }, /* @__PURE__ */ a(Rr, { otherProps: e, ...r });
+  }, /* @__PURE__ */ a(Br, { otherProps: e, ...r });
 }, Pl = ({ column: e, field: r, formik: t, otherProps: n, fieldConfigs: o = {}, mode: i }) => {
   const s = i !== "copy" && o.disabled, { systemDateTimeFormat: c, stateData: h } = qe(), y = q(() => t.values[r] ? ne(t.values[r]) : null, [t.values[r]]), C = e.minField ? t.values[e.minField] : void 0, f = e.maxField ? t.values[e.maxField] : void 0, u = q(() => e.min ? ne(e.min) : e.minField && C ? ne(C) : null, [e.min, e.minField, C]), m = q(() => e.max ? ne(e.max) : e.maxField && f ? ne(f) : null, [e.max, e.maxField, f]), w = A((x) => {
     if (x === null) {
@@ -3041,7 +3041,7 @@ const wn = ({ value: e, state: r }) => {
     const l = ne(x).hour(12).toISOString();
     t.setFieldValue(r, l);
   }, [r, t]);
-  return /* @__PURE__ */ kr(
+  return /* @__PURE__ */ Nr(
     Bn,
     {
       ...n,
@@ -3068,7 +3068,7 @@ const Fl = ({ column: e, field: r, formik: t, otherProps: n }) => {
     const c = t.values[r];
     return c ? ne(c) : null;
   }, [t.values[r], e]);
-  return /* @__PURE__ */ kr(
+  return /* @__PURE__ */ Nr(
     kn,
     {
       ...n,
@@ -3090,10 +3090,10 @@ const Fl = ({ column: e, field: r, formik: t, otherProps: n }) => {
     }
   );
 };
-ne.extend(Lr);
+ne.extend($r);
 const El = ({ column: e, field: r, formik: t, otherProps: n }) => {
   let o = t.values[r];
-  return !e.localize && o && (o = ne.utc(o).utcOffset(ne().utcOffset(), !0).format()), /* @__PURE__ */ kr(
+  return !e.localize && o && (o = ne.utc(o).utcOffset(ne().utcOffset(), !0).format()), /* @__PURE__ */ Nr(
     Xo,
     {
       ...n,
@@ -3229,7 +3229,7 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
   }, f = o ? o[y.column.lookup] : [], u = vt(), m = r.touched[e] && !!r.errors[e], w = s !== "copy" && i.disabled;
   return /* @__PURE__ */ S(ye, { children: [
     /* @__PURE__ */ a(Ct, { component: "fieldset", error: m, children: /* @__PURE__ */ a(
-      Nr,
+      Lr,
       {
         row: t === "row",
         "aria-label": n,
@@ -3329,7 +3329,7 @@ const Tl = yt.memo(({ column: e, field: r, formik: t, lookups: n, dependsOn: o =
   }, [m, h, y, e, r, o]), g = vt(), l = t.touched[r] && !!t.errors[r];
   return /* @__PURE__ */ S(ye, { children: [
     /* @__PURE__ */ a(Ct, { component: "fieldset", error: l, children: /* @__PURE__ */ S(
-      Nr,
+      Lr,
       {
         row: !0,
         name: e || r,
@@ -3455,7 +3455,7 @@ function Ul({ column: e, field: r, formik: t }) {
   const n = t.values[r] || "", { getApiEndpoint: o } = qe(), { maxSize: i, formats: s } = e, c = o("upload"), h = o("media"), y = o(), [C, f] = R({
     isExternal: "no",
     selectedFile: null
-  }), [u, m] = R(!1), w = Dt(), { getParams: x, useParams: g } = zr(), { associationId: l } = g() || x, v = l?.split("-")[0] || 1, D = (W) => {
+  }), [u, m] = R(!1), w = Dt(), { getParams: x, useParams: g } = Gr(), { associationId: l } = g() || x, v = l?.split("-")[0] || 1, D = (W) => {
     const X = W.target.value;
     f({
       ...C,
@@ -3515,7 +3515,7 @@ function Ul({ column: e, field: r, formik: t }) {
     /* @__PURE__ */ S(Fe, { sx: { display: "flex", alignItems: "center", marginBottom: 2 }, children: [
       /* @__PURE__ */ a(ke, { variant: "body1", sx: { width: "150px", marginRight: 2 }, children: "External Link?" }),
       /* @__PURE__ */ S(
-        Nr,
+        Lr,
         {
           row: !0,
           value: C.isExternal,
@@ -3650,7 +3650,7 @@ const Hl = ({ field: e, formik: r }) => {
 }, Yl = {
   boolean: xl,
   select: Tl,
-  string: Rr,
+  string: Br,
   number: Dl,
   password: Sl,
   date: Pl,
@@ -3660,7 +3660,7 @@ const Hl = ({ field: e, formik: r }) => {
   radio: Ml,
   autocomplete: Rl,
   dayRadio: $l,
-  email: Rr,
+  email: Br,
   chipInput: Vl,
   treeCheckbox: Gl,
   fileUpload: Ul,
@@ -3709,13 +3709,13 @@ const Hl = ({ field: e, formik: r }) => {
   const { tOpts: C, tTranslate: f } = ta(r);
   return e?.length ? /* @__PURE__ */ a(ye, { children: e.map(({ Component: u, column: m, field: w, label: x, otherProps: g }, l) => {
     const v = typeof m.relation == "function";
-    return /* @__PURE__ */ S(Pr, { container: !0, spacing: 2, sx: { marginTop: "1rem", marginBottom: "1rem" }, alignItems: v ? "flex-start" : "center", children: [
-      m?.showLabel !== !1 ? /* @__PURE__ */ a(Pr, { size: { xs: 3 }, sx: Dn, children: /* @__PURE__ */ S(ke, { sx: { fontSize: "16px", fontWeight: "bold" }, className: "form-label", children: [
+    return /* @__PURE__ */ S(Fr, { container: !0, spacing: 2, sx: { marginTop: "1rem", marginBottom: "1rem" }, alignItems: v ? "flex-start" : "center", children: [
+      m?.showLabel !== !1 ? /* @__PURE__ */ a(Fr, { size: { xs: 3 }, sx: Dn, children: /* @__PURE__ */ S(ke, { sx: { fontSize: "16px", fontWeight: "bold" }, className: "form-label", children: [
         f(m.label || w, C),
         ": ",
         m.required && /* @__PURE__ */ a(Kl, { children: "*" })
       ] }) }) : null,
-      /* @__PURE__ */ a(Pr, { size: { xs: v ? 12 : 9 }, sx: Dn, children: /* @__PURE__ */ a(u, { isAdd: y, model: r, fieldConfigs: c[w], mode: h, column: m, field: w, label: x, formik: t, data: n, onChange: o, combos: i, lookups: s, tTranslate: f, tOpts: C, ...g }) })
+      /* @__PURE__ */ a(Fr, { size: { xs: v ? 12 : 9 }, sx: Dn, children: /* @__PURE__ */ a(u, { isAdd: y, model: r, fieldConfigs: c[w], mode: h, column: m, field: w, label: x, formik: t, data: n, onChange: o, combos: i, lookups: s, tTranslate: f, tOpts: C, ...g }) })
     ] }, l);
   }) }) : null;
 }, Jl = function({ columns: e, tabs: r = {}, id: t, searchParams: n }) {
@@ -3839,7 +3839,7 @@ const es = Pn(({ relation: e, parentFilters: r, parent: t, where: n, models: o, 
   onCancel: u,
   onSaveSuccess: m
 }) => {
-  const w = e.formTitle || e.title, { t: x, i18n: g } = wt(), l = q(() => ({ t: x, i18n: g }), [x, g]), v = e?.tTranslate ?? ((z) => z), { navigate: D, getParams: N, useParams: B, pathname: E } = zr(), { relations: L = [] } = e, { stateData: te, buildUrl: H, setPageTitle: W } = qe(), X = B() || N, { id: Q = "" } = X, T = f || Q.split("-")[be.editIdIndex], ge = new URLSearchParams(window.location.search), ae = ge.has(be.baseData) && ge.get(be.baseData);
+  const w = e.formTitle || e.title, { t: x, i18n: g } = wt(), l = q(() => ({ t: x, i18n: g }), [x, g]), v = e?.tTranslate ?? ((z) => z), { navigate: D, getParams: N, useParams: B, pathname: E } = Gr(), { relations: L = [] } = e, { stateData: te, buildUrl: H, setPageTitle: W } = qe(), X = B() || N, { id: Q = "" } = X, T = f || Q.split("-")[be.editIdIndex], ge = new URLSearchParams(window.location.search), ae = ge.has(be.baseData) && ge.get(be.baseData);
   if (ae) {
     const z = JSON.parse(ae);
     typeof z === be.object && z !== null && (s = { ...s, ...z });
@@ -3902,7 +3902,7 @@ const es = Pn(({ relation: e, parentFilters: r, parent: t, where: n, models: o, 
     onSubmit: async (z, { resetForm: Pe }) => {
       Object.keys(z).forEach((Z) => {
         typeof z[Z] === be.string && (z[Z] = z[Z].trim());
-      }), se(!0), Vr({
+      }), se(!0), zr({
         id: T,
         api: fe,
         values: z,
@@ -3939,7 +3939,7 @@ const es = Pn(({ relation: e, parentFilters: r, parent: t, where: n, models: o, 
     Te.dirty && Ze ? Je(!0) : (typeof u === be.function && u(), ve !== !1 && Ee()), z.preventDefault();
   }, [Te.dirty, Ze, u, ve, Ee]), de = A(async () => {
     try {
-      M(!0), await $r({
+      M(!0), await Vr({
         id: T,
         api: r || e.api,
         model: e
@@ -4238,7 +4238,7 @@ export {
   Gi as ptPT,
   Vi as trTRGrid,
   Fi as useMobile,
-  zr as useRouter,
+  Gr as useRouter,
   Dt as useSnackbar,
   qe as useStateContext
 };
