@@ -267,6 +267,9 @@ const GridBase = memo(({
     useEffect(() => {
         if (Array.isArray(props.rowGroupingField)) {
             setGroupingModel(props.rowGroupingField);
+        } else {
+            // reset grouping so previous grouping does not persist.
+            setGroupingModel([]);
         }
     }, [props.rowGroupingField]);
 
