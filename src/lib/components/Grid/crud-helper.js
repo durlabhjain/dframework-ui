@@ -91,6 +91,7 @@ async function executeRequestHook(model, context) {
     if (typeof model.createRequestPayload === 'function') {
         await model.createRequestPayload(context);
     }
+    const method = String(context.method ?? '').toUpperCase();
     const data = {
         url: context.url,
         method: context.method,
@@ -100,7 +101,7 @@ async function executeRequestHook(model, context) {
         responseType: context.responseType,
         columns: context.columns
     };
-    if (context.action !== 'load' || context.method !== 'GET') {
+    if (method !== 'GET' && method !== 'HEAD') {
         data.params = context.params ?? { ...context.requestData, where: context.where };
     }
 

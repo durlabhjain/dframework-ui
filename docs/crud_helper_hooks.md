@@ -241,14 +241,10 @@ const model = new UiModel({
     columns: [/* ...columns */],
 
     createRequestPayload: async (context) => {
-        // Add authentication and tenant context
-        context.additionalHeaders = {
-            ...context.additionalHeaders,
-            'X-Tenant-Id': getCurrentTenantId()
-        };
-
-        // Add server-side includes for list requests
+        // Add tenant context to the request payload
+        // Note: mutate request data here rather than custom headers.
         if (context.action === 'list') {
+             context.requestData.tenantId = getCurrentTenantId();
             context.requestData.include = ['customer', 'lineItems'];
         }
     },
