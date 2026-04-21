@@ -117,7 +117,7 @@ async function executeRequestHook(model, context) {
  * @param {Object} context - Additional context to pass to the hook (dateColumns, props, etc.)
  * @returns {Promise<Object>} The potentially transformed response data
  */
-async function executeResponseHook(model, action, responseData, context = {}) {
+async function executeResponseHook({ model, action, responseData, context = {} }) {
     if (typeof model.parseResponsePayload === 'function' &&
         model.parseResponseActions?.includes(action)) {
         return await model.parseResponsePayload({
@@ -326,7 +326,7 @@ const getList = async (props = {}) => {
     validateResponse(response, 'An error occurred while fetching data');
 
     // Execute response hook if defined
-    await executeResponseHook(model, action, response, { dateColumns, model, action,  ...props });
+    await executeResponseHook({ model, action, responseData: response, context: { dateColumns, model, action,  ...props } });
 
     // Default response processing for date columns and display indexes
     response.records.forEach(record => {
@@ -381,7 +381,7 @@ const getRecord = async (props = {}) => {
     validateResponse(response, 'Load failed');
 
     // Execute response hook if defined
-    await executeResponseHook(model, 'load', response, props);
+    await executeResponseHook({ model, action: 'load', responseData: response, context: props });
 
     // Default response processing
     const { data: record, lookups } = response || {};
@@ -486,7 +486,7 @@ const getLookups = async (props = {}) => {
     validateResponse(response, 'Could not load lookups');
 
     // Execute response hook if defined
-    return await executeResponseHook(model, 'lookups', response, props);
+    return await executeResponseHook({ model, action: 'lookups', responseData: response, context: props });
 };
 
 export {
