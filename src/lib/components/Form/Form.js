@@ -18,7 +18,7 @@ import { useStateContext, useRouter } from "../useRouter/StateProvider";
 import PageTitle from "../PageTitle";
 import utils, { getPermissions } from "../utils";
 import Relations from "./relations";
-import { useTranslation } from "react-i18next";
+import { useModelTranslation } from "../../hooks/useModelTranslation";
 export const ActiveStepContext = createContext(1);
 const defaultFieldConfigs = {};
 const consts = {
@@ -51,9 +51,7 @@ const Form = ({
   onSaveSuccess
 }) => {
   const formTitle = model.formTitle || model.title;
-  const { t: translate, i18n } = useTranslation();
-  const tOpts = useMemo(() => ({ t: translate, i18n }), [translate, i18n]);
-  const tTranslate = model?.tTranslate ?? ((key) => key);
+  const { translate, tOpts, tTranslate } = useModelTranslation(model);
   const { navigate, getParams, useParams, pathname } = useRouter();
   const { relations = [] } = model;
   const { stateData, buildUrl, setPageTitle } = useStateContext();

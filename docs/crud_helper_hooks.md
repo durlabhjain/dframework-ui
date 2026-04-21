@@ -4,47 +4,53 @@ This document covers the changes made to `crud-helper.js` and how to use the `cr
 
 ## `createRequestPayload`
 
-An **async** function defined on the model that is called just before each HTTP request is made. It receives the full request object by reference, so mutations apply directly.
+An **async** function defined on the model that is called before the final HTTP request is constructed. It receives a single context object containing all request parameters and metadata, which can be modified directly before the final request is built.
 
 ### Signature
 
 ```js
-async createRequestPayload(requestData, context)
+async createRequestPayload(context)
 ```
 
 ### Parameters
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `requestData` | `Object` | The request configuration object that will be passed to the HTTP layer. You can mutate this directly. |
-| `context` | `Object` | Contextual metadata about the current operation (varies by action). |
+| `context` | `Object` | A mutable context object containing all request parameters and metadata. Modify properties on this object to change the final request. See "Context Properties by Action" below for details. |
 
-### Context by Action
+### Context Properties by Action
 
-| Action | Context Properties |
-|--------|-------------------|
-| **list** | `{ where, sortModel, page, pageSize, parentFilters, action, dataParsers }` |
-| **export** | `{ where, sortModel, page, pageSize, parentFilters, action, url }` |
-| **load** | `{ id, parentFilters, model, where, api, action: 'load' }` |
-| **save** | `{ id, model, values, api, action: 'save' }` |
-| **delete** | `{ id, model, api, action: 'delete' }` |
-| **lookups** | `{ model, lookups, scopeId, dispatchData }` |
+The `context` object contains different properties depending on the action. All contexts include the `action` property to identify the current operation.
 
-### `requestData` Structure
+#### Common Properties (all actions)
 
-For most operations, `requestData` contains:
+- `action` {string} - The CRUD action being performed (list, load, save, delete, lookups, export)
+- `url` {string} - The API endpoint URL
+- `method` {string} - HTTP method (GET, POST, PUT, DELETE)
+- `jsonPayload` {boolean} - Whether to send JSON payload vs FormData
+- `dataParser` {Function} - Function to parse response data
+- `dataParsers` {Object} - Available data parsers (json, text, raw)
+- All original props passed to the CRUD function are spread into the context
 
-```js
-{
-    url: String,              // The endpoint URL
-    additionalParams: Object, // e.g. { method: 'GET' }
-    additionalHeaders: Object,// e.g. { 'Content-Type': 'application/json' }
-    params: Object,           // The request body/payload
-    jsonPayload: Boolean,     // Whether to send as JSON
-    dispatchData: Function,   // Redux dispatch function
-    dataParser: Function      // (list only) response parser
-}
-```
+#### Action-Specific Properties
+
+| Action | Additional Context Properties |
+|--------|------------------------------|
+| **list** | `where` {Array} - Filter conditions<br>`requestData` {Object} - Request payload (start, limit, sort, lookups, etc.)<br>`signal` {AbortSignal} - Optional abort signal<br>`additionalHeaders` {Object} - HTTP headers |
+| **export** | `where` {Array} - Filter conditions<br>`requestData` {Object} - Request payload<br>`responseType` {string} - Expected content type<br>`columns` {Array} - Column definitions |
+| **load** | `where` {Object} - Filter conditions<br>`lookupsToFetch` {Array} - Lookups to load |
+| **save** | `params` {Object} - Record data to save<br>`additionalHeaders` {Object} - HTTP headers |
+| **delete** | *(No additional properties beyond common ones)* |
+| **lookups** | `lookups` {string} - Comma-separated lookup names<br>`scopeId` {any} - Scope identifier for lookups |
+
+### How It Works
+
+1. A context object is created with initial values (url, where, requestData, etc.)
+2. `createRequestPayload` is called with this context object
+3. You can modify any properties on the context object
+4. After the hook returns, the final request is built using the modified context values
+
+This design ensures that modifications to `where`, `url`, and other parameters apply correctly to the final request, avoiding duplicate assignment and maintaining consistency.
 
 ### Example Usage
 
@@ -58,37 +64,55 @@ const orderModel = new UiModel({
         { field: "total", type: "number", headerName: "Total" }
     ],
 
-    // Modify request before it is sent
-    createRequestPayload: async (requestData, context) => {
-        // Add a custom header
-        requestData.additionalHeaders = {
-            ...requestData.additionalHeaders,
-            'X-Custom-Token': 'my-token'
-        };
+    // Modify request parameters before the request is constructed
+    createRequestPayload: async (context) => {
+        // Access the action from context
+        const { action } = context;
 
-        // Add extra params for list requests
-        if (context.action === 'list') {
-            requestData.params.includeArchived = false;
+        // Modify the URL
+        if (action === 'save') {
+            context.url = `/api/orders/custom-save`;
         }
 
-        // Change the URL for save operations
-        if (context.action === 'save') {
-            requestData.url = `/api/orders/custom-save`;
+        // Modify where filters for list requests
+        if (action === 'list') {
+            context.where.push({
+                field: 'status',
+                operator: 'equals',
+                value: 'active'
+            });
+        }
+
+        // Modify request data
+        if (context.requestData) {
+            context.requestData.includeArchived = false;
+        }
+
+        // Modify params for save operations
+        if (action === 'save') {
+            context.params = {
+                ...context.params,
+                lastModifiedBy: 'current-user'
+            };
         }
     }
 });
 ```
 
-### Example: Switching to a Different Data Parser
+### Example: Modifying Where Filters
 
 ```jsx
 const model = new UiModel({
     // ...columns, api, etc.
 
-    createRequestPayload: async (requestData, context) => {
-        if (context.action === 'list') {
-            // Use a different data parser provided in context
-            requestData.dataParser = context.dataParsers.text;
+    createRequestPayload: async (context) => {
+        if (context.action === 'list' || context.action === 'export') {
+            // Add additional filters
+            context.where.push({
+                field: 'tenantId',
+                operator: 'equals',
+                value: getCurrentTenantId()
+            });
         }
     }
 });
@@ -216,16 +240,12 @@ const model = new UiModel({
     api: "/api/invoices",
     columns: [/* ...columns */],
 
-    createRequestPayload: async (requestData, context) => {
-        // Add authentication and tenant context
-        requestData.additionalHeaders = {
-            ...requestData.additionalHeaders,
-            'X-Tenant-Id': getCurrentTenantId()
-        };
-
-        // Add server-side includes for list requests
+    createRequestPayload: async (context) => {
+        // Add tenant context to the request payload
+        // Note: mutate request data here rather than custom headers.
         if (context.action === 'list') {
-            requestData.params.include = ['customer', 'lineItems'];
+             context.requestData.tenantId = getCurrentTenantId();
+            context.requestData.include = ['customer', 'lineItems'];
         }
     },
 

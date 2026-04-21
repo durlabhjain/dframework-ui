@@ -25,7 +25,7 @@ import TreeCheckbox from './fields/treeCheckBox';
 import FileUpload from './fields/fileUpload';
 import JSONInput from './fields/jsonInput';
 import utils from '../utils';
-import { useTranslation } from 'react-i18next';
+import { useModelTranslation } from '../../hooks/useModelTranslation';
 
 const fieldMappers = {
     "boolean": BooleanField,
@@ -52,14 +52,6 @@ const gridContainerStyle = { paddingTop: "2.5px", paddingBottom: "2.5px" };
 const ImportantSpan = styled('span')({
   color: 'red !important',
 });
-
-const useModelTranslation = (model) => {
-  const { t: translate, i18n } = useTranslation();
-  const tOpts = React.useMemo(() => ({ t: translate, i18n }), [translate, i18n]);
-  const tTranslate = model?.tTranslate ?? ((key) => key);
-
-  return { translate, i18n, tOpts, tTranslate };
-};
 
 const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, handleSubmit }) => {
     const [skipped, setSkipped] = React.useState(new Set());
@@ -218,18 +210,6 @@ const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displa
             </div>
         </div>
     );
-};
-
-export {
-    BooleanField,
-    StringField,
-    NumberField,
-    PasswordField,
-    DateField,
-    TimeField,
-    SelectField,
-    GridTransfer,
-    fieldMappers
 };
 
 export default FormLayout;
