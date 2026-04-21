@@ -266,6 +266,9 @@ const GridBase = memo(({
     useEffect(() => {
         if (Array.isArray(props.rowGroupingField)) {
             setGroupingModel(props.rowGroupingField);
+        } else {
+            // reset grouping so previous grouping does not persist.
+            setGroupingModel([]);
         }
     }, [props.rowGroupingField]);
 
@@ -304,13 +307,13 @@ const GridBase = memo(({
         },
         "date": {
             "valueFormatter": (value, row, column) => (
-                formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime, timeZone: column.localize ? timeZone : null, localize: column.localize })
+                formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "date", label: tTranslate('Value', tOpts) })
         },
         "dateTime": {
             "valueFormatter": (value, row, column) => (
-                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, timeZone: column.localize ? timeZone : null, localize: column.localize })
+                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "dateTime", label: tTranslate('Value', tOpts) })
         },
@@ -328,6 +331,9 @@ const GridBase = memo(({
 
     useEffect(() => {
         dataRef.current = data;
+        if (typeof props.onDataLoaded === 'function') {
+            props.onDataLoaded(data);
+        }
     }, [data]);
 
     useEffect(() => {

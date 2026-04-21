@@ -26,13 +26,13 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   const [pageBackButton, setPageBackButtonState] = useState(null);
   const [userData, setUserDataState] = useState(null);
   const [timeZone, setTimeZoneState] = useState('');
-  
+
   // Framework functionality - loader management (simple on/off, no counter)
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Framework functionality - i18n
   const { t, i18n } = useTranslation();
-  
+
   // Framework functionality - snackbar
   const snackbar = useSnackbar();
 
@@ -92,27 +92,30 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     return isDateFormatOnly?.split(' ')[0] || 'DD-MM-YYYY';
   }, []);
 
-  /**
-  * Formats a date value using system or user-defined format with optional timezone and UTC handling.
-  *
-  * @param {Object} params - The parameters object.
-  * @param {string|Date} params.value - The date value to format.
-  * @param {boolean} params.useSystemFormat - Whether to use the system date format.
-  * @param {boolean} [params.showOnlyDate=false] - Whether to show only the date part.
-  * @param {string|null|undefined} params.state - The user-defined date/time format string.
-  * @param {string} [params.timeZone] - The timezone to use for formatting.
-  * @param {boolean} [params.localize=false] - Whether to localize the date.
-  * @returns {string|null} The formatted date string, or `null` if value is falsy.
-  */
-  const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state, timeZone, localize = false }) => {
+/**
+   * Formats a date or date-string into a localized or system-defined string format.
+   * * @param {Object} params - The formatting configuration.
+   * @param {string|Date|dayjs.Dayjs} params.value - The date value to format. 
+   * - Strings without offsets are treated as local time.
+   * - Strings with offsets/Z are parsed as specific points in time.
+   * @param {boolean} params.useSystemFormat - If true, ignores `state` and uses the 
+   * globally configured system date/time format.
+   * @param {boolean} [params.showOnlyDate=false] - If true, excludes the time portion 
+   * from the resulting string.
+   * @param {string|null|undefined} params.state - A custom format string (e.g., "DD/MM/YYYY") 
+   * used if `useSystemFormat` is false.
+   * * @returns {string|null} The formatted date string, or `null` if the input value is falsy.
+   * * @example
+   * formatDate({ value: '2023-10-01', useSystemFormat: true });
+   * // Returns "Oct 1, 2023" (depending on system settings)
+   */
+  const formatDate = useCallback(({ value, useSystemFormat, showOnlyDate = false, state }) => {
     if (!value) return null;
-    const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state); // Pass 'state' as an argument
-    if(localize) {
-      if (!timeZone) {
-        return dayjs.utc(value).local().format(format);
-      }
-      return dayjs.utc(value).tz(timeZone).format(format);
-    }
+
+    // Get the appropriate format string based on system settings or user preference
+    const format = systemDateTimeFormat(useSystemFormat, showOnlyDate, state);
+
+    // Parse and format using dayjs
     return dayjs(value).format(format);
   }, [systemDateTimeFormat]);
 
@@ -193,30 +196,30 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   const contextValue = useMemo(() => ({
     // State data
     stateData,
-    
+
     // Loader management
     isLoading,
     showLoader,
-    
+
     // Snackbar utilities
     showMessage: snackbar?.showMessage || snackbarWarning,
     showError: snackbar?.showError || snackbarWarning,
-    
+
     // i18n utilities
     dayjs,
     t,
     i18n,
-    
+
     // Date/time utilities
     systemDateTimeFormat,
     formatDate,
     useLocalization,
-    
+
     // API utilities
     getApiEndpoint,
     setApiEndpoint,
     buildUrl,
-    
+
     // App-level state setters with meaningful names
     setLocale,
     setPageTitle,
@@ -226,8 +229,8 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     setDateTimeFormat,
     setModal
   }), [stateData, isLoading, showLoader, t, i18n, snackbar,
-       getApiEndpoint, setApiEndpoint, systemDateTimeFormat, formatDate, useLocalization,
-       setLocale, setPageTitle, setPageBackButton, setUserData, setTimeZone, setDateTimeFormat, setModal, buildUrl]);
+    getApiEndpoint, setApiEndpoint, systemDateTimeFormat, formatDate, useLocalization,
+    setLocale, setPageTitle, setPageBackButton, setUserData, setTimeZone, setDateTimeFormat, setModal, buildUrl]);
 
   return (
     <StateContext.Provider value={contextValue}>
