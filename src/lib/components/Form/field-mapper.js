@@ -48,6 +48,7 @@ const fieldMappers = {
 };
 
 const gridContainerStyle = { paddingTop: "2.5px", paddingBottom: "2.5px" };
+const sectionMarginTop = '20px';
 
 const ImportantSpan = styled('span')({
   color: 'red !important',
@@ -140,7 +141,7 @@ const RenderGroups = ({ tabColumns, model, formik, data, onChange, combos, looku
     return (
         <>
             {tabColumns.map(({ key, title, items }) => (
-                <Box key={key} sx={{ marginTop: '20px' }}>
+                <Box key={key} sx={{ marginTop: sectionMarginTop }}>
                     <Typography sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>{tTranslate(title, tOpts)}</Typography>
                     <RenderColumns isAdd={isAdd} formElements={items} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
                 </Box>
@@ -214,8 +215,9 @@ const getFormConfig = function ({ columns, tabs = {}, id, searchParams }) {
 const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayId, fieldConfigs, mode, handleSubmit }) => {
     const isAdd = utils.emptyIdValues.includes(displayId);
     const { formElements, tabColumns, showTabs, showGrouped } = React.useMemo(() => {
-        const showTabs = model.formConfig?.showTabbed;
-        const showGrouped = model.formConfig?.showGrouped;
+        const tabbedMode = model.formConfig?.showTabbed;
+        const showTabs = tabbedMode === true || (typeof tabbedMode === 'string' && tabbedMode !== 'group');
+        const showGrouped = tabbedMode === 'group' || (!showTabs && model.formConfig?.showGrouped === true);
         const searchParams = new URLSearchParams(window.location.search);
         const tabs = showTabs || showGrouped ? model.tabs : {};
         const { formElements, tabColumns } = getFormConfig({ columns: model.columns, tabs, id: displayId, searchParams });
@@ -227,9 +229,9 @@ const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displa
     return (
         <div>
             <RenderColumns isAdd={isAdd} formElements={formElements} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
-            <div style={{ marginTop: '20px' }}>
-                {showTabs ? <RenderSteps tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} handleSubmit={handleSubmit} /> : null}
-                {showGrouped ? <RenderGroups isAdd={isAdd} tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} /> : null}
+            <div style={{ marginTop: sectionMarginTop }}>
+                {showTabs && <RenderSteps tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} handleSubmit={handleSubmit} />}
+                {showGrouped && <RenderGroups isAdd={isAdd} tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />}
             </div>
         </div>
     );
