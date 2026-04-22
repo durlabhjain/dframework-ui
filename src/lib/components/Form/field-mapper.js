@@ -220,14 +220,16 @@ const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displa
         const tabs = showTabs || showGrouped ? model.tabs : {};
         const { formElements, tabColumns } = getFormConfig({ columns: model.columns, tabs, id: displayId, searchParams });
         const hasTabColumns = tabColumns.length > 0;
-        return { formElements, tabColumns, showTabs: showTabs && hasTabColumns, showGrouped: showGrouped && hasTabColumns };
+        const showTabbedLayout = showTabs && hasTabColumns;
+        const showGroupedLayout = !showTabbedLayout && showGrouped && hasTabColumns;
+        return { formElements, tabColumns, showTabs: showTabbedLayout, showGrouped: showGroupedLayout };
     }, [model]);
     return (
         <div>
             <RenderColumns isAdd={isAdd} formElements={formElements} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
             <div style={{ marginTop: '20px' }}>
                 {showTabs ? <RenderSteps tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} handleSubmit={handleSubmit} /> : null}
-                {!showTabs && showGrouped ? <RenderGroups isAdd={isAdd} tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} /> : null}
+                {showGrouped ? <RenderGroups isAdd={isAdd} tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} /> : null}
             </div>
         </div>
     );
