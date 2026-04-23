@@ -783,7 +783,7 @@ The Tabbed Stepper Form allows for creating step-based forms with a navigation b
 
 | Property   | Type    | Description                                                       |
 | ---------- | ------- | ----------------------------------------------------------------- |
-| formConfig | object  | Enables the navigation bar in the UI.                             |
+| formConfig | object  | Configures form layout options, including stepper/tabbed and grouped rendering modes. |
 | showTabbed | `boolean \| string` | Enables stepper navigation when `true`; use `"group"` to render grouped sections (requires `tabs`/`tab`). |
 | showGrouped | boolean | Legacy grouped mode flag. Prefer `showTabbed: "group"` for new usage. |
 | tabs       | object  | Defines the labels for each step.                                 |
