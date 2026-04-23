@@ -84,6 +84,19 @@ const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
 // Module-level default translate to avoid creating a new function instance every render
 const defaultTranslate = (key) => key;
 
+const normalizeStaticData = (staticData) => {
+    const records = Array.isArray(staticData)
+        ? staticData
+        : Array.isArray(staticData?.records)
+            ? staticData.records
+            : [];
+    return {
+        records,
+        recordCount: Number.isFinite(staticData?.recordCount) ? staticData.recordCount : records.length,
+        lookups: (staticData && typeof staticData.lookups === 'object' && staticData.lookups !== null) ? staticData.lookups : {}
+    };
+};
+
 // Return only items that are valid for requests (keep no-value operators)
 const filterValidItems = (items) => {
     return (items || []).filter(item => {
@@ -175,8 +188,14 @@ const GridBase = memo(({
     sx: propsSx,
     ...props
 }) => {
+    const staticDataSource = props.staticData ?? model.staticData;
+    const hasStaticData = staticDataSource !== undefined && staticDataSource !== null;
+    const normalizedStaticData = useMemo(
+        () => hasStaticData ? normalizeStaticData(staticDataSource) : null,
+        [hasStaticData, staticDataSource]
+    );
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
-    const [data, setData] = useState({ recordCount: 0, records: null, lookups: {} });
+    const [data, setData] = useState(() => normalizedStaticData || { recordCount: 0, records: null, lookups: {} });
     const forAssignment = !!onAssignChange;
     const rowsSelected = showRowsSelected;
     // MUI v8: rowSelectionModel uses object format with type ('include'/'exclude') and ids (Set)
@@ -189,7 +208,7 @@ const GridBase = memo(({
     const visibilityModel = { CreatedOn: false, CreatedByUser: false, ...model.columnVisibilityModel };
     const [showAddConfirmation, setShowAddConfirmation] = useState(false);
     const snackbar = useSnackbar();
-    const paginationMode = model.paginationMode === constants.client ? constants.client : constants.server;
+    const paginationMode = hasStaticData ? constants.client : (model.paginationMode === constants.client ? constants.client : constants.server);
     const { translate, tOpts } = useModelTranslation(model);
     const [errorMessage, setErrorMessage] = useState('');
     const [sortModel, setSortModel] = useState(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
@@ -335,6 +354,11 @@ const GridBase = memo(({
             props.onDataLoaded(data);
         }
     }, [data]);
+
+    useEffect(() => {
+        if (!hasStaticData) return;
+        setData(normalizedStaticData);
+    }, [hasStaticData, normalizedStaticData]);
 
     useEffect(() => {
         if (!customFilters || !Object.keys(customFilters).length) return;
@@ -619,6 +643,12 @@ const GridBase = memo(({
 
 
     const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
+        if (hasStaticData) {
+            if (!contentType) {
+                setData(normalizedStaticData);
+            }
+            return;
+        }
         const { pageSize, page } = paginationModel;
         const isExportRequest = Boolean(contentType);
 
@@ -712,7 +742,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
+    }, [hasStaticData, normalizedStaticData, paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -1016,9 +1046,9 @@ const GridBase = memo(({
     }, [data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
 
     useEffect(() => {
-        if (!backendApi || !preferencesReady) return;
+        if ((!backendApi && !hasStaticData) || !preferencesReady) return;
         fetchData();
-    }, [backendApi, preferencesReady, fetchData]);
+    }, [backendApi, hasStaticData, preferencesReady, fetchData]);
 
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
