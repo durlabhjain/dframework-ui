@@ -48,6 +48,7 @@ const fieldMappers = {
 };
 
 const gridContainerStyle = { paddingTop: "2.5px", paddingBottom: "2.5px" };
+const sectionMarginTop = '20px';
 
 const ImportantSpan = styled('span')({
   color: 'red !important',
@@ -132,6 +133,50 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
     );
 };
 
+const RenderGroups = ({ tabColumns, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, isAdd }) => {
+    const { tOpts, tTranslate } = useModelTranslation(model);
+    if (!tabColumns?.length) {
+        return null;
+    }
+    return (
+        <>
+            {tabColumns.map(({ key, title, items }, index) => (
+                <Box
+                    key={key}
+                    sx={{
+                        position: 'relative',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        px: 3,
+                        pt: 3,
+                        pb: 2,
+                        mt: index === 0 ? 0 : sectionMarginTop,
+                    }}
+                >
+                    <Typography
+                        component="h3"
+                        variant="h6"
+                        sx={{
+                            position: 'absolute',
+                            top: '-0.75em',
+                            left: 16,
+                            fontSize: '18px',
+                            fontWeight: 'bold',
+                            lineHeight: 1.5,
+                            bgcolor: 'background.paper',
+                            px: '6px',
+                        }}
+                    >
+                        {tTranslate(title, tOpts)}
+                    </Typography>
+                    <RenderColumns isAdd={isAdd} formElements={items} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
+                </Box>
+            ))}
+        </>
+    );
+};
+
 const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, isAdd }) => {
     const { tOpts, tTranslate } = useModelTranslation(model);
     if (!formElements?.length) {
@@ -196,17 +241,24 @@ const getFormConfig = function ({ columns, tabs = {}, id, searchParams }) {
 
 const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayId, fieldConfigs, mode, handleSubmit }) => {
     const isAdd = utils.emptyIdValues.includes(displayId);
-    const { formElements, tabColumns } = React.useMemo(() => {
-        const showTabs = model.formConfig?.showTabbed;
+    const { formElements, tabColumns, showTabs, showGrouped } = React.useMemo(() => {
+        const tabbedMode = model.formConfig?.showTabbed;
+        const showTabs = tabbedMode === true;
+        const showGrouped = tabbedMode === 'group' || (tabbedMode !== true && tabbedMode !== 'group' && model.formConfig?.showGrouped === true);
         const searchParams = new URLSearchParams(window.location.search);
-        const { formElements, tabColumns } = getFormConfig({ columns: model.columns, tabs: showTabs ? model.tabs : {}, id: displayId, searchParams });
-        return { formElements, tabColumns, showTabs: showTabs && tabColumns.length > 0 };
+        const tabs = showTabs || showGrouped ? model.tabs : {};
+        const { formElements, tabColumns } = getFormConfig({ columns: model.columns, tabs, id: displayId, searchParams });
+        const hasTabColumns = tabColumns.length > 0;
+        const showTabbedLayout = showTabs && hasTabColumns;
+        const showGroupedLayout = !showTabbedLayout && showGrouped && hasTabColumns;
+        return { formElements, tabColumns, showTabs: showTabbedLayout, showGrouped: showGroupedLayout };
     }, [model]);
     return (
         <div>
             <RenderColumns isAdd={isAdd} formElements={formElements} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
-            <div style={{ marginTop: '20px' }}>
-                <RenderSteps tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} handleSubmit={handleSubmit} />
+            <div style={{ marginTop: showTabs ? sectionMarginTop : 0 }}>
+                {showTabs && <RenderSteps tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} handleSubmit={handleSubmit} />}
+                {showGrouped && <RenderGroups isAdd={isAdd} tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />}
             </div>
         </div>
     );

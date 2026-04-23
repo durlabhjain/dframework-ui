@@ -783,8 +783,9 @@ The Tabbed Stepper Form allows for creating step-based forms with a navigation b
 
 | Property   | Type    | Description                                                       |
 | ---------- | ------- | ----------------------------------------------------------------- |
-| formConfig | object  | Enables the navigation bar in the UI.                             |
-| showTabbed | boolean | Enables the navigation bar in the UI.                             |
+| formConfig | object  | Configures form layout options, including stepper/tabbed and grouped rendering modes. |
+| showTabbed | `boolean \| string` | Enables stepper navigation when `true`; use `"group"` to render grouped sections (requires `tabs`/`tab`). |
+| showGrouped | boolean | Legacy grouped mode flag. Prefer `showTabbed: "group"` for new usage. |
 | tabs       | object  | Defines the labels for each step.                                 |
 | tab        | string  | Maps form fields to their respective steps based on the tabs key. |
 
@@ -846,6 +847,10 @@ const surveyModel = new UiModel({
     ]
 });
 ```
+
+To render the same tab-mapped fields as grouped sections (without stepper navigation), set `formConfig.showTabbed: "group"` and keep `tabs`/`tab` mappings the same.
+`showGrouped: true` remains supported for backward compatibility.
+If both grouped and tabbed options are provided, `showTabbed` takes precedence (`true` = stepper, `"group"` = grouped).
 
 #### UI Representation
 
