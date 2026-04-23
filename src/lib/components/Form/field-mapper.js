@@ -151,7 +151,7 @@ const RenderGroups = ({ tabColumns, model, formik, data, onChange, combos, looku
                         px: 3,
                         pt: 3,
                         pb: 2,
-                        mt: '28px',
+                        mt: sectionMarginTop,
                     }}
                 >
                     <Typography
