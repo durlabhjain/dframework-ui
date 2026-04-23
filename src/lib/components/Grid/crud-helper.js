@@ -159,7 +159,6 @@ const getList = async (props = {}) => {
         return;
     }
 
-    const { signal } = props;
     const reqParams = {
         url,
         additionalHeaders: {

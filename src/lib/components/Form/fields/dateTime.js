@@ -11,14 +11,7 @@ const Field = ({ column, field, formik, otherProps }) => {
     const dateTimeValue = useMemo(() => {
         const val = formik.values[field];
         if (!val) return null;
-        if (column.localize) {
-            return dayjs(val);
-        }
-        // Non-localized: adjust UTC value to appear as local time so user sees raw UTC digits
-        let date = new Date(val);
-        const userTimezoneOffset = date.getTimezoneOffset() * 60000;
-        date = new Date(date.getTime() + userTimezoneOffset);
-        return dayjs(date);
+        return dayjs(val);
     }, [formik.values[field], column]);
     
     return <DateTimePicker

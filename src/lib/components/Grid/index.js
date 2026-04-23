@@ -32,7 +32,7 @@ import utils, { getPermissions } from '../utils';
 import HistoryIcon from '@mui/icons-material/History';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Checkbox from '@mui/material/Checkbox';
-import { useTranslation } from 'react-i18next';
+import { useModelTranslation } from '../../hooks/useModelTranslation';
 import { convertDefaultSort, areEqual, getDefaultOperator } from './helper';
 import { styled } from '@mui/material/styles';
 
@@ -193,8 +193,7 @@ const GridBase = memo(({
     const snackbar = useSnackbar();
     const hasGridData = Array.isArray(gridData);
     const paginationMode = hasGridData || model.paginationMode === constants.client ? constants.client : constants.server;
-    const { t: translate, i18n } = useTranslation();
-    const tOpts = useMemo(() => ({ t: translate, i18n }), [translate, i18n]);
+    const { translate, tOpts } = useModelTranslation(model);
     const [errorMessage, setErrorMessage] = useState('');
     const [sortModel, setSortModel] = useState(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
     const initialFilterModel = { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' };
@@ -275,6 +274,9 @@ const GridBase = memo(({
     useEffect(() => {
         if (Array.isArray(props.rowGroupingField)) {
             setGroupingModel(props.rowGroupingField);
+        } else {
+            // reset grouping so previous grouping does not persist.
+            setGroupingModel([]);
         }
     }, [props.rowGroupingField]);
 
@@ -324,13 +326,13 @@ const GridBase = memo(({
         },
         "date": {
             "valueFormatter": (value, row, column) => (
-                formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime, timeZone: column.localize ? timeZone : null, localize: column.localize })
+                formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "date", label: tTranslate('Value', tOpts) })
         },
         "dateTime": {
             "valueFormatter": (value, row, column) => (
-                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime, timeZone: column.localize ? timeZone : null, localize: column.localize })
+                formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "dateTime", label: tTranslate('Value', tOpts) })
         },
@@ -348,6 +350,9 @@ const GridBase = memo(({
 
     useEffect(() => {
         dataRef.current = data;
+        if (typeof props.onDataLoaded === 'function') {
+            props.onDataLoaded(data);
+        }
     }, [data]);
 
     useEffect(() => {
