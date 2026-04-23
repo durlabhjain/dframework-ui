@@ -141,8 +141,33 @@ const RenderGroups = ({ tabColumns, model, formik, data, onChange, combos, looku
     return (
         <>
             {tabColumns.map(({ key, title, items }) => (
-                <Box key={key} sx={{ marginTop: sectionMarginTop }}>
-                    <Typography sx={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '10px' }}>{tTranslate(title, tOpts)}</Typography>
+                <Box
+                    key={key}
+                    sx={{
+                        position: 'relative',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 2,
+                        px: 3,
+                        pt: 3,
+                        pb: 2,
+                        mt: '28px',
+                    }}
+                >
+                    <Typography
+                        sx={{
+                            position: 'absolute',
+                            top: '-0.75em',
+                            left: 16,
+                            fontSize: '18px',
+                            fontWeight: 'bold',
+                            lineHeight: 1.5,
+                            bgcolor: 'background.paper',
+                            px: '6px',
+                        }}
+                    >
+                        {tTranslate(title, tOpts)}
+                    </Typography>
                     <RenderColumns isAdd={isAdd} formElements={items} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
                 </Box>
             ))}
