@@ -189,7 +189,7 @@ const GridBase = memo(({
     ...props
 }) => {
     const staticDataSource = props.staticData ?? model.staticData;
-    const hasStaticData = staticDataSource !== undefined && staticDataSource !== null;
+    const hasStaticData = Array.isArray(staticDataSource) || Array.isArray(staticDataSource?.records);
     const normalizedStaticData = useMemo(
         () => hasStaticData ? normalizeStaticData(staticDataSource) : null,
         [hasStaticData, staticDataSource]
@@ -999,12 +999,25 @@ const GridBase = memo(({
 
     const getGridRowId = useCallback((row) => row[idProperty], [idProperty]);
     const handleExport = useCallback((e) => {
+        const contentType = e.currentTarget?.dataset?.contentType || e.target?.dataset?.contentType;
+        const isPivotExport = (e.currentTarget?.dataset?.isPivotExport || e.target?.dataset?.isPivotExport) === 'true';
+        if (hasStaticData) {
+            if (contentType === 'text/csv') {
+                apiRef.current?.exportDataAsCsv?.();
+                return;
+            }
+            if (contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+                apiRef.current?.exportDataAsExcel?.();
+                return;
+            }
+            snackbar.showMessage(tTranslate('For static data, only CSV and Excel export are supported.', tOpts));
+            return;
+        }
         if (data?.recordCount > recordCounts) {
             snackbar.showMessage(tTranslate('Cannot export more than 60k records, please apply filters or reduce your results using filters', tOpts));
             return;
         }
         const { orderedFields, columnVisibilityModel, lookup } = apiRef.current.state.columns;
-        const isPivotExport = e.target.dataset.isPivotExport === 'true';
         const hiddenColumns = Object.keys(columnVisibilityModel).filter(key => columnVisibilityModel[key] === false);
 
         const nonExportColumns = new Set(gridColumns.filter(col => col.exportable === false).map(col => col.field));
@@ -1040,10 +1053,10 @@ const GridBase = memo(({
         fetchData({
             action,
             isPivotExport,
-            contentType: e.target.dataset.contentType,
+            contentType,
             columns
         });
-    }, [data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
+    }, [hasStaticData, data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
 
     useEffect(() => {
         if ((!backendApi && !hasStaticData) || !preferencesReady) return;
