@@ -33,15 +33,15 @@ export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, t
 );
 
 // Custom export button component
-export const CustomExportButton = ({ exportFormats, customExportOptions, ...props }) => (
-    <GridToolbarExportContainer {...props}>
-        {exportFormats.csv !== false && <ExportMenuItem {...props} icon={<GridOn fontSize="small" />} type="CSV" contentType="text/csv" />}
-        {exportFormats.excel !== false && <ExportMenuItem {...props} icon={<TableChart fontSize="small" />} type="Excel" contentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />}
-        {props.showPivotExportBtn && <ExportMenuItem {...props} icon={<TableChart fontSize="small" />} type="Excel With Pivot" contentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" isPivotExport={true} />}
-        {exportFormats.xml !== false && <ExportMenuItem {...props} icon={<Code fontSize="small" />} type="XML" contentType="text/xml" />}
-        {exportFormats.html !== false && <ExportMenuItem {...props} icon={<Language fontSize="small" />} type="HTML" contentType="text/html" />}
-        {exportFormats.json !== false && <ExportMenuItem {...props} icon={<DataObjectIcon fontSize="small" />} type="JSON" contentType="application/json" />}
-        {Array.isArray(customExportOptions) && customExportOptions.map((item, index) => (
+export const CustomExportButton = ({ exportFormats, customExportOptions, isStaticDataMode = false, ...props }) => {
+    const exportItems = [
+        exportFormats.csv !== false && <ExportMenuItem key="csv" {...props} icon={<GridOn fontSize="small" />} type="CSV" contentType="text/csv" />,
+        exportFormats.excel !== false && <ExportMenuItem key="excel" {...props} icon={<TableChart fontSize="small" />} type="Excel" contentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />,
+        !isStaticDataMode && props.showPivotExportBtn && <ExportMenuItem key="pivot" {...props} icon={<TableChart fontSize="small" />} type="Excel With Pivot" contentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" isPivotExport={true} />,
+        !isStaticDataMode && exportFormats.xml !== false && <ExportMenuItem key="xml" {...props} icon={<Code fontSize="small" />} type="XML" contentType="text/xml" />,
+        !isStaticDataMode && exportFormats.html !== false && <ExportMenuItem key="html" {...props} icon={<Language fontSize="small" />} type="HTML" contentType="text/html" />,
+        !isStaticDataMode && exportFormats.json !== false && <ExportMenuItem key="json" {...props} icon={<DataObjectIcon fontSize="small" />} type="JSON" contentType="application/json" />,
+        !isStaticDataMode && Array.isArray(customExportOptions) && customExportOptions.map((item, index) => (
             <ExportMenuItem
                 key={item.key || index}
                 {...props}
@@ -50,9 +50,17 @@ export const CustomExportButton = ({ exportFormats, customExportOptions, ...prop
                 contentType={item.contentType || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
                 handleExport={item.handleExport || props.handleExport}
             />
-        ))}
-    </GridToolbarExportContainer>
-);
+        ))
+    ].flat().filter(Boolean);
+
+    if (exportItems.length === 0) return null;
+
+    return (
+        <GridToolbarExportContainer {...props}>
+            {exportItems}
+        </GridToolbarExportContainer>
+    );
+};
 
 // Get default operator based on column type
 export const getDefaultOperator = (type, customOperator) => {

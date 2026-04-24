@@ -84,6 +84,24 @@ const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
 // Module-level default translate to avoid creating a new function instance every render
 const defaultTranslate = (key) => key;
 
+const normalizeStaticData = (staticData) => {
+    const records = Array.isArray(staticData)
+        ? staticData
+        : Array.isArray(staticData?.records)
+            ? staticData.records
+            : [];
+    return {
+        records,
+        recordCount: Number.isFinite(staticData?.recordCount) ? staticData.recordCount : records.length,
+        lookups: (
+            staticData &&
+            typeof staticData.lookups === 'object' &&
+            staticData.lookups !== null &&
+            !Array.isArray(staticData.lookups)
+        ) ? staticData.lookups : {}
+    };
+};
+
 // Return only items that are valid for requests (keep no-value operators)
 const filterValidItems = (items) => {
     return (items || []).filter(item => {
@@ -175,8 +193,14 @@ const GridBase = memo(({
     sx: propsSx,
     ...props
 }) => {
+    const staticDataSource = props.staticData ?? model.staticData;
+    const hasStaticData = Array.isArray(staticDataSource) || Array.isArray(staticDataSource?.records);
+    const normalizedStaticData = useMemo(
+        () => hasStaticData ? normalizeStaticData(staticDataSource) : null,
+        [hasStaticData, staticDataSource]
+    );
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
-    const [data, setData] = useState({ recordCount: 0, records: null, lookups: {} });
+    const [data, setData] = useState(() => normalizedStaticData || { recordCount: 0, records: null, lookups: {} });
     const forAssignment = !!onAssignChange;
     const rowsSelected = showRowsSelected;
     // MUI v8: rowSelectionModel uses object format with type ('include'/'exclude') and ids (Set)
@@ -189,7 +213,7 @@ const GridBase = memo(({
     const visibilityModel = { CreatedOn: false, CreatedByUser: false, ...model.columnVisibilityModel };
     const [showAddConfirmation, setShowAddConfirmation] = useState(false);
     const snackbar = useSnackbar();
-    const paginationMode = model.paginationMode === constants.client ? constants.client : constants.server;
+    const paginationMode = hasStaticData ? constants.client : (model.paginationMode === constants.client ? constants.client : constants.server);
     const { translate, tOpts } = useModelTranslation(model);
     const [errorMessage, setErrorMessage] = useState('');
     const [sortModel, setSortModel] = useState(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
@@ -205,8 +229,11 @@ const GridBase = memo(({
     const { id: idWithOptions } = useParams() || getParams;
     const id = idWithOptions?.split('-')[0];
     const apiRef = propsApiRef || useGridApiRef();
+    const backendApi = api || model.api;
+    const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
     const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true } = model;
-    const isReadOnly = model.readOnly === true || readOnly;
+    // In static mode without API endpoint, force read-only to prevent invalid CRUD requests.
+    const isReadOnly = model.readOnly === true || readOnly || isStaticDataWithoutBackendApi;
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
     const fetchAbortControllerRef = useRef(null);
@@ -234,7 +261,7 @@ const GridBase = memo(({
     const searchParams = new URLSearchParams(window.location.search);
     const [currentPreference, setCurrentPreference] = useState(null);
     const [preferencesReady, setPreferencesReady] = useState(!preferenceKey);
-    const backendApi = api || model.api;
+    const backendApiRequiredMessage = tTranslate('This action requires an API endpoint.', tOpts);
     // State for single expanded detail panel row
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
@@ -335,6 +362,19 @@ const GridBase = memo(({
             props.onDataLoaded(data);
         }
     }, [data]);
+
+    useEffect(() => {
+        if (hasStaticData) {
+            setData(normalizedStaticData);
+            return;
+        }
+        setData((prevData) => ({
+            ...(prevData || {}),
+            records: [],
+            recordCount: 0,
+            lookups: {}
+        }));
+    }, [hasStaticData, normalizedStaticData]);
 
     useEffect(() => {
         if (!customFilters || !Object.keys(customFilters).length) return;
@@ -619,6 +659,12 @@ const GridBase = memo(({
 
 
     const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
+        if (hasStaticData) {
+            if (!contentType) {
+                setData(normalizedStaticData);
+            }
+            return;
+        }
         const { pageSize, page } = paginationModel;
         const isExportRequest = Boolean(contentType);
 
@@ -712,10 +758,14 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
+    }, [hasStaticData, normalizedStaticData, paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
+            if (isStaticDataWithoutBackendApi) {
+                snackbar.showError(backendApiRequiredMessage);
+                return;
+            }
             try {
                 const baseUrl = buildUrl(backendApi);
                 const data = await getRecord({ id, api: baseUrl, model, parentFilters, where });
@@ -739,7 +789,7 @@ const GridBase = memo(({
             path += `?${searchParams.toString()}`;
         }
         navigate(path);
-    }, [setActiveRecord, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
+    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, backendApiRequiredMessage, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -818,6 +868,10 @@ const GridBase = memo(({
     }, [isReadOnly, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, searchParams, gridTitle, getApiEndpoint, handleDownload, openForm]);
 
     const handleDelete = useCallback(async () => {
+        if (isStaticDataWithoutBackendApi) {
+            snackbar.showError(backendApiRequiredMessage);
+            return;
+        }
         const baseUrl = buildUrl(backendApi);
         try {
             await deleteRecord({ id: record.id, api: baseUrl, model });
@@ -828,7 +882,7 @@ const GridBase = memo(({
         } finally {
             setIsDeleting(false);
         }
-    }, [backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts]);
+    }, [isStaticDataWithoutBackendApi, backendApiRequiredMessage, backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts]);
 
     const clearError = useCallback(() => {
         setErrorMessage(null);
@@ -885,7 +939,12 @@ const GridBase = memo(({
             );
         }
 
-        const baseUrl = buildUrl(selectionApi || backendApi);
+        const apiEndpoint = selectionApi || backendApi;
+        if (!apiEndpoint) {
+            snackbar.showError(backendApiRequiredMessage);
+            return;
+        }
+        const baseUrl = buildUrl(apiEndpoint);
         setIsLoading(true);
         try {
             const result = await saveRecord({
@@ -910,7 +969,7 @@ const GridBase = memo(({
             });
             setShowAddConfirmation(false);
         }
-    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts]);
+    }, [rowSelectionModel.ids, snackbar, backendApiRequiredMessage, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts]);
 
     const onAdd = useCallback(() => {
         if (selectionApi.length > 0) {
@@ -969,12 +1028,24 @@ const GridBase = memo(({
 
     const getGridRowId = useCallback((row) => row[idProperty], [idProperty]);
     const handleExport = useCallback((e) => {
+        const contentType = e.currentTarget?.dataset?.contentType || e.target?.dataset?.contentType;
+        const isPivotExport = (e.currentTarget?.dataset?.isPivotExport || e.target?.dataset?.isPivotExport) === 'true';
+        if (hasStaticData) {
+            if (contentType === 'text/csv') {
+                apiRef.current?.exportDataAsCsv?.();
+                return;
+            }
+            if (contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+                apiRef.current?.exportDataAsExcel?.();
+                return;
+            }
+            return;
+        }
         if (data?.recordCount > recordCounts) {
             snackbar.showMessage(tTranslate('Cannot export more than 60k records, please apply filters or reduce your results using filters', tOpts));
             return;
         }
         const { orderedFields, columnVisibilityModel, lookup } = apiRef.current.state.columns;
-        const isPivotExport = e.target.dataset.isPivotExport === 'true';
         const hiddenColumns = Object.keys(columnVisibilityModel).filter(key => columnVisibilityModel[key] === false);
 
         const nonExportColumns = new Set(gridColumns.filter(col => col.exportable === false).map(col => col.field));
@@ -1010,15 +1081,15 @@ const GridBase = memo(({
         fetchData({
             action,
             isPivotExport,
-            contentType: e.target.dataset.contentType,
+            contentType,
             columns
         });
-    }, [data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
+    }, [hasStaticData, data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
 
     useEffect(() => {
-        if (!backendApi || !preferencesReady) return;
+        if ((!backendApi && !hasStaticData) || !preferencesReady) return;
         fetchData();
-    }, [backendApi, preferencesReady, fetchData]);
+    }, [backendApi, hasStaticData, preferencesReady, fetchData]);
 
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
@@ -1248,7 +1319,8 @@ const GridBase = memo(({
             onPreferenceChange,
             toolbarItems,
             headerActions: props.headerActions,
-            customExportOptions
+            customExportOptions,
+            isStaticDataMode: hasStaticData
         },
         footer: {
             pagination: disablePagination !== true,
@@ -1269,7 +1341,7 @@ const GridBase = memo(({
                 'aria-label': tTranslate('Go to next page', tOpts),
             },
         }
-    }), [model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions]);
+    }), [model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions, hasStaticData]);
 
     const initialState = useMemo(() => ({
         columns: {
