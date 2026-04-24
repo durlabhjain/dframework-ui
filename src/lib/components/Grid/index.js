@@ -356,8 +356,16 @@ const GridBase = memo(({
     }, [data]);
 
     useEffect(() => {
-        if (!hasStaticData) return;
-        setData(normalizedStaticData);
+        if (hasStaticData) {
+            setData(normalizedStaticData);
+            return;
+        }
+        setData((prevData) => ({
+            ...(prevData || {}),
+            records: [],
+            recordCount: 0,
+            lookups: {}
+        }));
     }, [hasStaticData, normalizedStaticData]);
 
     useEffect(() => {
