@@ -60,7 +60,8 @@ const CustomToolbar = function (props) {
         onPreferenceChange,
         toolbarItems,
         gridColumns,
-        customExportOptions
+        customExportOptions,
+        isStaticDataMode
     } = props;
 
     const addText = model.customAddText || (model.title ? `Add ${model.title}` : 'Add');
@@ -146,7 +147,7 @@ const CustomToolbar = function (props) {
                     </>)}
 
                     {effectivePermissions.export && (
-                        <CustomExportButton handleExport={handleExport} showPivotExportBtn={model.pivotApi} exportFormats={model.exportFormats || {}} customExportOptions={customExportOptions} tTranslate={tTranslate} tOpts={tOpts} />
+                        <CustomExportButton handleExport={handleExport} showPivotExportBtn={model.pivotApi} exportFormats={model.exportFormats || {}} customExportOptions={customExportOptions} tTranslate={tTranslate} tOpts={tOpts} isStaticDataMode={isStaticDataMode} />
                     )}
                     {toolbarItems}
                     {preferenceKey &&

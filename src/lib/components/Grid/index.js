@@ -1010,7 +1010,6 @@ const GridBase = memo(({
                 apiRef.current?.exportDataAsExcel?.();
                 return;
             }
-            snackbar.showMessage(tTranslate('Static data mode supports only CSV and Excel export. Use API-backed data for other formats.', tOpts));
             return;
         }
         if (data?.recordCount > recordCounts) {
@@ -1291,7 +1290,8 @@ const GridBase = memo(({
             onPreferenceChange,
             toolbarItems,
             headerActions: props.headerActions,
-            customExportOptions
+            customExportOptions,
+            isStaticDataMode: hasStaticData
         },
         footer: {
             pagination: disablePagination !== true,
@@ -1312,7 +1312,7 @@ const GridBase = memo(({
                 'aria-label': tTranslate('Go to next page', tOpts),
             },
         }
-    }), [model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions]);
+    }), [model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions, hasStaticData]);
 
     const initialState = useMemo(() => ({
         columns: {
