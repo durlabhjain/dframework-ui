@@ -1010,7 +1010,7 @@ const GridBase = memo(({
                 apiRef.current?.exportDataAsExcel?.();
                 return;
             }
-            snackbar.showMessage(tTranslate('For static data, only CSV and Excel export are supported.', tOpts));
+            snackbar.showMessage(tTranslate('Static data mode supports only CSV and Excel export. Use API-backed data for other formats.', tOpts));
             return;
         }
         if (data?.recordCount > recordCounts) {
