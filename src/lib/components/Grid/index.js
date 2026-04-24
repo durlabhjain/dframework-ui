@@ -230,9 +230,10 @@ const GridBase = memo(({
     const id = idWithOptions?.split('-')[0];
     const apiRef = propsApiRef || useGridApiRef();
     const backendApi = api || model.api;
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true } = model;
-    const isReadOnly = model.readOnly === true || readOnly || (hasStaticData && !backendApi);
     const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true } = model;
+    // In static mode without API endpoint, force read-only to prevent invalid CRUD requests.
+    const isReadOnly = model.readOnly === true || readOnly || isStaticDataWithoutBackendApi;
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
     const fetchAbortControllerRef = useRef(null);
@@ -260,6 +261,7 @@ const GridBase = memo(({
     const searchParams = new URLSearchParams(window.location.search);
     const [currentPreference, setCurrentPreference] = useState(null);
     const [preferencesReady, setPreferencesReady] = useState(!preferenceKey);
+    const backendApiRequiredMessage = tTranslate('This action requires an API endpoint.', tOpts);
     // State for single expanded detail panel row
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
@@ -761,7 +763,7 @@ const GridBase = memo(({
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
             if (isStaticDataWithoutBackendApi) {
-                snackbar.showError(tTranslate('This action requires an API endpoint.', tOpts));
+                snackbar.showError(backendApiRequiredMessage);
                 return;
             }
             try {
@@ -787,7 +789,7 @@ const GridBase = memo(({
             path += `?${searchParams.toString()}`;
         }
         navigate(path);
-    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
+    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, backendApiRequiredMessage, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -867,7 +869,7 @@ const GridBase = memo(({
 
     const handleDelete = useCallback(async () => {
         if (isStaticDataWithoutBackendApi) {
-            snackbar.showError(tTranslate('This action requires an API endpoint.', tOpts));
+            snackbar.showError(backendApiRequiredMessage);
             return;
         }
         const baseUrl = buildUrl(backendApi);
@@ -880,7 +882,7 @@ const GridBase = memo(({
         } finally {
             setIsDeleting(false);
         }
-    }, [isStaticDataWithoutBackendApi, backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts]);
+    }, [isStaticDataWithoutBackendApi, backendApiRequiredMessage, backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts]);
 
     const clearError = useCallback(() => {
         setErrorMessage(null);
@@ -939,7 +941,7 @@ const GridBase = memo(({
 
         const apiEndpoint = selectionApi || backendApi;
         if (!apiEndpoint) {
-            snackbar.showError(tTranslate('This action requires an API endpoint.', tOpts));
+            snackbar.showError(backendApiRequiredMessage);
             return;
         }
         const baseUrl = buildUrl(apiEndpoint);
@@ -967,7 +969,7 @@ const GridBase = memo(({
             });
             setShowAddConfirmation(false);
         }
-    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts]);
+    }, [rowSelectionModel.ids, snackbar, backendApiRequiredMessage, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts]);
 
     const onAdd = useCallback(() => {
         if (selectionApi.length > 0) {
