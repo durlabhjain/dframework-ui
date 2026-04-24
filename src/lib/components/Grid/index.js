@@ -93,7 +93,12 @@ const normalizeStaticData = (staticData) => {
     return {
         records,
         recordCount: Number.isFinite(staticData?.recordCount) ? staticData.recordCount : records.length,
-        lookups: (staticData && typeof staticData.lookups === 'object' && staticData.lookups !== null) ? staticData.lookups : {}
+        lookups: (
+            staticData &&
+            typeof staticData.lookups === 'object' &&
+            staticData.lookups !== null &&
+            !Array.isArray(staticData.lookups)
+        ) ? staticData.lookups : {}
     };
 };
 
@@ -224,8 +229,10 @@ const GridBase = memo(({
     const { id: idWithOptions } = useParams() || getParams;
     const id = idWithOptions?.split('-')[0];
     const apiRef = propsApiRef || useGridApiRef();
+    const backendApi = api || model.api;
     const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true } = model;
-    const isReadOnly = model.readOnly === true || readOnly;
+    const isReadOnly = model.readOnly === true || readOnly || (hasStaticData && !backendApi);
+    const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
     const fetchAbortControllerRef = useRef(null);
@@ -253,7 +260,6 @@ const GridBase = memo(({
     const searchParams = new URLSearchParams(window.location.search);
     const [currentPreference, setCurrentPreference] = useState(null);
     const [preferencesReady, setPreferencesReady] = useState(!preferenceKey);
-    const backendApi = api || model.api;
     // State for single expanded detail panel row
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
@@ -754,6 +760,10 @@ const GridBase = memo(({
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
+            if (isStaticDataWithoutBackendApi) {
+                snackbar.showError(tTranslate('This action requires an API endpoint.', tOpts));
+                return;
+            }
             try {
                 const baseUrl = buildUrl(backendApi);
                 const data = await getRecord({ id, api: baseUrl, model, parentFilters, where });
@@ -777,7 +787,7 @@ const GridBase = memo(({
             path += `?${searchParams.toString()}`;
         }
         navigate(path);
-    }, [setActiveRecord, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
+    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -856,6 +866,10 @@ const GridBase = memo(({
     }, [isReadOnly, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, searchParams, gridTitle, getApiEndpoint, handleDownload, openForm]);
 
     const handleDelete = useCallback(async () => {
+        if (isStaticDataWithoutBackendApi) {
+            snackbar.showError(tTranslate('This action requires an API endpoint.', tOpts));
+            return;
+        }
         const baseUrl = buildUrl(backendApi);
         try {
             await deleteRecord({ id: record.id, api: baseUrl, model });
@@ -866,7 +880,7 @@ const GridBase = memo(({
         } finally {
             setIsDeleting(false);
         }
-    }, [backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts]);
+    }, [isStaticDataWithoutBackendApi, backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts]);
 
     const clearError = useCallback(() => {
         setErrorMessage(null);
@@ -923,7 +937,12 @@ const GridBase = memo(({
             );
         }
 
-        const baseUrl = buildUrl(selectionApi || backendApi);
+        const apiEndpoint = selectionApi || backendApi;
+        if (!apiEndpoint) {
+            snackbar.showError(tTranslate('This action requires an API endpoint.', tOpts));
+            return;
+        }
+        const baseUrl = buildUrl(apiEndpoint);
         setIsLoading(true);
         try {
             const result = await saveRecord({
