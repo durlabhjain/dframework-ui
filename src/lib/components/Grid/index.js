@@ -392,7 +392,7 @@ const GridBase = memo(({
     const lookupOptions = useCallback(({ field, lookupMap: lookupMapParam }) => {
         const lookupData = dataRef.current.lookups || {};
         const map = lookupMapParam || {};
-        return lookupData[map[field]?.lookup] || [];
+        return map[field]?.customLookup || lookupData[map[field]?.lookup] || [];
     }, []);
 
     useEffect(() => {
