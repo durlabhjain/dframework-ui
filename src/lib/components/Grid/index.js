@@ -255,6 +255,17 @@ const GridBase = memo(({
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
     const fetchAbortControllerRef = useRef(null);
+    // Keep a ref always in sync with paginationModel so fetchData can read the latest
+    // value without capturing it as a closure dep (needed for localSortAndFilter mode).
+    const paginationModelRef = useRef(paginationModel);
+    useEffect(() => {
+        paginationModelRef.current = paginationModel;
+    }, [paginationModel]);
+    // When localSortAndFilter=true the DataGrid resets paginationModel (page→0) on every
+    // client-side sort/filter change. Using the stable ref as the dep value prevents
+    // fetchData from being recreated (and the data-fetching useEffect from re-firing)
+    // due to those pagination resets.
+    const paginationModelForFetch = localSortAndFilter ? paginationModelRef : paginationModel;
 
     useEffect(() => () => {
         fetchAbortControllerRef.current?.abort();
@@ -683,7 +694,7 @@ const GridBase = memo(({
             }
             return;
         }
-        const { pageSize, page } = paginationModel;
+        const { pageSize, page } = paginationModelRef.current;
         const isExportRequest = Boolean(contentType);
 
         const baseUrl = buildUrl(isPivotExport ? model.pivotApi : backendApi);
@@ -776,7 +787,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [hasStaticData, normalizedStaticData, paginationModel, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
+    }, [hasStaticData, normalizedStaticData, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
