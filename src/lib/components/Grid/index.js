@@ -237,6 +237,7 @@ const GridBase = memo(({
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
     const fetchAbortControllerRef = useRef(null);
+    const hasFetchedOnceRef = useRef(false);
 
     useEffect(() => () => {
         fetchAbortControllerRef.current?.abort();
@@ -658,14 +659,14 @@ const GridBase = memo(({
     }, [gridColumns]);
 
 
-    const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
+    const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns, force = false } = {}) => {
         if (hasStaticData) {
             if (!contentType) {
                 setData(normalizedStaticData);
             }
             return;
         }
-        if (paginationMode === constants.client && !contentType && dataRef.current.records !== null) return; //filtering, sorting and pagination will be client-based except for exports
+        if (!force && paginationMode === constants.client && !contentType && dataRef.current.records !== null) return; //filtering, sorting and pagination will be client-based except for exports
         const { pageSize, page } = paginationModel;
         const isExportRequest = Boolean(contentType);
 
@@ -877,7 +878,7 @@ const GridBase = memo(({
         try {
             await deleteRecord({ id: record.id, api: baseUrl, model });
             snackbar.showMessage(tTranslate('Record Deleted Successfully.', tOpts));
-            fetchData();
+            fetchData({ force: true });
         } catch (error) {
             snackbar.showError(tTranslate('Delete failed', tOpts), error.message);
         } finally {
@@ -956,7 +957,7 @@ const GridBase = memo(({
             });
 
             if (result) {
-                fetchData();
+                fetchData({ force: true });
                 const message = result.info ? result.info : tTranslate('Record Added Successfully.', tOpts);
                 snackbar.showMessage(message);
             }
@@ -1089,7 +1090,9 @@ const GridBase = memo(({
 
     useEffect(() => {
         if ((!backendApi && !hasStaticData) || !preferencesReady) return;
-        fetchData();
+        const force = !hasFetchedOnceRef.current;
+        hasFetchedOnceRef.current = true;
+        fetchData({ force });
     }, [backendApi, hasStaticData, preferencesReady, fetchData]);
 
     useEffect(() => {
@@ -1159,7 +1162,7 @@ const GridBase = memo(({
                 onRefresh: () => {
                     // Close the expanded panel and refresh data
                     setRowPanelId(null);
-                    fetchData();
+                    fetchData({ force: true });
                 },
                 t: tTranslate,
                 tOpts

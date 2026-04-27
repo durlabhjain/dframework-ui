@@ -4,7 +4,8 @@ import {
     gridFilterModelSelector
 } from '@mui/x-data-grid-premium';
 
-import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { FormControl, IconButton, MenuItem, Select } from '@mui/material';
+import ClearIcon from '@mui/icons-material/Clear';
 
 const GridOperators = {
     IsAnyOf: 'isAnyOf'
@@ -63,8 +64,20 @@ const CustomDropdownMenu = (props) => {
 
     const value = currentFieldFilters[0]?.value ?? '';
 
+    const handleClear = useCallback(
+        (event) => {
+            event.stopPropagation();
+            if (currentFieldFilters[0]) {
+                apiRef.current.deleteFilterItem(currentFieldFilters[0]);
+            }
+        },
+        [apiRef, currentFieldFilters]
+    );
+
+    const hasValue = value !== '' && value !== null && value !== undefined;
+
     return (
-        <FormControl variant="standard" className="w-100">
+        <FormControl variant="standard" className="w-100" sx={{ position: 'relative' }}>
             <Select
                 label={column.field}
                 variant="standard"
@@ -86,6 +99,15 @@ const CustomDropdownMenu = (props) => {
                     </MenuItem>
                 ))}
             </Select>
+            {hasValue && !Array.isArray(value) && (
+                <IconButton
+                    size="small"
+                    onClick={handleClear}
+                    sx={{ position: 'absolute', right: 24, bottom: 2 }}
+                >
+                    <ClearIcon fontSize="small" />
+                </IconButton>
+            )}
         </FormControl>
     );
 };
