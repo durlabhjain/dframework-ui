@@ -237,7 +237,7 @@ const GridBase = memo(({
     const isDoubleClicked = model.allowDoubleClick === false;
     const dataRef = useRef(data);
     const fetchAbortControllerRef = useRef(null);
-    const hasFetchedOnceRef = useRef(false);
+    const hasFetchedOnceRef = useRef(null); // stores the backendApi value of the last initiated server fetch
 
     useEffect(() => () => {
         fetchAbortControllerRef.current?.abort();
@@ -1090,8 +1090,8 @@ const GridBase = memo(({
 
     useEffect(() => {
         if ((!backendApi && !hasStaticData) || !preferencesReady) return;
-        const force = !hasFetchedOnceRef.current;
-        hasFetchedOnceRef.current = true;
+        const force = hasFetchedOnceRef.current !== backendApi;
+        if (!hasStaticData) hasFetchedOnceRef.current = backendApi;
         fetchData({ force });
     }, [backendApi, hasStaticData, preferencesReady, fetchData]);
 

@@ -104,6 +104,7 @@ const CustomDropdownMenu = (props) => {
                     size="small"
                     onClick={handleClear}
                     sx={{ position: 'absolute', right: 24, bottom: 2 }}
+                    aria-label={props.tTranslate('Clear selection', props.tOpts)}
                 >
                     <ClearIcon fontSize="small" />
                 </IconButton>
