@@ -665,7 +665,7 @@ const GridBase = memo(({
             }
             return;
         }
-        if (paginationMode === constants.client && !contentType && dataRef.current.records !== null) return; //filtering, sorting and pagination will be client-based
+        if (paginationMode === constants.client && !contentType && dataRef.current.records !== null) return; //filtering, sorting and pagination will be client-based except for exports
         const { pageSize, page } = paginationModel;
         const isExportRequest = Boolean(contentType);
 
