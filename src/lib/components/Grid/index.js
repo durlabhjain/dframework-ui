@@ -1,9 +1,6 @@
 import {
     DataGridPremium,
-    getGridDateOperators,
     GRID_CHECKBOX_SELECTION_COL_DEF,
-    getGridStringOperators,
-    getGridBooleanOperators,
     GridActionsCellItem,
     useGridApiRef,
     useGridApiContext,
@@ -26,7 +23,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import PageTitle from '../PageTitle';
 import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
-import CustomDropdownMenu from './CustomDropdownMenu';
 import CustomToolbar from './CustomToolbar';
 import utils, { getPermissions } from '../utils';
 import HistoryIcon from '@mui/icons-material/History';
@@ -513,45 +509,8 @@ const GridBase = memo(({
                 Object.assign(overrides, updatedColumnType[column.type]);
             }
             // Common filter operator pattern
-            if (overrides.valueOptions === constants.lookup || column.type === constants.boolean) {
-                let operators = [];
-
-                if (overrides.valueOptions === constants.lookup) {
-                    overrides.valueOptions = (params) => lookupOptions({ ...params, lookupMap });
-                    const lookupFilters = [...getGridDateOperators(), ...getGridStringOperators()]
-                        .filter((op) => ['is', 'not', 'isAnyOf'].includes(op.value));
-                    operators = lookupFilters;
-                }
-
-                if (column.type === constants.boolean) {
-                    operators = getGridBooleanOperators();
-                }
-
-                overrides.filterOperators = operators.map((operator) => ({
-                    ...operator,
-                    InputComponent: operator.InputComponent
-                        ? (params) => (
-                            <CustomDropdownMenu
-                                column={{
-                                    ...column,
-                                    ...(column.type === constants.boolean
-                                        ? {
-                                            customLookup: [
-                                                { value: true, label: 'Yes' },
-                                                { value: false, label: 'No' }
-                                            ]
-                                        }
-                                        : {}),
-                                    dataRef
-                                }}
-                                {...params}
-                                autoHighlight
-                                tTranslate={tTranslate}
-                                tOpts={tOpts}
-                            />
-                        )
-                        : undefined
-                }));
+            if (overrides.valueOptions === constants.lookup) {
+                overrides.valueOptions = (params) => lookupOptions({ ...params, lookupMap });
             }
             if (column.linkTo || column.link) {
                 overrides.cellClassName = 'mui-grid-linkColumn';
