@@ -51,8 +51,17 @@ class UiModel {
 			...modelConfig,
 			api
 		});
+		this._applyColumnDefaults();
 		this.columnVisibilityModel = this._getColumnVisibilityModel();
 		this.defaultValues = this._getDefaultValues(defaultValues);
+	}
+
+	_applyColumnDefaults() {
+		for (const col of this.columns) {
+			if (!col.type) {
+				col.type = 'string';
+			}
+		}
 	}
 
 	_getColumnVisibilityModel() {
