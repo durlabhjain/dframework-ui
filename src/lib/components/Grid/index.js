@@ -77,6 +77,19 @@ const constants = {
 // Operators that do not require a value
 const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
 
+// Stable empty references used when localSortAndFilter is enabled to prevent
+// fetchData from being recreated (and re-triggering API calls) on sort/filter changes
+const EMPTY_SORT_MODEL = Object.freeze([]);
+const EMPTY_FILTER_MODEL = Object.freeze({
+    items: [],
+    logicOperator: 'and',
+    quickFilterValues: [],
+    quickFilterLogicOperator: 'and'
+});
+// Stable pagination used when localSortAndFilter is enabled: always request page 0
+// with a large pageSize so the backend returns all rows in one call.
+const LOCAL_MODE_PAGINATION_MODEL = Object.freeze({ page: 0, pageSize: exportPageSize });
+
 // Module-level default translate to avoid creating a new function instance every render
 const defaultTranslate = (key) => key;
 
@@ -209,7 +222,9 @@ const GridBase = memo(({
     const visibilityModel = { CreatedOn: false, CreatedByUser: false, ...model.columnVisibilityModel };
     const [showAddConfirmation, setShowAddConfirmation] = useState(false);
     const snackbar = useSnackbar();
-    const paginationMode = hasStaticData ? constants.client : (model.paginationMode === constants.client ? constants.client : constants.server);
+    // Force client pagination when localSortAndFilter is enabled so that all data is
+    // fetched in a single request and MUI DataGrid handles paging/sort/filter locally.
+    const paginationMode = (hasStaticData || model.localSortAndFilter) ? constants.client : (model.paginationMode === constants.client ? constants.client : constants.server);
     const { translate, tOpts } = useModelTranslation(model);
     const [errorMessage, setErrorMessage] = useState('');
     const [sortModel, setSortModel] = useState(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
@@ -227,7 +242,19 @@ const GridBase = memo(({
     const apiRef = propsApiRef || useGridApiRef();
     const backendApi = api || model.api;
     const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true } = model;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
+    // When localSortAndFilter is true, sorting and filtering are handled client-side by MUI DataGrid
+    // even if paginationMode is server. Sort/filter values are not sent to the API.
+    const sortAndFilterMode = (hasStaticData || localSortAndFilter) ? constants.client : paginationMode;
+    // Use stable empty references when localSortAndFilter is enabled so that fetchData's
+    // useCallback is not recreated (and the data-fetching useEffect not re-triggered)
+    // when the user changes sort/filter — the DataGrid handles those changes locally.
+    const sortModelForFetch = localSortAndFilter ? EMPTY_SORT_MODEL : sortModel;
+    const filterModelForFetch = localSortAndFilter ? EMPTY_FILTER_MODEL : filterModel;
+    // Use a stable large-page pagination when localSortAndFilter is enabled so that
+    // the entire dataset is loaded in one request and user page changes don't re-trigger
+    // fetchData (since all rows are already in memory for the DataGrid to page locally).
+    const paginationModelForFetch = localSortAndFilter ? LOCAL_MODE_PAGINATION_MODEL : paginationModel;
     // In static mode without API endpoint, force read-only to prevent invalid CRUD requests.
     const isReadOnly = model.readOnly === true || readOnly || isStaticDataWithoutBackendApi;
     const isDoubleClicked = model.allowDoubleClick === false;
@@ -624,14 +651,14 @@ const GridBase = memo(({
             }
             return;
         }
-        const { pageSize, page } = paginationModel;
+        const { pageSize, page } = paginationModelForFetch;
         const isExportRequest = Boolean(contentType);
 
         const baseUrl = buildUrl(isPivotExport ? model.pivotApi : backendApi);
 
         const filters = {
-            ...filterModel,
-            items: filterValidItems(filterModel.items)
+            ...filterModelForFetch,
+            items: filterValidItems(filterModelForFetch.items)
         };
         const finalBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
         if (model.joinColumn && id) {
@@ -689,7 +716,7 @@ const GridBase = memo(({
             action,
             page: isExportRequest ? exportPage : page,
             pageSize: isExportRequest ? exportPageSize : pageSize,
-            sortModel,
+            sortModel: sortModelForFetch,
             filterModel: filters,
             gridColumns,
             model,
@@ -717,7 +744,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [hasStaticData, normalizedStaticData, paginationModel, buildUrl, model, backendApi, filterModel, baseFilters, id, assigned, available, selected, props.extraParams, sortModel, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
+    }, [hasStaticData, normalizedStaticData, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -989,7 +1016,7 @@ const GridBase = memo(({
     const handleExport = useCallback((e) => {
         const contentType = e.currentTarget?.dataset?.contentType || e.target?.dataset?.contentType;
         const isPivotExport = (e.currentTarget?.dataset?.isPivotExport || e.target?.dataset?.isPivotExport) === 'true';
-        if (hasStaticData) {
+        if (hasStaticData || localSortAndFilter) {
             if (contentType === 'text/csv') {
                 apiRef.current?.exportDataAsCsv?.();
                 return;
@@ -1043,7 +1070,7 @@ const GridBase = memo(({
             contentType,
             columns
         });
-    }, [hasStaticData, data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
+    }, [hasStaticData, localSortAndFilter, data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
 
     useEffect(() => {
         if ((!backendApi && !hasStaticData) || !preferencesReady) return;
@@ -1279,7 +1306,7 @@ const GridBase = memo(({
             toolbarItems,
             headerActions: props.headerActions,
             customExportOptions,
-            isStaticDataMode: hasStaticData
+            isStaticDataMode: hasStaticData || localSortAndFilter
         },
         footer: {
             pagination: disablePagination !== true,
@@ -1355,8 +1382,8 @@ const GridBase = memo(({
                         rows={data.records || []}
                         sortModel={sortModel}
                         paginationMode={paginationMode}
-                        sortingMode={paginationMode}
-                        filterMode={paginationMode}
+                        sortingMode={sortAndFilterMode}
+                        filterMode={sortAndFilterMode}
                         processRowUpdate={processRowUpdate}
                         keepNonExistentRowsSelected
                         onSortModelChange={updateSort}
