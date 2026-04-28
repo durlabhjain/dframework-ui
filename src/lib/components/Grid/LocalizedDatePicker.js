@@ -14,8 +14,6 @@ const componentMap = {
     date: DatePicker,
     dateTime: DateTimePicker
 };
-const DATEPICKER_MARGIN_TOP = '-10px';
-const DATEPICKER_MARGIN_BOTTOM = '-16px';
 
 const LocalizedDatePicker = (props) => {
     const { fixedFilterFormat } = utils;
@@ -71,19 +69,9 @@ const LocalizedDatePicker = (props) => {
                 onChange={handleFilterChange}
                 slotProps={{
                     textField: {
-                        variant: "standard", label: props.label,
-                        sx: {
-                            marginTop: DATEPICKER_MARGIN_TOP,
-                            marginBottom: DATEPICKER_MARGIN_BOTTOM,
-                            '& .MuiInputLabel-root': {
-                                marginTop: '5px',
-                            },
-                            '& .MuiInput-root': {
-                                marginTop: '5px',
-                            },
-                            '&.MuiFormControl-root.MuiPickersTextField-root': {
-                                marginTop: '-20px',
-                            }
+                        variant: "standard",
+                        inputProps: {
+                            'aria-label': 'date-input'
                         }
                     }
                 }}

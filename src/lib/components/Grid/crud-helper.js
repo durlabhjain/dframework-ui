@@ -151,14 +151,14 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
     const lookups = [];
     const lookupWithDeps = []; // for backward compatibility having two lookups arrays
     const dateColumns = [];
-    gridColumns.forEach(({ lookup, type, field, localize = false, filterable = true, dependsOn }) => {
+    gridColumns.forEach(({ lookup, type, field, localize = false, dependsOn }) => {
         if (dateDataTypes.includes(type)) {
             dateColumns.push({ field, localize });
         }
         if (!lookup) {
             return;
         }
-        if (!lookups.includes(lookup) && lookupDataTypes.includes(type) && filterable) {
+        if (!lookups.includes(lookup) && lookupDataTypes.includes(type)) {
             lookups.push(lookup);
             lookupWithDeps.push({ lookup, dependsOn });
         }

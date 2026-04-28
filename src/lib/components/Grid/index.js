@@ -359,13 +359,13 @@ const GridBase = memo(({
             "valueFormatter": (value, row, column) => (
                 formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime })
             ),
-            "filterOperators": LocalizedDatePicker({ columnType: "date", label: tTranslate('Value', tOpts) })
+            "filterOperators": LocalizedDatePicker({ columnType: "date" })
         },
         "dateTime": {
             "valueFormatter": (value, row, column) => (
                 formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime })
             ),
-            "filterOperators": LocalizedDatePicker({ columnType: "dateTime", label: tTranslate('Value', tOpts) })
+            "filterOperators": LocalizedDatePicker({ columnType: "dateTime" })
         },
         "boolean": {
             renderCell: booleanIconRenderer
@@ -573,6 +573,10 @@ const GridBase = memo(({
             auditColumnMappings.forEach(({ key, field, type, header }) => {
                 if (auditColumns[key] === true) {
                     const column = { field, type, headerName: tTranslate(header, tOpts), width: 200 };
+                    // Apply shared grid column type overrides (renderers, valueOptions, etc.)
+                    if (updatedColumnType && updatedColumnType[column.type]) {
+                        Object.assign(column, updatedColumnType[column.type]);
+                    }
                     if (type === constants.dateTime) {
                         column.filterOperators = LocalizedDatePicker({ columnType: 'dateTime' });
                         column.valueFormatter = gridColumnTypes.dateTime.valueFormatter;
