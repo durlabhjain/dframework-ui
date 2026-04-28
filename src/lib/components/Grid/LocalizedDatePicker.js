@@ -69,7 +69,10 @@ const LocalizedDatePicker = (props) => {
                 onChange={handleFilterChange}
                 slotProps={{
                     textField: {
-                        variant: "standard"
+                        variant: "standard",
+                        inputProps: {
+                            'aria-label': 'date-input'
+                        }
                     }
                 }}
                 localeText={{
