@@ -82,6 +82,8 @@ export default defineConfig({
         },
         outDir: 'dist',
         sourcemap: true,
+        minify: false,
+        target: 'es2020',
         // Copy assets from src/lib/assets to dist
         copyPublicDir: false,
     },
