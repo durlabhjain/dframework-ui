@@ -133,6 +133,8 @@ const booleanIconRenderer = (params) => {
     }
 };
 
+const gridGroupByColumnName = ['__row_group_by_columns_group__', '__detail_panel_toggle__'];
+
 const DeleteContentText = styled('span')({
     width: '100%',
     whiteSpace: 'nowrap',
@@ -1120,6 +1122,12 @@ const GridBase = memo(({
     }, [gridColumns, constants.Number, emptyIsAnyOfOperatorFilters, isElasticScreen, setFilterModel]);
 
     const updateSort = useCallback((e) => {
+        if (e[0]) {
+            if (gridGroupByColumnName.includes(e[0].field)) {
+                snackbar.showMessage(tTranslate('Group By is applied on the same column, please remove it in order to apply sorting.', tOpts));
+                return;
+            }
+        }
         const sort = e.map((ele) => {
             const field = gridColumns.filter(element => element.field === ele.field)[0] || {};
             const isKeywordField = isElasticScreen && field.isKeywordField;
