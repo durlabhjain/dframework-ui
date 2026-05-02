@@ -521,12 +521,12 @@ const GridBase = memo(({
                 ),
         [actionConfig, createAction]
     );
-    // Derive a stable string from the loaded lookup names. This changes exactly once
-    // (empty → populated) after the first data fetch, so the gridColumns useMemo
-    // below recomputes at that point and produces new column object references.
-    // MUI DataGrid's GridFilterInputSingleSelect then sees a new resolvedColumn and
-    // re-evaluates its memoized currentValueOptions with the fresh lookup data,
-    // ensuring header-filter selections are applied correctly.
+    // Derive a stable string from the loaded lookup names. Recomputes whenever the
+    // set of lookup keys changes (e.g. after the first data fetch or when new lookups
+    // are introduced), causing the gridColumns useMemo below to produce new column
+    // object references. MUI DataGrid's GridFilterInputSingleSelect then sees a new
+    // resolvedColumn and re-evaluates its memoized currentValueOptions with the fresh
+    // lookup data, ensuring header-filter selections are applied correctly.
     const lookupKeys = useMemo(() => {
         const lookups = data?.lookups || {};
         return Object.keys(lookups).sort().join(',');
