@@ -5,7 +5,10 @@ import {
     useGridApiRef,
     useGridApiContext,
     useGridSelector,
-    gridRowSelectionStateSelector
+    gridRowSelectionStateSelector,
+    getGridStringOperators,
+    getGridBooleanOperators,
+    getGridDateOperators
 } from '@mui/x-data-grid-premium';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIcon from '@mui/icons-material/FileCopy';
@@ -31,6 +34,7 @@ import Checkbox from '@mui/material/Checkbox';
 import { useModelTranslation } from '../../hooks/useModelTranslation';
 import { convertDefaultSort, areEqual, getDefaultOperator } from './helper';
 import { styled } from '@mui/material/styles';
+import CustomDropdownMenu from './CustomDropDownMenu';
 
 const defaultPageSize = 50;
 const sortRegex = /(\w+)( ASC| DESC)?/i;
@@ -537,9 +541,30 @@ const GridBase = memo(({
             if (updatedColumnType[column.type]) {
                 Object.assign(overrides, updatedColumnType[column.type]);
             }
-            // Common filter operator pattern
             if (overrides.valueOptions === constants.lookup) {
-                overrides.valueOptions = (params) => lookupOptions({ ...params, lookupMap });
+                let operators = [];
+
+                if (overrides.valueOptions === constants.lookup) {
+                    overrides.valueOptions = (params) => lookupOptions({ ...params, lookupMap });
+                    const lookupFilters = [...getGridDateOperators(), ...getGridStringOperators()]
+                        .filter((op) => ['is', 'not', 'isAnyOf'].includes(op.value));
+                    operators = lookupFilters;
+                }
+
+                overrides.filterOperators = operators.map((operator) => ({
+                    ...operator,
+                    InputComponent: operator.InputComponent
+                        ? (params) => (
+                            <CustomDropdownMenu
+                                column={{...column, dataRef }}
+                                {...params}
+                                autoHighlight
+                                tTranslate={tTranslate}
+                                tOpts={tOpts}
+                            />
+                        )
+                        : undefined
+                }));
             }
             if (column.linkTo || column.link) {
                 overrides.cellClassName = 'mui-grid-linkColumn';
