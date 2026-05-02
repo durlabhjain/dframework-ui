@@ -376,6 +376,10 @@ const GridBase = memo(({
             "type": "singleSelect",
             "valueOptions": "lookup"
         },
+        "lookup": {
+            "type": "singleSelect",
+            "valueOptions": "lookup"
+        },
         "selection": {
             renderCell: (params) => <CustomCheckBox params={params} handleSelectRow={handleSelectRow} idProperty={idProperty} />
         }
@@ -517,6 +521,17 @@ const GridBase = memo(({
                 ),
         [actionConfig, createAction]
     );
+    // Derive a stable string from the loaded lookup names. This changes exactly once
+    // (empty → populated) after the first data fetch, so the gridColumns useMemo
+    // below recomputes at that point and produces new column object references.
+    // MUI DataGrid's GridFilterInputSingleSelect then sees a new resolvedColumn and
+    // re-evaluates its memoized currentValueOptions with the fresh lookup data,
+    // ensuring header-filter selections are applied correctly.
+    const lookupKeys = useMemo(() => {
+        const lookups = data?.lookups || {};
+        return Object.keys(lookups).sort().join(',');
+    }, [data?.lookups]);
+
     const { gridColumns, pinnedColumns, lookupMap } = useMemo(() => {
         let baseColumnList = columns || model.gridColumns || model.columns;
         if (dynamicColumns) {
@@ -601,7 +616,7 @@ const GridBase = memo(({
             pinnedColumns.right.push('actions');
         }
         return { gridColumns: finalColumns, pinnedColumns, lookupMap };
-    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime]);
+    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime, lookupKeys]);
 
     // Initialize toolbar filters with default values
     const hasInitializedRef = useRef(false);
