@@ -3024,6 +3024,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			"type": "singleSelect",
 			"valueOptions": "lookup"
 		},
+		"lookup": {
+			"type": "singleSelect",
+			"valueOptions": "lookup"
+		},
 		"selection": { renderCell: (params) => /* @__PURE__ */ jsx(CustomCheckBox, {
 			params,
 			handleSelectRow,
@@ -3147,6 +3151,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		disabled: disabled?.(row),
 		otherProps
 	})), [actionConfig, createAction]);
+	const lookupKeys = useMemo(() => {
+		const lookups = data?.lookups || {};
+		return Object.keys(lookups).sort().join(",");
+	}, [data?.lookups]);
 	const { gridColumns, pinnedColumns, lookupMap } = useMemo(() => {
 		let baseColumnList = columns || model.gridColumns || model.columns;
 		if (dynamicColumns) baseColumnList = [...dynamicColumns, ...baseColumnList];
@@ -3250,7 +3258,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		forAssignment,
 		dynamicColumns,
 		translate,
-		stateData?.dateTime
+		stateData?.dateTime,
+		lookupKeys
 	]);
 	const hasInitializedRef = useRef(false);
 	useEffect(() => {
