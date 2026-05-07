@@ -1,6 +1,6 @@
 // Delay (ms) before the global full-screen loader is shown.
 // Requests that complete before this threshold will not trigger the loader.
-const LOADER_DELAY_MS = 2000
+const LOADER_DELAY_MS = 2000;
 // Track pending requests that are eligible for loader display.
 let pendingRequests = 0;
 // Count of requests whose timer has fired and shown the loader.
