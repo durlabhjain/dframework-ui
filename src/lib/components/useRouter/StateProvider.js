@@ -33,18 +33,17 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
 
   // Register the global loader callback so dframework-ui's transport shows the
   // full-screen loader after the configured delay for slow requests.
-  // Uses first-registration-wins: inner StateProvider registers first (React runs
-  // child effects before parent effects), which is the correct one since the Loader
-  // component lives inside the inner provider's context tree.
+  // First-registration-wins: inner StateProvider registers first (React runs child
+  // effects before parent effects) and is the right owner since the Loader component
+  // lives inside the inner provider's context tree.
   useEffect(() => {
-    const cb = (flag) => {
-      console.log('[dframework-ui] StateProvider: setIsLoading called with', flag);
-      setIsLoading(flag);
-    };
+    const cb = (flag) => setIsLoading(flag);
     registerLoaderCallbacks({ showLoader: cb });
     return () => {
-      // On unmount, clear the registration so the next mount can re-register.
-      registerLoaderCallbacks({ showLoader: null, force: true });
+      // Only clear if the global callback still points to our own closure.
+      // Prevents an unmounting ancestor/sibling provider from clobbering a
+      // registration made by a still-mounted child provider.
+      registerLoaderCallbacks({ clearIfMatch: cb });
     };
   }, []);
 

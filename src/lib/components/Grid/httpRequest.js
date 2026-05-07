@@ -22,8 +22,16 @@ let _showLoader = null;
  * @param {Object} callbacks
  * @param {Function} callbacks.showLoader - Function(flag: boolean) that shows/hides the loader.
  * @param {boolean} [callbacks.force=false] - Force re-registration even if already registered.
+ * @param {Function} [callbacks.clearIfMatch=null] - Only clear the global callback if it still
+ *   equals this function reference. Use in cleanup to avoid clobbering a newer registration.
  */
-const registerLoaderCallbacks = ({ showLoader, force = false }) => {
+const registerLoaderCallbacks = ({ showLoader, force = false, clearIfMatch = null }) => {
+    if (clearIfMatch !== null) {
+        if (_showLoader === clearIfMatch) {
+            _showLoader = null;
+        }
+        return;
+    }
     if (_showLoader === null || force) {
         _showLoader = showLoader;
     }
@@ -130,42 +138,47 @@ const DATA_PARSERS = Object.freeze({
 });
 
 /**
- * Enhanced HTTP request handler with automatic data parsing
- * 
- * Note: Loader management is the responsibility of the calling component.
- * This allows components to control when and how to show loading states.
- * 
+ * HTTP request handler with automatic data parsing and global loader management.
+ *
+ * By default this function drives a global full-screen loader: if the request has
+ * not completed after LOADER_DELAY_MS (2 s), the loader registered via
+ * `registerLoaderCallbacks` is shown and hidden once all in-flight requests finish.
+ * Multiple overlapping calls are tracked — the loader stays visible until every
+ * participating request completes.
+ *
+ * Use `disableLoader: true` for background or high-frequency requests where showing
+ * the loader would be disruptive (e.g. polling, typeahead search, silent refreshes).
+ *
  * @param {Object} config - Request configuration
  * @param {string} config.url - API endpoint URL
  * @param {Object} config.params - Request parameters
  * @param {Function} config.history - Navigation function for redirects
- * @param {boolean} config.jsonPayload - Whether to send JSON payload instead of FormData
+ * @param {boolean} config.jsonPayload - Whether to send a JSON body instead of FormData
  * @param {string} [config.method='POST'] - HTTP method (e.g. 'GET', 'POST', 'PUT', 'DELETE')
  * @param {AbortSignal} [config.signal] - AbortSignal for cancellable requests
- * @param {Object} config.additionalParams - Additional fetch parameters (rarely needed; prefer named params above)
+ * @param {Object} config.additionalParams - Additional fetch options (rarely needed; prefer named params above)
  * @param {Object} config.additionalHeaders - Additional request headers
- * @param {Function} config.dataParser - Parser function to normalize response data (default: DATA_PARSERS.raw)
- * @param {Function} config.onParseError - Custom error handler for parse failures
+ * @param {boolean} [config.disableLoader=false] - Skip global loader management for this request
+ * @param {Function} config.dataParser - Parser to normalise response data (default: DATA_PARSERS.raw)
+ * @param {Function} config.onParseError - Custom handler called when dataParser throws
  *
  * @returns {Promise<any>} Parsed response data, `{ error: true, message }` on failure,
- *   or `{ error: true, aborted: true, message }` when the request is cancelled via an `AbortSignal`.
- * 
+ *   or `{ error: true, aborted: true, message }` when cancelled via an AbortSignal.
+ *
  * @example
- * // Basic usage
- * const data = await request({ 
- *   url: '/api/data', 
- *   params: { id: 1 }
- * });
- * 
+ * // Standard call — shows loader if the request takes longer than 2 s
+ * const data = await request({ url: '/api/data', params: { id: 1 } });
+ *
  * @example
- * // With custom error handling
- * const data = await request({ 
+ * // Silent background fetch — never triggers the loader
+ * const data = await request({ url: '/api/poll', params: {}, disableLoader: true });
+ *
+ * @example
+ * // Custom parse-error handling
+ * const data = await request({
  *   url: '/api/data',
  *   params: { id: 1 },
- *   onParseError: (error, rawData) => {
- *     console.error('Parse failed:', error);
- *     return { error: true, message: 'Custom error message' };
- *   }
+ *   onParseError: (error, rawData) => ({ error: true, message: 'Custom error message' })
  * });
  */
 
@@ -187,10 +200,13 @@ const request = async ({
     }
 
     // --- Global loader management (mirrors playbook-frontend httpRequest pattern) ---
+    // Capture participation at call time so the finally block always performs the
+    // matching teardown even if _showLoader is unregistered while the request is in-flight.
+    const didManageLoader = !disableLoader && typeof _showLoader === 'function';
     let loaderTimer = null;
     let loaderShown = false;
 
-    if (!disableLoader && typeof _showLoader === 'function') {
+    if (didManageLoader) {
         pendingRequests++;
         if (hideLoaderTimer) {
             clearTimeout(hideLoaderTimer);
@@ -263,7 +279,7 @@ const request = async ({
         return { error: true, message: ex.message || 'Network error' };
     } finally {
         // --- Global loader teardown ---
-        if (!disableLoader && typeof _showLoader === 'function') {
+        if (didManageLoader) {
             if (loaderTimer) {
                 clearTimeout(loaderTimer);
             }
@@ -271,9 +287,13 @@ const request = async ({
                 loaderShownCount = Math.max(0, loaderShownCount - 1);
             }
             pendingRequests = Math.max(0, pendingRequests - 1);
-            if (pendingRequests === 0 && loaderShownCount === 0 && loaderShown) {
+            // Schedule hide whenever all requests are done and the loader count is zero,
+            // regardless of whether this specific request triggered the loader. Without
+            // this, a fast request completing last (loaderShown=false) would leave the
+            // loader permanently visible after a preceding slow request showed it.
+            if (pendingRequests === 0 && loaderShownCount === 0) {
                 hideLoaderTimer = setTimeout(() => {
-                    if (pendingRequests === 0 && loaderShownCount === 0) {
+                    if (pendingRequests === 0 && loaderShownCount === 0 && typeof _showLoader === 'function') {
                         _showLoader(false);
                     }
                     hideLoaderTimer = null;
