@@ -9,7 +9,7 @@ let loaderShownCount = 0;
 let hideLoaderTimer = null;
 
 // Loader callback registered by the consuming application (e.g. StateProvider).
-let _showLoader = null;
+let showLoader = null;
 
 /**
  * Register a callback to control the global full-screen loader.
@@ -25,15 +25,15 @@ let _showLoader = null;
  * @param {Function} [callbacks.clearIfMatch=null] - Only clear the global callback if it still
  *   equals this function reference. Use in cleanup to avoid clobbering a newer registration.
  */
-const registerLoaderCallbacks = ({ showLoader, force = false, clearIfMatch = null }) => {
+const registerLoaderCallbacks = ({ showLoader: loaderCallback, force = false, clearIfMatch = null }) => {
     if (clearIfMatch !== null) {
-        if (_showLoader === clearIfMatch) {
-            _showLoader = null;
+        if (showLoader === clearIfMatch) {
+            showLoader = null;
         }
         return;
     }
-    if (_showLoader === null || force) {
-        _showLoader = showLoader;
+    if (showLoader === null || force) {
+        showLoader = loaderCallback;
     }
 };
 
@@ -201,8 +201,8 @@ const request = async ({
 
     // --- Global loader management (mirrors playbook-frontend httpRequest pattern) ---
     // Capture participation at call time so the finally block always performs the
-    // matching teardown even if _showLoader is unregistered while the request is in-flight.
-    const didManageLoader = !disableLoader && typeof _showLoader === 'function';
+    // matching teardown even if showLoader is unregistered while the request is in-flight.
+    const didManageLoader = !disableLoader && typeof showLoader === 'function';
     let loaderTimer = null;
     let loaderShown = false;
 
@@ -213,14 +213,13 @@ const request = async ({
             hideLoaderTimer = null;
         }
         loaderTimer = setTimeout(() => {
-            if (pendingRequests > 0 && typeof _showLoader === 'function') {
+            if (pendingRequests > 0 && typeof showLoader === 'function') {
                 loaderShown = true;
                 loaderShownCount++;
-                _showLoader(true);
+                showLoader(true);
             }
         }, LOADER_DELAY_MS);
     }
-    // --- End loader setup ---
 
     const reqParams = {
         method,
@@ -278,7 +277,7 @@ const request = async ({
         // Only network errors will be caught here
         return { error: true, message: ex.message || 'Network error' };
     } finally {
-        // --- Global loader teardown ---
+        // Global loader teardown
         if (didManageLoader) {
             if (loaderTimer) {
                 clearTimeout(loaderTimer);
@@ -293,14 +292,13 @@ const request = async ({
             // loader permanently visible after a preceding slow request showed it.
             if (pendingRequests === 0 && loaderShownCount === 0) {
                 hideLoaderTimer = setTimeout(() => {
-                    if (pendingRequests === 0 && loaderShownCount === 0 && typeof _showLoader === 'function') {
-                        _showLoader(false);
+                    if (pendingRequests === 0 && loaderShownCount === 0 && typeof showLoader === 'function') {
+                        showLoader(false);
                     }
                     hideLoaderTimer = null;
                 }, 100);
             }
         }
-        // --- End loader teardown ---
     }
 };
 

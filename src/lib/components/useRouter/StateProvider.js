@@ -37,13 +37,13 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   // effects before parent effects) and is the right owner since the Loader component
   // lives inside the inner provider's context tree.
   useEffect(() => {
-    const cb = (flag) => setIsLoading(flag);
-    registerLoaderCallbacks({ showLoader: cb });
+    const setLoadingFromRequest = (flag) => setIsLoading(flag);
+    registerLoaderCallbacks({ showLoader: setLoadingFromRequest });
     return () => {
       // Only clear if the global callback still points to our own closure.
       // Prevents an unmounting ancestor/sibling provider from clobbering a
       // registration made by a still-mounted child provider.
-      registerLoaderCallbacks({ clearIfMatch: cb });
+      registerLoaderCallbacks({ clearIfMatch: setLoadingFromRequest });
     };
   }, []);
 
