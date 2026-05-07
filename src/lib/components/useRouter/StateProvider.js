@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useRef, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useRef, useState, useCallback, useMemo, useEffect } from 'react';
 import { locales } from '../mui/locale/localization';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { useTranslation } from 'react-i18next';
 import { useSnackbar } from '../SnackBar';
+import { registerLoaderCallbacks } from '../Grid/httpRequest';
 
 // Extend dayjs with the plugins
 dayjs.extend(utc);
@@ -29,6 +30,23 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
 
   // Framework functionality - loader management (simple on/off, no counter)
   const [isLoading, setIsLoading] = useState(false);
+
+  // Register the global loader callback so dframework-ui's transport shows the
+  // full-screen loader after the configured delay for slow requests.
+  // Uses first-registration-wins: inner StateProvider registers first (React runs
+  // child effects before parent effects), which is the correct one since the Loader
+  // component lives inside the inner provider's context tree.
+  useEffect(() => {
+    const cb = (flag) => {
+      console.log('[dframework-ui] StateProvider: setIsLoading called with', flag);
+      setIsLoading(flag);
+    };
+    registerLoaderCallbacks({ showLoader: cb });
+    return () => {
+      // On unmount, clear the registration so the next mount can re-register.
+      registerLoaderCallbacks({ showLoader: null, force: true });
+    };
+  }, []);
 
   // Framework functionality - i18n
   const { t, i18n } = useTranslation();
@@ -190,8 +208,9 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     modal,
     pageBackButton,
     userData,
-    timeZone
-  }), [locale, dateTime, pageTitle, modal, pageBackButton, userData, timeZone]);
+    timeZone,
+    loaderOpen: isLoading
+  }), [locale, dateTime, pageTitle, modal, pageBackButton, userData, timeZone, isLoading]);
 
   const contextValue = useMemo(() => ({
     // State data

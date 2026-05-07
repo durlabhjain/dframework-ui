@@ -1,3 +1,34 @@
+// Delay (ms) before the global full-screen loader is shown.
+// Requests that complete before this threshold will not trigger the loader.
+const LOADER_DELAY_MS = 2000
+// Track pending requests that are eligible for loader display.
+let pendingRequests = 0;
+// Count of requests whose timer has fired and shown the loader.
+let loaderShownCount = 0;
+// Debounce timer for hiding the loader -- prevents flicker on back-to-back requests.
+let hideLoaderTimer = null;
+
+// Loader callback registered by the consuming application (e.g. StateProvider).
+let _showLoader = null;
+
+/**
+ * Register a callback to control the global full-screen loader.
+ * Should be called once during app initialisation (e.g. inside StateProvider on mount).
+ *
+ * Uses first-registration-wins: React runs child effects before parent effects, so
+ * the innermost StateProvider (the one that wraps the Loader component) registers
+ * first and wins. Outer/ancestor StateProviders are ignored.
+ *
+ * @param {Object} callbacks
+ * @param {Function} callbacks.showLoader - Function(flag: boolean) that shows/hides the loader.
+ * @param {boolean} [callbacks.force=false] - Force re-registration even if already registered.
+ */
+const registerLoaderCallbacks = ({ showLoader, force = false }) => {
+    if (_showLoader === null || force) {
+        _showLoader = showLoader;
+    }
+};
+
 const HTTP_STATUS_CODES = {
     OK: 200,
     SESSION_EXPIRED: 401,
@@ -148,11 +179,32 @@ const request = async ({
     additionalParams = {}, 
     additionalHeaders = {}, 
     dataParser = DATA_PARSERS.raw,
-    onParseError
+    onParseError,
+    disableLoader = false
 }) => {
     if (params.exportData) {
         return exportRequest(url, params);
     }
+
+    // --- Global loader management (mirrors playbook-frontend httpRequest pattern) ---
+    let loaderTimer = null;
+    let loaderShown = false;
+
+    if (!disableLoader && typeof _showLoader === 'function') {
+        pendingRequests++;
+        if (hideLoaderTimer) {
+            clearTimeout(hideLoaderTimer);
+            hideLoaderTimer = null;
+        }
+        loaderTimer = setTimeout(() => {
+            if (pendingRequests > 0 && typeof _showLoader === 'function') {
+                loaderShown = true;
+                loaderShownCount++;
+                _showLoader(true);
+            }
+        }, LOADER_DELAY_MS);
+    }
+    // --- End loader setup ---
 
     const reqParams = {
         method,
@@ -209,6 +261,26 @@ const request = async ({
         }
         // Only network errors will be caught here
         return { error: true, message: ex.message || 'Network error' };
+    } finally {
+        // --- Global loader teardown ---
+        if (!disableLoader && typeof _showLoader === 'function') {
+            if (loaderTimer) {
+                clearTimeout(loaderTimer);
+            }
+            if (loaderShown) {
+                loaderShownCount = Math.max(0, loaderShownCount - 1);
+            }
+            pendingRequests = Math.max(0, pendingRequests - 1);
+            if (pendingRequests === 0 && loaderShownCount === 0 && loaderShown) {
+                hideLoaderTimer = setTimeout(() => {
+                    if (pendingRequests === 0 && loaderShownCount === 0) {
+                        _showLoader(false);
+                    }
+                    hideLoaderTimer = null;
+                }, 100);
+            }
+        }
+        // --- End loader teardown ---
     }
 };
 
@@ -216,7 +288,8 @@ export {
     HTTP_STATUS_CODES,
     transport,
     DATA_PARSERS,
-    getErrorMessage
+    getErrorMessage,
+    registerLoaderCallbacks
 };
 
 export default request;
