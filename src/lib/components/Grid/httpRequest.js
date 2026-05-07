@@ -199,7 +199,7 @@ const request = async ({
         return exportRequest(url, params);
     }
 
-    // --- Global loader management (mirrors playbook-frontend httpRequest pattern) ---
+    // Global loader management (mirrors playbook-frontend httpRequest pattern)
     // Capture participation at call time so the finally block always performs the
     // matching teardown even if showLoader is unregistered while the request is in-flight.
     const didManageLoader = !disableLoader && typeof showLoader === 'function';
