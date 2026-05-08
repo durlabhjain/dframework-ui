@@ -551,9 +551,9 @@ const GridBase = memo(({
 
             if (updatedColumnType[column.type]) {
                 Object.assign(overrides, updatedColumnType[column.type]);
-                if (column.filterOperators) {
-                    overrides.filterOperators = column.filterOperators;
-                }
+            }
+            if (column.filterOperators) {
+                overrides.filterOperators = column.filterOperators;
             }
             // Common filter operator pattern
             if (overrides.valueOptions === constants.lookup) {
@@ -577,7 +577,8 @@ const GridBase = memo(({
             if (!disableRowGrouping) {
                 overrides.groupable = column.groupable ?? false;
             }
-            overrides.filterable = column.filterable === false ? false : !groupingModel.includes(column.field);
+            const finalField = overrides.field ?? column.field;
+            overrides.filterable = column.filterable === false ? false : !groupingModel.includes(finalField);
             const headerName = tTranslate((typeof column.gridLabel === 'function' ? column.gridLabel({ column, t: tTranslate, tOpts }) : column.gridLabel) || column.label, tOpts);
 
             finalColumns.push({ ...column, ...overrides, headerName, description: headerName });
