@@ -1066,7 +1066,7 @@ const GridBase = memo(({
         const nonExportColumns = new Set(gridColumns.filter(col => col.exportable === false).map(col => col.field));
 
         const visibleColumns = orderedFields.filter(
-            field => !nonExportColumns.has(field) && !hiddenColumns.includes(field) && field !== '__check__' && field !== 'actions'
+            field => !nonExportColumns.has(field) && !hiddenColumns.includes(field) && field !== '__check__' && field !== 'actions' && !gridGroupByColumnName.includes(field)
         );
 
         if (visibleColumns.length === 0) {
