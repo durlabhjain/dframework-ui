@@ -13,6 +13,7 @@ const Footer = ({ pagination, apiRef, tTranslate = (key) => key }) => {
     const rowsPerPage = apiRef.current.state.pagination.paginationModel.pageSize;
     const totalRows = apiRef.current.state.rows.totalRowCount;
     const totalPages = Math.ceil(totalRows / rowsPerPage);
+    const isPaginationEnabled = pagination && totalPages > 1;
     const { t: translate, i18n } = useTranslation();
     const tOpts = { t: translate, i18n };
     const [pageNumber, setPageNumber] = useState(page + 1);
@@ -72,9 +73,9 @@ const Footer = ({ pagination, apiRef, tTranslate = (key) => key }) => {
                             value={pageNumber}
                             onChange={handleChange}
                             onKeyPress={handleKeyPress}
-                            disabled={!totalRows}
+                            disabled={!isPaginationEnabled}
                         />
-                        <Button disabled={!totalRows} size='small' onClick={onPageChange}>{tTranslate('Go', tOpts)}</Button>
+                        <Button disabled={!isPaginationEnabled} size='small' onClick={onPageChange}>{tTranslate('Go', tOpts)}</Button>
                     </>
                 }
             </Box>

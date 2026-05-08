@@ -175,7 +175,7 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
                 if (type === 'boolean') {
                     value = (value === 'true' || value === true) ? 1 : 0;
                 } else if (type === 'number') {
-                    value = Array.isArray(value) ? value.filter(e => e) : value;
+                    value = Array.isArray(value) ? value.filter(e => e !== null && e !== undefined && e !== '') : value;
                 }
                 value = filter.filterValues || value;
                 where.push({
