@@ -5,7 +5,8 @@ import {
     useGridApiRef,
     useGridApiContext,
     useGridSelector,
-    gridRowSelectionStateSelector
+    gridRowSelectionStateSelector,
+    getGridNumericOperators
 } from '@mui/x-data-grid-premium';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIcon from '@mui/icons-material/FileCopy';
@@ -382,7 +383,27 @@ const GridBase = memo(({
         },
         "selection": {
             renderCell: (params) => <CustomCheckBox params={params} handleSelectRow={handleSelectRow} idProperty={idProperty} />
-        }
+        },
+        "percentage": {
+            type: "decimal",
+            align: 'right',
+            filterOperators: [...getGridNumericOperators()].filter(op => !['!='].includes(op.value)),
+            "valueFormatter": (value) => {
+                if (value == null) return '';
+                const numericValue = Number(value);
+                return !isNaN(numericValue) ? `${numericValue.toFixed(1)}%` : '';
+            }
+        },
+        "currency": {
+            type: "number",
+            align: 'right',
+            filterOperators: [...getGridNumericOperators()].filter(op => !['!='].includes(op.value)),
+            "valueFormatter": (value) => {
+                if (value == null) return '';
+                const symbol = userData?.userData?.CurrencySymbol || '';
+                return symbol ? `${symbol}${value}` : String(value);
+            }
+        },
     };
 
     useEffect(() => {
