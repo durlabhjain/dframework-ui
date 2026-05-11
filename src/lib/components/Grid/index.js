@@ -5,7 +5,8 @@ import {
     useGridApiRef,
     useGridApiContext,
     useGridSelector,
-    gridRowSelectionStateSelector
+    gridRowSelectionStateSelector,
+    getGridNumericOperators
 } from '@mui/x-data-grid-premium';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIcon from '@mui/icons-material/FileCopy';
@@ -382,7 +383,27 @@ const GridBase = memo(({
         },
         "selection": {
             renderCell: (params) => <CustomCheckBox params={params} handleSelectRow={handleSelectRow} idProperty={idProperty} />
-        }
+        },
+        "percentage": {
+            type: "number",
+            align: 'right',
+            filterOperators: [...getGridNumericOperators()].filter(op => !['!='].includes(op.value)),
+            "valueFormatter": (value) => {
+                if (value == null) return '';
+                const numericValue = Number(value);
+                return !isNaN(numericValue) ? `${numericValue.toFixed(1)}%` : '';
+            }
+        },
+        "currency": {
+            type: "number",
+            align: 'right',
+            filterOperators: [...getGridNumericOperators()].filter(op => !['!='].includes(op.value)),
+            "valueFormatter": (value) => {
+                if (value == null) return '';
+                const symbol = userData?.userData?.CurrencySymbol || '';
+                return symbol ? `${symbol}${value}` : String(value);
+            }
+        },
     };
 
     useEffect(() => {
@@ -532,7 +553,7 @@ const GridBase = memo(({
         return Object.keys(lookups).sort().join(',');
     }, [data?.lookups]);
 
-    const { gridColumns, pinnedColumns, lookupMap } = useMemo(() => {
+    const { stableGridColumns, pinnedColumns, lookupMap } = useMemo(() => {
         let baseColumnList = columns || model.gridColumns || model.columns;
         if (dynamicColumns) {
             baseColumnList = [...dynamicColumns, ...baseColumnList];
@@ -551,6 +572,9 @@ const GridBase = memo(({
 
             if (updatedColumnType[column.type]) {
                 Object.assign(overrides, updatedColumnType[column.type]);
+            }
+            if (column.filterOperators) {
+                overrides.filterOperators = column.filterOperators;
             }
             // Common filter operator pattern
             if (overrides.valueOptions === constants.lookup) {
@@ -574,6 +598,8 @@ const GridBase = memo(({
             if (!disableRowGrouping) {
                 overrides.groupable = column.groupable ?? false;
             }
+            const finalField = overrides.field ?? column.field;
+            overrides.filterable = column.filterable === false ? false : !groupingModel.includes(finalField);
             const headerName = tTranslate((typeof column.gridLabel === 'function' ? column.gridLabel({ column, t: tTranslate, tOpts }) : column.gridLabel) || column.label, tOpts);
 
             finalColumns.push({ ...column, ...overrides, headerName, description: headerName });
@@ -615,8 +641,12 @@ const GridBase = memo(({
 
             pinnedColumns.right.push('actions');
         }
-        return { gridColumns: finalColumns, pinnedColumns, lookupMap };
-    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime, lookupKeys]);
+        return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
+    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime, groupingModel]);
+
+    // Shallow-copy columns when lookups change so MUI DataGrid's GridFilterInputSingleSelect
+    // sees new column object references and re-evaluates its memoized currentValueOptions.
+    const gridColumns = useMemo(() => stableGridColumns.map(col => ({ ...col })), [stableGridColumns, lookupKeys]);
 
     // Initialize toolbar filters with default values
     const hasInitializedRef = useRef(false);
@@ -739,7 +769,7 @@ const GridBase = memo(({
             pageSize: isExportRequest ? exportPageSize : pageSize,
             sortModel: sortModelForFetch,
             filterModel: filters,
-            gridColumns,
+            gridColumns: stableGridColumns,
             model,
             baseFilters: mergedBaseFilters,
             api: baseUrl,
@@ -765,7 +795,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [hasStaticData, normalizedStaticData, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, gridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
+    }, [hasStaticData, normalizedStaticData, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, stableGridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters, tTranslate, tOpts]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -1058,7 +1088,7 @@ const GridBase = memo(({
         const nonExportColumns = new Set(gridColumns.filter(col => col.exportable === false).map(col => col.field));
 
         const visibleColumns = orderedFields.filter(
-            field => !nonExportColumns.has(field) && !hiddenColumns.includes(field) && field !== '__check__' && field !== 'actions'
+            field => !nonExportColumns.has(field) && !hiddenColumns.includes(field) && field !== '__check__' && field !== 'actions' && !gridGroupByColumnName.includes(field)
         );
 
         if (visibleColumns.length === 0) {
@@ -1133,7 +1163,8 @@ const GridBase = memo(({
             }
             return { ...item, value: isNumber ? null : value };
         });
-        setFilterModel({ ...e, items: updatedItems });
+        const filteredItems = updatedItems.filter(item => !(item.operator === 'isAnyOf' && Array.isArray(item.value) && item.value.length === 0));
+        setFilterModel({ ...e, items: filteredItems });
     }, [gridColumns, constants.Number, emptyIsAnyOfOperatorFilters, isElasticScreen, setFilterModel]);
 
     const updateSort = useCallback((e) => {
