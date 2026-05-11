@@ -10,7 +10,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import * as locales$1 from "@mui/x-data-grid-premium";
-import { ColumnsPanelTrigger, DataGridPremium, FilterPanelTrigger, GRID_CHECKBOX_SELECTION_COL_DEF, GridActionsCellItem, GridFooter, GridFooterContainer, GridToolbarExportContainer, Toolbar, getGridDateOperators, gridRowSelectionStateSelector, useGridApiContext, useGridApiRef, useGridSelector } from "@mui/x-data-grid-premium";
+import { ColumnsPanelTrigger, DataGridPremium, FilterPanelTrigger, GRID_CHECKBOX_SELECTION_COL_DEF, GridActionsCellItem, GridFooter, GridFooterContainer, GridToolbarExportContainer, Toolbar, getGridDateOperators, getGridNumericOperators, gridRowSelectionStateSelector, useGridApiContext, useGridApiRef, useGridSelector } from "@mui/x-data-grid-premium";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CopyIcon from "@mui/icons-material/FileCopy";
 import ArticleIcon from "@mui/icons-material/Article";
@@ -479,7 +479,7 @@ var buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, b
 			let { value } = filter;
 			const type = gridColumns.filter((item) => item?.field === filter.field)[0]?.type;
 			if (type === "boolean") value = value === "true" || value === true ? 1 : 0;
-			else if (type === "number") value = Array.isArray(value) ? value.filter((e) => e) : value;
+			else if (type === "number") value = Array.isArray(value) ? value.filter((e) => e !== null && e !== void 0 && e !== "") : value;
 			value = filter.filterValues || value;
 			where.push({
 				field: filterField || field,
@@ -747,6 +747,7 @@ var Footer = ({ pagination, apiRef, tTranslate = (key) => key }) => {
 	const rowsPerPage = apiRef.current.state.pagination.paginationModel.pageSize;
 	const totalRows = apiRef.current.state.rows.totalRowCount;
 	const totalPages = Math.ceil(totalRows / rowsPerPage);
+	const isPaginationEnabled = pagination && totalPages > 1;
 	const { t: translate, i18n } = useTranslation();
 	const tOpts = {
 		t: translate,
@@ -798,10 +799,10 @@ var Footer = ({ pagination, apiRef, tTranslate = (key) => key }) => {
 				value: pageNumber,
 				onChange: handleChange,
 				onKeyPress: handleKeyPress,
-				disabled: !totalRows
+				disabled: !isPaginationEnabled
 			}),
 			/* @__PURE__ */ jsx(Button, {
-				disabled: !totalRows,
+				disabled: !isPaginationEnabled,
 				size: "small",
 				onClick: onPageChange,
 				children: tTranslate("Go", tOpts)
@@ -3032,7 +3033,27 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			params,
 			handleSelectRow,
 			idProperty
-		}) }
+		}) },
+		"percentage": {
+			type: "number",
+			align: "right",
+			filterOperators: [...getGridNumericOperators()].filter((op) => !["!="].includes(op.value)),
+			"valueFormatter": (value) => {
+				if (value == null) return "";
+				const numericValue = Number(value);
+				return !isNaN(numericValue) ? `${numericValue.toFixed(1)}%` : "";
+			}
+		},
+		"currency": {
+			type: "number",
+			align: "right",
+			filterOperators: [...getGridNumericOperators()].filter((op) => !["!="].includes(op.value)),
+			"valueFormatter": (value) => {
+				if (value == null) return "";
+				const symbol = userData?.userData?.CurrencySymbol || "";
+				return symbol ? `${symbol}${value}` : String(value);
+			}
+		}
 	};
 	useEffect(() => {
 		dataRef.current = data;
@@ -3155,7 +3176,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		const lookups = data?.lookups || {};
 		return Object.keys(lookups).sort().join(",");
 	}, [data?.lookups]);
-	const { gridColumns, pinnedColumns, lookupMap } = useMemo(() => {
+	const { stableGridColumns, pinnedColumns, lookupMap } = useMemo(() => {
 		let baseColumnList = columns || model.gridColumns || model.columns;
 		if (dynamicColumns) baseColumnList = [...dynamicColumns, ...baseColumnList];
 		const pinnedColumns = {
@@ -3176,6 +3197,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				overrides.field = column.field.replace(/s$/, "Count");
 			}
 			if (updatedColumnType[column.type]) Object.assign(overrides, updatedColumnType[column.type]);
+			if (column.filterOperators) overrides.filterOperators = column.filterOperators;
 			if (overrides.valueOptions === constants.lookup) overrides.valueOptions = (params) => lookupOptions({
 				...params,
 				lookupMap
@@ -3196,6 +3218,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				};
 			}
 			if (!disableRowGrouping) overrides.groupable = column.groupable ?? false;
+			const finalField = overrides.field ?? column.field;
+			overrides.filterable = column.filterable === false ? false : !groupingModel.includes(finalField);
 			const headerName = tTranslate((typeof column.gridLabel === "function" ? column.gridLabel({
 				column,
 				t: tTranslate,
@@ -3246,7 +3270,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			pinnedColumns.right.push("actions");
 		}
 		return {
-			gridColumns: finalColumns,
+			stableGridColumns: finalColumns,
 			pinnedColumns,
 			lookupMap
 		};
@@ -3259,8 +3283,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		dynamicColumns,
 		translate,
 		stateData?.dateTime,
-		lookupKeys
+		groupingModel
 	]);
+	const gridColumns = useMemo(() => stableGridColumns.map((col) => ({ ...col })), [stableGridColumns, lookupKeys]);
 	const hasInitializedRef = useRef(false);
 	useEffect(() => {
 		if (hasInitializedRef.current) return;
@@ -3339,7 +3364,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			pageSize: isExportRequest ? exportPageSize : pageSize,
 			sortModel: sortModelForFetch,
 			filterModel: filters,
-			gridColumns,
+			gridColumns: stableGridColumns,
 			model,
 			baseFilters: mergedBaseFilters,
 			api: baseUrl,
@@ -3385,7 +3410,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		selected,
 		props.extraParams,
 		sortModelForFetch,
-		gridColumns,
+		stableGridColumns,
 		parentFilters,
 		onListParamsChange,
 		apiRef,
@@ -3725,7 +3750,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		const { orderedFields, columnVisibilityModel, lookup } = apiRef.current.state.columns;
 		const hiddenColumns = Object.keys(columnVisibilityModel).filter((key) => columnVisibilityModel[key] === false);
 		const nonExportColumns = new Set(gridColumns.filter((col) => col.exportable === false).map((col) => col.field));
-		const visibleColumns = orderedFields.filter((field) => !nonExportColumns.has(field) && !hiddenColumns.includes(field) && field !== "__check__" && field !== "actions");
+		const visibleColumns = orderedFields.filter((field) => !nonExportColumns.has(field) && !hiddenColumns.includes(field) && field !== "__check__" && field !== "actions" && !gridGroupByColumnName.includes(field));
 		if (visibleColumns.length === 0) {
 			snackbar.showMessage(tTranslate("You cannot export while all columns are hidden... please show at least 1 column before exporting", tOpts));
 			return;
@@ -3795,7 +3820,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	]);
 	const updateFilters = useCallback((e) => {
 		const { items } = e;
-		const updatedItems = items.map((item) => {
+		const filteredItems = items.map((item) => {
 			const { field, operator, value } = item;
 			const isNumber = (gridColumns.find((col) => col.field === field) || {}).type === constants.Number;
 			if (NO_VALUE_OPERATORS.includes(operator)) return {
@@ -3814,10 +3839,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				...item,
 				value: isNumber ? null : value
 			};
-		});
+		}).filter((item) => !(item.operator === "isAnyOf" && Array.isArray(item.value) && item.value.length === 0));
 		setFilterModel({
 			...e,
-			items: updatedItems
+			items: filteredItems
 		});
 	}, [
 		gridColumns,
@@ -6199,7 +6224,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.127.0/helpers/typeof.js
+//#region \0@oxc-project+runtime@0.129.0/helpers/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -6209,7 +6234,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.127.0/helpers/toPrimitive.js
+//#region \0@oxc-project+runtime@0.129.0/helpers/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -6221,13 +6246,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.127.0/helpers/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.129.0/helpers/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.127.0/helpers/defineProperty.js
+//#region \0@oxc-project+runtime@0.129.0/helpers/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
