@@ -270,8 +270,7 @@ const getList = async (props = {}) => {
         const finalRequestData = {
             ...context.params,
             columns: context.columns,
-            responseType: context.responseType,
-            userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+            responseType: context.responseType
         };
 
         const form = document.createElement("form");
