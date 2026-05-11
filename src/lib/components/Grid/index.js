@@ -385,7 +385,7 @@ const GridBase = memo(({
             renderCell: (params) => <CustomCheckBox params={params} handleSelectRow={handleSelectRow} idProperty={idProperty} />
         },
         "percentage": {
-            type: "decimal",
+            type: "number",
             align: 'right',
             filterOperators: [...getGridNumericOperators()].filter(op => !['!='].includes(op.value)),
             "valueFormatter": (value) => {
