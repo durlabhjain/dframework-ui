@@ -234,6 +234,17 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
     return { requestData, url, where, dateColumns };
 };
 
+const appendHiddenInput = (form, name, value) => {
+    if (value === undefined || value === null) return;
+    const v = typeof value !== 'string' ? JSON.stringify(value) : value;
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = name;
+    input.value = v;
+    form.append(input);
+};
+
+
 /**
  * Fetches a list of records or triggers a file export depending on whether `contentType` is provided.
  *
@@ -250,7 +261,7 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
  *     (e.g. returning an error file or exposing a separate export-status API).
  */
 const getList = async (props = {}) => {
-    const { contentType, columns, extraParams = {}, action = 'list', model, signal } = props;
+    const { contentType, columns, extraParams = {}, action = 'list', model, signal, gridPivotFilter=[] } = props;
     const { requestData, url, where, dateColumns } = buildRequestData(props);
 
     if (contentType) {
@@ -277,22 +288,14 @@ const getList = async (props = {}) => {
         form.setAttribute("method", "POST");
         form.setAttribute("id", "exportForm");
         form.setAttribute("target", "_blank");
-        // Template-based exports are fully server-driven via the template query param.
-        // Request data (where, sort, limit, etc.) is intentionally omitted — the template
-        // defines the data shape and filtering on the server side.
         if (!extraParams.template) {
             for (const key in finalRequestData) {
-                let v = finalRequestData[key];
-                if (v === undefined || v === null) {
-                    continue;
-                } else if (typeof v !== 'string') {
-                    v = JSON.stringify(v);
-                }
-                const hiddenTag = document.createElement('input');
-                hiddenTag.type = "hidden";
-                hiddenTag.name = key;
-                hiddenTag.value = v;
-                form.append(hiddenTag);
+                appendHiddenInput(form, key, finalRequestData[key]);
+            }
+        }
+        if (Array.isArray(gridPivotFilter) && gridPivotFilter.length) {
+            for (const { field, value } of gridPivotFilter) {
+                appendHiddenInput(form, field, value);
             }
         }
         form.setAttribute('action', context.url);

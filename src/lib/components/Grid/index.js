@@ -202,6 +202,7 @@ const GridBase = memo(({
     apiRef: propsApiRef,
     baseFilters,
     customExportOptions,
+    gridPivotFilter,
     sx: propsSx,
     ...props
 }) => {
@@ -773,7 +774,8 @@ const GridBase = memo(({
             model,
             baseFilters: mergedBaseFilters,
             api: baseUrl,
-            extraParams: mergedExtraParams
+            extraParams: mergedExtraParams,
+            gridPivotFilter
         };
         if (typeof onListParamsChange === 'function') {
             onListParamsChange(listParams);
