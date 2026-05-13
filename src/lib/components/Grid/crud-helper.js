@@ -261,7 +261,7 @@ const appendHiddenInput = (form, name, value) => {
  *     (e.g. returning an error file or exposing a separate export-status API).
  */
 const getList = async (props = {}) => {
-    const { contentType, columns, extraParams = {}, action = 'list', model, signal, gridPivotFilter=[] } = props;
+    const { contentType, columns, extraParams = {}, action = 'list', model, signal, gridPivotFilter = [] } = props;
     const { requestData, url, where, dateColumns } = buildRequestData(props);
 
     if (contentType) {
