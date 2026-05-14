@@ -695,7 +695,7 @@ const GridBase = memo(({
     }, [gridColumns]);
 
 
-    const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
+    const fetchData = useCallback(async ({ action = "list", extraParams = {}, contentType, columns } = {}) => {
         if (hasStaticData) {
             if (!contentType) {
                 setData(normalizedStaticData);
@@ -705,7 +705,7 @@ const GridBase = memo(({
         const { pageSize, page } = paginationModelForFetch;
         const isExportRequest = Boolean(contentType);
 
-        const baseUrl = buildUrl(isPivotExport ? model.pivotApi : backendApi);
+        const baseUrl = buildUrl(backendApi);
 
         const filters = {
             ...filterModelForFetch,
@@ -729,7 +729,6 @@ const GridBase = memo(({
             mergedBaseFilters.push(...parentFilters);
         }
 
-        // Prepare extraParams with template and configFileName for pivot exports
         const mergedExtraParams = {
             ...extraParams,
             ...props.extraParams, // Merge any custom params passed via component props
@@ -737,16 +736,6 @@ const GridBase = memo(({
 
         if (assigned || available) {
             mergedExtraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(",") : selected;
-        }
-
-        // Add template and configFileName for pivot exports
-        if (isPivotExport) {
-            if (model.exportTemplate) {
-                mergedExtraParams.template = model.exportTemplate;
-            }
-            if (model.configFileName) {
-                mergedExtraParams.configFileName = model.configFileName;
-            }
         }
 
         const isValidFilters = !filters.items.length || filters.items.every(item => "value" in item && item.value !== undefined);
@@ -1114,10 +1103,9 @@ const GridBase = memo(({
                 exportIndex: col.exportIndex
             };
         });
-        const action = (model?.formActions?.export || isPivotExport) ? (model?.formActions?.export || 'export') : undefined;
+        const action = isPivotExport ? 'export' : model?.formActions?.export;
         fetchData({
             action,
-            isPivotExport,
             contentType,
             columns
         });
