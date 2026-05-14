@@ -23,8 +23,8 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
     // Initial options for non-cascading
     const initialOptions = useMemo(() => {
         if (dependsOn.length) return [];
-        return typeof column.lookup === 'string' ? lookups[column.lookup] : column.lookup;
-    }, [column.lookup, lookups, dependsOn]);
+        return column.customLookup || (typeof column.lookup === 'string' ? lookups[column.lookup] : column.lookup);
+    }, [column.customLookup, column.lookup, lookups, dependsOn]);
 
     const fetchOptions = useCallback(async () => {
         if (!column.lookup) return;
