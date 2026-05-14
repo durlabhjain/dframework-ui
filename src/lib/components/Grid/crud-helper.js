@@ -238,8 +238,8 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
  *     (e.g. returning an error file or exposing a separate export-status API).
  */
 const getList = async (props = {}) => {
-    const { contentType, columns, action = 'list', model, signal } = props;
-    const { requestData, url, where, dateColumns } = buildRequestData(props);
+    const { contentType, columns, extraParams = {}, action = 'list', model, signal } = props;
+    const { requestData, url, where, dateColumns } = buildRequestData({ ...props, extraParams });
 
     if (contentType) {
         // Build context object and execute request hook
