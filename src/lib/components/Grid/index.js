@@ -1112,9 +1112,8 @@ const GridBase = memo(({
                 exportIndex: col.exportIndex
             };
         });
-        const action = isPivotExport ? 'export' : model?.formActions?.export;
         fetchData({
-            action,
+            action: 'export',
             isPivotExport,
             contentType,
             columns
