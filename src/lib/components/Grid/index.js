@@ -695,7 +695,7 @@ const GridBase = memo(({
     }, [gridColumns]);
 
 
-    const fetchData = useCallback(async ({ action = "list", extraParams = {}, contentType, columns } = {}) => {
+    const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
         if (hasStaticData) {
             if (!contentType) {
                 setData(normalizedStaticData);
@@ -705,7 +705,7 @@ const GridBase = memo(({
         const { pageSize, page } = paginationModelForFetch;
         const isExportRequest = Boolean(contentType);
 
-        const baseUrl = buildUrl(backendApi);
+        const baseUrl = buildUrl(isPivotExport && model.pivotApi ? model.pivotApi : backendApi);
 
         const filters = {
             ...filterModelForFetch,
@@ -736,6 +736,15 @@ const GridBase = memo(({
 
         if (assigned || available) {
             mergedExtraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(",") : selected;
+        }
+
+        if (isPivotExport) {
+            if (model.exportTemplate) {
+                mergedExtraParams.template = model.exportTemplate;
+            }
+            if (model.configFileName) {
+                mergedExtraParams.configFileName = model.configFileName;
+            }
         }
 
         const isValidFilters = !filters.items.length || filters.items.every(item => "value" in item && item.value !== undefined);
@@ -1106,6 +1115,7 @@ const GridBase = memo(({
         const action = isPivotExport ? 'export' : model?.formActions?.export;
         fetchData({
             action,
+            isPivotExport,
             contentType,
             columns
         });

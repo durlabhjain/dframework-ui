@@ -217,7 +217,19 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
         requestData.limitToSurveyed = model?.limitToSurveyed;
     }
 
-    const url = `${api}/${action}`;
+    let url = `${api}/${action}`;
+
+    const queryParams = new URLSearchParams();
+    if (extraParams.template) {
+        queryParams.append('template', extraParams.template);
+    }
+    if (extraParams.configFileName) {
+        queryParams.append('configFileName', extraParams.configFileName);
+    }
+    const queryString = queryParams.toString();
+    if (queryString) {
+        url += `?${queryString}`;
+    }
 
     return { requestData, url, where, dateColumns };
 };
