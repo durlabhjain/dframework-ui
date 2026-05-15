@@ -204,7 +204,10 @@ class UiModel {
 				config = config.required(`${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`);
 			}
 			if (requiredIfNew && (!id || id === '')) {
-				config = config.trim().required(`${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`);
+				const requiredMessage = `${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`;
+				config = typeof config.trim === 'function'
+					? config.trim().required(requiredMessage)
+					: config.required(requiredMessage);
 			}
 			if (validate) {
 				const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
