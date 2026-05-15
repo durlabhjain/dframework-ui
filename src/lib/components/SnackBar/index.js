@@ -1,59 +1,50 @@
-import React, { useState, useContext, createContext } from 'react'
+import React, { useState, useContext, createContext, useCallback, useMemo } from 'react'
 import Snackbar from '@mui/material/Snackbar'
 import MuiAlert from '@mui/material/Alert';
 
 const SnackbarContext = createContext(null);
-const vertical = 'bottom';
-const horizontal = 'center';
+const ANCHOR_ORIGIN = { vertical: 'bottom', horizontal: 'center' };
 
 const Alert = React.forwardRef(function Alert(props, ref) {
     return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
+
 const SnackbarProvider = ({ children }) => {
-    const [message, setMessage] = useState(null);
-    const [open, setOpen] = useState(false);
-    const [severity, setSeverity] = useState(null);
-    const [handleAction, setHandleAction] = useState(null);
+    const [snack, setSnack] = useState({ open: false, message: null, severity: null, onAction: null });
 
-    const showMessage = function (title, message, severity = "info", onAction) {
-        if (typeof title !== 'string') {
-            title = title.toString();
-        }
-        if (message && typeof message !== 'string') {
-            message = message.toString();
-        }
-        setMessage(message ? `${title}: ${message}` : title);
-        setSeverity(severity);
-        setOpen(true);
-        setHandleAction(onAction);
-    }
+    const showMessage = useCallback((title, message, severity = "info", onAction) => {
+        const titleStr = typeof title === 'string' ? title : String(title);
+        const text = message
+            ? `${titleStr}: ${typeof message === 'string' ? message : String(message)}`
+            : titleStr;
+        // onAction stored inside an object — React won't treat it as a state updater fn
+        setSnack({ open: true, message: text, severity, onAction: onAction ?? null });
+    }, []);
 
-    const showError = function (title, message, severity = "error", onAction) {
+    const showError = useCallback((title, message, severity = "error", onAction) => {
         showMessage(title, message, severity, onAction);
-    }
+    }, [showMessage]);
 
-    const handleClose = function () {
-        setOpen(false);
-        setHandleAction(null);
-        if (handleAction) {
-            handleAction()
-        }
-    }
+    const handleClose = () => {
+        const { onAction } = snack;
+        setSnack(prev => ({ ...prev, open: false, onAction: null }));
+        if (onAction) onAction();
+    };
+
+    const contextValue = useMemo(() => ({ showMessage, showError }), [showMessage, showError]);
+
     return (
         <>
-            <SnackbarContext.Provider
-                value={{ showMessage, showError }}
-            >
+            <SnackbarContext.Provider value={contextValue}>
                 {children}
             </SnackbarContext.Provider>
-            <Snackbar open={open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={{ vertical, horizontal }}>
-                <Alert severity={severity}>{message}</Alert>
+            <Snackbar open={snack.open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={ANCHOR_ORIGIN}>
+                <Alert severity={snack.severity}>{snack.message}</Alert>
             </Snackbar>
         </>
-    )
-}
-const useSnackbar = function () {
-    return useContext(SnackbarContext)
-}
+    );
+};
+
+const useSnackbar = () => useContext(SnackbarContext);
 
 export { SnackbarProvider, SnackbarContext, useSnackbar }

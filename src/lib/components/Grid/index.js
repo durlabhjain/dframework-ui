@@ -1113,7 +1113,6 @@ const GridBase = memo(({
             };
         });
         fetchData({
-            action: 'export',
             isPivotExport,
             contentType,
             columns
@@ -1367,7 +1366,8 @@ const GridBase = memo(({
             pagination: disablePagination !== true,
             apiRef,
             tTranslate,
-            tOpts
+            tOpts,
+            totalRowCount: data.recordCount
         },
         panel: {
             placement: "bottom-end"
