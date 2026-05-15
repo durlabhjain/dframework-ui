@@ -103,7 +103,7 @@ class UiModel {
 						config = config.max(Number(max), tTranslate(`${formLabel} must be at most ${max} characters long`, tOpts));
 					}
 					if (required) {
-						config = config.trim().required(tTranslate(`${formLabel} is required`, tOpts));
+						config = config.trim().required(`${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`);
 					}
 					break;
 				case 'boolean':
@@ -126,7 +126,7 @@ class UiModel {
 						return value;
 					}).label(formLabel);
 					if (required) {
-						config = config.required(tTranslate(`${formLabel} is required`, tOpts));
+						config = config.required(`${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`);
 					}
 					break;
 				case 'dateTime':
@@ -140,7 +140,7 @@ class UiModel {
 						})
 						.label(formLabel); // Set a label for better error messages
 					if (required) {
-						config = config.required(tTranslate(`${formLabel} is required`, tOpts));
+						config = config.required(`${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`);
 					}
 					break;
 				case 'select':
@@ -182,7 +182,7 @@ class UiModel {
 					break;
 				case 'number':
 					if (required) {
-						config = yup.number().label(formLabel).required(tTranslate(`${formLabel} is required.`, tOpts));
+						config = yup.number().label(formLabel).required(`${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`);
 					} else {
 						config = yup.number().nullable();
 					}
@@ -201,10 +201,10 @@ class UiModel {
 					break;
 			}
 			if (required && type !== "string") {
-				config = config.required(tTranslate(`${formLabel} is required`, tOpts));
+				config = config.required(`${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`);
 			}
 			if (requiredIfNew && (!id || id === '')) {
-				config = config.trim().required(tTranslate(`${formLabel} is required`, tOpts));
+				config = config.trim().required(`${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`);
 			}
 			if (validate) {
 				const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
