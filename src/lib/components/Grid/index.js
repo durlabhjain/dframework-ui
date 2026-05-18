@@ -1119,10 +1119,54 @@ const GridBase = memo(({
         });
     }, [hasStaticData, localSortAndFilter, data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
 
+    const autoFetchSignature = useMemo(() => {
+        if ((!backendApi && !hasStaticData) || !preferencesReady) {
+            return null;
+        }
+
+        return JSON.stringify({
+            backendApi: backendApi || null,
+            hasStaticData,
+            page: paginationModelForFetch.page,
+            pageSize: paginationModelForFetch.pageSize,
+            sortModel: sortModelForFetch,
+            filterModel: filterModelForFetch,
+            baseFilters: Array.isArray(baseFilters) ? baseFilters : [],
+            parentFilters: Array.isArray(parentFilters) ? parentFilters : [],
+            additionalFilters: additionalFilters ?? null,
+            extraParams: props.extraParams ?? null,
+            selected: selected ?? null,
+            assigned: Boolean(assigned),
+            available: Boolean(available),
+            joinColumn: model.joinColumn ?? null,
+            id: id ?? null
+        });
+    }, [
+        backendApi,
+        hasStaticData,
+        preferencesReady,
+        paginationModelForFetch.page,
+        paginationModelForFetch.pageSize,
+        sortModelForFetch,
+        filterModelForFetch,
+        baseFilters,
+        parentFilters,
+        additionalFilters,
+        props.extraParams,
+        selected,
+        assigned,
+        available,
+        model.joinColumn,
+        id
+    ]);
+
+    const lastAutoFetchSignatureRef = useRef(null);
     useEffect(() => {
-        if ((!backendApi && !hasStaticData) || !preferencesReady) return;
+        if (!autoFetchSignature) return;
+        if (lastAutoFetchSignatureRef.current === autoFetchSignature) return;
+        lastAutoFetchSignatureRef.current = autoFetchSignature;
         fetchData();
-    }, [backendApi, hasStaticData, preferencesReady, fetchData]);
+    }, [autoFetchSignature, fetchData]);
 
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
