@@ -116,18 +116,12 @@ class UiModel {
 				case 'radio':
 				case 'dayRadio':
 					config = yup.mixed().label(formLabel);
-					if (required) {
-						config = config.required(tTranslate(`Select at least one option for ${formLabel}`, tOpts));
-					}
 					break;
 				case 'date':
 					config = yup.date().nullable().transform((value, originalValue) => {
 						if (originalValue === '' || originalValue === null) return null;
 						return value;
 					}).label(formLabel);
-					if (required) {
-						config = config.required(`${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`);
-					}
 					break;
 				case 'dateTime':
 					config = yup
@@ -139,14 +133,11 @@ class UiModel {
 							return value;
 						})
 						.label(formLabel); // Set a label for better error messages
-					if (required) {
-						config = config.required(`${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`);
-					}
 					break;
 				case 'select':
 				case 'autocomplete':
 					if (required) {
-						config = yup.string().trim().label(formLabel).required(tTranslate(`Select at least one ${formLabel}`, tOpts));
+						config = yup.string().trim().label(formLabel);
 					} else {
 						config = yup.string().nullable();
 					}
@@ -182,7 +173,7 @@ class UiModel {
 					break;
 				case 'number':
 					if (required) {
-						config = yup.number().label(formLabel).required(`${tTranslate(formLabel, tOpts)}: ${tTranslate('Required', tOpts)}`);
+						config = yup.number().label(formLabel);
 					} else {
 						config = yup.number().nullable();
 					}
