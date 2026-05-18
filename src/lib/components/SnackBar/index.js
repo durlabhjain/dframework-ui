@@ -1,6 +1,8 @@
 import React, { useState, useContext, createContext, useCallback, useMemo } from 'react'
 import Snackbar from '@mui/material/Snackbar'
 import MuiAlert from '@mui/material/Alert';
+import { useTranslation } from 'react-i18next';
+import { resolveErrorMessage } from '../../errors';
 
 const SnackbarContext = createContext(null);
 const ANCHOR_ORIGIN = { vertical: 'bottom', horizontal: 'center' };
@@ -11,6 +13,8 @@ const Alert = React.forwardRef(function Alert(props, ref) {
 
 const SnackbarProvider = ({ children }) => {
     const [snack, setSnack] = useState({ open: false, message: null, severity: null, onAction: null });
+    const { t } = useTranslation();
+
 
     const showMessage = useCallback((title, message, severity = "info", onAction) => {
         const titleStr = typeof title === 'string' ? title : String(title);
@@ -25,13 +29,19 @@ const SnackbarProvider = ({ children }) => {
         showMessage(title, message, severity, onAction);
     }, [showMessage]);
 
+    const showErrorCode = useCallback((code, message, severity = "error", onAction) => {
+        const resolvedCode = typeof code !== 'string' ? String(code) : code;
+        const resolvedTitle = resolveErrorMessage(resolvedCode, t);
+        showMessage(resolvedTitle, message, severity, onAction);
+    }, [showMessage, t]);
+
     const handleClose = () => {
         const { onAction } = snack;
         setSnack(prev => ({ ...prev, open: false, onAction: null }));
         if (onAction) onAction();
     };
 
-    const contextValue = useMemo(() => ({ showMessage, showError }), [showMessage, showError]);
+    const contextValue = useMemo(() => ({ showMessage, showError, showErrorCode }), [showMessage, showError, showErrorCode]);
 
     return (
         <>

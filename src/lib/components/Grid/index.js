@@ -32,6 +32,7 @@ import Checkbox from '@mui/material/Checkbox';
 import { useModelTranslation } from '../../hooks/useModelTranslation';
 import { convertDefaultSort, areEqual, getDefaultOperator } from './helper';
 import { styled } from '@mui/material/styles';
+import { ERROR_CODES } from '../../errors';
 
 const defaultPageSize = 50;
 const sortRegex = /(\w+)( ASC| DESC)?/i;
@@ -280,7 +281,6 @@ const GridBase = memo(({
     const documentField = model.columns.find(ele => ele.type === 'fileUpload')?.field || "";
     const userDefinedPermissions = { add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete };
     const { canAdd, canEdit, canDelete } = getPermissions({ userData, model, userDefinedPermissions });
-    const tTranslate = useMemo(() => model.tTranslate ?? defaultTranslate, [model.tTranslate]);
     const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false } = model;
     const gridTitle = model.gridTitle || model.title;
     const preferenceKey = getApiEndpoint("GridPreferenceManager") ? (model.preferenceId || model.module?.preferenceId) : null;
@@ -786,7 +786,7 @@ const GridBase = memo(({
             }
         } catch (error) {
             if (error?.aborted || error?.name === 'AbortError' || controller?.signal?.aborted) return;
-            snackbar.showError(tTranslate('An error occurred while fetching data', tOpts));
+            snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, error?.message);
             if (!isExportRequest) {
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
             }
@@ -806,7 +806,7 @@ const GridBase = memo(({
                 const data = await getRecord({ id, api: baseUrl, model, parentFilters, where });
                 setActiveRecord(data);
             } catch (error) {
-                snackbar.showError(tTranslate('Could not load record', tOpts));
+                snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, error?.message);
             }
             return;
         }
@@ -913,7 +913,7 @@ const GridBase = memo(({
             snackbar.showMessage(tTranslate('Record Deleted Successfully.', tOpts));
             fetchData();
         } catch (error) {
-            snackbar.showError(tTranslate('Delete failed', tOpts), error.message);
+            snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, error?.message);
         } finally {
             setIsDeleting(false);
         }
@@ -959,7 +959,7 @@ const GridBase = memo(({
 
     const handleAddRecords = useCallback(async () => {
         if (rowSelectionModel.ids.size < 1) {
-            snackbar.showError(tTranslate("Please select at least one record to proceed", tOpts));
+            snackbar.showErrorCode(ERROR_CODES.SELECT_AT_LEAST_ONE);
             return;
         }
 
@@ -995,7 +995,7 @@ const GridBase = memo(({
                 snackbar.showMessage(message);
             }
         } catch (err) {
-            snackbar.showError(err.message || tTranslate('An error occurred, please try after some time.', tOpts));
+            snackbar.showErrorCode(ERROR_CODES.SAVE_FAILED, err?.message);
         } finally {
             setIsLoading(false);
             setRowSelectionModel({
@@ -1012,9 +1012,7 @@ const GridBase = memo(({
                 setShowAddConfirmation(true);
                 return;
             }
-            snackbar.showError(
-                tTranslate("Please select at least one record to proceed", tOpts),
-            );
+            snackbar.showErrorCode(ERROR_CODES.SELECT_AT_LEAST_ONE);
             return;
         }
         if (typeof onAddOverride === constants.function) {

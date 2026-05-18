@@ -20,7 +20,7 @@ import useMobile from './components/useMobile';
 import httpRequest from './components/Grid/httpRequest';
 import crudHelper from './components/Grid/crud-helper';
 import { useModelTranslation } from './hooks/useModelTranslation';
-
+import { ERROR_CODES, ERROR_MESSAGES, AppError, resolveErrorMessage } from './errors';
 export { 
   SnackbarProvider,
   SnackbarContext,
@@ -47,5 +47,9 @@ export {
   useRouter,
   httpRequest,
   crudHelper,
-  useModelTranslation
+  useModelTranslation,
+  ERROR_CODES,
+  ERROR_MESSAGES,
+  AppError,
+  resolveErrorMessage
 };
