@@ -94,6 +94,33 @@ const LOCAL_MODE_PAGINATION_MODEL = Object.freeze({ page: 0, pageSize: exportPag
 // Module-level default translate to avoid creating a new function instance every render
 const defaultTranslate = (key) => key;
 
+const stableSerialize = (value) => {
+    if (value === undefined || typeof value === 'function' || typeof value === 'symbol') {
+        return undefined;
+    }
+    if (value === null || typeof value !== 'object') {
+        return JSON.stringify(value);
+    }
+    if (value instanceof Date) {
+        return JSON.stringify(value.toJSON());
+    }
+    if (Array.isArray(value)) {
+        return `[${value.map(item => stableSerialize(item) ?? 'null').join(',')}]`;
+    }
+    if (Object.prototype.toString.call(value) !== '[object Object]') {
+        return JSON.stringify(value);
+    }
+    const keys = Object.keys(value).sort();
+    const entries = keys
+        .map((key) => {
+            const serialized = stableSerialize(value[key]);
+            if (serialized === undefined) return null;
+            return `${JSON.stringify(key)}:${serialized}`;
+        })
+        .filter(Boolean);
+    return `{${entries.join(',')}}`;
+};
+
 const normalizeStaticData = (staticData) => {
     const records = Array.isArray(staticData)
         ? staticData
@@ -1124,7 +1151,7 @@ const GridBase = memo(({
             return null;
         }
 
-        return JSON.stringify({
+        return stableSerialize({
             backendApi: backendApi || null,
             hasStaticData,
             page: paginationModelForFetch.page,
