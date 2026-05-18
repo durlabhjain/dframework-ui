@@ -98,30 +98,27 @@ const defaultTranslate = (key) => key;
 // ordering stable and drops non-serializable values so equivalent inputs produce
 // the same string across re-renders.
 const stableSerialize = (value) => {
-    if (value === undefined || typeof value === 'function' || typeof value === 'symbol') {
-        return undefined;
+    try {
+        return JSON.stringify(value, (key, currentValue) => {
+            if (currentValue === undefined || typeof currentValue === 'function' || typeof currentValue === 'symbol') {
+                return undefined;
+            }
+            if (Object.prototype.toString.call(currentValue) === '[object Object]') {
+                const sortedObject = {};
+                Object.keys(currentValue).sort().forEach((sortedKey) => {
+                    const sortedValue = currentValue[sortedKey];
+                    if (sortedValue === undefined || typeof sortedValue === 'function' || typeof sortedValue === 'symbol') {
+                        return;
+                    }
+                    sortedObject[sortedKey] = sortedValue;
+                });
+                return sortedObject;
+            }
+            return currentValue;
+        });
+    } catch {
+        return String(value);
     }
-    if (value === null || typeof value !== 'object') {
-        return JSON.stringify(value);
-    }
-    if (value instanceof Date) {
-        return JSON.stringify(value.toJSON());
-    }
-    if (Array.isArray(value)) {
-        return `[${value.map(item => stableSerialize(item) ?? 'null').join(',')}]`;
-    }
-    if (Object.prototype.toString.call(value) !== '[object Object]') {
-        return JSON.stringify(value);
-    }
-    const keys = Object.keys(value).sort();
-    const entries = keys
-        .map((key) => {
-            const serialized = stableSerialize(value[key]);
-            if (serialized === undefined) return null;
-            return `${JSON.stringify(key)}:${serialized}`;
-        })
-        .filter(Boolean);
-    return `{${entries.join(',')}}`;
 };
 
 const normalizeStaticData = (staticData) => {
