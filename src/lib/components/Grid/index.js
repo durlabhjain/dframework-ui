@@ -97,6 +97,14 @@ const defaultTranslate = (key) => key;
 // Deterministic serializer used for request-signature keys. It keeps object-key
 // ordering stable and drops non-serializable values so equivalent inputs produce
 // the same string across re-renders.
+/**
+ * Stable JSON serializer for auto-fetch signatures.
+ * - Sorts plain-object keys recursively for deterministic output.
+ * - Omits undefined/functions/symbols to mirror JSON semantics for objects.
+ * - Falls back to String(value) if serialization fails.
+ * @param {unknown} value
+ * @returns {string}
+ */
 const stableSerialize = (value) => {
     try {
         return JSON.stringify(value, (key, currentValue) => {
@@ -105,7 +113,8 @@ const stableSerialize = (value) => {
             }
             if (Object.prototype.toString.call(currentValue) === '[object Object]') {
                 const sortedObject = {};
-                Object.keys(currentValue).sort().forEach((sortedKey) => {
+                const sortedKeys = Object.keys(currentValue).sort();
+                sortedKeys.forEach((sortedKey) => {
                     const sortedValue = currentValue[sortedKey];
                     if (sortedValue === undefined || typeof sortedValue === 'function' || typeof sortedValue === 'symbol') {
                         return;
