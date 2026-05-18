@@ -94,6 +94,9 @@ const LOCAL_MODE_PAGINATION_MODEL = Object.freeze({ page: 0, pageSize: exportPag
 // Module-level default translate to avoid creating a new function instance every render
 const defaultTranslate = (key) => key;
 
+// Deterministic serializer used for request-signature keys. It keeps object-key
+// ordering stable and drops non-serializable values so equivalent inputs produce
+// the same string across re-renders.
 const stableSerialize = (value) => {
     if (value === undefined || typeof value === 'function' || typeof value === 'symbol') {
         return undefined;
@@ -1146,6 +1149,8 @@ const GridBase = memo(({
         });
     }, [hasStaticData, localSortAndFilter, data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
 
+    // Build a stable key from every list-query input that should trigger an
+    // automatic refetch; identical keys are treated as duplicate rerenders.
     const autoFetchSignature = useMemo(() => {
         if ((!backendApi && !hasStaticData) || !preferencesReady) {
             return null;
