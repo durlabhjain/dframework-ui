@@ -8,12 +8,12 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
-const Footer = ({ pagination, apiRef, tTranslate = (key) => key }) => {
+const Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) => {
     const page = apiRef.current.state.pagination.paginationModel.page;
     const rowsPerPage = apiRef.current.state.pagination.paginationModel.pageSize;
-    const totalRows = apiRef.current.state.rows.totalRowCount;
+    const totalRows = totalRowCount ?? apiRef.current.state.rows.totalRowCount;
     const totalPages = Math.ceil(totalRows / rowsPerPage);
-    const isPaginationEnabled = pagination && totalPages > 1;
+    const isPaginationEnabled = !!pagination && totalPages > 1;
     const { t: translate, i18n } = useTranslation();
     const tOpts = { t: translate, i18n };
     const [pageNumber, setPageNumber] = useState(page + 1);

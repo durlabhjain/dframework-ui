@@ -251,7 +251,7 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
  */
 const getList = async (props = {}) => {
     const { contentType, columns, extraParams = {}, action = 'list', model, signal } = props;
-    const { requestData, url, where, dateColumns } = buildRequestData(props);
+    const { requestData, url, where, dateColumns } = buildRequestData({ ...props, extraParams });
 
     if (contentType) {
         // Build context object and execute request hook
@@ -277,23 +277,18 @@ const getList = async (props = {}) => {
         form.setAttribute("method", "POST");
         form.setAttribute("id", "exportForm");
         form.setAttribute("target", "_blank");
-        // Template-based exports are fully server-driven via the template query param.
-        // Request data (where, sort, limit, etc.) is intentionally omitted — the template
-        // defines the data shape and filtering on the server side.
-        if (!extraParams.template) {
-            for (const key in finalRequestData) {
-                let v = finalRequestData[key];
-                if (v === undefined || v === null) {
-                    continue;
-                } else if (typeof v !== 'string') {
-                    v = JSON.stringify(v);
-                }
-                const hiddenTag = document.createElement('input');
-                hiddenTag.type = "hidden";
-                hiddenTag.name = key;
-                hiddenTag.value = v;
-                form.append(hiddenTag);
+        for (const key in finalRequestData) {
+            let v = finalRequestData[key];
+            if (v === undefined || v === null) {
+                continue;
+            } else if (typeof v !== 'string') {
+                v = JSON.stringify(v);
             }
+            const hiddenTag = document.createElement('input');
+            hiddenTag.type = "hidden";
+            hiddenTag.name = key;
+            hiddenTag.value = v;
+            form.append(hiddenTag);
         }
         form.setAttribute('action', context.url);
         document.body.appendChild(form);
