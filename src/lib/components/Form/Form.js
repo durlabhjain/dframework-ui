@@ -301,7 +301,7 @@ const Form = ({
     if (fieldConfig.tab) {
       setActiveStep(Object.keys(model.tabs).indexOf(fieldConfig.tab));
     }
-  }, [beforeSubmit, formik, model, snackbar, setActiveStep]);
+  }, [beforeSubmit, formik, model, snackbar, setActiveStep, tTranslate, tOpts]);
 
   const breadcrumbs = [
     { text: tTranslate(formTitle, tOpts) },
