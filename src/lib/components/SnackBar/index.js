@@ -30,8 +30,7 @@ const SnackbarProvider = ({ children }) => {
     }, [showMessage]);
 
     const showErrorCode = useCallback((code, message, severity = "error", onAction) => {
-        const resolvedCode = typeof code !== 'string' ? String(code) : code;
-        const resolvedTitle = resolveErrorMessage(resolvedCode, t);
+        const resolvedTitle = resolveErrorMessage(code, t);
         showMessage(resolvedTitle, message, severity, onAction);
     }, [showMessage, t]);
 

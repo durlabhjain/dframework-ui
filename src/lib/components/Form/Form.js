@@ -269,9 +269,7 @@ const Form = ({
         navigateBack !== false && handleNavigation();
       }
     } catch (error) {
-      snackbar.showErrorCode(ERROR_CODES.AN_ERROR_OCCURRED, error?.message);
-    } finally {
-      setIsDeleting(false);
+      snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, error?.message);
     }
   }, [id, api, model.api, snackbar, setErrorMessage, model, navigateBack, handleNavigation, tTranslate, tOpts]);
   const clearError = () => {
@@ -293,7 +291,7 @@ const Form = ({
     const fieldName = Object.keys(errors)[0];
     const errorMessage = errors[fieldName];
     if (errorMessage) {
-      snackbar.showError(tTranslate(errorMessage, tOpts), null, "error");
+      snackbar.showError(errorMessage, null, "error");
     }
     const fieldConfig = model.columns.find(
       (column) => column.field === fieldName

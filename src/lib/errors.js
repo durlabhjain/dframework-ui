@@ -24,6 +24,10 @@ export const ERROR_CODES = {
     LOOKUPS_FAILED:         'error.lookups_failed',
 
     SELECT_AT_LEAST_ONE:    'error.select_at_least_one',
+    DATA_LOAD_FAILED:       'error.data_load_failed',
+
+    // API / configuration
+    API_UNDEFINED:          'error.api_undefined',
 
     // Generic fallback
     AN_ERROR_OCCURRED:      'error.an_error_occurred',
@@ -57,7 +61,9 @@ export const ERROR_MESSAGES = {
     [ERROR_CODES.LOOKUPS_FAILED]:        'Could not load lookups',
     [ERROR_CODES.AN_ERROR_OCCURRED]:     'An error occurred.',
     [ERROR_CODES.UNKNOWN]:               'An unknown error occurred.',
-    [ERROR_CODES.SELECT_AT_LEAST_ONE]:   'Please select at least one record to proceed.'
+    [ERROR_CODES.SELECT_AT_LEAST_ONE]:   'Please select at least one record to proceed.',
+    [ERROR_CODES.DATA_LOAD_FAILED]:      'Could not load data',
+    [ERROR_CODES.API_UNDEFINED]:         'This action requires an API endpoint.',
 };
 
 /**

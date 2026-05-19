@@ -229,7 +229,7 @@ const GridBase = memo(({
     // Force client pagination when localSortAndFilter is enabled so that all data is
     // fetched in a single request and MUI DataGrid handles paging/sort/filter locally.
     const paginationMode = (hasStaticData || model.localSortAndFilter) ? constants.client : (model.paginationMode === constants.client ? constants.client : constants.server);
-    const { translate, tOpts } = useModelTranslation(model);
+    const { translate, tOpts, tTranslate } = useModelTranslation(model);
     const [errorMessage, setErrorMessage] = useState('');
     const [sortModel, setSortModel] = useState(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
     const initialFilterModel = { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' };
@@ -287,7 +287,6 @@ const GridBase = memo(({
     const searchParams = new URLSearchParams(window.location.search);
     const [currentPreference, setCurrentPreference] = useState(null);
     const [preferencesReady, setPreferencesReady] = useState(!preferenceKey);
-    const backendApiRequiredMessage = tTranslate('This action requires an API endpoint.', tOpts);
     // State for single expanded detail panel row
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
@@ -786,7 +785,7 @@ const GridBase = memo(({
             }
         } catch (error) {
             if (error?.aborted || error?.name === 'AbortError' || controller?.signal?.aborted) return;
-            snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, error?.message);
+            snackbar.showErrorCode(ERROR_CODES.DATA_LOAD_FAILED, error?.message);
             if (!isExportRequest) {
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
             }
@@ -798,7 +797,7 @@ const GridBase = memo(({
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
             if (isStaticDataWithoutBackendApi) {
-                snackbar.showError(backendApiRequiredMessage);
+                snackbar.showErrorCode(ERROR_CODES.API_UNDEFINED);
                 return;
             }
             try {
@@ -824,7 +823,7 @@ const GridBase = memo(({
             path += `?${searchParams.toString()}`;
         }
         navigate(path);
-    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, backendApiRequiredMessage, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
+    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -904,7 +903,7 @@ const GridBase = memo(({
 
     const handleDelete = useCallback(async () => {
         if (isStaticDataWithoutBackendApi) {
-            snackbar.showError(backendApiRequiredMessage);
+            snackbar.showErrorCode(ERROR_CODES.API_UNDEFINED);
             return;
         }
         const baseUrl = buildUrl(backendApi);
@@ -917,7 +916,7 @@ const GridBase = memo(({
         } finally {
             setIsDeleting(false);
         }
-    }, [isStaticDataWithoutBackendApi, backendApiRequiredMessage, backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts]);
+    }, [isStaticDataWithoutBackendApi, backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts]);
 
     const clearError = useCallback(() => {
         setErrorMessage(null);
@@ -976,7 +975,7 @@ const GridBase = memo(({
 
         const apiEndpoint = selectionApi || backendApi;
         if (!apiEndpoint) {
-            snackbar.showError(backendApiRequiredMessage);
+            snackbar.showErrorCode(ERROR_CODES.API_UNDEFINED);
             return;
         }
         const baseUrl = buildUrl(apiEndpoint);
@@ -1004,7 +1003,7 @@ const GridBase = memo(({
             });
             setShowAddConfirmation(false);
         }
-    }, [rowSelectionModel.ids, snackbar, backendApiRequiredMessage, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts]);
+    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts]);
 
     const onAdd = useCallback(() => {
         if (selectionApi.length > 0) {
