@@ -142,7 +142,7 @@ class UiModel {
 		const validationConfig = {};
 		for (const column of columns) {
 			const { field, label, header, type = 'string', requiredIfNew = false, required = false, min = '', max = '', validate } = column;
-			const formLabel = label || header || field;
+			const formLabel = tTranslate(label || header || field, tOpts);
 			if (!formLabel) {
 				continue;
 			}
