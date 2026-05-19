@@ -78,8 +78,9 @@ export const ERROR_MESSAGES = {
  */
 export const resolveErrorMessage = (codeOrMessage, t) => {
     const effectiveCode = codeOrMessage || ERROR_CODES.UNKNOWN;
-    const fallback = ERROR_MESSAGES[effectiveCode] ?? effectiveCode;
-    if (typeof t === 'function') {
+    const isKnownCode = effectiveCode in ERROR_MESSAGES;
+    const fallback = isKnownCode ? ERROR_MESSAGES[effectiveCode] : effectiveCode;
+    if (isKnownCode && typeof t === 'function') {
         return t(effectiveCode, { defaultValue: fallback });
     }
     return fallback;
@@ -101,9 +102,10 @@ export const resolveErrorMessage = (codeOrMessage, t) => {
  */
 export class AppError extends Error {
     constructor(code, detail = null, httpStatus = null) {
-        super(ERROR_MESSAGES[code] ?? code);
+        const effectiveCode = code || ERROR_CODES.UNKNOWN;
+        super(ERROR_MESSAGES[effectiveCode] ?? effectiveCode);
         this.name = 'AppError';
-        this.code = code;
+        this.code = effectiveCode;
         this.detail = detail;
         this.httpStatus = httpStatus;
     }

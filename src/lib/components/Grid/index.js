@@ -823,7 +823,7 @@ const GridBase = memo(({
             path += `?${searchParams.toString()}`;
         }
         navigate(path);
-    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
+    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
