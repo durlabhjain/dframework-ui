@@ -139,7 +139,6 @@ class UiModel {
 	getValidationSchema({ id, tTranslate = (key) => key, tOpts = {} } = {}) {
 		const { columns } = this;
 		const t = tOpts?.t;
-		const vm = (rule, params) => resolveValidationMessage(rule, params, t);
 		const validationConfig = {};
 		for (const column of columns) {
 			const { field, label, header, type = 'string', requiredIfNew = false, required = false, min = '', max = '', validate } = column;
@@ -153,10 +152,10 @@ class UiModel {
 				case 'string':
 					config = yup.string().nullable().trim().label(formLabel);
 					if (isValidNumericValue(min)) {
-						config = config.min(Number(min), vm('minChars', { label: formLabel, min }));
+						config = config.min(Number(min), resolveValidationMessage('minChars', { label: formLabel, min }, t));
 					}
 					if (isValidNumericValue(max)) {
-						config = config.max(Number(max), vm('maxChars', { label: formLabel, max }));
+						config = config.max(Number(max), resolveValidationMessage('maxChars', { label: formLabel, max }, t));
 					}
 					break;
 				case 'boolean':
@@ -186,7 +185,7 @@ class UiModel {
 				case 'password':
 					config = yup.string()
 						.label(formLabel)
-						.test("ignore-asterisks", vm('passwordInvalid', { label: formLabel }), (value) => {
+						.test("ignore-asterisks", resolveValidationMessage('passwordInvalid', { label: formLabel }, t), (value) => {
 							// Skip further validations if value is exactly "******"
 							if (value === "******") return true;
 							const minlength = Number(min) || 8;
@@ -194,11 +193,11 @@ class UiModel {
 							const regex = column.regex || regexConfig.password;
 							// Check minimum length, maximum length, and pattern if not "******"
 							return yup.string()
-								.min(minlength, vm('minChars', { label: formLabel, min: minlength }))
-								.max(maxlength, vm('maxChars', { label: formLabel, max: maxlength }))
+								.min(minlength, resolveValidationMessage('minChars', { label: formLabel, min: minlength }, t))
+								.max(maxlength, resolveValidationMessage('maxChars', { label: formLabel, max: maxlength }, t))
 								.matches(
 									regex,
-									vm('passwordPolicy', { label: formLabel })
+									resolveValidationMessage('passwordPolicy', { label: formLabel }, t)
 								)
 								.isValidSync(value);
 						});
@@ -209,16 +208,16 @@ class UiModel {
 						.trim()
 						.matches(
 							(column.regex || regexConfig.email),
-							vm('emailInvalid', { label: formLabel })
+							resolveValidationMessage('emailInvalid', { label: formLabel }, t)
 						);
 					break;
 				case 'number':
 					config = yup.number().label(formLabel).nullable();
 					if (isValidNumericValue(min)) {
-						config = config.min(Number(min), vm('minNumber', { label: formLabel, min }));
+						config = config.min(Number(min), resolveValidationMessage('minNumber', { label: formLabel, min }, t));
 					}
 					if (isValidNumericValue(max)) {
-						config = config.max(Number(max), vm('maxNumber', { label: formLabel, max }));
+						config = config.max(Number(max), resolveValidationMessage('maxNumber', { label: formLabel, max }, t));
 					}
 					break;
 				case 'fileUpload':
@@ -234,13 +233,13 @@ class UiModel {
 				if (type === 'string') {
 					config = applyRequired(config, formLabel, true, t);
 				} else if (type === 'radio' || type === 'dayRadio') {
-					config = config.required(vm('requiredSelectOption', { label: formLabel }));
+					config = config.required(resolveValidationMessage('requiredSelectOption', { label: formLabel }, t));
 				} else if (type === 'date' || type === 'dateTime') {
-					config = config.required(vm('required', { label: formLabel }));
+					config = config.required(resolveValidationMessage('required', { label: formLabel }, t));
 				} else if (type === 'select' || type === 'autocomplete') {
-					config = config.required(vm('requiredSelect', { label: formLabel }));
+					config = config.required(resolveValidationMessage('requiredSelect', { label: formLabel }, t));
 				} else if (type === 'number') {
-					config = config.required(vm('requiredNumber', { label: formLabel }));
+					config = config.required(resolveValidationMessage('requiredNumber', { label: formLabel }, t));
 				} else {
 					config = applyRequired(config, formLabel, false, t);
 				}
@@ -257,7 +256,7 @@ class UiModel {
 					);
 					config = config.oneOf(
 						[yup.ref(compareFieldName)],
-						vm('mustMatch', { label: formLabel, compareLabel: compareField?.label || compareFieldName })
+						resolveValidationMessage('mustMatch', { label: formLabel, compareLabel: compareField?.label || compareFieldName }, t)
 					);
 				}
 			}

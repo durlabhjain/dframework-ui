@@ -193,7 +193,7 @@ const Form = ({
         .catch((err) => {
           snackbar.showErrorCode(
             ERROR_CODES.AN_ERROR_OCCURRED,
-            err
+            err?.message
           );
           if (model.reloadOnSave) {
             resetForm();

@@ -77,10 +77,10 @@ export const ERROR_MESSAGES = {
  * @returns {string}
  */
 export const resolveErrorMessage = (codeOrMessage, t) => {
-    if (!codeOrMessage) return ERROR_MESSAGES[ERROR_CODES.UNKNOWN];
-    const fallback = ERROR_MESSAGES[codeOrMessage] ?? codeOrMessage;
+    const effectiveCode = codeOrMessage || ERROR_CODES.UNKNOWN;
+    const fallback = ERROR_MESSAGES[effectiveCode] ?? effectiveCode;
     if (typeof t === 'function') {
-        return t(codeOrMessage, { defaultValue: fallback });
+        return t(effectiveCode, { defaultValue: fallback });
     }
     return fallback;
 };
