@@ -270,6 +270,8 @@ const Form = ({
       }
     } catch (error) {
       snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, error?.message);
+    } finally {
+      setIsDeleting(false);
     }
   }, [id, api, model.api, snackbar, setErrorMessage, model, navigateBack, handleNavigation, tTranslate, tOpts]);
   const clearError = () => {

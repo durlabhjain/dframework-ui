@@ -48,7 +48,7 @@ const resolveValidationMessage = (rule, params, t) => {
 	const translated = typeof t === 'function'
 		? t(key, { defaultValue: template })
 		: template;
-	return utils.replaceTags(translated ?? template, params);
+	return utils.replaceTags(translated, params);
 };
 
 const emptyToNullTransform = (value, originalValue) => {
