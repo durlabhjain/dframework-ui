@@ -705,7 +705,7 @@ const GridBase = memo(({
         const { pageSize, page } = paginationModelForFetch;
         const isExportRequest = Boolean(contentType);
 
-        const baseUrl = buildUrl(isPivotExport ? model.pivotApi : backendApi);
+        const baseUrl = buildUrl(isPivotExport && model.pivotApi ? model.pivotApi : backendApi);
 
         const filters = {
             ...filterModelForFetch,
@@ -729,7 +729,6 @@ const GridBase = memo(({
             mergedBaseFilters.push(...parentFilters);
         }
 
-        // Prepare extraParams with template and configFileName for pivot exports
         const mergedExtraParams = {
             ...extraParams,
             ...props.extraParams, // Merge any custom params passed via component props
@@ -739,7 +738,6 @@ const GridBase = memo(({
             mergedExtraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(",") : selected;
         }
 
-        // Add template and configFileName for pivot exports
         if (isPivotExport) {
             if (model.exportTemplate) {
                 mergedExtraParams.template = model.exportTemplate;
@@ -1114,9 +1112,7 @@ const GridBase = memo(({
                 exportIndex: col.exportIndex
             };
         });
-        const action = (model?.formActions?.export || isPivotExport) ? (model?.formActions?.export || 'export') : undefined;
         fetchData({
-            action,
             isPivotExport,
             contentType,
             columns
@@ -1370,7 +1366,8 @@ const GridBase = memo(({
             pagination: disablePagination !== true,
             apiRef,
             tTranslate,
-            tOpts
+            tOpts,
+            totalRowCount: data.recordCount
         },
         panel: {
             placement: "bottom-end"
