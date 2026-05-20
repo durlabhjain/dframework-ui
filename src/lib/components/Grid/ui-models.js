@@ -212,7 +212,7 @@ class UiModel {
 						);
 					break;
 				case 'number':
-					config = yup.number().label(formLabel).nullable();
+					config = yup.number().nullable().transform(emptyToNullTransform).label(formLabel);
 					if (isValidNumericValue(min)) {
 						config = config.min(Number(min), resolveValidationMessage('minNumber', { label: formLabel, min }, t));
 					}
