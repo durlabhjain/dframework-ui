@@ -2,6 +2,7 @@ import * as React$1 from "react";
 import React, { createContext, createElement, memo, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
+import { useTranslation, withTranslation } from "react-i18next";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -18,7 +19,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import { useTranslation, withTranslation } from "react-i18next";
 import { Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, CardContent, Checkbox, CircularProgress, Dialog as Dialog$1, DialogContent as DialogContent$1, DialogTitle as DialogTitle$1, Divider, FilledInput, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, Input, InputAdornment, InputLabel, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField as TextField$1, Tooltip, Typography as Typography$1, styled, useTheme } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
@@ -75,10 +75,111 @@ import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import Input$1 from "@mui/material/Input";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
+//#region src/lib/errors.js
+/**
+* Centralized error code registry.
+*
+* Each code is a stable, dot-namespaced key that can be used directly as an
+* i18next translation key. Consuming applications add these keys to their
+* translation files to override the default English messages in ERROR_MESSAGES.
+*
+* Pattern: error.<domain>_<verb>
+*/
+var ERROR_CODES = {
+	SESSION_EXPIRED: "error.session_expired",
+	ACCESS_DENIED: "error.access_denied",
+	NETWORK_FAILURE: "error.network_failure",
+	INTERNAL_SERVER_ERROR: "error.internal_server_error",
+	LOAD_FAILED: "error.load_failed",
+	SAVE_FAILED: "error.save_failed",
+	DELETE_FAILED: "error.delete_failed",
+	DELETE_NO_RECORD: "error.delete_no_record",
+	LOOKUPS_FAILED: "error.lookups_failed",
+	SELECT_AT_LEAST_ONE: "error.select_at_least_one",
+	DATA_LOAD_FAILED: "error.data_load_failed",
+	API_UNDEFINED: "error.api_undefined",
+	AN_ERROR_OCCURRED: "error.an_error_occurred",
+	UNKNOWN: "error.unknown"
+};
+/**
+* Default English messages keyed by error code.
+*
+* These serve as the built-in fallback when the consuming application has not
+* provided a translation for a given code. Place these keys in your i18next
+* translation JSON to localize them.
+*
+* @example i18n translation file entry
+*   {
+*     "error": {
+*       "save_failed": "Echec de l'enregistrement",
+*       ...
+*     }
+*   }
+*/
+var ERROR_MESSAGES = {
+	[ERROR_CODES.SESSION_EXPIRED]: "Session Expired!",
+	[ERROR_CODES.ACCESS_DENIED]: "Access Denied!",
+	[ERROR_CODES.NETWORK_FAILURE]: "Network failure or server unreachable. Please try again.",
+	[ERROR_CODES.INTERNAL_SERVER_ERROR]: "Internal Server Error",
+	[ERROR_CODES.LOAD_FAILED]: "Could not load record",
+	[ERROR_CODES.SAVE_FAILED]: "Save failed",
+	[ERROR_CODES.DELETE_FAILED]: "Delete failed",
+	[ERROR_CODES.DELETE_NO_RECORD]: "Delete failed. No active record.",
+	[ERROR_CODES.LOOKUPS_FAILED]: "Could not load lookups",
+	[ERROR_CODES.AN_ERROR_OCCURRED]: "An error occurred.",
+	[ERROR_CODES.UNKNOWN]: "An unknown error occurred.",
+	[ERROR_CODES.SELECT_AT_LEAST_ONE]: "Please select at least one record to proceed.",
+	[ERROR_CODES.DATA_LOAD_FAILED]: "Could not load data",
+	[ERROR_CODES.API_UNDEFINED]: "This action requires an API endpoint."
+};
+/**
+* Resolves an error code or plain string to a displayable message.
+*
+* When the consuming app supplies an i18next `t` function the error is
+* translated; otherwise the built-in English message is used as a fallback.
+*
+* @param {string} codeOrMessage - An ERROR_CODES value or a plain message string.
+* @param {Function} [t] - Optional i18next t() function from useTranslation().
+* @returns {string}
+*/
+var resolveErrorMessage = (codeOrMessage, t) => {
+	const effectiveCode = codeOrMessage || ERROR_CODES.UNKNOWN;
+	const isKnownCode = effectiveCode in ERROR_MESSAGES;
+	const fallback = isKnownCode ? ERROR_MESSAGES[effectiveCode] : effectiveCode;
+	if (isKnownCode && typeof t === "function") return t(effectiveCode, { defaultValue: fallback });
+	return fallback;
+};
+/**
+* Structured application error that pairs a stable error code with an optional
+* server-supplied detail message and HTTP status.
+*
+* Using AppError instead of plain strings means callers receive a predictable
+* shape regardless of which operation failed, and the display layer can
+* translate the code independently of the service layer.
+*
+* @example
+*   throw new AppError(ERROR_CODES.SAVE_FAILED, response.data.message, 200);
+*
+* @example
+*   setError(new AppError(ERROR_CODES.NETWORK_FAILURE));
+*/
+var AppError = class extends Error {
+	constructor(code, detail = null, httpStatus = null) {
+		const effectiveCode = code || ERROR_CODES.UNKNOWN;
+		super(ERROR_MESSAGES[effectiveCode] ?? effectiveCode);
+		this.name = "AppError";
+		this.code = effectiveCode;
+		this.detail = detail;
+		this.httpStatus = httpStatus;
+	}
+};
+//#endregion
 //#region src/lib/components/SnackBar/index.js
 var SnackbarContext = createContext(null);
-var vertical = "bottom";
-var horizontal = "center";
+var ANCHOR_ORIGIN = {
+	vertical: "bottom",
+	horizontal: "center"
+};
 var Alert = React.forwardRef(function Alert(props, ref) {
 	return /* @__PURE__ */ jsx(MuiAlert, {
 		elevation: 6,
@@ -88,49 +189,61 @@ var Alert = React.forwardRef(function Alert(props, ref) {
 	});
 });
 var SnackbarProvider = ({ children }) => {
-	const [message, setMessage] = useState(null);
-	const [open, setOpen] = useState(false);
-	const [severity, setSeverity] = useState(null);
-	const [handleAction, setHandleAction] = useState(null);
-	const showMessage = function(title, message, severity = "info", onAction) {
-		if (typeof title !== "string") title = title.toString();
-		if (message && typeof message !== "string") message = message.toString();
-		setMessage(message ? `${title}: ${message}` : title);
-		setSeverity(severity);
-		setOpen(true);
-		setHandleAction(onAction);
-	};
-	const showError = function(title, message, severity = "error", onAction) {
+	const [snack, setSnack] = useState({
+		open: false,
+		message: null,
+		severity: null,
+		onAction: null
+	});
+	const { t } = useTranslation();
+	const showMessage = useCallback((title, message, severity = "info", onAction) => {
+		const titleStr = typeof title === "string" ? title : String(title);
+		setSnack({
+			open: true,
+			message: message ? `${titleStr}: ${typeof message === "string" ? message : String(message)}` : titleStr,
+			severity,
+			onAction: onAction ?? null
+		});
+	}, []);
+	const showError = useCallback((title, message, severity = "error", onAction) => {
 		showMessage(title, message, severity, onAction);
+	}, [showMessage]);
+	const showErrorCode = useCallback((code, message, severity = "error", onAction) => {
+		showMessage(resolveErrorMessage(code, t), message, severity, onAction);
+	}, [showMessage, t]);
+	const handleClose = () => {
+		const { onAction } = snack;
+		setSnack((prev) => ({
+			...prev,
+			open: false,
+			onAction: null
+		}));
+		if (onAction) onAction();
 	};
-	const handleClose = function() {
-		setOpen(false);
-		setHandleAction(null);
-		if (handleAction) handleAction();
-	};
+	const contextValue = useMemo(() => ({
+		showMessage,
+		showError,
+		showErrorCode
+	}), [
+		showMessage,
+		showError,
+		showErrorCode
+	]);
 	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(SnackbarContext.Provider, {
-		value: {
-			showMessage,
-			showError
-		},
+		value: contextValue,
 		children
 	}), /* @__PURE__ */ jsx(Snackbar, {
-		open,
+		open: snack.open,
 		autoHideDuration: 6e3,
 		onClose: handleClose,
-		anchorOrigin: {
-			vertical,
-			horizontal
-		},
+		anchorOrigin: ANCHOR_ORIGIN,
 		children: /* @__PURE__ */ jsx(Alert, {
-			severity,
-			children: message
+			severity: snack.severity,
+			children: snack.message
 		})
 	})] });
 };
-var useSnackbar = function() {
-	return useContext(SnackbarContext);
-};
+var useSnackbar = () => useContext(SnackbarContext);
 //#endregion
 //#region src/lib/components/Dialog/index.js
 /**
@@ -533,7 +646,10 @@ var buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, b
 */
 var getList = async (props = {}) => {
 	const { contentType, columns, extraParams = {}, action = "list", model, signal } = props;
-	const { requestData, url, where, dateColumns } = buildRequestData(props);
+	const { requestData, url, where, dateColumns } = buildRequestData({
+		...props,
+		extraParams
+	});
 	if (contentType) {
 		const context = await executeRequestHook(model, {
 			where,
@@ -554,7 +670,7 @@ var getList = async (props = {}) => {
 		form.setAttribute("method", "POST");
 		form.setAttribute("id", "exportForm");
 		form.setAttribute("target", "_blank");
-		if (!extraParams.template) for (const key in finalRequestData) {
+		for (const key in finalRequestData) {
 			let v = finalRequestData[key];
 			if (v === void 0 || v === null) continue;
 			else if (typeof v !== "string") v = JSON.stringify(v);
@@ -742,12 +858,12 @@ var crudHelper = {
 };
 //#endregion
 //#region src/lib/components/Grid/footer.js
-var Footer = ({ pagination, apiRef, tTranslate = (key) => key }) => {
+var Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) => {
 	const page = apiRef.current.state.pagination.paginationModel.page;
 	const rowsPerPage = apiRef.current.state.pagination.paginationModel.pageSize;
-	const totalRows = apiRef.current.state.rows.totalRowCount;
+	const totalRows = totalRowCount ?? apiRef.current.state.rows.totalRowCount;
 	const totalPages = Math.ceil(totalRows / rowsPerPage);
-	const isPaginationEnabled = pagination && totalPages > 1;
+	const isPaginationEnabled = !!pagination && totalPages > 1;
 	const { t: translate, i18n } = useTranslation();
 	const tOpts = {
 		t: translate,
@@ -812,7 +928,7 @@ var Footer = ({ pagination, apiRef, tTranslate = (key) => key }) => {
 };
 //#endregion
 //#region src/lib/components/Grid/template.js
-var defaultTemplate = /\${((\w+)\.)?(\w+)}/g;
+var defaultTemplate$1 = /\${((\w+)\.)?(\w+)}/g;
 /**
 * @description Replaces the given tags in the given source with the given values.
 * @param {string} source The source to replace the tags in.
@@ -827,7 +943,7 @@ var defaultTemplate = /\${((\w+)\.)?(\w+)}/g;
 * console.log(template("${user.firstName} ${user.lastName}", { user: { firstName: "John", lastName: "Doe" } }));
 * // -> "John Doe"
 **/
-var replaceTags = function(source, tags, { template = defaultTemplate, keepMissingTags = false } = {}) {
+var replaceTags = function(source, tags, { template = defaultTemplate$1, keepMissingTags = false } = {}) {
 	if (!source || !tags) return source;
 	return source.replace(template, function(match, g1, g2, g3) {
 		const container = g2 ? tags[g2] || {} : tags;
@@ -1548,6 +1664,10 @@ function PageTitle({ titleHeading, navigate, name = null, RightComponent = null,
 var PageTitle_default = withTranslation()(PageTitle);
 //#endregion
 //#region src/lib/components/utils.js
+/**
+* Matches placeholders like ${key} and ${group.key} in template strings.
+*/
+var defaultTemplate = /\$\{((\w+)\.)?(\w+)\}/gm;
 var utils = {
 	filterFieldDataTypes: {
 		Number: "number",
@@ -1584,6 +1704,26 @@ var utils = {
 		}
 		if (Array.isArray(value)) return value[0] ?? "";
 		return value ?? "";
+	},
+	/**
+	* Replaces placeholders in a template string with values from a tag object.
+	*
+	* Supports single-level keys (${name}) and two-level keys (${user.name}).
+	*
+	* @param {string} source Template string containing placeholders.
+	* @param {Object} tags Value map used for placeholder replacement.
+	* @param {Object} [options] Optional replacement behavior.
+	* @param {RegExp} [options.template] Regex used to match placeholders.
+	* @param {boolean} [options.keepMissingTags=false] Keep unmatched placeholders as-is.
+	* @returns {string} Resolved string after replacement.
+	*/
+	replaceTags: function(source, tags, { template = defaultTemplate, keepMissingTags = false } = {}) {
+		if (!source || !tags) return source;
+		return source.replace(template, function(match, _fullMatch, groupPrefix, key) {
+			const container = groupPrefix ? tags[groupPrefix] || {} : tags;
+			if (container[key] === void 0) return keepMissingTags ? match : "";
+			return container[key];
+		});
 	}
 };
 var getPermissions = ({ userData = {}, model, userDefinedPermissions }) => {
@@ -2781,7 +2921,6 @@ var LOCAL_MODE_PAGINATION_MODEL = Object.freeze({
 	page: 0,
 	pageSize: exportPageSize
 });
-var defaultTranslate = (key) => key;
 var normalizeStaticData = (staticData) => {
 	const records = Array.isArray(staticData) ? staticData : Array.isArray(staticData?.records) ? staticData.records : [];
 	return {
@@ -2878,7 +3017,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const [showAddConfirmation, setShowAddConfirmation] = useState(false);
 	const snackbar = useSnackbar();
 	const paginationMode = hasStaticData || model.localSortAndFilter ? constants.client : model.paginationMode === constants.client ? constants.client : constants.server;
-	const { translate, tOpts } = useModelTranslation(model);
+	const { translate, tOpts, tTranslate } = useModelTranslation(model);
 	const [errorMessage, setErrorMessage] = useState("");
 	const [sortModel, setSortModel] = useState(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
 	const initialFilterModel = {
@@ -2939,14 +3078,12 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			delete: effectivePermissions.delete
 		}
 	});
-	const tTranslate = useMemo(() => model.tTranslate ?? defaultTranslate, [model.tTranslate]);
 	const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false } = model;
 	const gridTitle = model.gridTitle || model.title;
 	const preferenceKey = getApiEndpoint("GridPreferenceManager") ? model.preferenceId || model.module?.preferenceId : null;
 	const searchParams = new URLSearchParams(window.location.search);
 	const [currentPreference, setCurrentPreference] = useState(null);
 	const [preferencesReady, setPreferencesReady] = useState(!preferenceKey);
-	const backendApiRequiredMessage = tTranslate("This action requires an API endpoint.", tOpts);
 	const [rowPanelId, setRowPanelId] = useState(null);
 	const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
 	const enableRowDetailPanel = typeof model.getDetailPanelContent === "function";
@@ -3324,7 +3461,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		}
 		const { pageSize, page } = paginationModelForFetch;
 		const isExportRequest = Boolean(contentType);
-		const baseUrl = buildUrl(isPivotExport ? model.pivotApi : backendApi);
+		const baseUrl = buildUrl(isPivotExport && model.pivotApi ? model.pivotApi : backendApi);
 		const filters = {
 			...filterModelForFetch,
 			items: filterValidItems(filterModelForFetch.items)
@@ -3386,7 +3523,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			}
 		} catch (error) {
 			if (error?.aborted || error?.name === "AbortError" || controller?.signal?.aborted) return;
-			snackbar.showError(tTranslate("An error occurred while fetching data", tOpts));
+			snackbar.showErrorCode(ERROR_CODES.DATA_LOAD_FAILED, error?.message);
 			if (!isExportRequest) setData((prevData) => ({
 				...prevData,
 				records: [],
@@ -3416,14 +3553,12 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		apiRef,
 		getList,
 		snackbar,
-		additionalFilters,
-		tTranslate,
-		tOpts
+		additionalFilters
 	]);
 	const openForm = useCallback(async ({ id, record = {}, mode }) => {
 		if (setActiveRecord) {
 			if (isStaticDataWithoutBackendApi) {
-				snackbar.showError(backendApiRequiredMessage);
+				snackbar.showErrorCode(ERROR_CODES.API_UNDEFINED);
 				return;
 			}
 			try {
@@ -3435,7 +3570,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					where
 				}));
 			} catch (error) {
-				snackbar.showError(tTranslate("Could not load record", tOpts));
+				snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, error?.message);
 			}
 			return;
 		}
@@ -3452,7 +3587,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		setActiveRecord,
 		isStaticDataWithoutBackendApi,
 		backendApi,
-		backendApiRequiredMessage,
 		model,
 		parentFilters,
 		where,
@@ -3462,9 +3596,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		navigate,
 		getRecord,
 		buildUrl,
-		snackbar,
-		tTranslate,
-		tOpts
+		snackbar
 	]);
 	const handleDownload = useCallback(({ documentLink }) => {
 		if (!documentLink) return;
@@ -3553,7 +3685,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	]);
 	const handleDelete = useCallback(async () => {
 		if (isStaticDataWithoutBackendApi) {
-			snackbar.showError(backendApiRequiredMessage);
+			snackbar.showErrorCode(ERROR_CODES.API_UNDEFINED);
 			return;
 		}
 		const baseUrl = buildUrl(backendApi);
@@ -3566,13 +3698,12 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			snackbar.showMessage(tTranslate("Record Deleted Successfully.", tOpts));
 			fetchData();
 		} catch (error) {
-			snackbar.showError(tTranslate("Delete failed", tOpts), error.message);
+			snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, error?.message);
 		} finally {
 			setIsDeleting(false);
 		}
 	}, [
 		isStaticDataWithoutBackendApi,
-		backendApiRequiredMessage,
 		backendApi,
 		record?.id,
 		snackbar,
@@ -3621,7 +3752,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	]);
 	const handleAddRecords = useCallback(async () => {
 		if (rowSelectionModel.ids.size < 1) {
-			snackbar.showError(tTranslate("Please select at least one record to proceed", tOpts));
+			snackbar.showErrorCode(ERROR_CODES.SELECT_AT_LEAST_ONE);
 			return;
 		}
 		const selectedIds = Array.from(rowSelectionModel.ids);
@@ -3633,7 +3764,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		if (Array.isArray(model.selectionUpdateKeys) && model.selectionUpdateKeys.length) selectedRecords = selectedRecords.map((item) => Object.fromEntries(model.selectionUpdateKeys.map((key) => [key, item[key]])));
 		const apiEndpoint = selectionApi || backendApi;
 		if (!apiEndpoint) {
-			snackbar.showError(backendApiRequiredMessage);
+			snackbar.showErrorCode(ERROR_CODES.API_UNDEFINED);
 			return;
 		}
 		const baseUrl = buildUrl(apiEndpoint);
@@ -3651,7 +3782,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				snackbar.showMessage(message);
 			}
 		} catch (err) {
-			snackbar.showError(err.message || tTranslate("An error occurred, please try after some time.", tOpts));
+			snackbar.showErrorCode(ERROR_CODES.SAVE_FAILED, err?.message);
 		} finally {
 			setIsLoading(false);
 			setRowSelectionModel({
@@ -3663,7 +3794,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	}, [
 		rowSelectionModel.ids,
 		snackbar,
-		backendApiRequiredMessage,
 		data.records,
 		idProperty,
 		baseSaveData,
@@ -3681,7 +3811,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				setShowAddConfirmation(true);
 				return;
 			}
-			snackbar.showError(tTranslate("Please select at least one record to proceed", tOpts));
+			snackbar.showErrorCode(ERROR_CODES.SELECT_AT_LEAST_ONE);
 			return;
 		}
 		if (typeof onAddOverride === constants.function) onAddOverride();
@@ -3774,7 +3904,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			};
 		});
 		fetchData({
-			action: model?.formActions?.export || isPivotExport ? model?.formActions?.export || "export" : void 0,
 			isPivotExport,
 			contentType,
 			columns
@@ -4052,7 +4181,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			pagination: disablePagination !== true,
 			apiRef,
 			tTranslate,
-			tOpts
+			tOpts,
+			totalRowCount: data.recordCount
 		},
 		panel: { placement: "bottom-end" },
 		pagination: {
@@ -4589,8 +4719,9 @@ function useCascadingLookup({ column, formik, lookups, dependsOn = [], isAutoCom
 	}, dependsOn.map((dep) => formik.values[dep]));
 	const initialOptions = useMemo(() => {
 		if (dependsOn.length) return [];
-		return typeof column.lookup === "string" ? lookups[column.lookup] : column.lookup;
+		return column.customLookup || (typeof column.lookup === "string" ? lookups[column.lookup] : column.lookup);
 	}, [
+		column.customLookup,
 		column.lookup,
 		lookups,
 		dependsOn
@@ -5933,7 +6064,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 				id: idToLoad
 			}));
 		} catch (error) {
-			errorOnLoad("Could not load record", error.message);
+			errorOnLoad(error);
 		} finally {
 			setIsLoading(false);
 		}
@@ -5994,7 +6125,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 				navigateBack !== false && handleNavigation();
 				resetForm({ values: formik.values });
 			}).catch((err) => {
-				snackbar.showError(tTranslate("An error occurred, please try after some time.", tOpts), err);
+				snackbar.showErrorCode(ERROR_CODES.AN_ERROR_OCCURRED, err?.message);
 				if (model.reloadOnSave) resetForm();
 			}).finally(() => {
 				setIsLoading(false);
@@ -6012,16 +6143,11 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 		navigateBack,
 		handleNavigation
 	]);
-	const errorOnLoad = useCallback((title, error) => {
+	const errorOnLoad = useCallback((error) => {
 		setIsLoading(false);
-		snackbar.showError(tTranslate(title, tOpts), error);
+		snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, error?.message);
 		handleNavigation();
-	}, [
-		snackbar,
-		handleNavigation,
-		tTranslate,
-		tOpts
-	]);
+	}, [snackbar, handleNavigation]);
 	const setActiveRecord = function({ id, title, record, lookups }) {
 		const isCopy = idWithOptions.indexOf("-") > -1;
 		const isNew = !id || id === "0";
@@ -6067,7 +6193,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 				navigateBack !== false && handleNavigation();
 			}
 		} catch (error) {
-			snackbar.showError(tTranslate("An error occurred, please try after some time.", tOpts), error?.message);
+			snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, error?.message);
 		} finally {
 			setIsDeleting(false);
 		}
@@ -6104,7 +6230,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 		formik.handleSubmit();
 		const fieldName = Object.keys(errors)[0];
 		const errorMessage = errors[fieldName];
-		if (errorMessage) snackbar.showError(tTranslate(errorMessage, tOpts), null, "error");
+		if (errorMessage) snackbar.showError(errorMessage, null, "error");
 		const fieldConfig = model.columns.find((column) => column.field === fieldName) || {};
 		if (fieldConfig.tab) setActiveStep(Object.keys(model.tabs).indexOf(fieldConfig.tab));
 	}, [
@@ -6112,9 +6238,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 		formik,
 		model,
 		snackbar,
-		setActiveStep,
-		tTranslate,
-		tOpts
+		setActiveStep
 	]);
 	const breadcrumbs = [{ text: tTranslate(formTitle, tOpts) }, { text: id === "0" ? tTranslate("New", tOpts) : tTranslate("Update", tOpts) }];
 	const showRelations = Number(id) !== 0 && Boolean(relations.length);
@@ -6224,7 +6348,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.129.0/helpers/typeof.js
+//#region \0@oxc-project+runtime@0.130.0/helpers/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -6234,7 +6358,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.129.0/helpers/toPrimitive.js
+//#region \0@oxc-project+runtime@0.130.0/helpers/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -6246,13 +6370,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.129.0/helpers/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.130.0/helpers/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.129.0/helpers/defineProperty.js
+//#region \0@oxc-project+runtime@0.130.0/helpers/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
@@ -6268,6 +6392,49 @@ var regexConfig = {
 	nonAlphaNumeric: /[^a-zA-Z0-9]/g,
 	compareValidatorRegex: /^compare:(.+)$/,
 	email: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+};
+var validationMessageTemplates = {
+	required: "${label}: required",
+	requiredSelectOption: "${label}: select at least one option",
+	requiredSelect: "${label}: select at least one",
+	minChars: "${label}: minimum ${min} characters",
+	maxChars: "${label}: maximum ${max} characters",
+	passwordInvalid: "${label}: invalid password",
+	passwordPolicy: "${label}: must contain lowercase, uppercase, digit, and special character",
+	emailInvalid: "${label}: invalid email format",
+	requiredNumber: "${label}: required",
+	minNumber: "${label}: minimum value is ${min}",
+	maxNumber: "${label}: maximum value is ${max}",
+	mustMatch: "${label}: must match ${compareLabel}"
+};
+var defaultValidationTranslationKeyPrefix = "validation";
+/**
+* Resolves a validation message for a rule.
+*
+* Builds the key `<defaultValidationTranslationKeyPrefix>.<rule>` and looks it
+* up via the provided i18next `t` function with the built-in English template as
+* the `defaultValue`. The resolved string is then processed through `replaceTags`
+* to substitute any `${token}` placeholders from `params`.
+*
+* @param {string} rule Validation rule key (must exist in validationMessageTemplates).
+* @param {Object} params Token map used to format the message (e.g. { label, min, max }).
+* @param {Function} [t] Optional i18next t() function for i18n lookup.
+* @returns {string}
+*/
+var resolveValidationMessage = (rule, params, t) => {
+	const template = validationMessageTemplates[rule];
+	const key = `${defaultValidationTranslationKeyPrefix}.${rule}`;
+	const translated = typeof t === "function" ? t(key, { defaultValue: template }) : template;
+	return utils.replaceTags(translated, params);
+};
+var emptyToNullTransform = (value, originalValue) => {
+	if (originalValue === "" || originalValue === null) return null;
+	return value;
+};
+var isValidNumericValue = (value) => value !== void 0 && value !== "" && !isNaN(Number(value));
+var applyRequired = (config, label, shouldTrim = false, t) => {
+	if (shouldTrim && typeof config.trim === "function") return config.trim().required(resolveValidationMessage("required", { label }, t));
+	return config.required(resolveValidationMessage("required", { label }, t));
 };
 var customStyle = {};
 var showRowsSelected = true;
@@ -6347,67 +6514,72 @@ var UiModel = class UiModel {
 	}
 	getValidationSchema({ id, tTranslate = (key) => key, tOpts = {} } = {}) {
 		const { columns } = this;
+		const t = tOpts?.t;
 		const validationConfig = {};
 		for (const column of columns) {
 			const { field, label, header, type = "string", requiredIfNew = false, required = false, min = "", max = "", validate } = column;
-			const formLabel = label || header || field;
+			const formLabel = tTranslate(label || header || field, tOpts);
 			if (!formLabel) continue;
 			if (label === null || label === "") continue;
 			let config;
 			switch (type) {
 				case "string":
 					config = yup.string().nullable().trim().label(formLabel);
-					if (min && !isNaN(Number(min))) config = config.min(Number(min), tTranslate(`${formLabel} must be at least ${min} characters long`, tOpts));
-					if (max && !isNaN(Number(max))) config = config.max(Number(max), tTranslate(`${formLabel} must be at most ${max} characters long`, tOpts));
-					if (required) config = config.trim().required(tTranslate(`${formLabel} is required`, tOpts));
+					if (isValidNumericValue(min)) config = config.min(Number(min), resolveValidationMessage("minChars", {
+						label: formLabel,
+						min
+					}, t));
+					if (isValidNumericValue(max)) config = config.max(Number(max), resolveValidationMessage("maxChars", {
+						label: formLabel,
+						max
+					}, t));
 					break;
 				case "boolean":
-					config = yup.bool().nullable().transform((value, originalValue) => {
-						if (originalValue === "") return null;
-						return value;
-					}).label(formLabel);
+					config = yup.bool().nullable().transform(emptyToNullTransform).label(formLabel);
 					break;
 				case "radio":
 				case "dayRadio":
-					config = yup.mixed().label(formLabel);
-					if (required) config = config.required(tTranslate(`Select at least one option for ${formLabel}`, tOpts));
+					config = yup.mixed().label(formLabel).nullable();
 					break;
 				case "date":
-					config = yup.date().nullable().transform((value, originalValue) => {
-						if (originalValue === "" || originalValue === null) return null;
-						return value;
-					}).label(formLabel);
-					if (required) config = config.required(tTranslate(`${formLabel} is required`, tOpts));
+					config = yup.date().nullable().transform(emptyToNullTransform).label(formLabel);
 					break;
 				case "dateTime":
-					config = yup.date().nullable().transform((value, originalValue) => {
-						if (originalValue === "" || originalValue === null) return null;
-						return value;
-					}).label(formLabel);
-					if (required) config = config.required(tTranslate(`${formLabel} is required`, tOpts));
+					config = yup.date().nullable().transform(emptyToNullTransform).label(formLabel);
 					break;
 				case "select":
 				case "autocomplete":
-					if (required) config = yup.string().trim().label(formLabel).required(tTranslate(`Select at least one ${formLabel}`, tOpts));
-					else config = yup.string().nullable();
+					config = yup.string().trim().label(formLabel);
+					if (!required) config = config.nullable();
 					break;
 				case "password":
-					config = yup.string().label(formLabel).test("ignore-asterisks", tTranslate(`${formLabel} must be a valid password.`, tOpts), (value) => {
+					config = yup.string().label(formLabel).test("ignore-asterisks", resolveValidationMessage("passwordInvalid", { label: formLabel }, t), (value) => {
 						if (value === "******") return true;
 						const minlength = Number(min) || 8;
 						const maxlength = Number(max) || 50;
 						const regex = column.regex || regexConfig.password;
-						return yup.string().min(minlength, tTranslate(`${formLabel} must be at least ${minlength} characters`, tOpts)).max(maxlength, tTranslate(`${formLabel} must be at most ${maxlength} characters`, tOpts)).matches(regex, tTranslate(`${formLabel} must contain at least one lowercase letter, one uppercase letter, one digit, and one special character`, tOpts)).isValidSync(value);
+						return yup.string().min(minlength, resolveValidationMessage("minChars", {
+							label: formLabel,
+							min: minlength
+						}, t)).max(maxlength, resolveValidationMessage("maxChars", {
+							label: formLabel,
+							max: maxlength
+						}, t)).matches(regex, resolveValidationMessage("passwordPolicy", { label: formLabel }, t)).isValidSync(value);
 					});
 					break;
 				case "email":
-					config = yup.string().trim().matches(column.regex || regexConfig.email, tTranslate("Email must be a valid email", tOpts));
+					config = yup.string().trim().matches(column.regex || regexConfig.email, resolveValidationMessage("emailInvalid", { label: formLabel }, t));
 					break;
 				case "number":
-					if (required) config = yup.number().label(formLabel).required(tTranslate(`${formLabel} is required.`, tOpts));
-					else config = yup.number().nullable();
-					if (min !== void 0 && min !== "" && !isNaN(Number(min))) config = config.min(Number(min), tTranslate(`${formLabel} must be greater than or equal to ${min}`, tOpts));
-					if (max !== void 0 && max !== "" && !isNaN(Number(max))) config = config.max(Number(max), tTranslate(`${formLabel} must be less than or equal to ${max}`, tOpts));
+					config = yup.number().nullable().transform(emptyToNullTransform).label(formLabel);
+					if (isValidNumericValue(min)) config = config.min(Number(min), resolveValidationMessage("minNumber", {
+						label: formLabel,
+						min
+					}, t));
+					if (isValidNumericValue(max)) config = config.max(Number(max), resolveValidationMessage("maxNumber", {
+						label: formLabel,
+						max
+					}, t));
 					break;
 				case "fileUpload":
 					config = yup.string().trim().label(formLabel);
@@ -6416,14 +6588,22 @@ var UiModel = class UiModel {
 					config = yup.mixed().nullable().label(formLabel);
 					break;
 			}
-			if (required && type !== "string") config = config.required(tTranslate(`${formLabel} is required`, tOpts));
-			if (requiredIfNew && (!id || id === "")) config = config.trim().required(tTranslate(`${formLabel} is required`, tOpts));
+			if (required) if (type === "string") config = applyRequired(config, formLabel, true, t);
+			else if (type === "radio" || type === "dayRadio") config = config.required(resolveValidationMessage("requiredSelectOption", { label: formLabel }, t));
+			else if (type === "date" || type === "dateTime") config = config.required(resolveValidationMessage("required", { label: formLabel }, t));
+			else if (type === "select" || type === "autocomplete") config = config.required(resolveValidationMessage("requiredSelect", { label: formLabel }, t));
+			else if (type === "number") config = config.required(resolveValidationMessage("requiredNumber", { label: formLabel }, t));
+			else config = applyRequired(config, formLabel, false, t);
+			if (requiredIfNew && (!id || id === "")) config = applyRequired(config, formLabel, type === "string", t);
 			if (validate) {
 				const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
 				if (compareValidator) {
 					const compareFieldName = compareValidator[1];
 					const compareField = columns.find((f) => (f.formField === compareFieldName || f.field) === compareFieldName);
-					config = config.oneOf([yup.ref(compareFieldName)], tTranslate(`${formLabel} must match ${compareField.label}`, tOpts));
+					config = config.oneOf([yup.ref(compareFieldName)], resolveValidationMessage("mustMatch", {
+						label: formLabel,
+						compareLabel: compareField?.label || compareFieldName
+					}, t));
 				}
 			}
 			validationConfig[field] = config;
@@ -6440,6 +6620,6 @@ _defineProperty(UiModel, "defaultPermissions", {
 	delete: true
 });
 //#endregion
-export { DialogComponent, GridBase, HelpModal, MuiTypography, PageTitle_default as PageTitle, RouterProvider, SnackbarContext, SnackbarProvider, StateProvider, UiModel, crudHelper, daDKGrid, deDEGrid, elGRGrid, esESGrid, frFRGrid, request as httpRequest, itITGrid, locales, ptPT_default as ptPT, trTRGrid, useMobile, useModelTranslation, useRouter, useSnackbar, useStateContext };
+export { AppError, DialogComponent, ERROR_CODES, ERROR_MESSAGES, GridBase, HelpModal, MuiTypography, PageTitle_default as PageTitle, RouterProvider, SnackbarContext, SnackbarProvider, StateProvider, UiModel, crudHelper, daDKGrid, deDEGrid, elGRGrid, esESGrid, frFRGrid, request as httpRequest, itITGrid, locales, ptPT_default as ptPT, resolveErrorMessage, trTRGrid, useMobile, useModelTranslation, useRouter, useSnackbar, useStateContext };
 
 //# sourceMappingURL=index.js.map
