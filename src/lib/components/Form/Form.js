@@ -19,6 +19,7 @@ import PageTitle from "../PageTitle";
 import utils, { getPermissions } from "../utils";
 import Relations from "./relations";
 import { useModelTranslation } from "../../hooks/useModelTranslation";
+import { ERROR_CODES } from "../../errors";
 export const ActiveStepContext = createContext(1);
 const defaultFieldConfigs = {};
 const consts = {
@@ -139,7 +140,7 @@ const Form = ({
       });
       setActiveRecord(data);
     } catch (error) {
-      errorOnLoad('Could not load record', error.message);
+      errorOnLoad(error);
     } finally {
       setIsLoading(false);
     }
@@ -190,9 +191,9 @@ const Form = ({
           resetForm({ values: formik.values});
         })
         .catch((err) => {
-          snackbar.showError(
-            tTranslate("An error occurred, please try after some time.", tOpts),
-            err
+          snackbar.showErrorCode(
+            ERROR_CODES.AN_ERROR_OCCURRED,
+            err?.message
           );
           if (model.reloadOnSave) {
             resetForm();
@@ -213,11 +214,11 @@ const Form = ({
     navigateBack !== false && handleNavigation();
   }, [formik, onCancel, navigateBack, handleNavigation]);
 
-  const errorOnLoad = useCallback((title, error) => {
+  const errorOnLoad = useCallback((error) => {
     setIsLoading(false);
-    snackbar.showError(tTranslate(title, tOpts), error);
+    snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, error?.message);
     handleNavigation();
-  }, [snackbar, handleNavigation, tTranslate, tOpts]);
+  }, [snackbar, handleNavigation]);
 
   const setActiveRecord = function ({ id, title, record, lookups }) {
     const isCopy = idWithOptions.indexOf("-") > -1;
@@ -268,7 +269,7 @@ const Form = ({
         navigateBack !== false && handleNavigation();
       }
     } catch (error) {
-      snackbar.showError(tTranslate("An error occurred, please try after some time.", tOpts), error?.message);
+      snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, error?.message);
     } finally {
       setIsDeleting(false);
     }
@@ -292,7 +293,7 @@ const Form = ({
     const fieldName = Object.keys(errors)[0];
     const errorMessage = errors[fieldName];
     if (errorMessage) {
-      snackbar.showError(tTranslate(errorMessage, tOpts), null, "error");
+      snackbar.showError(errorMessage, null, "error");
     }
     const fieldConfig = model.columns.find(
       (column) => column.field === fieldName
@@ -300,7 +301,7 @@ const Form = ({
     if (fieldConfig.tab) {
       setActiveStep(Object.keys(model.tabs).indexOf(fieldConfig.tab));
     }
-  }, [beforeSubmit, formik, model, snackbar, setActiveStep, tTranslate, tOpts]);
+  }, [beforeSubmit, formik, model, snackbar, setActiveStep]);
 
   const breadcrumbs = [
     { text: tTranslate(formTitle, tOpts) },

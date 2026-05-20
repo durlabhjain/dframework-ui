@@ -3,12 +3,66 @@ import React from 'react';
 import * as yup from 'yup';
 import { Divider } from '@mui/material';
 import Form from '../Form/Form';
+import utils from '../utils';
 
 const regexConfig = {
 	password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/,
 	nonAlphaNumeric: /[^a-zA-Z0-9]/g,
 	compareValidatorRegex: /^compare:(.+)$/,
 	email: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+};
+
+const validationMessageTemplates = {
+	required: '${label}: required',
+	requiredSelectOption: '${label}: select at least one option',
+	requiredSelect: '${label}: select at least one',
+	minChars: '${label}: minimum ${min} characters',
+	maxChars: '${label}: maximum ${max} characters',
+	passwordInvalid: '${label}: invalid password',
+	passwordPolicy: '${label}: must contain lowercase, uppercase, digit, and special character',
+	emailInvalid: '${label}: invalid email format',
+	requiredNumber: '${label}: required',
+	minNumber: '${label}: minimum value is ${min}',
+	maxNumber: '${label}: maximum value is ${max}',
+	mustMatch: '${label}: must match ${compareLabel}'
+};
+
+const defaultValidationTranslationKeyPrefix = 'validation';
+
+/**
+ * Resolves a validation message for a rule.
+ *
+ * Builds the key `<defaultValidationTranslationKeyPrefix>.<rule>` and looks it
+ * up via the provided i18next `t` function with the built-in English template as
+ * the `defaultValue`. The resolved string is then processed through `replaceTags`
+ * to substitute any `${token}` placeholders from `params`.
+ *
+ * @param {string} rule Validation rule key (must exist in validationMessageTemplates).
+ * @param {Object} params Token map used to format the message (e.g. { label, min, max }).
+ * @param {Function} [t] Optional i18next t() function for i18n lookup.
+ * @returns {string}
+ */
+const resolveValidationMessage = (rule, params, t) => {
+	const template = validationMessageTemplates[rule];
+	const key = `${defaultValidationTranslationKeyPrefix}.${rule}`;
+	const translated = typeof t === 'function'
+		? t(key, { defaultValue: template })
+		: template;
+	return utils.replaceTags(translated, params);
+};
+
+const emptyToNullTransform = (value, originalValue) => {
+	if (originalValue === '' || originalValue === null) return null;
+	return value;
+};
+
+const isValidNumericValue = (value) => value !== undefined && value !== '' && !isNaN(Number(value));
+
+const applyRequired = (config, label, shouldTrim = false, t) => {
+	if (shouldTrim && typeof config.trim === 'function') {
+		return config.trim().required(resolveValidationMessage('required', { label }, t));
+	}
+	return config.required(resolveValidationMessage('required', { label }, t));
 };
 
 const customStyle = {};
@@ -84,10 +138,11 @@ class UiModel {
 
 	getValidationSchema({ id, tTranslate = (key) => key, tOpts = {} } = {}) {
 		const { columns } = this;
+		const t = tOpts?.t;
 		const validationConfig = {};
 		for (const column of columns) {
 			const { field, label, header, type = 'string', requiredIfNew = false, required = false, min = '', max = '', validate } = column;
-			const formLabel = label || header || field;
+			const formLabel = tTranslate(label || header || field, tOpts);
 			if (!formLabel) {
 				continue;
 			}
@@ -96,65 +151,41 @@ class UiModel {
 			switch (type) {
 				case 'string':
 					config = yup.string().nullable().trim().label(formLabel);
-					if (min && !isNaN(Number(min))) {
-						config = config.min(Number(min), tTranslate(`${formLabel} must be at least ${min} characters long`, tOpts));
+					if (isValidNumericValue(min)) {
+						config = config.min(Number(min), resolveValidationMessage('minChars', { label: formLabel, min }, t));
 					}
-					if (max && !isNaN(Number(max))) {
-						config = config.max(Number(max), tTranslate(`${formLabel} must be at most ${max} characters long`, tOpts));
-					}
-					if (required) {
-						config = config.trim().required(tTranslate(`${formLabel} is required`, tOpts));
+					if (isValidNumericValue(max)) {
+						config = config.max(Number(max), resolveValidationMessage('maxChars', { label: formLabel, max }, t));
 					}
 					break;
 				case 'boolean':
-					config = yup.bool().nullable().transform((value, originalValue) => {
-						if (originalValue === '') return null;
-						return value;
-					}).label(formLabel);
+					config = yup.bool().nullable().transform(emptyToNullTransform).label(formLabel);
 					break;
-
 				case 'radio':
 				case 'dayRadio':
-					config = yup.mixed().label(formLabel);
-					if (required) {
-						config = config.required(tTranslate(`Select at least one option for ${formLabel}`, tOpts));
-					}
+					config = yup.mixed().label(formLabel).nullable();
 					break;
 				case 'date':
-					config = yup.date().nullable().transform((value, originalValue) => {
-						if (originalValue === '' || originalValue === null) return null;
-						return value;
-					}).label(formLabel);
-					if (required) {
-						config = config.required(tTranslate(`${formLabel} is required`, tOpts));
-					}
+					config = yup.date().nullable().transform(emptyToNullTransform).label(formLabel);
 					break;
 				case 'dateTime':
 					config = yup
 						.date()
-						.nullable() // Allow null values
-						.transform((value, originalValue) => {
-							// Transform empty strings or null values into null
-							if (originalValue === '' || originalValue === null) return null;
-							return value;
-						})
-						.label(formLabel); // Set a label for better error messages
-					if (required) {
-						config = config.required(tTranslate(`${formLabel} is required`, tOpts));
-					}
+						.nullable()
+						.transform(emptyToNullTransform)
+						.label(formLabel);
 					break;
 				case 'select':
 				case 'autocomplete':
-					if (required) {
-						config = yup.string().trim().label(formLabel).required(tTranslate(`Select at least one ${formLabel}`, tOpts));
-					} else {
-						config = yup.string().nullable();
+					config = yup.string().trim().label(formLabel);
+					if (!required) {
+						config = config.nullable();
 					}
 					break;
 				case 'password':
 					config = yup.string()
 						.label(formLabel)
-						.test("ignore-asterisks", tTranslate(`${formLabel} must be a valid password.`, tOpts), (value) => {
+						.test("ignore-asterisks", resolveValidationMessage('passwordInvalid', { label: formLabel }, t), (value) => {
 							// Skip further validations if value is exactly "******"
 							if (value === "******") return true;
 							const minlength = Number(min) || 8;
@@ -162,11 +193,11 @@ class UiModel {
 							const regex = column.regex || regexConfig.password;
 							// Check minimum length, maximum length, and pattern if not "******"
 							return yup.string()
-								.min(minlength, tTranslate(`${formLabel} must be at least ${minlength} characters`, tOpts))
-								.max(maxlength, tTranslate(`${formLabel} must be at most ${maxlength} characters`, tOpts))
+								.min(minlength, resolveValidationMessage('minChars', { label: formLabel, min: minlength }, t))
+								.max(maxlength, resolveValidationMessage('maxChars', { label: formLabel, max: maxlength }, t))
 								.matches(
 									regex,
-									tTranslate(`${formLabel} must contain at least one lowercase letter, one uppercase letter, one digit, and one special character`, tOpts)
+									resolveValidationMessage('passwordPolicy', { label: formLabel }, t)
 								)
 								.isValidSync(value);
 						});
@@ -177,20 +208,16 @@ class UiModel {
 						.trim()
 						.matches(
 							(column.regex || regexConfig.email),
-							tTranslate('Email must be a valid email', tOpts)
+							resolveValidationMessage('emailInvalid', { label: formLabel }, t)
 						);
 					break;
 				case 'number':
-					if (required) {
-						config = yup.number().label(formLabel).required(tTranslate(`${formLabel} is required.`, tOpts));
-					} else {
-						config = yup.number().nullable();
+					config = yup.number().nullable().transform(emptyToNullTransform).label(formLabel);
+					if (isValidNumericValue(min)) {
+						config = config.min(Number(min), resolveValidationMessage('minNumber', { label: formLabel, min }, t));
 					}
-					if (min !== undefined && min !== '' && !isNaN(Number(min))) {
-						config = config.min(Number(min), tTranslate(`${formLabel} must be greater than or equal to ${min}`, tOpts));
-					}
-					if (max !== undefined && max !== '' && !isNaN(Number(max))) {
-						config = config.max(Number(max), tTranslate(`${formLabel} must be less than or equal to ${max}`, tOpts));
+					if (isValidNumericValue(max)) {
+						config = config.max(Number(max), resolveValidationMessage('maxNumber', { label: formLabel, max }, t));
 					}
 					break;
 				case 'fileUpload':
@@ -200,11 +227,25 @@ class UiModel {
 					config = yup.mixed().nullable().label(formLabel);
 					break;
 			}
-			if (required && type !== "string") {
-				config = config.required(tTranslate(`${formLabel} is required`, tOpts));
+
+			// Apply required/requiredIfNew logic in one place
+			if (required) {
+				if (type === 'string') {
+					config = applyRequired(config, formLabel, true, t);
+				} else if (type === 'radio' || type === 'dayRadio') {
+					config = config.required(resolveValidationMessage('requiredSelectOption', { label: formLabel }, t));
+				} else if (type === 'date' || type === 'dateTime') {
+					config = config.required(resolveValidationMessage('required', { label: formLabel }, t));
+				} else if (type === 'select' || type === 'autocomplete') {
+					config = config.required(resolveValidationMessage('requiredSelect', { label: formLabel }, t));
+				} else if (type === 'number') {
+					config = config.required(resolveValidationMessage('requiredNumber', { label: formLabel }, t));
+				} else {
+					config = applyRequired(config, formLabel, false, t);
+				}
 			}
 			if (requiredIfNew && (!id || id === '')) {
-				config = config.trim().required(tTranslate(`${formLabel} is required`, tOpts));
+				config = applyRequired(config, formLabel, type === 'string', t);
 			}
 			if (validate) {
 				const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
@@ -215,10 +256,9 @@ class UiModel {
 					);
 					config = config.oneOf(
 						[yup.ref(compareFieldName)],
-						tTranslate(`${formLabel} must match ${compareField.label}`, tOpts)
+						resolveValidationMessage('mustMatch', { label: formLabel, compareLabel: compareField?.label || compareFieldName }, t)
 					);
 				}
-
 			}
 
 			validationConfig[field] = config;

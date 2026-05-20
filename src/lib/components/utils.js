@@ -1,3 +1,8 @@
+/**
+ * Matches placeholders like ${key} and ${group.key} in template strings.
+ */
+const defaultTemplate = /\$\{((\w+)\.)?(\w+)\}/gm;
+
 const utils = {
     filterFieldDataTypes: {
         Number: 'number',
@@ -40,6 +45,32 @@ const utils = {
         }
 
         return value ?? '';
+    },
+    
+    /**
+     * Replaces placeholders in a template string with values from a tag object.
+     *
+     * Supports single-level keys (${name}) and two-level keys (${user.name}).
+     *
+     * @param {string} source Template string containing placeholders.
+     * @param {Object} tags Value map used for placeholder replacement.
+     * @param {Object} [options] Optional replacement behavior.
+     * @param {RegExp} [options.template] Regex used to match placeholders.
+     * @param {boolean} [options.keepMissingTags=false] Keep unmatched placeholders as-is.
+     * @returns {string} Resolved string after replacement.
+     */
+    replaceTags: function (source, tags, { template = defaultTemplate, keepMissingTags = false } = {}) {
+        if (!source || !tags) {
+            return source;
+        }
+
+        return source.replace(template, function (match, _fullMatch, groupPrefix, key) {
+            const container = groupPrefix ? tags[groupPrefix] || {} : tags;
+            if (container[key] === undefined) {
+                return keepMissingTags ? match : "";
+            }
+            return container[key];
+        });
     }
 }
 export const getPermissions = ({ userData = {}, model, userDefinedPermissions }) => {
