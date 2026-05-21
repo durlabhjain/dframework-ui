@@ -16,24 +16,19 @@ function shouldApplyFilter(filter) {
 }
 
 /**
- * Parses a date string into a JavaScript Date object based on specific format lengths.
- * * @param {string} value - The date string to parse.
+ * Parses supported date strings into a JavaScript Date object.
+ * @param {string} value - The date string to parse.
  * Supported formats:
- * - 17 chars: "YYYYMMDDHHmmssSSS" (e.g., "20260413104406000")
- * - 24 chars: "YYYY-MM-DDTHH:mm:ss.SSSZ" (e.g., "2026-04-13T10:44:06.000Z")
- * @param {boolean} [utc=false] - If true, treats the input as UTC and returns a localized Date.
- * If false, treats input as local time (for 17-char) or 
- * strips the 'Z' (for 24-char) to treat as local.
- * @returns {Date|string|null} - Returns a Date object, the original value if not a string, or null if empty.
- * @throws {Error} - Throws error if the string length is not 17 or 24.
- * * @example
- * // Length 17: Treat as UTC and convert to local
- * // Input: "20260413104406000"
- * dateParser("20260413104406000", true); 
- * * @example
- * // Length 24: ISO format
- * // Input: "2026-04-13T10:44:06.000Z"
- * dateParser("2026-04-13T10:44:06.000Z", true);
+ * - Compact: "YYYYMMDDHHmmssSSS" (e.g., "20260413104406000")
+ * - ISO UTC: "YYYY-MM-DDTHH:mm:ssZ" or "YYYY-MM-DDTHH:mm:ss.S...Z" (e.g., "2026-04-13T10:44:06Z", "2026-04-13T10:44:06.000123Z")
+ * - Any other value parseable by `new Date(value)` (fallback path)
+ * @param {boolean} [utc=false] - If true, preserves UTC-instant behavior for supported UTC inputs.
+ * If false, supported UTC strings are interpreted as local wall-clock date/time.
+ * @returns {Date|string|null} - Returns a Date object, the original value if not a string/unparseable, or null if empty.
+ * @example
+ * dateParser("20260413104406000", true);
+ * @example
+ * dateParser("2026-04-13T10:44:06.000Z", false);
  */
 const dateParser = (value, utc = false) => {
     // Validation: Return original value if it's not a string or is undefined/null
