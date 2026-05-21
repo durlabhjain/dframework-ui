@@ -17,14 +17,14 @@ function shouldApplyFilter(filter) {
 
 /**
  * Parses supported date strings into a JavaScript Date object.
- * @param {string} value - The date string to parse.
+ * @param {*} value - The input value to parse as a date when it is a string.
  * Supported formats:
  * - Compact: "YYYYMMDDHHmmssSSS" (e.g., "20260413104406000")
  * - ISO UTC: "YYYY-MM-DDTHH:mm:ssZ" or "YYYY-MM-DDTHH:mm:ss.S...Z" (e.g., "2026-04-13T10:44:06Z", "2026-04-13T10:44:06.000123Z")
  * - Any other value parseable by `new Date(value)` (fallback path)
  * @param {boolean} [utc=false] - If true, preserves UTC-instant behavior for supported UTC inputs.
  * If false, supported UTC strings are interpreted as local wall-clock date/time.
- * @returns {Date|string|null} - Returns a Date object, the original value if not a string/unparseable, or null if empty.
+ * @returns {*} - Returns a Date object for parseable strings, the original value when non-string/unparseable, or null for empty strings.
  * @example
  * dateParser("20260413104406000", true);
  * @example
@@ -59,7 +59,7 @@ const dateParser = (value, utc = false) => {
         return new Date(year, month, day, hour, min, sec, ms);
     }
 
-    // Handle "ISO" Format (YYYY-MM-DDTHH:mm:ss.SSSZ)
+    // Handle "ISO" Format (YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.S...Z)
     const isoUtcMatch = value.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d+))?Z$/);
     if (isoUtcMatch) {
         const [, base, fraction = ''] = isoUtcMatch;
