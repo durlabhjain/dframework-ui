@@ -75,7 +75,7 @@ const dateParser = (value, utc = false) => {
             // Parse as UTC instant and let the UI localize when needed.
             return new Date(normalizedValue);
         }
-        // Drop timezone marker so localize=false preserves source wall-clock date/time.
+        // Drop the timezone marker so utc === false preserves the source wall-clock date/time.
         return new Date(normalizedValue.slice(0, -1));
     }
 
