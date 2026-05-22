@@ -59,20 +59,13 @@ const dateParser = (value, utc = false) => {
         return new Date(year, month, day, hour, min, sec, ms);
     }
 
-    // Handle "ISO" Format (YYYY-MM-DDTHH:mm:ssZ or YYYY-MM-DDTHH:mm:ss.S...Z)
-    const isoUtcMatch = value.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(?:\.(\d+))?Z$/);
-    if (isoUtcMatch) {
-        const [, base, fraction = ''] = isoUtcMatch;
-        const milliseconds = fraction ? fraction.slice(0, 3).padEnd(3, '0') : '';
-        const normalizedValue = milliseconds ? `${base}.${milliseconds}Z` : `${base}Z`;
-
-        if (utc) {
-            // Parse as UTC instant and let the UI localize when needed.
-            return new Date(normalizedValue);
-        }
-        // Drop the timezone marker so utc === false preserves the source wall-clock date/time.
-        return new Date(normalizedValue.slice(0, -1));
+    // Handle "ISO" Format (YYYY-MM-DDTHH:mm:ss.SSSZ)
+    if (utc) {
+        // Standard behavior: 'Z' suffix indicates UTC
+        return new Date(value);
     }
+    // Slice off the 'Z' to force the constructor to treat it as local time
+    return new Date(value.slice(0, -1));
 
     // Fallback for other valid date formats (e.g. ISO without milliseconds, with offset)
     const parsedValue = new Date(value);
