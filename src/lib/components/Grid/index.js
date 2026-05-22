@@ -1446,6 +1446,11 @@ const GridBase = memo(({
                                 "& .MuiDataGrid-virtualScroller ": {
                                     zIndex: 2
                                 },
+                                ...(model.showDetailPanelColumn === false && {
+                                    '& .MuiDataGrid-cell[data-field="__detail_panel_toggle__"], & .MuiDataGrid-columnHeader[data-field="__detail_panel_toggle__"]': {
+                                        display: 'none'
+                                    }
+                                }),
                             },
                             ...(Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : [])
                         ]}
