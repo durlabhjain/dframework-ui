@@ -62,10 +62,10 @@ const dateParser = (value, utc = false) => {
     }
 
     // Handle non-compact string inputs (including ISO-like formats)
-        if (utc) {
-            // Standard behavior: 'Z' suffix indicates UTC
-            return new Date(value);
-        }
+    if (utc) {
+        // Standard behavior: 'Z' suffix indicates UTC
+        return new Date(value);
+    }
 
     if (value.endsWith('Z')) {
         // Slice off the 'Z' to force the constructor to treat it as local time
