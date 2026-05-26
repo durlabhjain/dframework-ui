@@ -16,24 +16,21 @@ function shouldApplyFilter(filter) {
 }
 
 /**
- * Parses a date string into a JavaScript Date object based on specific format lengths.
- * * @param {string} value - The date string to parse.
- * Supported formats:
- * - 17 chars: "YYYYMMDDHHmmssSSS" (e.g., "20260413104406000")
- * - 24 chars: "YYYY-MM-DDTHH:mm:ss.SSSZ" (e.g., "2026-04-13T10:44:06.000Z")
- * @param {boolean} [utc=false] - If true, treats the input as UTC and returns a localized Date.
- * If false, treats input as local time (for 17-char) or 
- * strips the 'Z' (for 24-char) to treat as local.
- * @returns {Date|string|null} - Returns a Date object, the original value if not a string, or null if empty.
- * @throws {Error} - Throws error if the string length is not 17 or 24.
- * * @example
- * // Length 17: Treat as UTC and convert to local
- * // Input: "20260413104406000"
+ * Parses supported date strings into a JavaScript Date object.
+ * @param {*} value - The input value to parse as a date when it is a string.
+ * Supported handling:
+ * - Compact: "YYYYMMDDHHmmssSSS" (e.g., "20260413104406000")
+ * - Non-compact strings are parsed through the ISO branch:
+ *   - `utc === true`: parsed via `new Date(value)`
+ *   - `utc === false`: if the input ends with `Z`, parses `new Date(value.slice(0, -1))` to treat UTC input as local wall-clock time
+ *   - otherwise parses via `new Date(value)` and returns the original value if parsing is invalid
+ * @param {boolean} [utc=false] - If true, preserves UTC-instant behavior for supported UTC inputs.
+ * If false, supported UTC strings are interpreted as local wall-clock date/time.
+ * @returns {*} - Returns the original value for non-string inputs, null for empty strings, a Date object for successfully parsed strings, the original string when parsing fails in the final non-UTC fallback branch, or an Invalid Date object in branches that directly return `new Date(...)` for an invalid date string.
+ * @example
  * dateParser("20260413104406000", true); 
- * * @example
- * // Length 24: ISO format
- * // Input: "2026-04-13T10:44:06.000Z"
- * dateParser("2026-04-13T10:44:06.000Z", true);
+ * @example
+ * dateParser("2026-04-13T10:44:06.000Z", false);
  */
 const dateParser = (value, utc = false) => {
     // Validation: Return original value if it's not a string or is undefined/null
@@ -64,17 +61,17 @@ const dateParser = (value, utc = false) => {
         return new Date(year, month, day, hour, min, sec, ms);
     }
 
-    // Handle "ISO" Format (YYYY-MM-DDTHH:mm:ss.SSSZ)
-    if (value.length === 24) {
-        if (utc) {
-            // Standard behavior: 'Z' suffix indicates UTC
-            return new Date(value);
-        }
+    // Handle non-compact string inputs (including ISO-like formats)
+    if (utc) {
+        // Standard behavior: 'Z' suffix indicates UTC
+        return new Date(value);
+    }
+
+    if (value.endsWith('Z')) {
         // Slice off the 'Z' to force the constructor to treat it as local time
         return new Date(value.slice(0, -1));
     }
 
-    // Fallback for other valid date formats (e.g. ISO without milliseconds, with offset)
     const parsedValue = new Date(value);
     return Number.isNaN(parsedValue.getTime()) ? value : parsedValue;
 };
@@ -217,19 +214,7 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
         requestData.limitToSurveyed = model?.limitToSurveyed;
     }
 
-    let url = `${api}/${action}`;
-
-    const queryParams = new URLSearchParams();
-    if (extraParams.template) {
-        queryParams.append('template', extraParams.template);
-    }
-    if (extraParams.configFileName) {
-        queryParams.append('configFileName', extraParams.configFileName);
-    }
-    const queryString = queryParams.toString();
-    if (queryString) {
-        url += `?${queryString}`;
-    }
+    const url = `${api}/${action}`;
 
     return { requestData, url, where, dateColumns };
 };
