@@ -26,7 +26,7 @@ function shouldApplyFilter(filter) {
  *   - otherwise parses via `new Date(value)` and returns the original value if parsing is invalid
  * @param {boolean} [utc=false] - If true, preserves UTC-instant behavior for supported UTC inputs.
  * If false, supported UTC strings are interpreted as local wall-clock date/time.
- * @returns {*} - Returns a Date object for string inputs, the original value for non-string inputs, or null for empty strings.
+ * @returns {*} - Returns the original value for non-string inputs, null for empty strings, a Date object for successfully parsed strings, the original string when parsing fails in the final non-UTC fallback branch, or an Invalid Date object in branches that directly return `new Date(...)` for an invalid date string.
  * @example
  * dateParser("20260413104406000", true);
  * @example
