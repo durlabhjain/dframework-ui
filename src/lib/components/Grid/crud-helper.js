@@ -28,7 +28,7 @@ function shouldApplyFilter(filter) {
  * If false, supported UTC strings are interpreted as local wall-clock date/time.
  * @returns {*} - Returns the original value for non-string inputs, null for empty strings, a Date object for successfully parsed strings, the original string when parsing fails in the final non-UTC fallback branch, or an Invalid Date object in branches that directly return `new Date(...)` for an invalid date string.
  * @example
- * dateParser("20260413104406000", true);
+ * dateParser("20260413104406000", true); 
  * @example
  * dateParser("2026-04-13T10:44:06.000Z", false);
  */
@@ -62,10 +62,10 @@ const dateParser = (value, utc = false) => {
     }
 
     // Handle non-compact string inputs (including ISO-like formats)
-    if (utc) {
-        // Standard behavior: 'Z' suffix indicates UTC
-        return new Date(value);
-    }
+        if (utc) {
+            // Standard behavior: 'Z' suffix indicates UTC
+            return new Date(value);
+        }
 
     if (value.endsWith('Z')) {
         // Slice off the 'Z' to force the constructor to treat it as local time
@@ -219,9 +219,13 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
     const queryParams = new URLSearchParams();
     if (extraParams.template) {
         queryParams.append('template', extraParams.template);
+        // Delete template from requestData to avoid sending same info in both query params and body, which causes template to send as duplicate to server. Eg - "template-name, template-name"
+        delete requestData.template;
     }
     if (extraParams.configFileName) {
         queryParams.append('configFileName', extraParams.configFileName);
+        // Delete configFileName from requestData to avoid sending same info in both query params and body, which causes configFileName to send as duplicate to server. Eg - "config-file, config-file"
+        delete requestData.configFileName;
     }
     const queryString = queryParams.toString();
     if (queryString) {
