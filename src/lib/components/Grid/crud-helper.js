@@ -214,23 +214,23 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
         requestData.limitToSurveyed = model?.limitToSurveyed;
     }
 
-    let url = `${api}/${action}`;
+    const url = `${api}/${action}`;
 
-    const queryParams = new URLSearchParams();
-    if (extraParams.template) {
-        queryParams.append('template', extraParams.template);
-        // Delete template from requestData to avoid sending same info in both query params and body, which causes template to send as duplicate to server. Eg - "template-name, template-name"
-        delete requestData.template;
-    }
-    if (extraParams.configFileName) {
-        queryParams.append('configFileName', extraParams.configFileName);
-        // Delete configFileName from requestData to avoid sending same info in both query params and body, which causes configFileName to send as duplicate to server. Eg - "config-file, config-file"
-        delete requestData.configFileName;
-    }
-    const queryString = queryParams.toString();
-    if (queryString) {
-        url += `?${queryString}`;
-    }
+    // const queryParams = new URLSearchParams();
+    // if (extraParams.template) {
+    //     queryParams.append('template', extraParams.template);
+    //     // Delete template from requestData to avoid sending same info in both query params and body, which causes template to send as duplicate to server. Eg - "template-name, template-name"
+    //     delete requestData.template;
+    // }
+    // if (extraParams.configFileName) {
+    //     queryParams.append('configFileName', extraParams.configFileName);
+    //     // Delete configFileName from requestData to avoid sending same info in both query params and body, which causes configFileName to send as duplicate to server. Eg - "config-file, config-file"
+    //     delete requestData.configFileName;
+    // }
+    // const queryString = queryParams.toString();
+    // if (queryString) {
+    //     url += `?${queryString}`;
+    // }
 
     return { requestData, url, where, dateColumns };
 };
