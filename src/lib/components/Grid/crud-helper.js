@@ -22,7 +22,8 @@ function shouldApplyFilter(filter) {
  * - Compact: "YYYYMMDDHHmmssSSS" (e.g., "20260413104406000")
  * - Non-compact strings are parsed through the ISO branch:
  *   - `utc === true`: parsed via `new Date(value)`
- *   - `utc === false`: parses `new Date(value.slice(0, -1))` to treat `...Z` input as local wall-clock time
+ *   - `utc === false`: if the input ends with `Z`, parses `new Date(value.slice(0, -1))` to treat UTC input as local wall-clock time
+ *   - otherwise parses via `new Date(value)` and returns the original value if parsing is invalid
  * @param {boolean} [utc=false] - If true, preserves UTC-instant behavior for supported UTC inputs.
  * If false, supported UTC strings are interpreted as local wall-clock date/time.
  * @returns {*} - Returns a Date object for string inputs, the original value for non-string inputs, or null for empty strings.
@@ -65,10 +66,12 @@ const dateParser = (value, utc = false) => {
         // Standard behavior: 'Z' suffix indicates UTC
         return new Date(value);
     }
-    // Slice off the 'Z' to force the constructor to treat it as local time
-    return new Date(value.slice(0, -1));
 
-    // Fallback for other valid date formats (e.g. ISO without milliseconds, with offset)
+    if (value.endsWith('Z')) {
+        // Slice off the 'Z' to force the constructor to treat it as local time
+        return new Date(value.slice(0, -1));
+    }
+
     const parsedValue = new Date(value);
     return Number.isNaN(parsedValue.getTime()) ? value : parsedValue;
 };
