@@ -61,7 +61,7 @@ const dateParser = (value, utc = false) => {
         return new Date(year, month, day, hour, min, sec, ms);
     }
 
-    // Handle "ISO" Format (YYYY-MM-DDTHH:mm:ss.SSSZ)
+    // Handle non-compact string inputs (including ISO-like formats)
     if (utc) {
         // Standard behavior: 'Z' suffix indicates UTC
         return new Date(value);
