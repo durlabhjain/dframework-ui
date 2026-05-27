@@ -470,24 +470,21 @@ function shouldApplyFilter(filter) {
 	return ["isEmpty", "isNotEmpty"].includes(operator) || value !== void 0 && value !== null && (value !== "" || type === "number" && value === 0 || type === "boolean" && value === false);
 }
 /**
-* Parses a date string into a JavaScript Date object based on specific format lengths.
-* * @param {string} value - The date string to parse.
-* Supported formats:
-* - 17 chars: "YYYYMMDDHHmmssSSS" (e.g., "20260413104406000")
-* - 24 chars: "YYYY-MM-DDTHH:mm:ss.SSSZ" (e.g., "2026-04-13T10:44:06.000Z")
-* @param {boolean} [utc=false] - If true, treats the input as UTC and returns a localized Date.
-* If false, treats input as local time (for 17-char) or 
-* strips the 'Z' (for 24-char) to treat as local.
-* @returns {Date|string|null} - Returns a Date object, the original value if not a string, or null if empty.
-* @throws {Error} - Throws error if the string length is not 17 or 24.
-* * @example
-* // Length 17: Treat as UTC and convert to local
-* // Input: "20260413104406000"
+* Parses supported date strings into a JavaScript Date object.
+* @param {*} value - The input value to parse as a date when it is a string.
+* Supported handling:
+* - Compact: "YYYYMMDDHHmmssSSS" (e.g., "20260413104406000")
+* - Non-compact strings are parsed through the ISO branch:
+*   - `utc === true`: parsed via `new Date(value)`
+*   - `utc === false`: if the input ends with `Z`, parses `new Date(value.slice(0, -1))` to treat UTC input as local wall-clock time
+*   - otherwise parses via `new Date(value)` and returns the original value if parsing is invalid
+* @param {boolean} [utc=false] - If true, preserves UTC-instant behavior for supported UTC inputs.
+* If false, supported UTC strings are interpreted as local wall-clock date/time.
+* @returns {*} - Returns the original value for non-string inputs, null for empty strings, a Date object for successfully parsed strings, the original string when parsing fails in the final non-UTC fallback branch, or an Invalid Date object in branches that directly return `new Date(...)` for an invalid date string.
+* @example
 * dateParser("20260413104406000", true); 
-* * @example
-* // Length 24: ISO format
-* // Input: "2026-04-13T10:44:06.000Z"
-* dateParser("2026-04-13T10:44:06.000Z", true);
+* @example
+* dateParser("2026-04-13T10:44:06.000Z", false);
 */
 var dateParser = (value, utc = false) => {
 	if (typeof value !== "string" || value === void 0 || value === null) return value;
@@ -503,10 +500,8 @@ var dateParser = (value, utc = false) => {
 		if (utc) return new Date(Date.UTC(year, month, day, hour, min, sec, ms));
 		return new Date(year, month, day, hour, min, sec, ms);
 	}
-	if (value.length === 24) {
-		if (utc) return new Date(value);
-		return new Date(value.slice(0, -1));
-	}
+	if (utc) return new Date(value);
+	if (value.endsWith("Z")) return new Date(value.slice(0, -1));
 	const parsedValue = new Date(value);
 	return Number.isNaN(parsedValue.getTime()) ? value : parsedValue;
 };
@@ -616,15 +611,9 @@ var buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, b
 	if (lookups.length) requestData.lookups = lookups.join(",");
 	if (lookupWithDeps.length) requestData.lookupWithDeps = JSON.stringify(lookupWithDeps);
 	if (model?.limitToSurveyed) requestData.limitToSurveyed = model?.limitToSurveyed;
-	let url = `${api}/${action}`;
-	const queryParams = new URLSearchParams();
-	if (extraParams.template) queryParams.append("template", extraParams.template);
-	if (extraParams.configFileName) queryParams.append("configFileName", extraParams.configFileName);
-	const queryString = queryParams.toString();
-	if (queryString) url += `?${queryString}`;
 	return {
 		requestData,
-		url,
+		url: `${api}/${action}`,
 		where,
 		dateColumns
 	};
@@ -6348,7 +6337,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.130.0/helpers/typeof.js
+//#region \0@oxc-project+runtime@0.132.0/helpers/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -6358,7 +6347,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.130.0/helpers/toPrimitive.js
+//#region \0@oxc-project+runtime@0.132.0/helpers/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -6370,13 +6359,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.130.0/helpers/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.132.0/helpers/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.130.0/helpers/defineProperty.js
+//#region \0@oxc-project+runtime@0.132.0/helpers/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
