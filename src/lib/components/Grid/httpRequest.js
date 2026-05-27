@@ -9,10 +9,17 @@ const HTTP_STATUS_CODES = {
 const getFormData = (props) => {
     const formData = new FormData();
     for (const key in props) {
-        if (typeof props[key] === "object") {
-            formData.append(key, JSON.stringify(props[key]));
+        const value = props[key];
+        // Skip null/undefined — typeof null === "object" is a JS quirk that would
+        // otherwise turn null into the string "null" via JSON.stringify, which
+        // causes C# DataMapper to fail when assigning to DateTime/numeric properties.
+        if (value === null || value === undefined) {
+            continue;
+        }
+        if (typeof value === "object") {
+            formData.append(key, JSON.stringify(value));
         } else {
-            formData.append(key, props[key]);
+            formData.append(key, value);
         }
     }
     return formData;
