@@ -30,7 +30,7 @@ const Field = ({ column, field, formik, otherProps }) => {
                 if (column.localize) {
                     formik.setFieldValue(field, value.toISOString());
                 } else {
-                    formik.setFieldValue(field, value.toISOString());
+                    formik.setFieldValue(field, value.utcOffset(0, true).toISOString());
                 }
             }
         }}
