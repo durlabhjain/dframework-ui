@@ -178,9 +178,9 @@ class UiModel {
 				case 'select':
 				case 'autocomplete':
 					config = yup.string().transform((value, originalValue) => {
-							if (originalValue === 0 || originalValue === '0') return '';
-							return value;
-						}).trim().label(formLabel);
+						if (originalValue === 0 || originalValue === '0') return '';
+						return value;
+					}).trim().label(formLabel);
 					if (!required) {
 						config = config.nullable();
 					}
