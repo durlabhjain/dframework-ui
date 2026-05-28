@@ -44,7 +44,7 @@ const defaultValidationTranslationKeyPrefix = 'validation';
  */
 const resolveValidationMessage = (rule, params, t) => {
 	const template = validationMessageTemplates[rule];
-	const key = `${defaultValidationTranslationKeyPrefix}.${rule}`;
+	const key = `${defaultValidationTranslationKeyPrefix}.${rule}`.toLowerCase();
 	const translated = typeof t === 'function'
 		? t(key, { defaultValue: template })
 		: template;
@@ -177,7 +177,10 @@ class UiModel {
 					break;
 				case 'select':
 				case 'autocomplete':
-					config = yup.string().trim().label(formLabel);
+					config = yup.string().transform((value, originalValue) => {
+							if (originalValue === 0 || originalValue === '0') return '';
+							return value;
+						}).trim().label(formLabel);
 					if (!required) {
 						config = config.nullable();
 					}
