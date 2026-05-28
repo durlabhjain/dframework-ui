@@ -185,11 +185,11 @@ class UiModel {
 				    }
 				    break;
 				case 'autocomplete':
-				    config = yup.string().trim().label(formLabel);
-				    if (!required) {
-				        config = config.nullable();
-				    }
-				    break;
+					config = yup.string().trim().label(formLabel);
+					if (!required) {
+						config = config.nullable();
+					}
+					break;
 				case 'password':
 					config = yup.string()
 						.label(formLabel)
