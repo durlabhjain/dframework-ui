@@ -191,7 +191,7 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
                     // fieldConfig.hidden: dynamically hide this field (e.g. via model.applyFieldConfig)
                     if (fieldConfig.hidden) return null;
                     // fieldConfig.label: runtime label override (e.g. rename based on record data)
-                    const displayLabel = fieldConfig.label ?? column.label ?? field;
+                    const displayLabel = fieldConfig.label ?? (column.label || field);
                     return (
                         <Grid container spacing={2} key={key} sx={{ marginTop: "1rem", marginBottom: "1rem" }} alignItems={isGridComponent ? "flex-start" : "center"}>
                             {column?.showLabel !== false ?
