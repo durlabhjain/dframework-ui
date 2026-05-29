@@ -176,7 +176,6 @@ class UiModel {
 						.label(formLabel);
 					break;
 				case 'select':
-				case 'select':
 					config = yup.string().transform((value, originalValue) => {
 						if (originalValue === 0 || originalValue === '0') return '';
 						return value;
