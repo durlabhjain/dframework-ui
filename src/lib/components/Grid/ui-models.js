@@ -44,7 +44,7 @@ const defaultValidationTranslationKeyPrefix = 'validation';
  */
 const resolveValidationMessage = (rule, params, t) => {
 	const template = validationMessageTemplates[rule];
-	const key = `${defaultValidationTranslationKeyPrefix}.${rule}`.toLowerCase();
+	const key = `${defaultValidationTranslationKeyPrefix}.${rule}`;
 	const translated = typeof t === 'function'
 		? t(key, { defaultValue: template })
 		: template;
