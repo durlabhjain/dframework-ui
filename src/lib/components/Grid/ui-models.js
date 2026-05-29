@@ -176,6 +176,14 @@ class UiModel {
 						.label(formLabel);
 					break;
 				case 'select':
+					config = yup.string().transform((value, originalValue) => {
+						if (originalValue === 0 || originalValue === '0') return '';
+						return value;
+					}).trim().label(formLabel);
+					if (!required) {
+						config = config.nullable();
+					}
+					break;
 				case 'autocomplete':
 					config = yup.string().trim().label(formLabel);
 					if (!required) {

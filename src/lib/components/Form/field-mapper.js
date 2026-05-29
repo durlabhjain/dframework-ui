@@ -187,11 +187,16 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
             {
                 formElements.map(({ Component, column, field, label, otherProps }, key) => {
                     const isGridComponent = typeof column.relation === 'function';
+                    const fieldConfig = fieldConfigs?.[field] ?? {};
+                    // fieldConfig.hidden: dynamically hide this field (e.g. via model.applyFieldConfig)
+                    if (fieldConfig.hidden) return null;
+                    // fieldConfig.label: runtime label override (e.g. rename based on record data)
+                    const displayLabel = fieldConfig.label ?? (column.label || field);
                     return (
                         <Grid container spacing={2} key={key} sx={{ marginTop: "1rem", marginBottom: "1rem" }} alignItems={isGridComponent ? "flex-start" : "center"}>
                             {column?.showLabel !== false ?
                                 <Grid size={{ xs: 3 }} sx={gridContainerStyle}>
-                                    <Typography sx={{ fontSize: "16px", fontWeight: "bold" }} className="form-label">{tTranslate(column.label || field, tOpts)}: {column.required && <ImportantSpan>*</ImportantSpan>}</Typography>
+                                    <Typography sx={{ fontSize: "16px", fontWeight: "bold" }} className="form-label">{tTranslate(displayLabel, tOpts)}: {column.required && <ImportantSpan>*</ImportantSpan>}</Typography>
                                 </Grid>
                                 : null
                             }
