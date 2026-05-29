@@ -26,7 +26,7 @@ const getFormData = (props) => {
             value = '';
         } else if (value instanceof Date) {
             value = dateFormatterForForm.format(value).replace(',', '');
-        } else if (value instanceof dayjs) {
+        } else if (dayjs.isDayjs(value)) {
             value = dateFormatterForForm.format(value.toDate()).replace(',', '');
         } else if (typeof value === "object") {
             value = JSON.stringify(value);
