@@ -16,6 +16,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CopyIcon from "@mui/icons-material/FileCopy";
 import ArticleIcon from "@mui/icons-material/Article";
 import EditIcon from "@mui/icons-material/Edit";
+import dayjs from "dayjs";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
@@ -24,7 +25,6 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import HelpIcon from "@mui/icons-material/Help";
 import { Close, Code, DataObject, GridOn, Language, Replay, TableChart } from "@mui/icons-material";
-import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -304,10 +304,25 @@ var HTTP_STATUS_CODES = {
 	NOT_FOUND: 404,
 	INTERNAL_SERVER_ERROR: 500
 };
+var dateFormatterForForm = new Intl.DateTimeFormat("en-CA", {
+	year: "numeric",
+	month: "2-digit",
+	day: "2-digit",
+	hour: "2-digit",
+	minute: "2-digit",
+	second: "2-digit",
+	hour12: false
+});
 var getFormData = (props) => {
 	const formData = new FormData();
-	for (const key in props) if (typeof props[key] === "object") formData.append(key, JSON.stringify(props[key]));
-	else formData.append(key, props[key]);
+	for (const key in props) {
+		let value = props[key];
+		if (value === null) value = "";
+		else if (value instanceof Date) value = dateFormatterForForm.format(value).replace(",", "");
+		else if (dayjs.isDayjs(value)) value = dateFormatterForForm.format(value.toDate()).replace(",", "");
+		else if (typeof value === "object") value = JSON.stringify(value);
+		formData.append(key, value);
+	}
 	return formData;
 };
 var exportRequest = (url, query) => {
@@ -5180,6 +5195,10 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = {}, mo
 	const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
 		const lastElement = newValue.pop()?.trim();
 		if (!newValue.includes(lastElement)) newValue.push(lastElement);
+		if (column.max && newValue.length > column.max) {
+			newValue.pop();
+			return;
+		}
 		if (fixedOptions && fixedOptions.includes(item.option) && action === "removeOption") newValue = [item.option];
 		if (column.dataFormat !== "array") newValue = newValue.length ? newValue.join(",") : "";
 		formik.setFieldValue(field, newValue);
@@ -5697,6 +5716,9 @@ var RenderColumns = ({ formElements, model, formik, data, onChange, combos, look
 	if (!formElements?.length) return null;
 	return /* @__PURE__ */ jsx(Fragment, { children: formElements.map(({ Component, column, field, label, otherProps }, key) => {
 		const isGridComponent = typeof column.relation === "function";
+		const fieldConfig = fieldConfigs?.[field] ?? {};
+		if (fieldConfig.hidden) return null;
+		const displayLabel = fieldConfig.label ?? (column.label || field);
 		return /* @__PURE__ */ jsxs(Grid$1, {
 			container: true,
 			spacing: 2,
@@ -5715,7 +5737,7 @@ var RenderColumns = ({ formElements, model, formik, data, onChange, combos, look
 					},
 					className: "form-label",
 					children: [
-						tTranslate(column.label || field, tOpts),
+						tTranslate(displayLabel, tOpts),
 						": ",
 						column.required && /* @__PURE__ */ jsx(ImportantSpan, { children: "*" })
 					]
@@ -6537,6 +6559,12 @@ var UiModel = class UiModel {
 					config = yup.date().nullable().transform(emptyToNullTransform).label(formLabel);
 					break;
 				case "select":
+					config = yup.string().transform((value, originalValue) => {
+						if (originalValue === 0 || originalValue === "0") return "";
+						return value;
+					}).trim().label(formLabel);
+					if (!required) config = config.nullable();
+					break;
 				case "autocomplete":
 					config = yup.string().trim().label(formLabel);
 					if (!required) config = config.nullable();
