@@ -14,7 +14,6 @@ const utils = {
         dateTime: "YYYY-MM-DD hh:mm:ss a",
         OverrideDateFormat: "DD-MMM-YYYY"
     },
-    formDateTimeSubmissionFormat: 'YYYY-MM-DD HH:mm:ss',
     errorMapping: {
         413: "Upload failed: The file exceeds the 30 MB size limit. Please select a smaller file."
     },

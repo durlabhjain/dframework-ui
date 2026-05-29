@@ -1,5 +1,4 @@
 import dayjs from 'dayjs';
-import utils from '../utils';
 
 const HTTP_STATUS_CODES = {
     OK: 200,
@@ -27,8 +26,8 @@ const getFormData = (props) => {
             value = '';
         } else if (value instanceof Date) {
             value = dateFormatterForForm.format(value).replace(',', '');
-        } else if (dayjs.isDayjs(value)) {
-            value = value.format(utils.formDateTimeSubmissionFormat).replace(',', '');
+        } else if (value instanceof dayjs) {
+            value = dateFormatterForForm.format(value.toDate()).replace(',', '');
         } else if (typeof value === "object") {
             value = JSON.stringify(value);
         }
