@@ -1,3 +1,6 @@
+import dayjs from 'dayjs';
+import utils from '../utils';
+
 const HTTP_STATUS_CODES = {
     OK: 200,
     SESSION_EXPIRED: 401,
@@ -6,21 +9,30 @@ const HTTP_STATUS_CODES = {
     INTERNAL_SERVER_ERROR: 500
 };
 
+const dateFormatterForForm = new Intl.DateTimeFormat('en-CA', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hour12: false
+});
+
 const getFormData = (props) => {
     const formData = new FormData();
     for (const key in props) {
-        const value = props[key];
-        // Skip null — typeof null === "object" is a JS quirk that would
-        // otherwise turn null into the string "null" via JSON.stringify, which
-        // causes C# DataMapper to fail when assigning to DateTime/numeric properties.
+        let value = props[key];
         if (value === null) {
-            continue;
+            value = '';
+        } else if (value instanceof Date) {
+            value = dateFormatterForForm.format(value).replace(',', '');
+        } else if (dayjs.isDayjs(value)) {
+            value = value.format(utils.formDateTimeSubmissionFormat).replace(',', '');
+        } else if (typeof value === "object") {
+            value = JSON.stringify(value);
         }
-        if (typeof value === "object") {
-            formData.append(key, JSON.stringify(value));
-        } else {
-            formData.append(key, value);
-        }
+        formData.append(key, value);
     }
     return formData;
 };
