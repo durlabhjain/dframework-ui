@@ -291,6 +291,8 @@ const GridBase = memo(({
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
     const enableRowDetailPanel = typeof model.getDetailPanelContent === 'function';
+    const gridRows = useMemo(() => data.records || [], [data.records]);
+    const rowCount = useMemo(() => data.recordCount, [data.recordCount]);
     const [groupingModel, setGroupingModel] = useState([]);
 
     useEffect(() => {
@@ -640,8 +642,9 @@ const GridBase = memo(({
 
             pinnedColumns.right.push('actions');
         }
+        if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push('__detail_panel_toggle__');
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
-    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime, groupingModel]);
+    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime, groupingModel, enableRowDetailPanel]);
 
     // Shallow-copy columns when lookups change so MUI DataGrid's GridFilterInputSingleSelect
     // sees new column object references and re-evaluates its memoized currentValueOptions.
@@ -1025,6 +1028,33 @@ const GridBase = memo(({
         if (!filterModel?.items?.length) return;
         setFilterModel({ ...constants.gridFilterModel });
     }, [filterModel]);
+
+    /**
+     * Gets the selected row IDs from the grid based on the current selection state.
+     * Handles both 'include' (selected rows) and 'exclude' (all rows except excluded) selection types.
+     * @returns {Array} Array of selected row IDs
+     */
+    const getSelectedRowIds = useCallback((selectionModel) => {
+        const selection = selectionModel || apiRef.current?.state?.rowSelection || { type: 'include', ids: new Set() };
+        const allRowIds = apiRef.current ? apiRef.current.getAllRowIds() : [];
+        if (selection.type === 'include') {
+            return Array.from(selection.ids || []);
+        }
+        // exclude = all rows except excluded
+        return allRowIds.filter(id => !(selection.ids || new Set()).has(id));
+    }, [apiRef]);
+
+    const handleRowSelectionModelChange = useCallback((selectionModel) => {
+        let normalizedModel = selectionModel;
+        if (selectionModel.type === 'exclude') {
+            const selectedIds = getSelectedRowIds(selectionModel);
+            normalizedModel = { type: 'include', ids: new Set(selectedIds) };
+        }
+        setRowSelectionModel(normalizedModel);
+        props.onRowSelectionModelChange?.(normalizedModel);
+    }, [getSelectedRowIds, props.onRowSelectionModelChange]);
+    
+
     const updateAssignment = useCallback(({ unassign, assign }) => {
         const assignedValues = Array.isArray(selected) ? selected : (selected.length ? selected.split(',') : []);
         const finalValues = unassign ? assignedValues.filter(id => !unassign.includes(parseInt(id))) : [...assignedValues, ...assign];
@@ -1394,6 +1424,10 @@ const GridBase = memo(({
         footer: Footer
     }), []);
 
+    const gridSxProps = useMemo(() => [
+        ...(Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : [])
+    ], [propsSx]);
+
     return (
         <>
             {showPageTitle !== false && <PageTitle navigate={navigate} showBreadcrumbs={!hideBreadcrumb && !hideBreadcrumbInGrid}
@@ -1401,26 +1435,10 @@ const GridBase = memo(({
             <Box style={gridStyle || customStyle}>
                 <Box sx={{ display: 'flex', maxHeight: '80vh', flexDirection: 'column' }}>
                     <DataGridPremium
-                        sx={[
-                            {
-                                "& .MuiTablePagination-selectLabel": {
-                                    marginTop: 2
-                                },
-                                "& .MuiTablePagination-displayedRows": {
-                                    marginTop: 2
-                                },
-                                "& .MuiDataGrid-virtualScroller ": {
-                                    zIndex: 2
-                                },
-                                "& .MuiDataGrid-detailPanelToggleCell, & .MuiDataGrid-cell--withRenderer.MuiDataGrid-cell--detailPanelToggle": {
-                                    display: 'none'
-                                },
-                            },
-                            ...(Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : [])
-                        ]}
+                        sx={gridSxProps}
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
-                        checkboxSelection={forAssignment}
+                        checkboxSelection={forAssignment || !!model.checkboxSelection}
                         loading={!data.records || isLoading}
                         className="pagination-fix"
                         onCellClick={onCellClickHandler}
@@ -1430,8 +1448,8 @@ const GridBase = memo(({
                         pageSizeOptions={constants.pageSizeOptions}
                         onPaginationModelChange={setPaginationModel}
                         pagination={!disablePagination}
-                        rowCount={data.recordCount}
-                        rows={data.records || []}
+                        rowCount={rowCount}
+                        rows={gridRows}
                         sortModel={sortModel}
                         paginationMode={paginationMode}
                         sortingMode={sortAndFilterMode}
@@ -1441,7 +1459,7 @@ const GridBase = memo(({
                         onSortModelChange={updateSort}
                         onFilterModelChange={updateFilters}
                         rowSelectionModel={rowSelectionModel}
-                        onRowSelectionModelChange={setRowSelectionModel}
+                        onRowSelectionModelChange={handleRowSelectionModelChange}
                         filterModel={filterModel}
                         getRowId={getGridRowId}
                         onRowClick={onRowClick}
@@ -1467,7 +1485,7 @@ const GridBase = memo(({
                         columnHeaderHeight={columnHeaderHeight}
                         hideFooter={!showFooter}
                         rowGroupingModel={groupingModel}
-                        onRowGroupingModelChange={(newGroupingModel) => setGroupingModel(newGroupingModel)}
+                        onRowGroupingModelChange={setGroupingModel}
                         getRowClassName={props.getRowClassName}
                         columnGroupingModel={columnGroupingModel}
                     />
