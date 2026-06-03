@@ -644,7 +644,7 @@ const GridBase = memo(({
         }
         if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push('__detail_panel_toggle__');
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
-    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime, groupingModel]);
+    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime, groupingModel, enableRowDetailPanel]);
 
     // Shallow-copy columns when lookups change so MUI DataGrid's GridFilterInputSingleSelect
     // sees new column object references and re-evaluates its memoized currentValueOptions.
@@ -1042,7 +1042,7 @@ const GridBase = memo(({
         }
         // exclude = all rows except excluded
         return allRowIds.filter(id => !(selection.ids || new Set()).has(id));
-    }, []);
+    }, [apiRef]);
 
     const handleRowSelectionModelChange = useCallback((selectionModel) => {
         let normalizedModel = selectionModel;
