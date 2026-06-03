@@ -291,6 +291,8 @@ const GridBase = memo(({
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
     const enableRowDetailPanel = typeof model.getDetailPanelContent === 'function';
+    const gridRows = useMemo(() => data.records || [], [data.records]);
+    const rowCount = useMemo(() => data.recordCount, [data.recordCount]);
     const [groupingModel, setGroupingModel] = useState([]);
 
     useEffect(() => {
@@ -640,11 +642,7 @@ const GridBase = memo(({
 
             pinnedColumns.right.push('actions');
         }
-        // Pin detail panel toggle to the configured side when it has per-row visibility control
-        if (typeof model.getDetailPanelContent === 'function') {
-            const togglePos = model?.detailTogglePosition || constants.left;
-            pinnedColumns[togglePos].push('__detail_panel_toggle__');
-        }
+        if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push('__detail_panel_toggle__');
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime, groupingModel]);
 
@@ -1426,6 +1424,10 @@ const GridBase = memo(({
         footer: Footer
     }), []);
 
+    const gridSxProps = useMemo(() => [
+        ...(Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : [])
+    ], [propsSx]);
+
     return (
         <>
             {showPageTitle !== false && <PageTitle navigate={navigate} showBreadcrumbs={!hideBreadcrumb && !hideBreadcrumbInGrid}
@@ -1433,25 +1435,7 @@ const GridBase = memo(({
             <Box style={gridStyle || customStyle}>
                 <Box sx={{ display: 'flex', maxHeight: '80vh', flexDirection: 'column' }}>
                     <DataGridPremium
-                        sx={[
-                            {
-                                "& .MuiTablePagination-selectLabel": {
-                                    marginTop: 2
-                                },
-                                "& .MuiTablePagination-displayedRows": {
-                                    marginTop: 2
-                                },
-                                "& .MuiDataGrid-virtualScroller ": {
-                                    zIndex: 2
-                                },
-                                ...(model.showDetailPanelColumn === false && {
-                                    '& .MuiDataGrid-cell[data-field="__detail_panel_toggle__"], & .MuiDataGrid-columnHeader[data-field="__detail_panel_toggle__"]': {
-                                        display: 'none'
-                                    }
-                                }),
-                            },
-                            ...(Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : [])
-                        ]}
+                        sx={gridSxProps}
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
                         checkboxSelection={forAssignment || !!model.checkboxSelection}
@@ -1464,8 +1448,8 @@ const GridBase = memo(({
                         pageSizeOptions={constants.pageSizeOptions}
                         onPaginationModelChange={setPaginationModel}
                         pagination={!disablePagination}
-                        rowCount={data.recordCount}
-                        rows={data.records || []}
+                        rowCount={rowCount}
+                        rows={gridRows}
                         sortModel={sortModel}
                         paginationMode={paginationMode}
                         sortingMode={sortAndFilterMode}
@@ -1501,7 +1485,7 @@ const GridBase = memo(({
                         columnHeaderHeight={columnHeaderHeight}
                         hideFooter={!showFooter}
                         rowGroupingModel={groupingModel}
-                        onRowGroupingModelChange={(newGroupingModel) => setGroupingModel(newGroupingModel)}
+                        onRowGroupingModelChange={setGroupingModel}
                         getRowClassName={props.getRowClassName}
                         columnGroupingModel={columnGroupingModel}
                     />
