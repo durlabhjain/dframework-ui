@@ -640,6 +640,11 @@ const GridBase = memo(({
 
             pinnedColumns.right.push('actions');
         }
+        // Pin detail panel toggle to the configured side when it has per-row visibility control
+        if (typeof model.getDetailPanelContent === 'function') {
+            const togglePos = model?.detailTogglePosition || constants.left;
+            pinnedColumns[togglePos].push('__detail_panel_toggle__');
+        }
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime, groupingModel]);
 
@@ -1025,6 +1030,33 @@ const GridBase = memo(({
         if (!filterModel?.items?.length) return;
         setFilterModel({ ...constants.gridFilterModel });
     }, [filterModel]);
+
+    /**
+     * Gets the selected row IDs from the grid based on the current selection state.
+     * Handles both 'include' (selected rows) and 'exclude' (all rows except excluded) selection types.
+     * @returns {Array} Array of selected row IDs
+     */
+    const getSelectedRowIds = useCallback((selectionModel) => {
+        const selection = selectionModel || apiRef.current?.state?.rowSelection || { type: 'include', ids: new Set() };
+        const allRowIds = apiRef.current ? apiRef.current.getAllRowIds() : [];
+        if (selection.type === 'include') {
+            return Array.from(selection.ids || []);
+        }
+        // exclude = all rows except excluded
+        return allRowIds.filter(id => !(selection.ids || new Set()).has(id));
+    }, []);
+
+    const handleRowSelectionModelChange = useCallback((selectionModel) => {
+        let normalizedModel = selectionModel;
+        if (selectionModel.type === 'exclude') {
+            const selectedIds = getSelectedRowIds(selectionModel);
+            normalizedModel = { type: 'include', ids: new Set(selectedIds) };
+        }
+        setRowSelectionModel(normalizedModel);
+        props.onRowSelectionModelChange?.(normalizedModel);
+    }, [getSelectedRowIds, props.onRowSelectionModelChange]);
+    
+
     const updateAssignment = useCallback(({ unassign, assign }) => {
         const assignedValues = Array.isArray(selected) ? selected : (selected.length ? selected.split(',') : []);
         const finalValues = unassign ? assignedValues.filter(id => !unassign.includes(parseInt(id))) : [...assignedValues, ...assign];
@@ -1412,15 +1444,17 @@ const GridBase = memo(({
                                 "& .MuiDataGrid-virtualScroller ": {
                                     zIndex: 2
                                 },
-                                "& .MuiDataGrid-detailPanelToggleCell, & .MuiDataGrid-cell--withRenderer.MuiDataGrid-cell--detailPanelToggle": {
-                                    display: 'none'
-                                },
+                                ...(model.showDetailPanelColumn === false && {
+                                    '& .MuiDataGrid-cell[data-field="__detail_panel_toggle__"], & .MuiDataGrid-columnHeader[data-field="__detail_panel_toggle__"]': {
+                                        display: 'none'
+                                    }
+                                }),
                             },
                             ...(Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : [])
                         ]}
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
-                        checkboxSelection={forAssignment}
+                        checkboxSelection={forAssignment || !!model.checkboxSelection}
                         loading={!data.records || isLoading}
                         className="pagination-fix"
                         onCellClick={onCellClickHandler}
@@ -1441,7 +1475,7 @@ const GridBase = memo(({
                         onSortModelChange={updateSort}
                         onFilterModelChange={updateFilters}
                         rowSelectionModel={rowSelectionModel}
-                        onRowSelectionModelChange={setRowSelectionModel}
+                        onRowSelectionModelChange={handleRowSelectionModelChange}
                         filterModel={filterModel}
                         getRowId={getGridRowId}
                         onRowClick={onRowClick}
