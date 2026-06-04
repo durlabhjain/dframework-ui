@@ -3091,6 +3091,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const [rowPanelId, setRowPanelId] = useState(null);
 	const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
 	const enableRowDetailPanel = typeof model.getDetailPanelContent === "function";
+	const gridRows = useMemo(() => data.records || [], [data.records]);
+	const rowCount = useMemo(() => data.recordCount, [data.recordCount]);
 	const [groupingModel, setGroupingModel] = useState([]);
 	useEffect(() => {
 		if (!apiRef.current) return;
@@ -3410,6 +3412,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			});
 			pinnedColumns.right.push("actions");
 		}
+		if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push("__detail_panel_toggle__");
 		return {
 			stableGridColumns: finalColumns,
 			pinnedColumns,
@@ -3424,7 +3427,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		dynamicColumns,
 		translate,
 		stateData?.dateTime,
-		groupingModel
+		groupingModel,
+		enableRowDetailPanel
 	]);
 	const gridColumns = useMemo(() => stableGridColumns.map((col) => ({ ...col })), [stableGridColumns, lookupKeys]);
 	const hasInitializedRef = useRef(false);
@@ -3833,6 +3837,32 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		if (!filterModel?.items?.length) return;
 		setFilterModel({ ...constants.gridFilterModel });
 	}, [filterModel]);
+	/**
+	* Gets the selected row IDs from the grid based on the current selection state.
+	* Handles both 'include' (selected rows) and 'exclude' (all rows except excluded) selection types.
+	* @returns {Array} Array of selected row IDs
+	*/
+	const getSelectedRowIds = useCallback((selectionModel) => {
+		const selection = selectionModel || apiRef.current?.state?.rowSelection || {
+			type: "include",
+			ids: /* @__PURE__ */ new Set()
+		};
+		const allRowIds = apiRef.current ? apiRef.current.getAllRowIds() : [];
+		if (selection.type === "include") return Array.from(selection.ids || []);
+		return allRowIds.filter((id) => !(selection.ids || /* @__PURE__ */ new Set()).has(id));
+	}, [apiRef]);
+	const handleRowSelectionModelChange = useCallback((selectionModel) => {
+		let normalizedModel = selectionModel;
+		if (selectionModel.type === "exclude") {
+			const selectedIds = getSelectedRowIds(selectionModel);
+			normalizedModel = {
+				type: "include",
+				ids: new Set(selectedIds)
+			};
+		}
+		setRowSelectionModel(normalizedModel);
+		props.onRowSelectionModelChange?.(normalizedModel);
+	}, [getSelectedRowIds, props.onRowSelectionModelChange]);
 	const updateAssignment = useCallback(({ unassign, assign }) => {
 		const assignedValues = Array.isArray(selected) ? selected : selected.length ? selected.split(",") : [];
 		const finalValues = unassign ? assignedValues.filter((id) => !unassign.includes(parseInt(id))) : [...assignedValues, ...assign];
@@ -4241,6 +4271,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		toolbar: CustomToolbar,
 		footer: Footer
 	}), []);
+	const gridSxProps = useMemo(() => [...Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : []], [propsSx]);
 	return /* @__PURE__ */ jsxs(Fragment, { children: [showPageTitle !== false && /* @__PURE__ */ jsx(PageTitle_default, {
 		navigate,
 		showBreadcrumbs: !hideBreadcrumb && !hideBreadcrumbInGrid,
@@ -4258,15 +4289,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					flexDirection: "column"
 				},
 				children: /* @__PURE__ */ jsx(DataGridPremium, {
-					sx: [{
-						"& .MuiTablePagination-selectLabel": { marginTop: 2 },
-						"& .MuiTablePagination-displayedRows": { marginTop: 2 },
-						"& .MuiDataGrid-virtualScroller ": { zIndex: 2 },
-						"& .MuiDataGrid-detailPanelToggleCell, & .MuiDataGrid-cell--withRenderer.MuiDataGrid-cell--detailPanelToggle": { display: "none" }
-					}, ...Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : []],
+					sx: gridSxProps,
 					headerFilters: showHeaderFilters,
 					unstable_headerFilters: showHeaderFilters,
-					checkboxSelection: forAssignment,
+					checkboxSelection: forAssignment || !!model.checkboxSelection,
 					loading: !data.records || isLoading,
 					className: "pagination-fix",
 					onCellClick: onCellClickHandler,
@@ -4276,8 +4302,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					pageSizeOptions: constants.pageSizeOptions,
 					onPaginationModelChange: setPaginationModel,
 					pagination: !disablePagination,
-					rowCount: data.recordCount,
-					rows: data.records || [],
+					rowCount,
+					rows: gridRows,
 					sortModel,
 					paginationMode,
 					sortingMode: sortAndFilterMode,
@@ -4287,7 +4313,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					onSortModelChange: updateSort,
 					onFilterModelChange: updateFilters,
 					rowSelectionModel,
-					onRowSelectionModelChange: setRowSelectionModel,
+					onRowSelectionModelChange: handleRowSelectionModelChange,
 					filterModel,
 					getRowId: getGridRowId,
 					onRowClick,
@@ -4313,7 +4339,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					columnHeaderHeight,
 					hideFooter: !showFooter,
 					rowGroupingModel: groupingModel,
-					onRowGroupingModelChange: (newGroupingModel) => setGroupingModel(newGroupingModel),
+					onRowGroupingModelChange: setGroupingModel,
 					getRowClassName: props.getRowClassName,
 					columnGroupingModel
 				})
@@ -6359,7 +6385,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.132.0/helpers/typeof.js
+//#region \0@oxc-project+runtime@0.133.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -6369,7 +6395,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.132.0/helpers/toPrimitive.js
+//#region \0@oxc-project+runtime@0.133.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -6381,13 +6407,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.132.0/helpers/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.133.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.132.0/helpers/defineProperty.js
+//#region \0@oxc-project+runtime@0.133.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
