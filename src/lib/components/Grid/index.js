@@ -204,6 +204,7 @@ const GridBase = memo(({
     baseFilters,
     customExportOptions,
     sx: propsSx,
+    gridProps,
     ...props
 }) => {
     const staticDataSource = props.staticData ?? model.staticData;
@@ -1488,6 +1489,7 @@ const GridBase = memo(({
                         onRowGroupingModelChange={setGroupingModel}
                         getRowClassName={props.getRowClassName}
                         columnGroupingModel={columnGroupingModel}
+                        {...gridProps}
                     />
                 </Box>
                 {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)

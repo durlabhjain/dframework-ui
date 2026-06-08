@@ -52,13 +52,13 @@ const Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }
 
     return (
         <GridFooterContainer>
-            <Box sx={{ pl: 5 }}>
+            <Box sx={{ pl: { xs: 1, sm: 5 }, display: 'flex', alignItems: 'center' }}>
                 {pagination &&
                     <>
-                        <Typography variant="p">{tTranslate('Jump to page', tOpts)}:</Typography>
+                        <Typography variant="p" sx={{ whiteSpace: 'nowrap' }}>{tTranslate('Jump to page', tOpts)}:</Typography>
                         <TextField
                             sx={{
-                                width: 70,
+                                width: { xs: 35, sm: 60 },
                                 pl: 1,
                                 '& input[type=number]::-webkit-inner-spin-button': {
                                     cursor: 'pointer'
