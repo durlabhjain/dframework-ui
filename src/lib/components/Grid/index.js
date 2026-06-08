@@ -1437,6 +1437,7 @@ const GridBase = memo(({
                 <Box sx={{ display: 'flex', maxHeight: '80vh', flexDirection: 'column' }}>
                     <DataGridPremium
                         sx={gridSxProps}
+                        {...gridProps}
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
                         checkboxSelection={forAssignment || !!model.checkboxSelection}
@@ -1489,7 +1490,6 @@ const GridBase = memo(({
                         onRowGroupingModelChange={setGroupingModel}
                         getRowClassName={props.getRowClassName}
                         columnGroupingModel={columnGroupingModel}
-                        {...gridProps}
                     />
                 </Box>
                 {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
