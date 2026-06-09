@@ -900,15 +900,26 @@ var Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) 
 		if (!/\d/.test(keyValue)) event.preventDefault();
 	};
 	return /* @__PURE__ */ jsxs(GridFooterContainer, { children: [/* @__PURE__ */ jsx(Box, {
-		sx: { pl: 5 },
+		sx: {
+			pl: {
+				xs: 1,
+				sm: 5
+			},
+			display: "flex",
+			alignItems: "center"
+		},
 		children: pagination && /* @__PURE__ */ jsxs(Fragment, { children: [
 			/* @__PURE__ */ jsxs(Typography, {
-				variant: "p",
+				variant: "body2",
+				sx: { whiteSpace: "nowrap" },
 				children: [tTranslate("Jump to page", tOpts), ":"]
 			}),
 			/* @__PURE__ */ jsx(TextField, {
 				sx: {
-					width: 70,
+					width: {
+						xs: 35,
+						sm: 60
+					},
 					pl: 1,
 					"& input[type=number]::-webkit-inner-spin-button": { cursor: "pointer" },
 					"& input[type=number]::-webkit-outer-spin-button": { cursor: "pointer" }
@@ -2992,7 +3003,7 @@ var CustomCheckBox = ({ params, handleSelectRow, idProperty }) => {
 		inputProps: { "aria-label": "checkbox" }
 	});
 };
-var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, showFullScreenLoader, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, reRenderKey, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, ...props }) => {
+var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, showFullScreenLoader, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, reRenderKey, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, ...props }) => {
 	const staticDataSource = props.staticData ?? model.staticData;
 	const hasStaticData = Array.isArray(staticDataSource) || Array.isArray(staticDataSource?.records);
 	const normalizedStaticData = useMemo(() => hasStaticData ? normalizeStaticData(staticDataSource) : null, [hasStaticData, staticDataSource]);
@@ -4289,6 +4300,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					flexDirection: "column"
 				},
 				children: /* @__PURE__ */ jsx(DataGridPremium, {
+					...gridProps,
 					sx: gridSxProps,
 					headerFilters: showHeaderFilters,
 					unstable_headerFilters: showHeaderFilters,
