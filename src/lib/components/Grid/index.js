@@ -204,6 +204,7 @@ const GridBase = memo(({
     baseFilters,
     customExportOptions,
     sx: propsSx,
+    gridProps,
     ...props
 }) => {
     const staticDataSource = props.staticData ?? model.staticData;
@@ -1435,6 +1436,7 @@ const GridBase = memo(({
             <Box style={gridStyle || customStyle}>
                 <Box sx={{ display: 'flex', maxHeight: '80vh', flexDirection: 'column' }}>
                     <DataGridPremium
+                        {...gridProps}
                         sx={gridSxProps}
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
