@@ -1436,8 +1436,8 @@ const GridBase = memo(({
             <Box style={gridStyle || customStyle}>
                 <Box sx={{ display: 'flex', maxHeight: '80vh', flexDirection: 'column' }}>
                     <DataGridPremium
-                        sx={gridSxProps}
                         {...gridProps}
+                        sx={gridSxProps}
                         headerFilters={showHeaderFilters}
                         unstable_headerFilters={showHeaderFilters} //for older versions of mui
                         checkboxSelection={forAssignment || !!model.checkboxSelection}
