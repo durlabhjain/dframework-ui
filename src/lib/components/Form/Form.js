@@ -290,7 +290,7 @@ const Form = ({
     }
     const { errors } = formik;
     formik.handleSubmit();
-    const fieldName = Object.keys(errors)[0];
+    const fieldName = model.columns.find((col) => errors[col.field])?.field || Object.keys(errors)[0];
     const errorMessage = errors[fieldName];
     if (errorMessage) {
       snackbar.showError(errorMessage, null, "error");
