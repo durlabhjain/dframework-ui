@@ -288,7 +288,7 @@ const Form = ({
     if (typeof beforeSubmit === consts.function) {
       await beforeSubmit({ formik , model });
     }
-    const { errors } = formik;
+    const errors = await formik.validateForm();
     formik.handleSubmit();
     const fieldName = model.columns.find((col) => errors[col.field])?.field || Object.keys(errors)[0];
     const errorMessage = errors[fieldName];
