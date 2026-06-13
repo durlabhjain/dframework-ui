@@ -293,7 +293,7 @@ const Form = ({
       formik.setTouched(Object.keys(errors).reduce((acc, key) => {
         acc[key] = true;
         return acc;
-      }, {}), true);
+      }, {}), false);
     } else {
       formik.handleSubmit();
     }
