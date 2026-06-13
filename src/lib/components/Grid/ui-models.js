@@ -15,7 +15,7 @@ const regexConfig = {
 const validationMessageTemplates = {
 	required: '${label}: required',
 	requiredSelectOption: '${label}: select at least one option',
-	requiredSelect: '${label}: select at least one',
+	requiredSelect: '${label}: required',
 	minChars: '${label}: minimum ${min} characters',
 	maxChars: '${label}: maximum ${max} characters',
 	passwordInvalid: '${label}: invalid password',

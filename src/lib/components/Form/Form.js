@@ -288,9 +288,16 @@ const Form = ({
     if (typeof beforeSubmit === consts.function) {
       await beforeSubmit({ formik , model });
     }
-    const { errors } = formik;
-    formik.handleSubmit();
-    const fieldName = Object.keys(errors)[0];
+    const errors = await formik.validateForm();
+    if (Object.keys(errors).length > 0) {
+      formik.setTouched(Object.keys(errors).reduce((acc, key) => {
+        acc[key] = true;
+        return acc;
+      }, {}), false);
+    } else {
+      formik.handleSubmit();
+    }
+    const fieldName = model.columns.find((col) => errors[col.field])?.field || Object.keys(errors)[0];
     const errorMessage = errors[fieldName];
     if (errorMessage) {
       snackbar.showError(errorMessage, null, "error");
