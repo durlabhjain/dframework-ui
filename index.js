@@ -6275,9 +6275,13 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 			formik,
 			model
 		});
-		const { errors } = formik;
-		formik.handleSubmit();
-		const fieldName = Object.keys(errors)[0];
+		const errors = await formik.validateForm();
+		if (Object.keys(errors).length > 0) formik.setTouched(Object.keys(errors).reduce((acc, key) => {
+			acc[key] = true;
+			return acc;
+		}, {}), false);
+		else formik.handleSubmit();
+		const fieldName = model.columns.find((col) => errors[col.field])?.field || Object.keys(errors)[0];
 		const errorMessage = errors[fieldName];
 		if (errorMessage) snackbar.showError(errorMessage, null, "error");
 		const fieldConfig = model.columns.find((column) => column.field === fieldName) || {};
@@ -6445,7 +6449,7 @@ var regexConfig = {
 var validationMessageTemplates = {
 	required: "${label}: required",
 	requiredSelectOption: "${label}: select at least one option",
-	requiredSelect: "${label}: select at least one",
+	requiredSelect: "${label}: required",
 	minChars: "${label}: minimum ${min} characters",
 	maxChars: "${label}: maximum ${max} characters",
 	passwordInvalid: "${label}: invalid password",
