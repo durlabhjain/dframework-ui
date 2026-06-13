@@ -289,7 +289,14 @@ const Form = ({
       await beforeSubmit({ formik , model });
     }
     const errors = await formik.validateForm();
-    formik.handleSubmit();
+    if (Object.keys(errors).length > 0) {
+      formik.setTouched(Object.keys(errors).reduce((acc, key) => {
+        acc[key] = true;
+        return acc;
+      }, {}), true);
+    } else {
+      formik.handleSubmit();
+    }
     const fieldName = model.columns.find((col) => errors[col.field])?.field || Object.keys(errors)[0];
     const errorMessage = errors[fieldName];
     if (errorMessage) {
