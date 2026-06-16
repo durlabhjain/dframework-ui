@@ -3949,6 +3949,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			};
 		});
 		fetchData({
+			action: "export",
 			isPivotExport,
 			contentType,
 			columns
