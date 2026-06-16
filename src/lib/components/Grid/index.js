@@ -79,6 +79,7 @@ const constants = {
 // Operators that do not require a value
 const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
 const EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze(['isEmpty', 'isNotEmpty', 'isAnyOf']);
+const test = 'test'
 
 // Stable empty references used when localSortAndFilter is enabled to prevent
 // fetchData from being recreated (and re-triggering API calls) on sort/filter changes
