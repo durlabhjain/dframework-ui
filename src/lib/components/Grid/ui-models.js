@@ -278,11 +278,11 @@ class UiModel {
 		return yup.object({ ...validationConfig, ...this.validationSchema });
 	}
 
-	Form = ({ match, ...props }) => {
+	Form = ({ ...props }) => {
 		return <Form model={this} Layout={this.Layout} {...props} />;
 	};
 
-	Grid = ({ match, ...props }) => {
+	Grid = ({ ...props }) => {
 		return <GridBase model={this} showRowsSelected={showRowsSelected} {...props} />;
 	};
 	ChildGrid = (props) => {

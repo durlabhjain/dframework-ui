@@ -15,7 +15,7 @@ const days = [
     { label: 'Saturday', value: 6, display: 'S' },
 ];
 
-const CustomAvator = styled(Avatar)(({ theme, isSelected }) => ({
+const CustomAvator = styled(Avatar)(({ isSelected }) => ({
     width: 34,
     height: 34,
     padding: 1,

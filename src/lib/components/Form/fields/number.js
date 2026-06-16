@@ -128,7 +128,7 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
             max={resolvedMax}
             disabled={readOnly}
             format={numberFormat}
-            render={(baseProps, state) => (
+            render={(baseProps) => (
                 <FormControl
                     fullWidth
                     ref={baseProps.ref}

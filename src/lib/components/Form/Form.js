@@ -1,6 +1,6 @@
 import React from "react";
 import { useFormik } from "formik";
-import { useState, useEffect, createContext, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   getRecord,
   saveRecord,
@@ -231,7 +231,7 @@ const Form = ({
     handleNavigation();
   }, [snackbar, handleNavigation]);
 
-  const setActiveRecord = function ({ id, title, record, lookups }) {
+  const setActiveRecord = function ({ id, record, lookups }) {
     const isCopy = idWithOptions.indexOf("-") > -1;
     const isNew = !id || id === "0";
     const pageTitle = isNew ? consts.create : isCopy ? consts.copy : consts.edit;

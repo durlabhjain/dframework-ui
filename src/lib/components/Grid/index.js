@@ -79,7 +79,6 @@ const constants = {
 // Operators that do not require a value
 const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
 const EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze(['isEmpty', 'isNotEmpty', 'isAnyOf']);
-const test = 'test'
 
 // Stable empty references used when localSortAndFilter is enabled to prevent
 // fetchData from being recreated (and re-triggering API calls) on sort/filter changes
@@ -93,9 +92,6 @@ const EMPTY_FILTER_MODEL = Object.freeze({
 // Stable pagination used when localSortAndFilter is enabled: always request page 0
 // with a large pageSize so the backend returns all rows in one call.
 const LOCAL_MODE_PAGINATION_MODEL = Object.freeze({ page: 0, pageSize: exportPageSize });
-
-// Module-level default translate to avoid creating a new function instance every render
-const defaultTranslate = (key) => key;
 
 const normalizeStaticData = (staticData) => {
     const records = Array.isArray(staticData)
@@ -189,12 +185,10 @@ const GridBase = memo(({
     customStyle,
     onCellClick,
     showRowsSelected,
-    showFullScreenLoader,
     customFilters,
     onRowDoubleClick,
     onRowClick = () => { },
     gridStyle,
-    reRenderKey,
     additionalFilters,
     onCellDoubleClickOverride,
     onAddOverride,
@@ -279,7 +273,6 @@ const GridBase = memo(({
     const toLink = model.columns.flatMap(({ link }) => link ? [link] : []);
     const { stateData, formatDate, getApiEndpoint, buildUrl, setPageTitle } = useStateContext();
     const [isLoading, setIsLoading] = useState(false);
-    const { timeZone } = stateData;
     const effectivePermissions = useMemo(() => ({ ...constants.permissions, ...model.permissions, ...permissions }), [model.permissions, permissions]);
     const emptyIsAnyOfOperatorFilters = EMPTY_IS_ANY_OF_OPERATOR_FILTERS;
     const userData = stateData.userData || {};
@@ -368,13 +361,13 @@ const GridBase = memo(({
             "valueOptions": "lookup"
         },
         "date": {
-            "valueFormatter": (value, row, column) => (
+            "valueFormatter": (value) => (
                 formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "date" })
         },
         "dateTime": {
-            "valueFormatter": (value, row, column) => (
+            "valueFormatter": (value) => (
                 formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "dateTime" })
@@ -547,7 +540,7 @@ const GridBase = memo(({
     const getActions = useCallback(
         ({ row }) =>
             actionConfig
-                .map(({ key, title, icon, color, disabled, show, action, ...otherProps }) =>
+                .map(({ key, title, icon, color, disabled, action, ...otherProps }) =>
                     createAction({
                         key,
                         title: title || action, // Fallback to 'action' for backward compatibility if 'title' is not provided

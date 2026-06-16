@@ -142,7 +142,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         let gridState;
         try {
             gridState = typeof preference.prefValue === 'string' ? JSON.parse(preference.prefValue) : preference.prefValue;
-        } catch (error) {
+        } catch {
             snackbar.showMessage(t('Failed to parse preference data.', tOpts));
             return;
         }
