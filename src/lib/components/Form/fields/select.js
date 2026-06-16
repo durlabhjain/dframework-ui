@@ -54,10 +54,10 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
     }, [formik.values[field], options, column.multiSelect, field]);
 
     const handleChange = useCallback((event) => {
+        formik.handleChange(event);
         if (typeof column.onChange === 'function') {
             column.onChange({ formik, value: event.target.value, options, event , t: tTranslate, tOpts});
         }
-        formik.handleChange(event);
         userSelected.current = true;
     }, [formik.values[field], column.onChange, options]);
 
