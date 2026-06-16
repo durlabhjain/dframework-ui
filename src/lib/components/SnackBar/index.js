@@ -1,4 +1,4 @@
-import React, { useState, useContext, createContext, useCallback, useMemo } from 'react'
+import React, { useState, use, createContext, useCallback, useMemo } from 'react'
 import Snackbar from '@mui/material/Snackbar'
 import MuiAlert from '@mui/material/Alert';
 import { useTranslation } from 'react-i18next';
@@ -7,9 +7,7 @@ import { resolveErrorMessage } from '../../errors';
 const SnackbarContext = createContext(null);
 const ANCHOR_ORIGIN = { vertical: 'bottom', horizontal: 'center' };
 
-const Alert = React.forwardRef(function Alert(props, ref) {
-    return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
-});
+const Alert = ({ ref, ...props }) => <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 
 const SnackbarProvider = ({ children }) => {
     const [snack, setSnack] = useState({ open: false, message: null, severity: null, onAction: null });
@@ -54,6 +52,6 @@ const SnackbarProvider = ({ children }) => {
     );
 };
 
-const useSnackbar = () => useContext(SnackbarContext);
+const useSnackbar = () => use(SnackbarContext);
 
 export { SnackbarProvider, SnackbarContext, useSnackbar }

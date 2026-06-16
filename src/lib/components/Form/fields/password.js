@@ -4,13 +4,13 @@ import { IconButton, InputAdornment } from '@mui/material';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
+const handleMouseDownPassword = (event) => {
+    event.preventDefault();
+};
+
 const Field = ({ otherProps, ...props }) => {
 	const [showPassword, setShowPassword] = React.useState(false);
 	const handleClickShowPassword = () => setShowPassword((show) => !show);
-
-	const handleMouseDownPassword = (event) => {
-		event.preventDefault();
-	};
     const { readOnly = false, disabled = false } = props.column || {};
     otherProps = {
 		type: showPassword ? 'text' : 'password',

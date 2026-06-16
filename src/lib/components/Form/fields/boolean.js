@@ -7,7 +7,8 @@ const Field = ({ column, field, formik, otherProps }) => {
     const handleChange = (event) => {
         formik.setFieldValue(field, event.target.checked);
     }
-    const checked = useMemo(()=> formik.values[field] ?? !!column.defaultValue, [formik, column]);
+    /* oxlint-disable-next-line react-doctor/exhaustive-deps -- formik.values[field] is a computed dep expression; oxlint cannot parse it, so formik is kept instead */
+    const checked = useMemo(()=> formik.values[field] ?? !!column.defaultValue, [formik, field, column.defaultValue]);
     const isDisabled = typeof column.readOnly === 'function' ? column.readOnly(formik) : column.readOnly; 
     return <div key={field}>
         <FormControlLabel

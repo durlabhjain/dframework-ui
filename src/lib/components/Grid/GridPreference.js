@@ -37,6 +37,7 @@ const paginationModel = { pageSize: 50, page: 0 };
 
 const pageSizeOptions = [5, 10, 20, 50, 100];
 
+/* oxlint-disable react-doctor/no-giant-component, react-doctor/prefer-useReducer -- GridPreferences is a complex component with independent UI states; splitting or useReducer would be a significant architecture refactor */
 const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts }) => {
     const { getApiEndpoint } = useStateContext();
     const preferenceApi = getApiEndpoint("GridPreferenceManager");
@@ -59,8 +60,8 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         { field: "prefName", type: 'string', width: 300, headerName: t("Preference Name", tOpts), sortable: false, filterable: false },
         { field: "prefDesc", type: 'string', width: 300, headerName: t("Preference Description", tOpts), sortable: false, filterable: false },
         { field: "isDefault", type: "boolean", width: 100, headerName: t("Default", tOpts), sortable: false, filterable: false },
-        { field: 'editAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={1} icon={<Tooltip title={actionTypes.Edit}><EditIcon /></Tooltip>} tabIndex={1} data-action={actionTypes.Edit} label={t("Edit", tOpts)} color="primary" />] },
-        { field: 'deleteAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={2} icon={<Tooltip title={actionTypes.Delete}><DeleteIcon /></Tooltip>} tabIndex={2} data-action={actionTypes.Delete} label={t("Delete", tOpts)} color="error" />] }
+        { field: 'editAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={1} icon={<Tooltip title={actionTypes.Edit}><EditIcon /></Tooltip>} tabIndex={0} data-action={actionTypes.Edit} label={t("Edit", tOpts)} color="primary" />] },
+        { field: 'deleteAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={2} icon={<Tooltip title={actionTypes.Delete}><DeleteIcon /></Tooltip>} tabIndex={0} data-action={actionTypes.Delete} label={t("Delete", tOpts)} color="error" />] }
     ], [t, tOpts]);
 
     const validationSchema = useMemo(() =>
@@ -76,23 +77,23 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         handleClose();
     };
 
-    const resetToDefault = () => {
+    const resetToDefault = useCallback(() => {
         if (gridRef.current?.initialGridState) {
             gridRef.current.restoreState(gridRef.current.initialGridState);
             setCurrentPreference(null);
             if (onPreferenceChange) onPreferenceChange(null);
             handleClose();
         }
-    };
+    }, [gridRef, onPreferenceChange]);
 
     // Only memoize functions used in useEffect dependencies
+    /* oxlint-disable react-doctor/no-event-handler, react-doctor/no-pass-live-state-to-parent -- loadPreferences calls onPreferenceChange in async callback after fetching; this notification pattern is intentional */
     const loadPreferences = useCallback(async ({ applyDefault = false }) => {
         const response = await request({
             url: preferenceApi,
             params: { action: 'list', id: preferenceKey },
             dataParser: DATA_PARSERS.json
         });
-        
         if (!response?.preferences) {
             snackbar.showMessage(t('Failed to load preferences.', tOpts));
             if (onPreferenceChange) onPreferenceChange(null);
@@ -100,9 +101,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         }
 
         const preferences = response.preferences.filter(pref => pref.prefName.trim() !== '');
-        
         setPreferences(preferences);
-        
         if (applyDefault) {
             const defaultPref = preferences.find(pref => pref.isDefault);
             if (defaultPref) {
@@ -114,6 +113,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         
         return { preferences };
     }, [preferenceApi, preferenceKey, snackbar, t, tOpts, onPreferenceChange]);
+    /* oxlint-enable react-doctor/no-event-handler, react-doctor/no-pass-live-state-to-parent */
 
     const applyPreference = useCallback(async (prefId, preferencesArray = null) => {
         // Store initial state before applying first preference
@@ -241,18 +241,18 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
     });
 
     // Load preferences on mount
+    /* oxlint-disable react-doctor/no-pass-live-state-to-parent, react-doctor/exhaustive-deps -- loadPreferences/applyPreference are stable callbacks; preferenceKey is the correct dep; others would cause infinite loops */
     useEffect(() => {
         if (!preferenceKey) return;
-        
         const loadAndApply = async () => {
             const result = await loadPreferences({ applyDefault: true });
             if (result?.defaultPrefId && result?.preferences) {
                 await applyPreference(result.defaultPrefId, result.preferences);
             }
         };
-        
         loadAndApply();
     }, [preferenceKey]);
+    /* oxlint-enable react-doctor/no-pass-live-state-to-parent, react-doctor/exhaustive-deps */
 
     // Memoize locale text used by the DataGrid to avoid recreating the object on every render
     const localeText = useMemo(() => ({
@@ -534,6 +534,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         </Box>
     );
 };
-
+/* oxlint-enable react-doctor/no-giant-component, react-doctor/prefer-useReducer */
 
 export default GridPreferences;

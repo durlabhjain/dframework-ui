@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     Grid, Typography,
     Dialog, DialogContent, DialogTitle,
@@ -6,14 +6,15 @@ import {
 import { Replay, Close } from '@mui/icons-material';
 import { useStateContext } from '../useRouter/StateProvider';
 
+const RATIO = 16 / 9;
+
 const HelpModal = () => {
     const [height, setHeight] = useState();
     const [loading, setLoading] = useState(false);
-    const { stateData, setModal } = useStateContext()
-    const openModal = stateData.modal; //useSelector(state => state.appReducer.modal);
-    const ratio = 16 / 9;
-    let zoom = ((window.outerWidth - 10) / window.innerWidth) * 100;
-    const updateHeight = () => {
+    const { stateData, setModal } = useStateContext();
+    const openModal = stateData.modal;
+
+    const updateHeight = useCallback(() => {
         let widthPercentage = document.getElementById('tutorial-iframe');
         if (widthPercentage) {
             widthPercentage = widthPercentage.offsetWidth;
@@ -21,24 +22,26 @@ const HelpModal = () => {
         } else {
             widthPercentage = 0.9;
         }
-        const calculatedHeight = window.innerWidth * widthPercentage * (1 / ratio);
+        const calculatedHeight = window.innerWidth * widthPercentage * (1 / RATIO);
         const maxHeight = window.innerHeight - 180;
         setHeight(Math.min(calculatedHeight, maxHeight));
-    };
+    }, []);
+
     useEffect(() => {
         if (openModal?.status) {
             setLoading(true);
             updateHeight();
         }
-    }, [openModal, zoom])
+    }, [openModal, updateHeight]);
 
+    /* oxlint-disable react-doctor/advanced-event-handler-refs -- updateHeight is stabilized by useCallback([]) so the listener is only added once */
     useEffect(() => {
         window.addEventListener("resize", updateHeight);
-
         return () => {
             window.removeEventListener("resize", updateHeight);
-        }
-    }, [])
+        };
+    }, [updateHeight]);
+    /* oxlint-enable react-doctor/advanced-event-handler-refs */
 
     function resetIframe() {
         const iframe = document.getElementById('tutorial-iframe');
@@ -72,15 +75,16 @@ const HelpModal = () => {
                             style={{ width: '100%', height: `${height}px` }}
                             title={openModal?.data?.title || ''}
                             src={openModal?.data?.url}
-                            allowfullscreen
-                            frameborder="0"
+                            allowFullScreen
+                            frameBorder="0"
                             loading="lazy"
+                            sandbox="allow-scripts allow-popups allow-forms allow-presentation"
                             onLoad={() => setLoading(false)}
                         />}
                     </DialogContent>
                 </Dialog>}
         </div>
-    )
-}
+    );
+};
 
-export default HelpModal
+export default HelpModal;

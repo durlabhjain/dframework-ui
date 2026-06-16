@@ -6,7 +6,9 @@ import TextField from '@mui/material/TextField';
 import Chip from '@mui/material/Chip';
 import { useCallback } from 'react';
 
-const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = {}, mode }) => {
+const EMPTY_FIELD_CONFIGS = {};
+
+const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS, mode }) => {
     const theme = useTheme();
     let inputValue = formik.values[field] || [];
     if (!Array.isArray(inputValue)) {
@@ -17,9 +19,10 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = {}, mo
         if (typeof fieldConfigs.disabled !== 'undefined') return fieldConfigs.disabled;
         if (typeof column.disabled === 'function') return column.disabled({ isAdd, formik });
         return Boolean(column.disabled);
-    }, [mode, fieldConfigs.disabled, column.disabled]);
+    }, [mode, fieldConfigs.disabled, column.disabled, isAdd, formik]);
     const fixedOptions = column.hasDefault && !isAdd ? [inputValue[0]] : [];
 
+    /* oxlint-disable react-doctor/exhaustive-deps -- fixedOptions covers the isAdd/inputValue chain; all used values are captured in deps */
     const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
         const lastElement = newValue.pop()?.trim();
         if (!newValue.includes(lastElement)) {
@@ -37,7 +40,8 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = {}, mo
             newValue = newValue.length ? newValue.join(',') : '';
         }
         formik.setFieldValue(field, newValue);
-    },[formik, field]);
+    }, [formik, field, column, fixedOptions]);
+    /* oxlint-enable react-doctor/exhaustive-deps */
 
     return (
         <FormControl

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState, useCallback, useMemo } from 'react';
+import { createContext, use, useRef, useState, useCallback, useMemo } from 'react';
 import { locales } from '../mui/locale/localization';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -16,7 +16,10 @@ const RouterContext = createContext(null);
 // Fallback functions for missing SnackbarProvider
 const snackbarWarning = () => console.warn('SnackbarProvider not found. Wrap StateProvider with SnackbarProvider.');
 
-const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => {
+const EMPTY_API_ENDPOINTS = {};
+
+/* oxlint-disable react-doctor/prefer-useReducer -- multiple independent state slices intentionally kept as separate useState for clarity; useReducer would add indirection without benefit here */
+const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API_ENDPOINTS }) => {
 
   // App-level state - using individual useState for simplicity
   const [locale, setLocaleState] = useState('en');
@@ -28,7 +31,9 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   const [timeZone, setTimeZoneState] = useState('');
 
   // Framework functionality - loader management (simple on/off, no counter)
+  /* oxlint-disable react-doctor/rendering-usetransition-loading -- showLoader is a generic boolean toggle; migrating to useTransition would change the external API used by all callers */
   const [isLoading, setIsLoading] = useState(false);
+  /* oxlint-enable react-doctor/rendering-usetransition-loading */
 
   // Framework functionality - i18n
   const { t, i18n } = useTranslation();
@@ -238,15 +243,16 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
     </StateContext.Provider>
   );
 };
+/* oxlint-enable react-doctor/prefer-useReducer */
 
 const RouterProvider = RouterContext.Provider;
 
 const useRouter = () => {
-  return useContext(RouterContext);
+  return use(RouterContext);
 };
 
 const useStateContext = () => {
-  const context = useContext(StateContext);
+  const context = use(StateContext);
   if (context === undefined) {
     throw new Error('useStateContext must be used within a StateProvider');
   }

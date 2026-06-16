@@ -2,16 +2,18 @@ import { Avatar, useTheme } from "@mui/material";
 
 export const brandBackgroundColor = '#182eb5';
 export const brandColor = '#ffffff';
+const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
 function RenderDayCell({ value }) {
-    const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
     const dayValues = value.split('');
 
     const theme = useTheme();
     return (
         <div style={{ display: 'flex' }}>
-            {dayValues.map((val, index) => (
+            {/* oxlint-disable react-doctor/no-array-index-as-key -- fixed 7-element array mapped from a string; positions are stable and never reorder */}
+        {dayValues.map((val, index) => (
                 <Avatar
-                    key={index}
+                    key={`day-${index}`}
                     sx={{
                         backgroundColor: val === '1' ? theme.palette.success.main : brandColor,
                         color: val === '1' ? 'white' : 'black',
@@ -26,7 +28,7 @@ function RenderDayCell({ value }) {
                         border: "1px solid grey"
                     }}
                 >
-                    {days[index]}
+                    {DAYS[index]}
                 </Avatar>
             ))}
         </div>

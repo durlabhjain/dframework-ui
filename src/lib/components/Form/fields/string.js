@@ -2,7 +2,7 @@ import TextField from '@mui/material/TextField';
 import React from 'react';
 import { useTheme } from '@mui/material';
 
-const field = ({ column, field, formik, otherProps }) => {
+const Field = ({ column, field, formik, otherProps }) => {
     const theme = useTheme();
     const rows = column.rows || (column.multiline ? 5 : 1);
     return <TextField
@@ -31,4 +31,4 @@ const field = ({ column, field, formik, otherProps }) => {
     />;
 };
 
-export default field;
+export default Field;

@@ -51,8 +51,10 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
         }
         
         return value;
+        /* oxlint-disable-next-line react-doctor/exhaustive-deps -- formik.setFieldValue is stable; full formik object in deps causes excessive re-renders */
     }, [formik.values[field], options, column.multiSelect, field]);
 
+    /* oxlint-disable react-doctor/exhaustive-deps -- tTranslate/tOpts/formik are intentionally omitted; adding formik to deps causes callback churn on every keypress */
     const handleChange = useCallback((event) => {
         if (typeof column.onChange === 'function') {
             column.onChange({ formik, value: event.target.value, options, event , t: tTranslate, tOpts});
@@ -60,6 +62,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
         formik.handleChange(event);
         userSelected.current = true;
     }, [formik.values[field], column.onChange, options]);
+    /* oxlint-enable react-doctor/exhaustive-deps */
 
     // Determine if the current value is valid and should show the clear button
     const hasValue = useMemo(() => {

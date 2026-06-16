@@ -15,6 +15,11 @@ const componentMap = {
     dateTime: DateTimePicker
 };
 
+const isValidDate = (date) => {
+    const parsedDate = dayjs(date);
+    return parsedDate.isValid() && parsedDate.year() > 1900;
+};
+
 const LocalizedDatePicker = (props) => {
     const { fixedFilterFormat } = utils;
     const { item, applyValue, convert, colDef } = props;
@@ -22,10 +27,6 @@ const LocalizedDatePicker = (props) => {
     const columnType = colDef?.type || 'date';
     const filterFormat = fixedFilterFormat[columnType];
     const localize = colDef?.localize ?? props.localize ?? false;
-    const isValidDate = (date) => {
-        const parsedDate = dayjs(date);
-        return parsedDate.isValid() && parsedDate.year() > 1900;
-    };
     const format = systemDateTimeFormat(columnType !== "dateTime", false, stateData.dateTime);
 
     const handleFilterChange = (newValue) => {

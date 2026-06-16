@@ -3,13 +3,17 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { useStateContext } from '../../useRouter/StateProvider';
 
-const Field = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) => {
+const EMPTY_FIELD_CONFIGS = {};
+
+const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS, mode }) => {
     const isDisabled = mode !== 'copy' && fieldConfigs.disabled;
     const { systemDateTimeFormat, stateData } = useStateContext(); //provider
     
+    /* oxlint-disable react-doctor/exhaustive-deps -- formik.values[field] is a computed dep; using formik + field to cover it */
     const dateValue = useMemo(() => {
         return formik.values[field] ? dayjs(formik.values[field]) : null;
-    }, [formik.values[field]]);
+    }, [formik, field]);
+    /* oxlint-enable react-doctor/exhaustive-deps */
 
     const minFieldValue = column.minField ? formik.values[column.minField] : undefined;
     const maxFieldValue = column.maxField ? formik.values[column.maxField] : undefined;
@@ -37,10 +41,10 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) =
     }, [field, formik]);
     
     return <DatePicker
+        key={field}
         {...otherProps}
         variant="standard"
         readOnly={column?.readOnly === true}
-        key={field}
         fullWidth
         format={systemDateTimeFormat(true, false, stateData.dateTime)}
         name={field}

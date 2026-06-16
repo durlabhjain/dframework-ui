@@ -331,7 +331,8 @@ const getList = async (props = {}) => {
  * Returns { id, title, record, lookups } or throws on error.
  */
 const getRecord = async (props = {}) => {
-    let { api, id, model, parentFilters, where = {} } = props;
+    const { id, model, parentFilters, where = {} } = props;
+    let { api } = props;
     api = api || model.api;
     const searchParams = new URLSearchParams();
     const url = `${api}/${id === undefined || id === null ? '-' : id}`;
@@ -442,7 +443,8 @@ const saveRecord = async function (props = {}) {
  * Fetches lookup data for a given scope. Returns the response or throws on error.
  */
 const getLookups = async (props = {}) => {
-    let { api, model, lookups, scopeId, reqData } = props;
+    const { model, lookups, scopeId, reqData } = props;
+    let { api } = props;
     api = api || model.api;
     const searchParams = new URLSearchParams();
     const url = `${api}/lookups`;

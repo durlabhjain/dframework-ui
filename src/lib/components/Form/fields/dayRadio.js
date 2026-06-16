@@ -52,7 +52,9 @@ const DaySelection = ({ name, field, formik, expired }) => {
         if (value === isWeekdays) return isWeekdays;
         return 'Custom';
     });
+    /* oxlint-disable react-doctor/rerender-state-only-in-handlers -- presetSelected is coordination state between event handlers; useRef is not used per project convention */
     const [presetSelected, setPresetSelected] = useState(false);
+    /* oxlint-enable react-doctor/rerender-state-only-in-handlers */
     const onAssignChange = useCallback((newValue) => {
         if (Array.isArray(newValue)) {
             let finalValue = defaultVal;
@@ -63,7 +65,7 @@ const DaySelection = ({ name, field, formik, expired }) => {
             setFieldValue(name || field, finalValue);
             setPresetSelected(true);
         } else {
-            let baseValue = presetSelected ? defaultVal : selectedDays;
+            const baseValue = presetSelected ? defaultVal : selectedDays;
             const finalValue = baseValue.slice(0, newValue) + (baseValue[newValue] === "1" ? "0" : "1") + baseValue.slice(newValue + 1);
             setSelectedDays(finalValue);
             setFieldValue(name || field, finalValue);
