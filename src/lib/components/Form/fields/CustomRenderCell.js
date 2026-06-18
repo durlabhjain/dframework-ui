@@ -10,7 +10,6 @@ function RenderDayCell({ value }) {
     const theme = useTheme();
     return (
         <div style={{ display: 'flex' }}>
-            {/* oxlint-disable react-doctor/no-array-index-as-key -- fixed 7-element array mapped from a string; positions are stable and never reorder */}
         {dayValues.map((val, index) => (
                 <Avatar
                     key={`day-${index}`}

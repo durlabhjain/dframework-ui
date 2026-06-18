@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useId } from 'react';
+import { useMemo, useState, useEffect, useId } from 'react';
 import { NumberField as BaseNumberField } from '@base-ui/react/number-field';
 import {
     IconButton,
@@ -77,7 +77,6 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
         () => resolveValue({ value: max, state: formik.values }),
         [max, formik.values]
     );
-    /* oxlint-disable react-doctor/no-event-handler, react-doctor/no-derived-state, react-doctor/no-pass-data-to-parent, react-doctor/no-pass-live-state-to-parent, react-doctor/no-reset-all-state-on-prop-change, react-doctor/exhaustive-deps -- debounced number input pattern: local inputValue buffers keystrokes, debouncedValue syncs to formik, external formik changes sync back; this 3-way sync is intentional */
     const formikFieldValue = useMemo(() => formik.values[field] ?? null, [formik.values[field]]);
     const [inputValue, setInputValue] = useState(formikFieldValue);
     const debouncedValue = useDebounce(inputValue, 400);
@@ -94,7 +93,6 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
             setInputValue(formikFieldValue);
         }
     }, [formikFieldValue]);
-    /* oxlint-enable react-doctor/no-event-handler, react-doctor/no-derived-state, react-doctor/no-pass-data-to-parent, react-doctor/no-pass-live-state-to-parent, react-doctor/no-reset-all-state-on-prop-change, react-doctor/exhaustive-deps */
 
     const handleValueChange = (value) => {
         setInputValue(value);

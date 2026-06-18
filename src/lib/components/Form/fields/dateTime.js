@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -8,13 +8,11 @@ dayjs.extend(utc);
 
 const Field = ({ column, field, formik, otherProps }) => {
     const { systemDateTimeFormat, stateData } = useStateContext();
-    /* oxlint-disable react-doctor/exhaustive-deps -- formik.values[field] is a computed dep; using formik + field to cover it; column included for readOnly re-evaluation */
     const dateTimeValue = useMemo(() => {
         const val = formik.values[field];
         if (!val) return null;
         return dayjs(val);
     }, [formik, field, column]);
-    /* oxlint-enable react-doctor/exhaustive-deps */
     
     return <DateTimePicker
         key={field}

@@ -31,7 +31,7 @@ export default [
             'react/prop-types': 'off',
 
             // JS quality
-            'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^(_|React)$' }],
+            'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
             'no-console': ['warn', { allow: ['warn', 'error'] }],
             'no-var': 'error',
             'prefer-const': 'error',

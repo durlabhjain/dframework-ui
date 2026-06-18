@@ -11,18 +11,15 @@ const parseJson = (raw) => {
 
 const Field = ({ field, formik }) => {
     const [state, setState] = React.useState(() => parseJson(formik.values[field]));
-    /* oxlint-disable-next-line react-doctor/no-event-handler -- debouncedState is a derived stable value used in an effect; react-doctor false-positively traces it back to here */
     const debouncedState = useDebounce(state, 300);
 
     // Update formik when debounced state changes
-    /* oxlint-disable react-doctor/no-event-handler, react-doctor/no-pass-data-to-parent, react-doctor/no-pass-live-state-to-parent, react-doctor/exhaustive-deps -- debounced JSON editor syncs to formik via effect; intentional pattern for non-blocking JSON editing */
     React.useEffect(() => {
         const nextValue = JSON.stringify(debouncedState);
         if (formik.values[field] !== nextValue) {
             formik.setFieldValue(field, nextValue);
         }
     }, [debouncedState, field, formik, formik.values[field]]);
-    /* oxlint-enable react-doctor/no-event-handler, react-doctor/no-pass-data-to-parent, react-doctor/no-pass-live-state-to-parent, react-doctor/exhaustive-deps */
 
     const handleChange = (key, value) => {
         const updatedState = { ...state, [key]: value };

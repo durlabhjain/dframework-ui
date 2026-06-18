@@ -85,14 +85,12 @@ function FileUpload({ column, field, formik }) {
     };
 
     const host = new URL(url, window.location.origin).hostname.toLowerCase();
-    /* oxlint-disable react-doctor/no-derived-state-effect, react-doctor/no-derived-state -- auto-detecting external/internal URL is intentional; user can override via radio button (handleRadioChange), making it real state, not a pure derivation */
     React.useEffect(() => {
         setFormState(prev => ({
             ...prev,
             isExternal: !inputValue.toLowerCase().includes(host) ? "yes" : "no"
         }));
     }, [inputValue, host]);
-    /* oxlint-enable react-doctor/no-derived-state-effect */
 
     const isLengthExceeded = formik.values[field]?.length > (column.max || consts.maxLength);
     const colorScheme = isLengthExceeded ? 'red' : '';

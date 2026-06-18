@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
     Grid, Typography,
     Dialog, DialogContent, DialogTitle,
@@ -34,14 +34,12 @@ const HelpModal = () => {
         }
     }, [openModal, updateHeight]);
 
-    /* oxlint-disable react-doctor/advanced-event-handler-refs -- updateHeight is stabilized by useCallback([]) so the listener is only added once */
     useEffect(() => {
         window.addEventListener("resize", updateHeight);
         return () => {
             window.removeEventListener("resize", updateHeight);
         };
     }, [updateHeight]);
-    /* oxlint-enable react-doctor/advanced-event-handler-refs */
 
     function resetIframe() {
         const iframe = document.getElementById('tutorial-iframe');

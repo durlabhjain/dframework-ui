@@ -2,7 +2,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Box from '@mui/material/Box';
 import { GridToolbarExportContainer } from '@mui/x-data-grid-premium';
 import { GridOn, Code, Language, TableChart, DataObject as DataObjectIcon } from '@mui/icons-material';
-import React from 'react';
 
 // Helper to convert default sort string to array
 export const convertDefaultSort = (defaultSort, constants, sortRegex) => {

@@ -18,7 +18,6 @@ const snackbarWarning = () => console.warn('SnackbarProvider not found. Wrap Sta
 
 const EMPTY_API_ENDPOINTS = {};
 
-/* oxlint-disable react-doctor/prefer-useReducer -- multiple independent state slices intentionally kept as separate useState for clarity; useReducer would add indirection without benefit here */
 const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API_ENDPOINTS }) => {
 
   // App-level state - using individual useState for simplicity
@@ -31,9 +30,7 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API
   const [timeZone, setTimeZoneState] = useState('');
 
   // Framework functionality - loader management (simple on/off, no counter)
-  /* oxlint-disable react-doctor/rendering-usetransition-loading -- showLoader is a generic boolean toggle; migrating to useTransition would change the external API used by all callers */
   const [isLoading, setIsLoading] = useState(false);
-  /* oxlint-enable react-doctor/rendering-usetransition-loading */
 
   // Framework functionality - i18n
   const { t, i18n } = useTranslation();
@@ -243,7 +240,6 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API
     </StateContext.Provider>
   );
 };
-/* oxlint-enable react-doctor/prefer-useReducer */
 
 const RouterProvider = RouterContext.Provider;
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { useStateContext } from '../../useRouter/StateProvider';
@@ -9,11 +9,9 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
     const isDisabled = mode !== 'copy' && fieldConfigs.disabled;
     const { systemDateTimeFormat, stateData } = useStateContext(); //provider
     
-    /* oxlint-disable react-doctor/exhaustive-deps -- formik.values[field] is a computed dep; using formik + field to cover it */
     const dateValue = useMemo(() => {
         return formik.values[field] ? dayjs(formik.values[field]) : null;
     }, [formik, field]);
-    /* oxlint-enable react-doctor/exhaustive-deps */
 
     const minFieldValue = column.minField ? formik.values[column.minField] : undefined;
     const maxFieldValue = column.maxField ? formik.values[column.maxField] : undefined;

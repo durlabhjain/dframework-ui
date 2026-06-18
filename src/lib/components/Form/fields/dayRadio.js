@@ -1,4 +1,3 @@
-import React from 'react';
 import { useCallback, useState } from 'react';
 import { Avatar, FormControl, FormControlLabel, FormHelperText, Radio, RadioGroup, styled, useTheme } from '@mui/material';
 import {  grey } from '@mui/material/colors';
@@ -52,9 +51,7 @@ const DaySelection = ({ name, field, formik, expired }) => {
         if (value === isWeekdays) return isWeekdays;
         return 'Custom';
     });
-    /* oxlint-disable react-doctor/rerender-state-only-in-handlers -- presetSelected is coordination state between event handlers; useRef is not used per project convention */
     const [presetSelected, setPresetSelected] = useState(false);
-    /* oxlint-enable react-doctor/rerender-state-only-in-handlers */
     const onAssignChange = useCallback((newValue) => {
         if (Array.isArray(newValue)) {
             let finalValue = defaultVal;

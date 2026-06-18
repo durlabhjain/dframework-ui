@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { Box } from "@mui/material";
 import { withTranslation } from "react-i18next";
@@ -39,13 +39,11 @@ function PageTitle({
   };
 
   // Update document title when title prop changes
-  /* oxlint-disable react-doctor/no-event-handler -- setting document.title in useEffect is the standard pattern for syncing to DOM APIs */
   useEffect(() => {
     if (title) {
       document.title = title;
     }
   }, [title]);
-  /* oxlint-enable react-doctor/no-event-handler */
 
   return (
     <>

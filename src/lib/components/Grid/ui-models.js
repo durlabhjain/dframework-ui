@@ -1,5 +1,4 @@
 import GridBase from './index';
-import React from 'react';
 import * as yup from 'yup';
 import { Divider } from '@mui/material';
 import Form from '../Form/Form';

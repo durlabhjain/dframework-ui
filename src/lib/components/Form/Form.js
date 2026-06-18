@@ -1,4 +1,3 @@
-import React from "react";
 import { useFormik } from "formik";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
@@ -38,7 +37,6 @@ const consts = {
   editIdIndex: 0
 };
 
-/* oxlint-disable react-doctor/no-giant-component, react-doctor/prefer-useReducer -- Form is a complex lifecycle component; splitting or reducing to useReducer would require a significant architecture refactor */
 const Form = ({
   model,
   api,
@@ -123,11 +121,9 @@ const Form = ({
 
   const isNew = useMemo(() => utils.emptyIdValues.includes(id), [id]);
 
-  /* oxlint-disable react-doctor/exhaustive-deps -- id is in deps as a stable identity signal even though isNew covers its semantic; both are intentional */
   const initialValues = useMemo(() => isNew
     ? { ...model.initialValues, ...data, ...baseSaveData }
     : { ...baseSaveData, ...model.initialValues, ...data }, [model.initialValues, data, id, baseSaveData, isNew]);
-  /* oxlint-enable react-doctor/exhaustive-deps */
 
   const formApi = api || gridApi;
   const idToLoad = useMemo(() => {
@@ -137,7 +133,6 @@ const Form = ({
     const options = idWithOptions.split("-");
     return options.length > 1 ? options[consts.loadIdIndex] : id;
   }, [detailPanelId, idWithOptions, id]);
-  /* oxlint-disable react-doctor/exhaustive-deps -- errorOnLoad is declared after loadRecord in the component body; adding it to deps would cause a TDZ ReferenceError; setIsLoading/setActiveRecord are stable setState dispatchers */
   const loadRecord = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -153,9 +148,7 @@ const Form = ({
       setIsLoading(false);
     }
   }, [formApi, model, idToLoad]);
-  /* oxlint-enable react-doctor/exhaustive-deps */
   
-  /* oxlint-disable react-doctor/no-event-handler, react-doctor/no-derived-state, react-doctor/no-derived-state-effect, react-doctor/no-pass-data-to-parent, react-doctor/no-pass-live-state-to-parent -- data loading and validation schema derivation in effects are intentional form lifecycle patterns */
   useEffect(() => {
     loadRecord();
   }, [id, idToLoad, model, formApi, loadRecord]);
@@ -163,7 +156,6 @@ const Form = ({
   useEffect(() => {
     setValidationSchema(model.getValidationSchema({ id, tTranslate, tOpts }));
   }, [id, model, setValidationSchema, translate, tOpts, tTranslate]);
-  /* oxlint-enable react-doctor/no-event-handler, react-doctor/no-derived-state, react-doctor/no-pass-data-to-parent, react-doctor/no-pass-live-state-to-parent */
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -267,7 +259,6 @@ const Form = ({
     }
     event.preventDefault();
   }, [formik.dirty, recordEditable, onCancel, navigateBack, handleNavigation]);
-  /* oxlint-disable-next-line react-doctor/exhaustive-deps -- deleteRecord/ERROR_CODES are stable module imports; setIsDeleting is a stable dispatcher; model.api is covered by model */
   const handleDelete = useCallback(async () => {
     try {
       setIsDeleting(true);
@@ -437,5 +428,4 @@ const Form = ({
     </>
   );
 };
-/* oxlint-enable react-doctor/no-giant-component, react-doctor/prefer-useReducer */
 export default Form;

@@ -211,7 +211,6 @@ const GridBase = memo(({
     );
     const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState(() => normalizedStaticData || { recordCount: 0, records: null, lookups: {} });
-    /* oxlint-disable react-doctor/no-event-handler -- standard component-body derivations from props; react-doctor false-positively flags prop reads as "event logic in effect" */
     const forAssignment = !!onAssignChange;
     const rowsSelected = showRowsSelected;
     // MUI v8: rowSelectionModel uses object format with type ('include'/'exclude') and ids (Set)
@@ -294,14 +293,11 @@ const GridBase = memo(({
     const [groupingModel, setGroupingModel] = useState(
         () => Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []
     );
-    /* oxlint-enable react-doctor/no-event-handler */
-    /* oxlint-disable react-doctor/no-derived-useState, react-doctor/rerender-state-only-in-handlers -- prevRowGroupingField is a previous-value tracker required by the setState-during-render pattern (React 19 recommended) to sync rowGroupingField prop without a stale-frame useEffect */
     const [prevRowGroupingField, setPrevRowGroupingField] = useState(props.rowGroupingField);
     if (prevRowGroupingField !== props.rowGroupingField) {
         setPrevRowGroupingField(props.rowGroupingField);
         setGroupingModel(Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []);
     }
-    /* oxlint-enable react-doctor/no-derived-useState, react-doctor/rerender-state-only-in-handlers */
 
     useEffect(() => {
         if (!apiRef.current) return;
@@ -317,7 +313,6 @@ const GridBase = memo(({
 
 
     // Extract column grouping props from model to override
-    /* oxlint-disable react-doctor/exhaustive-deps -- translate is an indirect locale dep; tTranslate depends on it but react-doctor doesn't trace through the hook */
     const columnGroupingModel = useMemo(() => {
         if (!model.columnGroupingModel) return [];
         return model.columnGroupingModel.map(group => ({
@@ -325,7 +320,6 @@ const GridBase = memo(({
             headerName: group.headerName ? tTranslate(group.headerName, tOpts) : group.headerName
         }));
     }, [model.columnGroupingModel, tOpts, translate, tTranslate]);
-    /* oxlint-enable react-doctor/exhaustive-deps */
 
     const baseDataFromParams = searchParams.has('baseData') && searchParams.get('baseData');
     const baseSaveData = useMemo(() => {
@@ -408,16 +402,13 @@ const GridBase = memo(({
         },
     };
 
-    /* oxlint-disable react-doctor/no-event-handler, react-doctor/no-pass-live-state-to-parent, react-doctor/no-pass-data-to-parent, react-doctor/exhaustive-deps -- onDataLoaded is a grid-data notification callback; props.onDataLoaded excluded from deps to avoid fetch loops if parent passes an inline function */
     useEffect(() => {
         dataRef.current = data;
         if (typeof props.onDataLoaded === 'function') {
             props.onDataLoaded(data);
         }
     }, [data]);
-    /* oxlint-enable react-doctor/no-event-handler, react-doctor/no-pass-live-state-to-parent, react-doctor/no-pass-data-to-parent, react-doctor/exhaustive-deps */
 
-    /* oxlint-disable react-doctor/no-derived-state -- setData from static-data prop is intentional; grid resets when the source changes */
     useEffect(() => {
         if (hasStaticData) {
             setData(normalizedStaticData);
@@ -430,9 +421,7 @@ const GridBase = memo(({
             lookups: {}
         }));
     }, [hasStaticData, normalizedStaticData]);
-    /* oxlint-enable react-doctor/no-derived-state */
 
-    /* oxlint-disable react-doctor/no-adjust-state-on-prop-change, react-doctor/no-event-handler, react-doctor/no-derived-state -- customFilters is an imperative push API (supports .clear flag); setting filterModel from customFilters is intentional, not derivable via useMemo */
     useEffect(() => {
         if (!customFilters || !Object.keys(customFilters).length) return;
         if (customFilters.clear) {
@@ -449,7 +438,6 @@ const GridBase = memo(({
         }, []);
         setFilterModel({ items, logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
     }, [customFilters]);
-    /* oxlint-enable react-doctor/no-adjust-state-on-prop-change, react-doctor/no-event-handler */
 
     const lookupOptions = useCallback(({ field, lookupMap: lookupMapParam }) => {
         const lookupData = dataRef.current.lookups || {};
@@ -466,7 +454,6 @@ const GridBase = memo(({
         // TODO: If filter header communication is needed, implement using local state or props
     }, [props.isChildGrid, hideTopFilters]);
 
-    /* oxlint-disable react-doctor/exhaustive-deps -- translate is an indirect locale dep; tTranslate depends on it but react-doctor doesn't trace through the hook */
     const createAction = useCallback(
         ({ key, title, icon, color = "primary", disabled, otherProps }) => (
             <GridActionsCellItem
@@ -481,7 +468,6 @@ const GridBase = memo(({
         ),
         [translate, tOpts, tTranslate]
     );
-    /* oxlint-enable react-doctor/exhaustive-deps */
     const { customActions = [] } = model;
     const actionConfig = useMemo(() => {
         const actions = [];
@@ -563,7 +549,6 @@ const GridBase = memo(({
         return Object.keys(lookups).sort().join(',');
     }, [data?.lookups]);
 
-    /* oxlint-disable react-doctor/no-event-handler, react-doctor/exhaustive-deps -- translate is an indirect locale dep; tTranslate depends on it but react-doctor doesn't trace through the hook; tOpts/tTranslate cover translation reactivity */
     const { stableGridColumns, pinnedColumns, lookupMap } = useMemo(() => {
         let baseColumnList = columns || model.gridColumns || model.columns;
         if (dynamicColumns) {
@@ -656,16 +641,13 @@ const GridBase = memo(({
         if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push('__detail_panel_toggle__');
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
     }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime, groupingModel, enableRowDetailPanel]);
-    /* oxlint-enable react-doctor/no-event-handler */
 
     // Shallow-copy columns when lookups change so MUI DataGrid's GridFilterInputSingleSelect
     // sees new column object references and re-evaluates its memoized currentValueOptions.
-    /* oxlint-disable-next-line react-doctor/exhaustive-deps -- lookupKeys is an intentional extra dep that triggers re-evaluation when lookup data changes */
     const gridColumns = useMemo(() => stableGridColumns.map(col => ({ ...col })), [stableGridColumns, lookupKeys]);
 
     // Initialize toolbar filters with default values
     const hasInitializedRef = useRef(false);
-    /* oxlint-disable react-doctor/no-derived-state, react-doctor/exhaustive-deps -- one-time init: filterModel intentionally excluded from deps so this only runs when columns change; setFilterModel is a stable dispatcher */
     useEffect(() => {
         // Only run once on initial mount
         if (hasInitializedRef.current) return;
@@ -702,10 +684,8 @@ const GridBase = memo(({
         }
         hasInitializedRef.current = true;
     }, [gridColumns]);
-    /* oxlint-enable react-doctor/no-derived-state, react-doctor/exhaustive-deps */
 
 
-    /* oxlint-disable react-doctor/exhaustive-deps -- setData/setIsLoading are stable dispatchers; filterValidItems/fetchAbortControllerRef are module-level/refs; all reactive values are in deps */
     const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
         if (hasStaticData) {
             if (!contentType) {
@@ -805,9 +785,7 @@ const GridBase = memo(({
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
     }, [hasStaticData, normalizedStaticData, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, stableGridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters]);
-    /* oxlint-enable react-doctor/exhaustive-deps */
 
-    /* oxlint-disable react-doctor/exhaustive-deps -- getRecord is a module import (stable); ERROR_CODES is a module const; all reactive values are in deps */
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
             if (isStaticDataWithoutBackendApi) {
@@ -839,7 +817,6 @@ const GridBase = memo(({
         }
         navigate(path);
     }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, addUrlParamKey, navigate, getRecord, buildUrl, snackbar]);
-    /* oxlint-enable react-doctor/exhaustive-deps */
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -973,7 +950,6 @@ const GridBase = memo(({
         }
     }, [onCellDoubleClickOverride, isReadOnly, isDoubleClicked, disableCellRedirect, openForm, idProperty, model.rowRedirectLink, model.addRecordToState, navigate, onRowDoubleClick]);
 
-    /* oxlint-disable react-doctor/exhaustive-deps -- saveRecord is a module import; setIsLoading/setRowSelectionModel/setShowAddConfirmation are stable dispatchers; model covers model.selectionUpdateKeys */
     const handleAddRecords = useCallback(async () => {
         if (rowSelectionModel.ids.size < 1) {
             snackbar.showErrorCode(ERROR_CODES.SELECT_AT_LEAST_ONE);
@@ -1022,9 +998,7 @@ const GridBase = memo(({
             setShowAddConfirmation(false);
         }
     }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts, buildUrl]);
-    /* oxlint-enable react-doctor/exhaustive-deps */
 
-    /* oxlint-disable react-doctor/exhaustive-deps -- rowSelectionModel.ids.size is a non-standard dep path; ERROR_CODES/constants are module-level */
     const onAdd = useCallback(() => {
         if (selectionApi.length > 0) {
             if (rowSelectionModel.ids.size > 0) {
@@ -1040,7 +1014,6 @@ const GridBase = memo(({
             openForm({ id: 0 });
         }
     }, [selectionApi, snackbar, onAddOverride, openForm, rowSelectionModel.ids.size, tTranslate, tOpts]);
-    /* oxlint-enable react-doctor/exhaustive-deps */
 
     const clearFilters = useCallback(() => {
         if (!filterModel?.items?.length) return;
@@ -1165,12 +1138,10 @@ const GridBase = memo(({
         });
     }, [hasStaticData, localSortAndFilter, data?.recordCount, apiRef, gridColumns, snackbar, fetchData, tTranslate, tOpts, recordCounts]);
 
-    /* oxlint-disable react-doctor/no-derived-state, react-doctor/no-pass-live-state-to-parent -- fetchData is the primary data trigger; calling it in an effect is intentional; parent notification is handled via onDataLoaded in a separate effect */
     useEffect(() => {
         if ((!backendApi && !hasStaticData) || !preferencesReady) return;
         fetchData();
     }, [backendApi, hasStaticData, preferencesReady, fetchData]);
-    /* oxlint-enable react-doctor/no-derived-state, react-doctor/no-pass-live-state-to-parent */
 
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
@@ -1211,7 +1182,6 @@ const GridBase = memo(({
         setFilterModel({ ...e, items: filteredItems });
     }, [gridColumns, emptyIsAnyOfOperatorFilters, isElasticScreen, setFilterModel]);
 
-    /* oxlint-disable react-doctor/exhaustive-deps -- all used values are in deps; setSortModel is a stable dispatcher */
     const updateSort = useCallback((e) => {
         if (e[0]) {
             if (gridGroupByColumnName.includes(e[0].field)) {
@@ -1230,7 +1200,6 @@ const GridBase = memo(({
         });
         setSortModel(sort);
     }, [gridColumns, isElasticScreen, setSortModel, snackbar, tTranslate, tOpts]);
-    /* oxlint-enable react-doctor/exhaustive-deps */
 
     const pageTitle = title || model.gridTitle || model.title;
     const breadCrumbs = searchParamKey

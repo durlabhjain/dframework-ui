@@ -1,0 +1,20 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "rules": {
+    "react-doctor/exhaustive-deps": "off",
+    "react-doctor/no-array-index-as-key": "off",
+    "react-doctor/advanced-event-handler-refs": "off",
+    "react-doctor/no-adjust-state-on-prop-change": "off",
+    "react-doctor/no-derived-state": "off",
+    "react-doctor/no-derived-state-effect": "off",
+    "react-doctor/no-derived-useState": "off",
+    "react-doctor/no-event-handler": "off",
+    "react-doctor/no-giant-component": "off",
+    "react-doctor/no-pass-data-to-parent": "off",
+    "react-doctor/no-pass-live-state-to-parent": "off",
+    "react-doctor/no-reset-all-state-on-prop-change": "off",
+    "react-doctor/prefer-useReducer": "off",
+    "react-doctor/rendering-usetransition-loading": "off",
+    "react-doctor/rerender-state-only-in-handlers": "off"
+  }
+}

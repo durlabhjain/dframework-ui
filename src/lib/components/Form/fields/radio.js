@@ -1,4 +1,3 @@
-import React from "react";
 import { FormControl, FormControlLabel, Radio, RadioGroup, FormHelperText, useTheme } from "@mui/material";
 
 const EMPTY_FIELD_CONFIGS = {};

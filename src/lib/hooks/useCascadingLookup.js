@@ -12,7 +12,6 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
     const api = buildUrl(model.api);
     // Memoize dependency values
     // Memoize dependency values — deps array is dynamic (dependsOn.map); react-doctor cannot analyze it
-    /* oxlint-disable react-doctor/exhaustive-deps -- computed deps array tracks each dependency field value; react-doctor cannot analyze dynamic dep arrays */
     const dependencyValues = useMemo(() => {
         const toReturn = {};
         if (!dependsOn.length) return toReturn;
@@ -21,7 +20,6 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
         }
         return toReturn;
     }, dependsOn.map(dep => formik.values[dep]));
-    /* oxlint-enable react-doctor/exhaustive-deps */
 
     // Initial options for non-cascading
     const initialOptions = useMemo(() => {
@@ -55,7 +53,6 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
     }, [column.lookup, dependencyValues, api, model, lookups, snackbar]);
 
     // Fetch cascading options
-    /* oxlint-disable react-doctor/no-event-handler, react-doctor/no-derived-state, react-doctor/exhaustive-deps -- fetching/setting lookup options in effect is the correct pattern for async data; userSelected.current is intentionally excluded (ref, not reactive) */
     useEffect(() => {
         if (dependsOn.length) {
             fetchOptions();
@@ -63,7 +60,6 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
             setOptions(initialOptions || []);
         }
     }, [dependsOn.length, fetchOptions, isAutoComplete, initialOptions]);
-    /* oxlint-enable react-doctor/no-event-handler, react-doctor/no-derived-state, react-doctor/exhaustive-deps */
 
     return options;
 }

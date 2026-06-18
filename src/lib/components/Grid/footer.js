@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { useTranslation } from 'react-i18next';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const handleKeyPress = (event) => {
     const keyCode = event.which || event.keyCode;
@@ -24,13 +24,11 @@ const Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }
     const { t: translate, i18n } = useTranslation();
     const tOpts = { t: translate, i18n };
     const [pageNumber, setPageNumber] = useState(page + 1);
-    /* oxlint-disable react-doctor/rerender-state-only-in-handlers -- setState-during-render is the React-recommended pattern to sync derived state without a stale-frame useEffect */
     const [prevPage, setPrevPage] = useState(page);
     if (prevPage !== page) {
         setPrevPage(page);
         setPageNumber(page + 1);
     }
-    /* oxlint-enable react-doctor/rerender-state-only-in-handlers */
 
     const handleChange = function (e) {
         let value = e.target?.value;

@@ -22,7 +22,6 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
     }, [mode, fieldConfigs.disabled, column.disabled, isAdd, formik]);
     const fixedOptions = column.hasDefault && !isAdd ? [inputValue[0]] : [];
 
-    /* oxlint-disable react-doctor/exhaustive-deps -- fixedOptions covers the isAdd/inputValue chain; all used values are captured in deps */
     const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
         const lastElement = newValue.pop()?.trim();
         if (!newValue.includes(lastElement)) {
@@ -41,7 +40,6 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
         }
         formik.setFieldValue(field, newValue);
     }, [formik, field, column, fixedOptions]);
-    /* oxlint-enable react-doctor/exhaustive-deps */
 
     return (
         <FormControl

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -37,7 +37,6 @@ const paginationModel = { pageSize: 50, page: 0 };
 
 const pageSizeOptions = [5, 10, 20, 50, 100];
 
-/* oxlint-disable react-doctor/no-giant-component, react-doctor/prefer-useReducer -- GridPreferences is a complex component with independent UI states; splitting or useReducer would be a significant architecture refactor */
 const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts }) => {
     const { getApiEndpoint } = useStateContext();
     const preferenceApi = getApiEndpoint("GridPreferenceManager");
@@ -87,7 +86,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
     }, [gridRef, onPreferenceChange]);
 
     // Only memoize functions used in useEffect dependencies
-    /* oxlint-disable react-doctor/no-event-handler, react-doctor/no-pass-live-state-to-parent -- loadPreferences calls onPreferenceChange in async callback after fetching; this notification pattern is intentional */
     const loadPreferences = useCallback(async ({ applyDefault = false }) => {
         const response = await request({
             url: preferenceApi,
@@ -113,7 +111,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         
         return { preferences };
     }, [preferenceApi, preferenceKey, snackbar, t, tOpts, onPreferenceChange]);
-    /* oxlint-enable react-doctor/no-event-handler, react-doctor/no-pass-live-state-to-parent */
 
     const applyPreference = useCallback(async (prefId, preferencesArray = null) => {
         // Store initial state before applying first preference
@@ -241,7 +238,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
     });
 
     // Load preferences on mount
-    /* oxlint-disable react-doctor/no-pass-live-state-to-parent, react-doctor/exhaustive-deps -- loadPreferences/applyPreference are stable callbacks; preferenceKey is the correct dep; others would cause infinite loops */
     useEffect(() => {
         if (!preferenceKey) return;
         const loadAndApply = async () => {
@@ -252,7 +248,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         };
         loadAndApply();
     }, [preferenceKey]);
-    /* oxlint-enable react-doctor/no-pass-live-state-to-parent, react-doctor/exhaustive-deps */
 
     // Memoize locale text used by the DataGrid to avoid recreating the object on every render
     const localeText = useMemo(() => ({
@@ -534,6 +529,5 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         </Box>
     );
 };
-/* oxlint-enable react-doctor/no-giant-component, react-doctor/prefer-useReducer */
 
 export default GridPreferences;
