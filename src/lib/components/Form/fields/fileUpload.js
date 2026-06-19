@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Box, RadioGroup, FormControlLabel, Radio, TextField, Button, Typography, Tooltip, CircularProgress } from "@mui/material";
 import { useRouter, useStateContext } from "../../useRouter/StateProvider";
 import { transport } from "../../Grid/httpRequest";
@@ -85,12 +85,14 @@ function FileUpload({ column, field, formik }) {
     };
 
     const host = new URL(url, window.location.origin).hostname.toLowerCase();
-    React.useEffect(() => {
+    const [prevSyncKey, setPrevSyncKey] = useState(() => ({}));
+    if (prevSyncKey.inputValue !== inputValue || prevSyncKey.host !== host) {
+        setPrevSyncKey({ inputValue, host });
         setFormState(prev => ({
             ...prev,
             isExternal: !inputValue.toLowerCase().includes(host) ? "yes" : "no"
         }));
-    }, [inputValue, host]);
+    }
 
     const isLengthExceeded = formik.values[field]?.length > (column.max || consts.maxLength);
     const colorScheme = isLengthExceeded ? 'red' : '';

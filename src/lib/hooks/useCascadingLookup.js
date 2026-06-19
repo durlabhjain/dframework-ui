@@ -56,10 +56,16 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
     useEffect(() => {
         if (dependsOn.length) {
             fetchOptions();
-        } else if (isAutoComplete || !userSelected.current) {
+        }
+    }, [dependsOn.length, fetchOptions]);
+
+    const [prevSyncKey, setPrevSyncKey] = useState(() => ({}));
+    if (!dependsOn.length && (prevSyncKey.isAutoComplete !== isAutoComplete || prevSyncKey.initialOptions !== initialOptions)) {
+        setPrevSyncKey({ isAutoComplete, initialOptions });
+        if (isAutoComplete || !userSelected.current) {
             setOptions(initialOptions || []);
         }
-    }, [dependsOn.length, fetchOptions, isAutoComplete, initialOptions]);
+    }
 
     return options;
 }

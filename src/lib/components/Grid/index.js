@@ -237,6 +237,9 @@ const GridBase = memo(({
         });
     }
     const [filterModel, setFilterModel] = useState({ ...initialFilterModel });
+    const [prevCustomFilters, setPrevCustomFilters] = useState(() => ({}));
+    const [prevHasStaticData, setPrevHasStaticData] = useState(hasStaticData);
+    const [prevNormalizedStaticData, setPrevNormalizedStaticData] = useState(normalizedStaticData);
     const { navigate, getParams, useParams, pathname } = useRouter();
     const { id: idWithOptions } = useParams() || getParams;
     const id = idWithOptions?.split('-')[0];
@@ -409,35 +412,39 @@ const GridBase = memo(({
         }
     }, [data]);
 
-    useEffect(() => {
+    if (hasStaticData !== prevHasStaticData || normalizedStaticData !== prevNormalizedStaticData) {
+        setPrevHasStaticData(hasStaticData);
+        setPrevNormalizedStaticData(normalizedStaticData);
         if (hasStaticData) {
             setData(normalizedStaticData);
-            return;
+        } else {
+            setData((prevData) => ({
+                ...(prevData || {}),
+                records: [],
+                recordCount: 0,
+                lookups: {}
+            }));
         }
-        setData((prevData) => ({
-            ...(prevData || {}),
-            records: [],
-            recordCount: 0,
-            lookups: {}
-        }));
-    }, [hasStaticData, normalizedStaticData]);
+    }
 
-    useEffect(() => {
-        if (!customFilters || !Object.keys(customFilters).length) return;
-        if (customFilters.clear) {
-            setFilterModel({ items: [], logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
-            return;
-        }
-        const items = Object.entries(customFilters).reduce((acc, [key, value]) => {
-            if (key === constants.startDate || key === constants.endDate) {
-                acc.push(value);
-            } else if (key in customFilters) {
-                acc.push({ field: key, value, operator: "equals", type: "string" });
+    if (prevCustomFilters !== customFilters) {
+        setPrevCustomFilters(customFilters);
+        if (customFilters && Object.keys(customFilters).length) {
+            if (customFilters.clear) {
+                setFilterModel({ items: [], logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
+            } else {
+                const items = Object.entries(customFilters).reduce((acc, [key, value]) => {
+                    if (key === constants.startDate || key === constants.endDate) {
+                        acc.push(value);
+                    } else if (key in customFilters) {
+                        acc.push({ field: key, value, operator: "equals", type: "string" });
+                    }
+                    return acc;
+                }, []);
+                setFilterModel({ items, logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
             }
-            return acc;
-        }, []);
-        setFilterModel({ items, logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
-    }, [customFilters]);
+        }
+    }
 
     const lookupOptions = useCallback(({ field, lookupMap: lookupMapParam }) => {
         const lookupData = dataRef.current.lookups || {};
@@ -1139,7 +1146,7 @@ const GridBase = memo(({
     }, [hasStaticData, localSortAndFilter, data?.recordCount, apiRef, gridColumns, snackbar, fetchData, tTranslate, tOpts, recordCounts]);
 
     useEffect(() => {
-        if ((!backendApi && !hasStaticData) || !preferencesReady) return;
+        if (hasStaticData || !backendApi || !preferencesReady) return;
         fetchData();
     }, [backendApi, hasStaticData, preferencesReady, fetchData]);
 

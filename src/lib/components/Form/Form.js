@@ -74,7 +74,6 @@ const Form = ({
   const [lookups, setLookups] = useState({});
   const [isDeleting, setIsDeleting] = useState(false);
   const snackbar = useSnackbar();
-  const [validationSchema, setValidationSchema] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
   const activeStepContextValue = useMemo(() => ({ activeStep, setActiveStep }), [activeStep, setActiveStep]);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
@@ -153,9 +152,10 @@ const Form = ({
     loadRecord();
   }, [id, idToLoad, model, formApi, loadRecord]);
 
-  useEffect(() => {
-    setValidationSchema(model.getValidationSchema({ id, tTranslate, tOpts }));
-  }, [id, model, setValidationSchema, translate, tOpts, tTranslate]);
+  const validationSchema = useMemo(
+    () => model.getValidationSchema({ id, tTranslate, tOpts }),
+    [id, model, translate, tOpts, tTranslate]
+  );
 
   const formik = useFormik({
     enableReinitialize: true,

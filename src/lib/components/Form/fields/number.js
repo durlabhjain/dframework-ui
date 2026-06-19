@@ -87,12 +87,12 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
         }
     }, [debouncedValue]);
 
-    // Sync with formik value changes from external sources
-    useEffect(() => {
-        if (formikFieldValue !== inputValue) {
-            setInputValue(formikFieldValue);
-        }
-    }, [formikFieldValue]);
+    // Sync with formik value changes from external sources, adjusted inline during render
+    const [prevFormikFieldValue, setPrevFormikFieldValue] = useState(formikFieldValue);
+    if (formikFieldValue !== prevFormikFieldValue) {
+        setPrevFormikFieldValue(formikFieldValue);
+        setInputValue(formikFieldValue);
+    }
 
     const handleValueChange = (value) => {
         setInputValue(value);

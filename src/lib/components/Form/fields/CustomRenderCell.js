@@ -3,6 +3,7 @@ import { Avatar, useTheme } from "@mui/material";
 export const brandBackgroundColor = '#182eb5';
 export const brandColor = '#ffffff';
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const DAY_IDS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 function RenderDayCell({ value }) {
     const dayValues = value.split('');
@@ -12,7 +13,7 @@ function RenderDayCell({ value }) {
         <div style={{ display: 'flex' }}>
         {dayValues.map((val, index) => (
                 <Avatar
-                    key={`day-${index}`}
+                    key={DAY_IDS[index]}
                     sx={{
                         backgroundColor: val === '1' ? theme.palette.success.main : brandColor,
                         color: val === '1' ? 'white' : 'black',
