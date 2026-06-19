@@ -21,6 +21,11 @@ const Field = ({ field, formik }) => {
         }
     }, [debouncedState, field, formik, formik.values[field]]);
 
+    // Resync local state when formik changes externally (e.g. form reinitialise)
+    React.useEffect(() => {
+        setState(parseJson(formik.values[field]));
+    }, [formik.values[field], field]);
+
     const handleChange = (key, value) => {
         const updatedState = { ...state, [key]: value };
         setState(updatedState);

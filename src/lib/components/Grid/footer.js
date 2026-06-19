@@ -7,7 +7,7 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const handleKeyPress = (event) => {
     const keyCode = event.which || event.keyCode;
@@ -24,11 +24,9 @@ const Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }
     const { t: translate, i18n } = useTranslation();
     const tOpts = { t: translate, i18n };
     const [pageNumber, setPageNumber] = useState(page + 1);
-    const [prevPage, setPrevPage] = useState(page);
-    if (prevPage !== page) {
-        setPrevPage(page);
+    useEffect(() => {
         setPageNumber(page + 1);
-    }
+    }, [page]);
 
     const handleChange = function (e) {
         let value = e.target?.value;
