@@ -358,13 +358,13 @@ const GridBase = memo(({
             "valueOptions": "lookup"
         },
         "date": {
-            "valueFormatter": (value) => (
+            "valueFormatter": ({ value }) => (
                 formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "date" })
         },
         "dateTime": {
-            "valueFormatter": (value) => (
+            "valueFormatter": ({ value }) => (
                 formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "dateTime" })
@@ -387,7 +387,7 @@ const GridBase = memo(({
             type: "number",
             align: 'right',
             filterOperators: [...getGridNumericOperators()].filter(op => !['!='].includes(op.value)),
-            "valueFormatter": (value) => {
+            "valueFormatter": ({ value }) => {
                 if (value == null) return '';
                 const numericValue = Number(value);
                 return !isNaN(numericValue) ? `${numericValue.toFixed(1)}%` : '';
@@ -397,7 +397,7 @@ const GridBase = memo(({
             type: "number",
             align: 'right',
             filterOperators: [...getGridNumericOperators()].filter(op => !['!='].includes(op.value)),
-            "valueFormatter": (value) => {
+            "valueFormatter": ({ value }) => {
                 if (value == null) return '';
                 const symbol = userData?.userData?.CurrencySymbol || '';
                 return symbol ? `${symbol}${value}` : String(value);

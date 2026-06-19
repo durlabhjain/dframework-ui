@@ -23,9 +23,8 @@ export default [
             },
         },
         rules: {
-            // React hooks — only the critical rule; exhaustive-deps is covered by react-doctor
             'react-hooks/rules-of-hooks': 'error',
-            'react-hooks/exhaustive-deps': 'off',
+            'react-hooks/exhaustive-deps': 'warn',
 
             // React
             'react/prop-types': 'off',
