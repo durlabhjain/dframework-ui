@@ -4,19 +4,14 @@ import Input from '@mui/material/Input';
 import Typography from '@mui/material/Typography';
 import useDebounce from '../../../hooks/useDebounce';
 
-const Field = ({ field, formik }) => {
-    const [state, setState] = React.useState({});
-    const debouncedState = useDebounce(state, 300);
+const parseJson = (raw) => {
+    if (!raw) return {};
+    try { return JSON.parse(raw); } catch { return {}; }
+};
 
-    React.useEffect(() => {
-        if (!formik.values[field]) return;
-        try {
-            const inputJSON = JSON.parse(formik.values[field]);
-            setState(inputJSON);
-        } catch (e) {
-            setState({});
-        }
-    }, [formik.values[field]]);
+const Field = ({ field, formik }) => {
+    const [state, setState] = React.useState(() => parseJson(formik.values[field]));
+    const debouncedState = useDebounce(state, 300);
 
     // Update formik when debounced state changes
     React.useEffect(() => {
@@ -25,6 +20,11 @@ const Field = ({ field, formik }) => {
             formik.setFieldValue(field, nextValue);
         }
     }, [debouncedState, field, formik, formik.values[field]]);
+
+    // Resync local state when formik changes externally (e.g. form reinitialise)
+    React.useEffect(() => {
+        setState(parseJson(formik.values[field]));
+    }, [formik.values[field], field]);
 
     const handleChange = (key, value) => {
         const updatedState = { ...state, [key]: value };

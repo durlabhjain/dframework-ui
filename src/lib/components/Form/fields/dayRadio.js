@@ -1,4 +1,3 @@
-import React from 'react';
 import { useCallback, useState } from 'react';
 import { Avatar, FormControl, FormControlLabel, FormHelperText, Radio, RadioGroup, styled, useTheme } from '@mui/material';
 import {  grey } from '@mui/material/colors';
@@ -15,7 +14,7 @@ const days = [
     { label: 'Saturday', value: 6, display: 'S' },
 ];
 
-const CustomAvator = styled(Avatar)(({ theme, isSelected }) => ({
+const CustomAvator = styled(Avatar)(({ isSelected }) => ({
     width: 34,
     height: 34,
     padding: 1,
@@ -63,7 +62,7 @@ const DaySelection = ({ name, field, formik, expired }) => {
             setFieldValue(name || field, finalValue);
             setPresetSelected(true);
         } else {
-            let baseValue = presetSelected ? defaultVal : selectedDays;
+            const baseValue = presetSelected ? defaultVal : selectedDays;
             const finalValue = baseValue.slice(0, newValue) + (baseValue[newValue] === "1" ? "0" : "1") + baseValue.slice(newValue + 1);
             setSelectedDays(finalValue);
             setFieldValue(name || field, finalValue);

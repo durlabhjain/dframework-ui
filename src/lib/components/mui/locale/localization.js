@@ -8,7 +8,6 @@ import mergedLocalizationDataitIT from './data-grid/itIT';
 import mergedLocalizationDatatrTR from './data-grid/trTR';
 import ptPT from './data-grid/ptPT';
 import mergedLocalizationDataenUS from './data-grid/enUS';
-import * as React from 'react';
 export const locales = {
   'en': mergedLocalizationDataenUS,
   'tr-TR': mergedLocalizationDatatrTR,

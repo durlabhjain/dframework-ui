@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useId } from 'react';
+import { useMemo, useState, useEffect, useId } from 'react';
 import { NumberField as BaseNumberField } from '@base-ui/react/number-field';
 import {
     IconButton,
@@ -87,11 +87,8 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
         }
     }, [debouncedValue]);
 
-    // Sync with formik value changes from external sources
     useEffect(() => {
-        if (formikFieldValue !== inputValue) {
-            setInputValue(formikFieldValue);
-        }
+        setInputValue(formikFieldValue);
     }, [formikFieldValue]);
 
     const handleValueChange = (value) => {
@@ -126,7 +123,7 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
             max={resolvedMax}
             disabled={readOnly}
             format={numberFormat}
-            render={(baseProps, state) => (
+            render={(baseProps) => (
                 <FormControl
                     fullWidth
                     ref={baseProps.ref}

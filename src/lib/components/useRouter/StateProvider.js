@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState, useCallback, useMemo } from 'react';
+import { createContext, use, useRef, useState, useCallback, useMemo } from 'react';
 import { locales } from '../mui/locale/localization';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -16,7 +16,9 @@ const RouterContext = createContext(null);
 // Fallback functions for missing SnackbarProvider
 const snackbarWarning = () => console.warn('SnackbarProvider not found. Wrap StateProvider with SnackbarProvider.');
 
-const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => {
+const EMPTY_API_ENDPOINTS = Object.freeze({});
+
+const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API_ENDPOINTS }) => {
 
   // App-level state - using individual useState for simplicity
   const [locale, setLocaleState] = useState('en');
@@ -36,8 +38,7 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
   // Framework functionality - snackbar
   const snackbar = useSnackbar();
 
-  // Initialize with provided endpoints or empty object
-  const apiEndpoints = useRef(initialApiEndpoints);
+  const apiEndpoints = useRef({ ...initialApiEndpoints });
 
   const setApiEndpoint = useCallback((key, endpoint) => {
     apiEndpoints.current[key] = endpoint;
@@ -242,11 +243,11 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => 
 const RouterProvider = RouterContext.Provider;
 
 const useRouter = () => {
-  return useContext(RouterContext);
+  return use(RouterContext);
 };
 
 const useStateContext = () => {
-  const context = useContext(StateContext);
+  const context = use(StateContext);
   if (context === undefined) {
     throw new Error('useStateContext must be used within a StateProvider');
   }

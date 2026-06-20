@@ -1,6 +1,5 @@
-import React from "react";
 import { useFormik } from "formik";
-import { useState, useEffect, createContext, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   getRecord,
   saveRecord,
@@ -20,8 +19,11 @@ import utils, { getPermissions } from "../utils";
 import Relations from "./relations";
 import { useModelTranslation } from "../../hooks/useModelTranslation";
 import { ERROR_CODES } from "../../errors";
-export const ActiveStepContext = createContext(1);
+import { ActiveStepContext } from "./context";
 const defaultFieldConfigs = {};
+const DEFAULT_RELATION_FILTERS = {};
+const DEFAULT_PERMISSIONS = {};
+const DEFAULT_BASE_SAVE_DATA = {};
 const consts = {
   object: "object",
   function: "function",
@@ -39,10 +41,10 @@ const Form = ({
   model,
   api,
   models,
-  relationFilters = {},
-  permissions = {},
+  relationFilters = DEFAULT_RELATION_FILTERS,
+  permissions = DEFAULT_PERMISSIONS,
   Layout = FormLayout,
-  baseSaveData = {},
+  baseSaveData = DEFAULT_BASE_SAVE_DATA,
   sx,
   readOnly,
   beforeSubmit,
@@ -72,8 +74,8 @@ const Form = ({
   const [lookups, setLookups] = useState({});
   const [isDeleting, setIsDeleting] = useState(false);
   const snackbar = useSnackbar();
-  const [validationSchema, setValidationSchema] = useState(null);
   const [activeStep, setActiveStep] = useState(0);
+  const activeStepContextValue = useMemo(() => ({ activeStep, setActiveStep }), [activeStep, setActiveStep]);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
@@ -103,7 +105,7 @@ const Form = ({
     let navigatePath;
     switch (typeof navigateBack) {
       case consts.function:
-        navigatePath = navigateBack({ params, searchParams, data });
+        navigatePath = navigateBack({ params, searchParams: new URLSearchParams(window.location.search), data });
         break;
       case consts.number:
       case consts.string:
@@ -114,13 +116,13 @@ const Form = ({
         break;
     }
     navigate(navigatePath);
-  }, [navigateBack, navigate, params, searchParams, data, pathname]);
+  }, [navigateBack, navigate, params, data, pathname]);
 
   const isNew = useMemo(() => utils.emptyIdValues.includes(id), [id]);
 
   const initialValues = useMemo(() => isNew
     ? { ...model.initialValues, ...data, ...baseSaveData }
-    : { ...baseSaveData, ...model.initialValues, ...data }, [model.initialValues, data, id]);
+    : { ...baseSaveData, ...model.initialValues, ...data }, [model.initialValues, data, id, baseSaveData, isNew]);
 
   const formApi = api || gridApi;
   const idToLoad = useMemo(() => {
@@ -150,9 +152,10 @@ const Form = ({
     loadRecord();
   }, [id, idToLoad, model, formApi, loadRecord]);
 
-  useEffect(() => {
-    setValidationSchema(model.getValidationSchema({ id, tTranslate, tOpts }));
-  }, [id, model, setValidationSchema, translate, tOpts, tTranslate]);
+  const validationSchema = useMemo(
+    () => model.getValidationSchema({ id, tTranslate, tOpts }),
+    [id, model, translate, tOpts, tTranslate]
+  );
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -220,7 +223,7 @@ const Form = ({
     handleNavigation();
   }, [snackbar, handleNavigation]);
 
-  const setActiveRecord = function ({ id, title, record, lookups }) {
+  const setActiveRecord = function ({ id, record, lookups }) {
     const isCopy = idWithOptions.indexOf("-") > -1;
     const isNew = !id || id === "0";
     const pageTitle = isNew ? consts.create : isCopy ? consts.copy : consts.edit;
@@ -273,7 +276,7 @@ const Form = ({
     } finally {
       setIsDeleting(false);
     }
-  }, [id, api, model.api, snackbar, setErrorMessage, model, navigateBack, handleNavigation, tTranslate, tOpts]);
+  }, [id, api, model, snackbar, navigateBack, handleNavigation, tTranslate, tOpts]);
   const clearError = () => {
     setErrorMessage(null)
     setIsDeleting(false);
@@ -331,7 +334,7 @@ const Form = ({
           enableBackButton={navigateBack !== undefined}
         />
       )}
-      <ActiveStepContext.Provider value={{ activeStep, setActiveStep }}>
+      <ActiveStepContext.Provider value={activeStepContextValue}>
         <Paper sx={{ padding: 2, ...sx }}>
           {isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>

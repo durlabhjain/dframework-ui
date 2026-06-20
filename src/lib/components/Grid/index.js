@@ -78,6 +78,7 @@ const constants = {
 };
 // Operators that do not require a value
 const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
+const EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze(['isEmpty', 'isNotEmpty', 'isAnyOf']);
 
 // Stable empty references used when localSortAndFilter is enabled to prevent
 // fetchData from being recreated (and re-triggering API calls) on sort/filter changes
@@ -91,9 +92,6 @@ const EMPTY_FILTER_MODEL = Object.freeze({
 // Stable pagination used when localSortAndFilter is enabled: always request page 0
 // with a large pageSize so the backend returns all rows in one call.
 const LOCAL_MODE_PAGINATION_MODEL = Object.freeze({ page: 0, pageSize: exportPageSize });
-
-// Module-level default translate to avoid creating a new function instance every render
-const defaultTranslate = (key) => key;
 
 const normalizeStaticData = (staticData) => {
     const records = Array.isArray(staticData)
@@ -187,12 +185,10 @@ const GridBase = memo(({
     customStyle,
     onCellClick,
     showRowsSelected,
-    showFullScreenLoader,
     customFilters,
     onRowDoubleClick,
     onRowClick = () => { },
     gridStyle,
-    reRenderKey,
     additionalFilters,
     onCellDoubleClickOverride,
     onAddOverride,
@@ -224,7 +220,7 @@ const GridBase = memo(({
     });
     const [isDeleting, setIsDeleting] = useState(false);
     const [record, setRecord] = useState(null);
-    const visibilityModel = { CreatedOn: false, CreatedByUser: false, ...model.columnVisibilityModel };
+    const visibilityModel = useMemo(() => ({ CreatedOn: false, CreatedByUser: false, ...model.columnVisibilityModel }), [model.columnVisibilityModel]);
     const [showAddConfirmation, setShowAddConfirmation] = useState(false);
     const snackbar = useSnackbar();
     // Force client pagination when localSortAndFilter is enabled so that all data is
@@ -232,7 +228,7 @@ const GridBase = memo(({
     const paginationMode = (hasStaticData || model.localSortAndFilter) ? constants.client : (model.paginationMode === constants.client ? constants.client : constants.server);
     const { translate, tOpts, tTranslate } = useModelTranslation(model);
     const [errorMessage, setErrorMessage] = useState('');
-    const [sortModel, setSortModel] = useState(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
+    const [sortModel, setSortModel] = useState(() => convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
     const initialFilterModel = { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' };
     if (model.defaultFilters) {
         initialFilterModel.items = [];
@@ -241,10 +237,14 @@ const GridBase = memo(({
         });
     }
     const [filterModel, setFilterModel] = useState({ ...initialFilterModel });
+    const [prevCustomFilters, setPrevCustomFilters] = useState(() => ({}));
+    const [prevHasStaticData, setPrevHasStaticData] = useState(hasStaticData);
+    const [prevNormalizedStaticData, setPrevNormalizedStaticData] = useState(normalizedStaticData);
     const { navigate, getParams, useParams, pathname } = useRouter();
     const { id: idWithOptions } = useParams() || getParams;
     const id = idWithOptions?.split('-')[0];
-    const apiRef = propsApiRef || useGridApiRef();
+    const internalRef = useGridApiRef();
+    const apiRef = propsApiRef ?? internalRef;
     const backendApi = api || model.api;
     const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
     const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
@@ -272,12 +272,11 @@ const GridBase = memo(({
     }, []);
 
     const showAddIcon = model.showAddIcon === true;
-    const toLink = model.columns.filter(({ link }) => Boolean(link)).map(item => item.link);
+    const toLink = model.columns.flatMap(({ link }) => link ? [link] : []);
     const { stateData, formatDate, getApiEndpoint, buildUrl, setPageTitle } = useStateContext();
     const [isLoading, setIsLoading] = useState(false);
-    const { timeZone } = stateData;
     const effectivePermissions = useMemo(() => ({ ...constants.permissions, ...model.permissions, ...permissions }), [model.permissions, permissions]);
-    const emptyIsAnyOfOperatorFilters = ["isEmpty", "isNotEmpty", "isAnyOf"];
+    const emptyIsAnyOfOperatorFilters = EMPTY_IS_ANY_OF_OPERATOR_FILTERS;
     const userData = stateData.userData || {};
     const documentField = model.columns.find(ele => ele.type === 'fileUpload')?.field || "";
     const userDefinedPermissions = { add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete };
@@ -294,7 +293,14 @@ const GridBase = memo(({
     const enableRowDetailPanel = typeof model.getDetailPanelContent === 'function';
     const gridRows = useMemo(() => data.records || [], [data.records]);
     const rowCount = useMemo(() => data.recordCount, [data.recordCount]);
-    const [groupingModel, setGroupingModel] = useState([]);
+    const [groupingModel, setGroupingModel] = useState(
+        () => Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []
+    );
+    const [prevRowGroupingField, setPrevRowGroupingField] = useState(props.rowGroupingField);
+    if (prevRowGroupingField !== props.rowGroupingField) {
+        setPrevRowGroupingField(props.rowGroupingField);
+        setGroupingModel(Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []);
+    }
 
     useEffect(() => {
         if (!apiRef.current) return;
@@ -317,15 +323,6 @@ const GridBase = memo(({
             headerName: group.headerName ? tTranslate(group.headerName, tOpts) : group.headerName
         }));
     }, [model.columnGroupingModel, tOpts, translate, tTranslate]);
-
-    useEffect(() => {
-        if (Array.isArray(props.rowGroupingField)) {
-            setGroupingModel(props.rowGroupingField);
-        } else {
-            // reset grouping so previous grouping does not persist.
-            setGroupingModel([]);
-        }
-    }, [props.rowGroupingField]);
 
     const baseDataFromParams = searchParams.has('baseData') && searchParams.get('baseData');
     const baseSaveData = useMemo(() => {
@@ -361,13 +358,13 @@ const GridBase = memo(({
             "valueOptions": "lookup"
         },
         "date": {
-            "valueFormatter": (value, row, column) => (
+            "valueFormatter": (value) => (
                 formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "date" })
         },
         "dateTime": {
-            "valueFormatter": (value, row, column) => (
+            "valueFormatter": (value) => (
                 formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "dateTime" })
@@ -390,7 +387,7 @@ const GridBase = memo(({
             type: "number",
             align: 'right',
             filterOperators: [...getGridNumericOperators()].filter(op => !['!='].includes(op.value)),
-            "valueFormatter": (value) => {
+            "valueFormatter": ({ value }) => {
                 if (value == null) return '';
                 const numericValue = Number(value);
                 return !isNaN(numericValue) ? `${numericValue.toFixed(1)}%` : '';
@@ -400,7 +397,7 @@ const GridBase = memo(({
             type: "number",
             align: 'right',
             filterOperators: [...getGridNumericOperators()].filter(op => !['!='].includes(op.value)),
-            "valueFormatter": (value) => {
+            "valueFormatter": ({ value }) => {
                 if (value == null) return '';
                 const symbol = userData?.userData?.CurrencySymbol || '';
                 return symbol ? `${symbol}${value}` : String(value);
@@ -415,35 +412,39 @@ const GridBase = memo(({
         }
     }, [data]);
 
-    useEffect(() => {
+    if (hasStaticData !== prevHasStaticData || normalizedStaticData !== prevNormalizedStaticData) {
+        setPrevHasStaticData(hasStaticData);
+        setPrevNormalizedStaticData(normalizedStaticData);
         if (hasStaticData) {
             setData(normalizedStaticData);
-            return;
+        } else {
+            setData((prevData) => ({
+                ...(prevData || {}),
+                records: [],
+                recordCount: 0,
+                lookups: {}
+            }));
         }
-        setData((prevData) => ({
-            ...(prevData || {}),
-            records: [],
-            recordCount: 0,
-            lookups: {}
-        }));
-    }, [hasStaticData, normalizedStaticData]);
+    }
 
-    useEffect(() => {
-        if (!customFilters || !Object.keys(customFilters).length) return;
-        if (customFilters.clear) {
-            setFilterModel({ items: [], logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
-            return;
-        }
-        const items = Object.entries(customFilters).reduce((acc, [key, value]) => {
-            if (key === constants.startDate || key === constants.endDate) {
-                acc.push(value);
-            } else if (key in customFilters) {
-                acc.push({ field: key, value, operator: "equals", type: "string" });
+    if (prevCustomFilters !== customFilters) {
+        setPrevCustomFilters(customFilters);
+        if (customFilters && Object.keys(customFilters).length) {
+            if (customFilters.clear) {
+                setFilterModel({ items: [], logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
+            } else {
+                const items = Object.entries(customFilters).reduce((acc, [key, value]) => {
+                    if (key === constants.startDate || key === constants.endDate) {
+                        acc.push(value);
+                    } else if (key in customFilters) {
+                        acc.push({ field: key, value, operator: "equals", type: "string" });
+                    }
+                    return acc;
+                }, []);
+                setFilterModel({ items, logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
             }
-            return acc;
-        }, []);
-        setFilterModel({ items, logicOperator: "and", quickFilterValues: [], quickFilterLogicOperator: "and" });
-    }, [customFilters]);
+        }
+    }
 
     const lookupOptions = useCallback(({ field, lookupMap: lookupMapParam }) => {
         const lookupData = dataRef.current.lookups || {};
@@ -532,7 +533,7 @@ const GridBase = memo(({
     const getActions = useCallback(
         ({ row }) =>
             actionConfig
-                .map(({ key, title, icon, color, disabled, show, action, ...otherProps }) =>
+                .map(({ key, title, icon, color, disabled, action, ...otherProps }) =>
                     createAction({
                         key,
                         title: title || action, // Fallback to 'action' for backward compatibility if 'title' is not provided
@@ -564,6 +565,7 @@ const GridBase = memo(({
         const finalColumns = [];
         const lookupMap = {};
         const updatedColumnType = { ...gridColumnTypes, ...model.gridColumnTypes };
+        const groupingSet = new Set(groupingModel);
         for (const column of baseColumnList) {
             if (column.gridLabel === null || (parent && column.lookup === parent) || (column.type === constants.oneToMany && column.countInList === false)) continue;
             const overrides = {};
@@ -601,7 +603,7 @@ const GridBase = memo(({
                 overrides.groupable = column.groupable ?? false;
             }
             const finalField = overrides.field ?? column.field;
-            overrides.filterable = column.filterable === false ? false : !groupingModel.includes(finalField);
+            overrides.filterable = column.filterable === false ? false : !groupingSet.has(finalField);
             const headerName = tTranslate((typeof column.gridLabel === 'function' ? column.gridLabel({ column, t: tTranslate, tOpts }) : column.gridLabel) || column.label, tOpts);
 
             finalColumns.push({ ...column, ...overrides, headerName, description: headerName });
@@ -668,24 +670,17 @@ const GridBase = memo(({
             return;
         }
 
-        const toolbarFilters = toolbarFilterColumns.map(col => {
+        const toolbarFilters = toolbarFilterColumns.flatMap(col => {
             const operator = getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator);
             const normalizedValue = utils.normalizeFilterValue({
                 operator,
                 value: col.toolbarFilter.defaultFilterValue
             });
-            return {
-                field: col.field,
-                operator,
-                value: normalizedValue,
-                type: col.type
-            };
-        }).filter(f => {
             // Skip inserting toolbar filters where normalization produced an empty array,
             // which historically could result from legacy multi-select defaults (''/null).
             // An empty array often behaves like 'match none', so avoid adding it.
-            const v = f.value;
-            return !(Array.isArray(v) && v.length === 0);
+            if (Array.isArray(normalizedValue) && normalizedValue.length === 0) return [];
+            return [{ field: col.field, operator, value: normalizedValue, type: col.type }];
         });
 
         if (toolbarFilters.length > 0) {
@@ -823,11 +818,12 @@ const GridBase = memo(({
             path += id;
         }
         if (addUrlParamKey) {
-            searchParams.set(addUrlParamKey, record[addUrlParamKey]);
-            path += `?${searchParams.toString()}`;
+            const currentParams = new URLSearchParams(window.location.search);
+            currentParams.set(addUrlParamKey, record[addUrlParamKey]);
+            path += `?${currentParams.toString()}`;
         }
         navigate(path);
-    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, addUrlParamKey, searchParams, navigate, getRecord, buildUrl, snackbar]);
+    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, addUrlParamKey, navigate, getRecord, buildUrl, snackbar]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -877,8 +873,8 @@ const GridBase = memo(({
                     break;
                 case actionTypes.History:
                     // navigates to history screen, specifying the tablename, id of record and breadcrumb to render title on history screen.
-                    return navigate(`${getApiEndpoint('history')}?tableName=${tableName}&id=${record[idProperty]}&breadCrumb=${searchParamKey ? searchParams.get(searchParamKey) : gridTitle}`);
-                default:
+                    return navigate(`${getApiEndpoint('history')}?tableName=${tableName}&id=${record[idProperty]}&breadCrumb=${searchParamKey ? new URLSearchParams(window.location.search).get(searchParamKey) : gridTitle}`);
+                default: {
                     // Check if action matches any customAction and call its onClick if found
                     const foundCustomAction = customActions.find(ca => ca.action === action && typeof ca.onClick === constants.function);
                     if (foundCustomAction) {
@@ -886,6 +882,7 @@ const GridBase = memo(({
                         return;
                     }
                     break;
+                }
             }
         }
         if (action === actionTypes.Download) {
@@ -903,7 +900,7 @@ const GridBase = memo(({
             historyObject.state = row;
         }
         navigate(historyObject);
-    }, [isReadOnly, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, searchParams, gridTitle, getApiEndpoint, handleDownload, openForm]);
+    }, [isReadOnly, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, gridTitle, getApiEndpoint, handleDownload, openForm]);
 
     const handleDelete = useCallback(async () => {
         if (isStaticDataWithoutBackendApi) {
@@ -920,7 +917,7 @@ const GridBase = memo(({
         } finally {
             setIsDeleting(false);
         }
-    }, [isStaticDataWithoutBackendApi, backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts]);
+    }, [isStaticDataWithoutBackendApi, backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts, buildUrl]);
 
     const clearError = useCallback(() => {
         setErrorMessage(null);
@@ -958,7 +955,7 @@ const GridBase = memo(({
         if (typeof onRowDoubleClick === constants.function) {
             onRowDoubleClick(event);
         }
-    }, [onCellDoubleClickOverride, isReadOnly, isDoubleClicked, disableCellRedirect, openForm, idProperty, model.rowRedirectLink, model.addRecordToState, navigate, onRowDoubleClick, template]);
+    }, [onCellDoubleClickOverride, isReadOnly, isDoubleClicked, disableCellRedirect, openForm, idProperty, model.rowRedirectLink, model.addRecordToState, navigate, onRowDoubleClick]);
 
     const handleAddRecords = useCallback(async () => {
         if (rowSelectionModel.ids.size < 1) {
@@ -1007,7 +1004,7 @@ const GridBase = memo(({
             });
             setShowAddConfirmation(false);
         }
-    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts]);
+    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts, buildUrl]);
 
     const onAdd = useCallback(() => {
         if (selectionApi.length > 0) {
@@ -1111,10 +1108,11 @@ const GridBase = memo(({
         const { orderedFields, columnVisibilityModel, lookup } = apiRef.current.state.columns;
         const hiddenColumns = Object.keys(columnVisibilityModel).filter(key => columnVisibilityModel[key] === false);
 
-        const nonExportColumns = new Set(gridColumns.filter(col => col.exportable === false).map(col => col.field));
+        const nonExportColumns = new Set(gridColumns.flatMap(col => col.exportable === false ? [col.field] : []));
+        const hiddenColumnSet = new Set(hiddenColumns);
 
         const visibleColumns = orderedFields.filter(
-            field => !nonExportColumns.has(field) && !hiddenColumns.includes(field) && field !== '__check__' && field !== 'actions' && !gridGroupByColumnName.includes(field)
+            field => !nonExportColumns.has(field) && !hiddenColumnSet.has(field) && field !== '__check__' && field !== 'actions' && !gridGroupByColumnName.includes(field)
         );
 
         if (visibleColumns.length === 0) {
@@ -1146,10 +1144,10 @@ const GridBase = memo(({
             contentType,
             columns
         });
-    }, [hasStaticData, localSortAndFilter, data?.recordCount, apiRef, gridColumns, snackbar, model, fetchData, tTranslate, tOpts]);
+    }, [hasStaticData, localSortAndFilter, data?.recordCount, apiRef, gridColumns, snackbar, fetchData, tTranslate, tOpts, recordCounts]);
 
     useEffect(() => {
-        if ((!backendApi && !hasStaticData) || !preferencesReady) return;
+        if (hasStaticData || !backendApi || !preferencesReady) return;
         fetchData();
     }, [backendApi, hasStaticData, preferencesReady, fetchData]);
 
@@ -1190,7 +1188,7 @@ const GridBase = memo(({
         });
         const filteredItems = updatedItems.filter(item => !(item.operator === 'isAnyOf' && Array.isArray(item.value) && item.value.length === 0));
         setFilterModel({ ...e, items: filteredItems });
-    }, [gridColumns, constants.Number, emptyIsAnyOfOperatorFilters, isElasticScreen, setFilterModel]);
+    }, [gridColumns, emptyIsAnyOfOperatorFilters, isElasticScreen, setFilterModel]);
 
     const updateSort = useCallback((e) => {
         if (e[0]) {
@@ -1209,7 +1207,7 @@ const GridBase = memo(({
             return obj;
         });
         setSortModel(sort);
-    }, [gridColumns, isElasticScreen, setSortModel]);
+    }, [gridColumns, isElasticScreen, setSortModel, snackbar, tTranslate, tOpts]);
 
     const pageTitle = title || model.gridTitle || model.title;
     const breadCrumbs = searchParamKey
@@ -1411,7 +1409,7 @@ const GridBase = memo(({
                 'aria-label': tTranslate('Go to next page', tOpts),
             },
         }
-    }), [model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions, hasStaticData]);
+    }), [model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination]);
 
     const initialState = useMemo(() => ({
         columns: {

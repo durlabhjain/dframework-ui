@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { TextField, FormControl, Select, MenuItem, InputLabel, Tooltip } from '@mui/material';
 import { DatePicker, DateTimePicker } from '@mui/x-date-pickers';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -47,7 +47,7 @@ const ToolbarFilter = ({
             return isMultiple ? [] : '';
         }
         return value;
-    }, [existingFilter, isMultiple]);
+    }, [existingFilter, isMultiple, operator]);
     // Handle filter change - use functional update to avoid filterModel dependency
     const handleFilterChange = useCallback((newValue) => {
         
@@ -77,7 +77,7 @@ const ToolbarFilter = ({
                 items: [...otherFilters, newFilter],
             };
         });
-    }, [column, setFilterModel]);
+    }, [column, setFilterModel, operator]);
 
     // Get operator label/symbol for display
     const getOperatorLabel = useCallback((operator, type) => {
@@ -202,7 +202,7 @@ const ToolbarFilter = ({
 
             case 'select':
             case 'singleSelect':
-            case 'lookup':
+            case 'lookup': {
                 const options = column.customLookup || lookupData?.[column.lookup] || [];
                 const normalizedOptions = typeof column.lookup === 'string'
                     ? options.map((option) => ({
@@ -212,7 +212,7 @@ const ToolbarFilter = ({
                     : options;
 
                 const selectValue = utils.normalizeFilterValue({ value: filterValue, operator, isMultiple });
-                const displayLimit = 1; // Show up to 1 selected options before collapsing into tooltip
+                const displayLimit = 1;
 
                 return (
                     <FormControl variant="standard" sx={{ minWidth: 150 }}>
@@ -225,14 +225,13 @@ const ToolbarFilter = ({
                             renderValue={(selected) => {
                                 // Normalize selected to array of values
                                 const values = Array.isArray(selected) ? selected : (selected != null && selected !== '' ? [selected] : []);
-                                const labels = values.map((v) => {
+                                const labels = values.flatMap((v) => {
                                     // If the selected item is already an object with a label, use it
-                                    if (v && typeof v === 'object' && 'label' in v) return tTranslate(v.label, tOpts);
-
+                                    if (v && typeof v === 'object' && 'label' in v) return [tTranslate(v.label, tOpts)];
                                     // Compare option values loosely (stringified) to handle type differences
                                     const opt = normalizedOptions.find((o) => String(o.value) === String(v));
-                                    return opt ? tTranslate(opt.label, tOpts) : '';
-                                }).filter(Boolean);
+                                    return opt ? [tTranslate(opt.label, tOpts)] : [];
+                                });
 
                                 if (labels.length === 0) return '';
                                 if (labels.length <= displayLimit) return labels.join(', ');
@@ -256,14 +255,15 @@ const ToolbarFilter = ({
                         </Select>
                     </FormControl>
                 );
+            }
 
             case 'date':
-            case 'dateTime':
+            case 'dateTime': {
                 const columnType = column.type;
                 const filterFormat = fixedFilterFormat[columnType];
                 const format = systemDateTimeFormat(columnType === 'date', false, stateData.dateTime);
                 const DateComponent = columnType === 'dateTime' ? DateTimePicker : DatePicker;
-                
+
                 // Parse and validate date value once
                 let dateValue = null;
                 if (filterValue) {
@@ -294,6 +294,7 @@ const ToolbarFilter = ({
                         />
                     </LocalizationProvider>
                 );
+            }
 
             default:
                 return (

@@ -167,9 +167,6 @@ export default {
           expandDetailPanel: 'Expandir',
           collapseDetailPanel: 'Recolher',
 
-          // Used core components translation keys
-          MuiTablePagination: {},
-
           // Row reordering text
           rowReorderingHeaderName: 'Reorganização de linhas',
 

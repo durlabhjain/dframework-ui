@@ -1,4 +1,3 @@
-import React from 'react';
 import Button from '@mui/material/Button';
 import {
     Toolbar,
@@ -30,6 +29,17 @@ const GridToolBar = styled(Toolbar)({
     minHeight: 'auto',
     borderBottom: 'none'
 });
+
+const hasNonEmptyValue = (value) =>
+    value !== null &&
+    value !== undefined &&
+    value !== '' &&
+    !(Array.isArray(value) && value.length === 0);
+
+const filterValidItems = (items = []) =>
+    items.filter((item) =>
+        ['isEmpty', 'isNotEmpty'].includes(item.operator) || hasNonEmptyValue(item.value)
+    );
 
 const CustomToolbar = function (props) {
     const {
@@ -65,17 +75,6 @@ const CustomToolbar = function (props) {
     } = props;
 
     const addText = model.customAddText || (model.title ? `Add ${model.title}` : 'Add');
-
-    const hasNonEmptyValue = (value) =>
-        value !== null &&
-        value !== undefined &&
-        value !== '' &&
-        !(Array.isArray(value) && value.length === 0);
-
-    const filterValidItems = (items = []) =>
-        items.filter((item) =>
-            ['isEmpty', 'isNotEmpty'].includes(item.operator) || hasNonEmptyValue(item.value)
-        );
 
     const activeFilterCount = filterValidItems(filterModel?.items || []).length || 0;
     // Get columns that should have toolbar filters

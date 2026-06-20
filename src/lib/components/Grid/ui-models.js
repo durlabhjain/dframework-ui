@@ -1,5 +1,4 @@
 import GridBase from './index';
-import React from 'react';
 import * as yup from 'yup';
 import { Divider } from '@mui/material';
 import Form from '../Form/Form';
@@ -140,6 +139,11 @@ class UiModel {
 		const { columns } = this;
 		const t = tOpts?.t;
 		const validationConfig = {};
+		const columnByField = new Map(columns.flatMap(col => {
+			const entries = [[col.field, col]];
+			if (col.formField) entries.push([col.formField, col]);
+			return entries;
+		}));
 		for (const column of columns) {
 			const { field, label, header, type = 'string', requiredIfNew = false, required = false, min = '', max = '', validate } = column;
 			const formLabel = tTranslate(label || header || field, tOpts);
@@ -259,9 +263,7 @@ class UiModel {
 				const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
 				if (compareValidator) {
 					const compareFieldName = compareValidator[1];
-					const compareField = columns.find(
-						(f) => (f.formField === compareFieldName || f.field) === compareFieldName
-					);
+					const compareField = columnByField.get(compareFieldName);
 					config = config.oneOf(
 						[yup.ref(compareFieldName)],
 						resolveValidationMessage('mustMatch', { label: formLabel, compareLabel: compareField?.label || compareFieldName }, t)
@@ -275,11 +277,11 @@ class UiModel {
 		return yup.object({ ...validationConfig, ...this.validationSchema });
 	}
 
-	Form = ({ match, ...props }) => {
+	Form = ({ ...props }) => {
 		return <Form model={this} Layout={this.Layout} {...props} />;
 	};
 
-	Grid = ({ match, ...props }) => {
+	Grid = ({ ...props }) => {
 		return <GridBase model={this} showRowsSelected={showRowsSelected} {...props} />;
 	};
 	ChildGrid = (props) => {

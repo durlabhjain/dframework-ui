@@ -10,7 +10,10 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
     const { buildUrl } = useStateContext();
     const snackbar = useSnackbar();
     const api = buildUrl(model.api);
-    // Memoize dependency values
+    // Memoize dependency values — deps array is dynamic; react-doctor cannot analyze it statically.
+    // dependsOnKey captures the identity of the dependency list so the memo recomputes whenever
+    // the set of dependency names changes (not just when their values change).
+    const dependsOnKey = dependsOn.join(',');
     const dependencyValues = useMemo(() => {
         const toReturn = {};
         if (!dependsOn.length) return toReturn;
@@ -18,7 +21,8 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
             toReturn[dependency] = formik.values[dependency];
         }
         return toReturn;
-    }, dependsOn.map(dep => formik.values[dep]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dependsOnKey, ...dependsOn.map(dep => formik.values[dep])]);
 
     // Initial options for non-cascading
     const initialOptions = useMemo(() => {
@@ -55,10 +59,15 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
     useEffect(() => {
         if (dependsOn.length) {
             fetchOptions();
-        } else if (isAutoComplete || !userSelected.current) {
+        }
+    }, [dependsOn.length, fetchOptions]);
+
+    useEffect(() => {
+        if (dependsOn.length) return;
+        if (isAutoComplete || !userSelected.current) {
             setOptions(initialOptions || []);
         }
-    }, [dependsOn.length, fetchOptions, isAutoComplete, initialOptions]);
+    }, [dependsOn.length, isAutoComplete, initialOptions]);
 
     return options;
 }

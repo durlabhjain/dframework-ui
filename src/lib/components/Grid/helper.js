@@ -2,24 +2,20 @@ import MenuItem from '@mui/material/MenuItem';
 import Box from '@mui/material/Box';
 import { GridToolbarExportContainer } from '@mui/x-data-grid-premium';
 import { GridOn, Code, Language, TableChart, DataObject as DataObjectIcon } from '@mui/icons-material';
-import React from 'react';
 
 // Helper to convert default sort string to array
 export const convertDefaultSort = (defaultSort, constants, sortRegex) => {
     if (typeof defaultSort !== constants.string) return [];
-    return defaultSort.split(',').map(sortField => {
+    return defaultSort.split(',').flatMap(sortField => {
         sortRegex.lastIndex = 0;
         const sortInfo = sortRegex.exec(sortField);
-        if (!sortInfo) return null;
+        if (!sortInfo) return [];
         const [, field, direction = 'ASC'] = sortInfo;
-        return {
-            field: field.trim(),
-            sort: direction.trim().toLowerCase()
-        };
-    }).filter(Boolean);
+        return [{ field: field.trim(), sort: direction.trim().toLowerCase() }];
+    });
 };
 
-// Export menu item component
+// Export menu item component (internal use only — used by CustomExportButton below)
 export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, icon }) => (
     <MenuItem
         onClick={handleExport}

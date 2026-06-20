@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { Box } from "@mui/material";
 import { withTranslation } from "react-i18next";
@@ -10,6 +10,8 @@ import HelpModal from "../HelpModal";
 import { Card, CardContent } from '@mui/material';
 import { useTranslation } from "react-i18next";
 
+const EMPTY_BREADCRUMBS = [];
+
 function PageTitle({
   titleHeading,
   navigate,
@@ -19,7 +21,7 @@ function PageTitle({
   title = "",
   titleClass = "text-theme-blue text-max-width",
   showBreadcrumbs,
-  breadcrumbs = [],
+  breadcrumbs = EMPTY_BREADCRUMBS,
   enableBackButton = false,
   breadcrumbColor,
   showHelpButton = false,
@@ -54,10 +56,10 @@ function PageTitle({
               <Grid sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <Breadcrumbs variant="h5" aria-label="breadcrumb" separator=">" className={`${titleClass} breadcrumbs-text-title text-max-width`}>
                   {breadcrumbs.map((breadcrumb, index) => index < breadcrumbsLasIndex ? (
-                    <MuiLink onClick={handleBack} key={index} className={`${titleClass} breadcrumbs-text-title text-max-width`} variant="inherit" sx={{ textDecoration: 'none', color: '#1976d2' }}>
+                    <MuiLink onClick={handleBack} key={`${index}-${breadcrumb.text}`} className={`${titleClass} breadcrumbs-text-title text-max-width`} variant="inherit" sx={{ textDecoration: 'none', color: '#1976d2' }}>
                       {breadcrumb.text}
                     </MuiLink>
-                  ) : <Typography key={index} className={`${titleClass} breadcrumbs-text-title text-max-width`} variant="inherit">
+                  ) : <Typography key={`${index}-${breadcrumb.text}`} className={`${titleClass} breadcrumbs-text-title text-max-width`} variant="inherit">
                     {breadcrumb.text}
                   </Typography>)}
                 </Breadcrumbs>

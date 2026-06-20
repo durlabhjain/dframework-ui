@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
@@ -12,13 +12,13 @@ const Field = ({ column, field, formik, otherProps }) => {
         const val = formik.values[field];
         if (!val) return null;
         return dayjs(val);
-    }, [formik.values[field], column]);
+    }, [formik.values[field], field]);
     
     return <DateTimePicker
+        key={field}
         {...otherProps}
         variant="standard"
         readOnly={column?.readOnly === true}
-        key={field}
         fullWidth
         format={systemDateTimeFormat(false, false, stateData.dateTime)}
         name={field}

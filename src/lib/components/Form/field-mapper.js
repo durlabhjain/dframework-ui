@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { use } from 'react';
 import Box from '@mui/material/Box';
 import BooleanField from './fields/boolean';
 import StringField from './fields/string';
@@ -18,7 +19,7 @@ import StepLabel from '@mui/material/StepLabel';
 import Button from '@mui/material/Button';
 import DaySelection from './fields/dayRadio';
 import { Typography } from '@mui/material';
-import { ActiveStepContext } from './Form';
+import { ActiveStepContext } from './context';
 import styled from '@emotion/styled';
 import ChipInput from './fields/chipInput';
 import TreeCheckbox from './fields/treeCheckBox';
@@ -58,7 +59,7 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
     const [skipped, setSkipped] = React.useState(new Set());
     const { tOpts, tTranslate } = useModelTranslation(model);
 
-    const { activeStep, setActiveStep } = React.useContext(ActiveStepContext);
+    const { activeStep, setActiveStep } = use(ActiveStepContext);
 
     const skipSteps = {};
     for (let index = 0, len = model.columns.length; index < len; index++) {
@@ -257,7 +258,7 @@ const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displa
         const showTabbedLayout = showTabs && hasTabColumns;
         const showGroupedLayout = !showTabbedLayout && showGrouped && hasTabColumns;
         return { formElements, tabColumns, showTabs: showTabbedLayout, showGrouped: showGroupedLayout };
-    }, [model]);
+    }, [model, displayId]);
     return (
         <div>
             <RenderColumns isAdd={isAdd} formElements={formElements} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />

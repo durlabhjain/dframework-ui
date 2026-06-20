@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -59,8 +59,8 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         { field: "prefName", type: 'string', width: 300, headerName: t("Preference Name", tOpts), sortable: false, filterable: false },
         { field: "prefDesc", type: 'string', width: 300, headerName: t("Preference Description", tOpts), sortable: false, filterable: false },
         { field: "isDefault", type: "boolean", width: 100, headerName: t("Default", tOpts), sortable: false, filterable: false },
-        { field: 'editAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={1} icon={<Tooltip title={actionTypes.Edit}><EditIcon /></Tooltip>} tabIndex={1} data-action={actionTypes.Edit} label={t("Edit", tOpts)} color="primary" />] },
-        { field: 'deleteAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={2} icon={<Tooltip title={actionTypes.Delete}><DeleteIcon /></Tooltip>} tabIndex={2} data-action={actionTypes.Delete} label={t("Delete", tOpts)} color="error" />] }
+        { field: 'editAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={1} icon={<Tooltip title={actionTypes.Edit}><EditIcon /></Tooltip>} tabIndex={0} data-action={actionTypes.Edit} label={t("Edit", tOpts)} color="primary" />] },
+        { field: 'deleteAction', type: 'actions', headerName: '', width: 20, getActions: () => [<GridActionsCellItem key={2} icon={<Tooltip title={actionTypes.Delete}><DeleteIcon /></Tooltip>} tabIndex={0} data-action={actionTypes.Delete} label={t("Delete", tOpts)} color="error" />] }
     ], [t, tOpts]);
 
     const validationSchema = useMemo(() =>
@@ -76,14 +76,14 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         handleClose();
     };
 
-    const resetToDefault = () => {
+    const resetToDefault = useCallback(() => {
         if (gridRef.current?.initialGridState) {
             gridRef.current.restoreState(gridRef.current.initialGridState);
             setCurrentPreference(null);
             if (onPreferenceChange) onPreferenceChange(null);
-            handleClose();
+            setMenuAnchorEl(null);
         }
-    };
+    }, [gridRef, onPreferenceChange]);
 
     // Only memoize functions used in useEffect dependencies
     const loadPreferences = useCallback(async ({ applyDefault = false }) => {
@@ -92,7 +92,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
             params: { action: 'list', id: preferenceKey },
             dataParser: DATA_PARSERS.json
         });
-        
         if (!response?.preferences) {
             snackbar.showMessage(t('Failed to load preferences.', tOpts));
             if (onPreferenceChange) onPreferenceChange(null);
@@ -100,9 +99,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         }
 
         const preferences = response.preferences.filter(pref => pref.prefName.trim() !== '');
-        
         setPreferences(preferences);
-        
         if (applyDefault) {
             const defaultPref = preferences.find(pref => pref.isDefault);
             if (defaultPref) {
@@ -142,7 +139,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         let gridState;
         try {
             gridState = typeof preference.prefValue === 'string' ? JSON.parse(preference.prefValue) : preference.prefValue;
-        } catch (error) {
+        } catch {
             snackbar.showMessage(t('Failed to parse preference data.', tOpts));
             return;
         }
@@ -243,14 +240,12 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
     // Load preferences on mount
     useEffect(() => {
         if (!preferenceKey) return;
-        
         const loadAndApply = async () => {
             const result = await loadPreferences({ applyDefault: true });
             if (result?.defaultPrefId && result?.preferences) {
                 await applyPreference(result.defaultPrefId, result.preferences);
             }
         };
-        
         loadAndApply();
     }, [preferenceKey]);
 
@@ -534,6 +529,5 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         </Box>
     );
 };
-
 
 export default GridPreferences;

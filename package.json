@@ -10,6 +10,7 @@
     "dist"
   ],
   "peerDependencies": {
+    "@base-ui/react": "^1.4.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.10",
@@ -25,11 +26,18 @@
     "react-dom": "^19.2.5",
     "react-i18next": "^17.0.6",
     "react-router-dom": "^7.14.2",
-    "yup": "^1.7.1",
-    "@base-ui/react": "^1.4.1"
+    "yup": "^1.7.1"
   },
   "devDependencies": {
+    "@base-ui/react": "^1.4.1",
+    "@eslint/js": "^10.0.1",
     "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^10.5.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
+    "husky": "^9.1.7",
+    "react-doctor": "^0.5.6",
     "rollup-plugin-visualizer": "^6.0.11",
     "vite": "^8.0.10",
     "vite-plugin-static-copy": "^3.4.0"
@@ -38,7 +46,13 @@
     "dev": "vite",
     "start": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "lint:react": "react-doctor --no-score --no-telemetry .",
+    "lint:react:ci": "react-doctor --no-score --no-telemetry --blocking error .",
+    "prepare": "husky",
+    "doctor": "react-doctor --no-score --no-telemetry ."
   },
   "browserslist": {
     "production": [
