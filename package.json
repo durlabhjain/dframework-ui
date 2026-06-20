@@ -51,7 +51,7 @@
     "lint:react": "react-doctor --no-score --no-telemetry .",
     "lint:react:ci": "react-doctor --no-score --no-telemetry --blocking error .",
     "prepare": "husky",
-    "doctor": "npx react-doctor@latest"
+    "doctor": "react-doctor --no-score --no-telemetry ."
   },
   "browserslist": {
     "production": [
