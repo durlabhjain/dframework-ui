@@ -12,7 +12,7 @@ const Field = ({ column, field, formik, otherProps }) => {
         const val = formik.values[field];
         if (!val) return null;
         return dayjs(val);
-    }, [formik, field, column]);
+    }, [formik.values[field], field]);
     
     return <DateTimePicker
         key={field}

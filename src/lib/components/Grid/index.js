@@ -358,13 +358,13 @@ const GridBase = memo(({
             "valueOptions": "lookup"
         },
         "date": {
-            "valueFormatter": ({ value }) => (
+            "valueFormatter": (value) => (
                 formatDate({ value, useSystemFormat: true, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "date" })
         },
         "dateTime": {
-            "valueFormatter": ({ value }) => (
+            "valueFormatter": (value) => (
                 formatDate({ value, useSystemFormat: false, showOnlyDate: false, state: stateData.dateTime })
             ),
             "filterOperators": LocalizedDatePicker({ columnType: "dateTime" })
