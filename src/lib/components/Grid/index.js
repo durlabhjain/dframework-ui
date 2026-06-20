@@ -1139,6 +1139,7 @@ const GridBase = memo(({
             };
         });
         fetchData({
+            action: "export",
             isPivotExport,
             contentType,
             columns
