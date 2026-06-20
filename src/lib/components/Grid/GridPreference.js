@@ -81,7 +81,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
             gridRef.current.restoreState(gridRef.current.initialGridState);
             setCurrentPreference(null);
             if (onPreferenceChange) onPreferenceChange(null);
-            handleClose();
+            setMenuAnchorEl(null);
         }
     }, [gridRef, onPreferenceChange]);
 
