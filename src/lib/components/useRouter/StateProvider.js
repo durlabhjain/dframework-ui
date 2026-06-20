@@ -16,7 +16,7 @@ const RouterContext = createContext(null);
 // Fallback functions for missing SnackbarProvider
 const snackbarWarning = () => console.warn('SnackbarProvider not found. Wrap StateProvider with SnackbarProvider.');
 
-const EMPTY_API_ENDPOINTS = {};
+const EMPTY_API_ENDPOINTS = Object.freeze({});
 
 const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API_ENDPOINTS }) => {
 
@@ -38,8 +38,7 @@ const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API
   // Framework functionality - snackbar
   const snackbar = useSnackbar();
 
-  // Initialize with provided endpoints or empty object
-  const apiEndpoints = useRef(initialApiEndpoints);
+  const apiEndpoints = useRef({ ...initialApiEndpoints });
 
   const setApiEndpoint = useCallback((key, endpoint) => {
     apiEndpoints.current[key] = endpoint;
