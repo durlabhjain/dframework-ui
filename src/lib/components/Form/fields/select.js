@@ -59,7 +59,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
             column.onChange({ formik, value: event.target.value, options, event , t: tTranslate, tOpts});
         }
         userSelected.current = true;
-    }, [formik.values[field], column.onChange, options]);
+    }, [formik, column.onChange, options, tTranslate, tOpts]);
 
     // Determine if the current value is valid and should show the clear button
     const hasValue = useMemo(() => {
