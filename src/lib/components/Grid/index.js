@@ -93,6 +93,42 @@ const EMPTY_FILTER_MODEL = Object.freeze({
 // with a large pageSize so the backend returns all rows in one call.
 const LOCAL_MODE_PAGINATION_MODEL = Object.freeze({ page: 0, pageSize: exportPageSize });
 
+// Deterministic serializer used for request-signature keys. It keeps object-key
+// ordering stable and drops non-serializable values so equivalent inputs produce
+// the same string across re-renders.
+/**
+ * Stable JSON serializer for auto-fetch signatures.
+ * - Sorts plain-object keys recursively for deterministic output.
+ * - Omits undefined/functions/symbols to mirror JSON semantics for objects.
+ * - Falls back to String(value) if serialization fails.
+ * @param {unknown} value
+ * @returns {string}
+ */
+const stableSerialize = (value) => {
+    try {
+        return JSON.stringify(value, (key, currentValue) => {
+            if (currentValue === undefined || typeof currentValue === 'function' || typeof currentValue === 'symbol') {
+                return undefined;
+            }
+            if (Object.prototype.toString.call(currentValue) === '[object Object]') {
+                const sortedObject = {};
+                const sortedKeys = Object.keys(currentValue).sort();
+                sortedKeys.forEach((sortedKey) => {
+                    const sortedValue = currentValue[sortedKey];
+                    if (sortedValue === undefined || typeof sortedValue === 'function' || typeof sortedValue === 'symbol') {
+                        return;
+                    }
+                    sortedObject[sortedKey] = sortedValue;
+                });
+                return sortedObject;
+            }
+            return currentValue;
+        });
+    } catch {
+        return String(value);
+    }
+};
+
 const normalizeStaticData = (staticData) => {
     const records = Array.isArray(staticData)
         ? staticData
@@ -1146,10 +1182,57 @@ const GridBase = memo(({
         });
     }, [hasStaticData, localSortAndFilter, data?.recordCount, apiRef, gridColumns, snackbar, fetchData, tTranslate, tOpts, recordCounts]);
 
+    // Build a stable key from every list-query input that should trigger an
+    // automatic refetch; identical keys are treated as duplicate rerenders.
+    const autoFetchSignature = useMemo(() => {
+        if ((!backendApi && !hasStaticData) || !preferencesReady) {
+            return null;
+        }
+
+        return stableSerialize({
+            backendApi: backendApi || null,
+            hasStaticData,
+            page: paginationModelForFetch.page,
+            pageSize: paginationModelForFetch.pageSize,
+            sortModel: sortModelForFetch,
+            filterModel: filterModelForFetch,
+            baseFilters: Array.isArray(baseFilters) ? baseFilters : [],
+            parentFilters: Array.isArray(parentFilters) ? parentFilters : [],
+            additionalFilters: additionalFilters ?? null,
+            extraParams: props.extraParams ?? null,
+            selected: selected ?? null,
+            assigned: Boolean(assigned),
+            available: Boolean(available),
+            joinColumn: model.joinColumn ?? null,
+            id: id ?? null
+        });
+    }, [
+        backendApi,
+        hasStaticData,
+        preferencesReady,
+        paginationModelForFetch.page,
+        paginationModelForFetch.pageSize,
+        sortModelForFetch,
+        filterModelForFetch,
+        baseFilters,
+        parentFilters,
+        additionalFilters,
+        props.extraParams,
+        selected,
+        assigned,
+        available,
+        model.joinColumn,
+        id
+    ]);
+
+    const lastAutoFetchSignatureRef = useRef(null);
     useEffect(() => {
-        if (hasStaticData || !backendApi || !preferencesReady) return;
-        fetchData();
-    }, [backendApi, hasStaticData, preferencesReady, fetchData]);
+        if (!autoFetchSignature) return;
+        if (autoFetchSignature !== lastAutoFetchSignatureRef.current) {
+            lastAutoFetchSignatureRef.current = autoFetchSignature;
+            fetchData();
+        }
+    }, [fetchData, autoFetchSignature]);
 
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
