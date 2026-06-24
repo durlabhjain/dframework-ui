@@ -8,6 +8,7 @@ const regexConfig = {
 	password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/,
 	nonAlphaNumeric: /[^a-zA-Z0-9]/g,
 	compareValidatorRegex: /^compare:(.+)$/,
+	notEqualValidatorRegex: /^notEqual:([^:]+)(?::(.+))?$/,
 	email: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
 };
 
@@ -23,7 +24,8 @@ const validationMessageTemplates = {
 	requiredNumber: '${label}: required',
 	minNumber: '${label}: minimum value is ${min}',
 	maxNumber: '${label}: maximum value is ${max}',
-	mustMatch: '${label}: must match ${compareLabel}'
+	mustMatch: '${label}: must match ${compareLabel}',
+	notEqual: '${label}: must not be the same as ${compareLabel}'
 };
 
 const defaultValidationTranslationKeyPrefix = 'validation';
@@ -261,12 +263,26 @@ class UiModel {
 			}
 			if (validate) {
 				const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
+				const notEqualValidator = regexConfig.notEqualValidatorRegex.exec(validate);
 				if (compareValidator) {
 					const compareFieldName = compareValidator[1];
 					const compareField = columnByField.get(compareFieldName);
 					config = config.oneOf(
 						[yup.ref(compareFieldName)],
 						resolveValidationMessage('mustMatch', { label: formLabel, compareLabel: compareField?.label || compareFieldName }, t)
+					);
+				} else if (notEqualValidator) {
+					const [, compareFieldName, compareLabelOverride] = notEqualValidator;
+					const compareField = columnByField.get(compareFieldName);
+					config = config.test(
+						'not-equal',
+						resolveValidationMessage('notEqual', { label: formLabel, compareLabel: compareLabelOverride || compareField?.label || compareFieldName }, t),
+						function (value) {
+							if (value === undefined || value === null || value === '') return true;
+							const compareValue = this.parent[compareFieldName];
+							if (compareValue === undefined || compareValue === null || compareValue === '') return true;
+							return String(value) !== String(compareValue);
+						}
 					);
 				}
 			}
