@@ -273,15 +273,13 @@ class UiModel {
 					);
 				} else if (notEqualValidator) {
 					const [, compareFieldName, compareLabelOverride] = notEqualValidator;
-					const compareField = columnByField.get(compareFieldName);
+					const compareLabel = compareLabelOverride || columnByField.get(compareFieldName)?.label || compareFieldName;
 					config = config.test(
 						'not-equal',
-						resolveValidationMessage('notEqual', { label: formLabel, compareLabel: compareLabelOverride || compareField?.label || compareFieldName }, t),
+						resolveValidationMessage('notEqual', { label: formLabel, compareLabel }, t),
 						function (value) {
-							if (value === undefined || value === null || value === '') return true;
 							const compareValue = this.parent[compareFieldName];
-							if (compareValue === undefined || compareValue === null || compareValue === '') return true;
-							return String(value) !== String(compareValue);
+							return !value || !compareValue || String(value) !== String(compareValue);
 						}
 					);
 				}
