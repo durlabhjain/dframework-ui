@@ -277,12 +277,12 @@ class UiModel {
 					config = config.test(
 						'not-equal',
 						resolveValidationMessage('notEqual', { label: formLabel, compareLabel }, t),
-function (value) {
-	const compareValue = this.parent?.[compareFieldName];
-	if (value === undefined || value === null || value === '') return true;
-	if (compareValue === undefined || compareValue === null || compareValue === '') return true;
-	return String(value) !== String(compareValue);
-}
+						function (value) {
+							const compareValue = this.parent?.[compareFieldName];
+							if (value === undefined || value === null || value === '') return true;
+							if (compareValue === undefined || compareValue === null || compareValue === '') return true;
+							return String(value) !== String(compareValue);
+						}
 					);
 				}
 			}
