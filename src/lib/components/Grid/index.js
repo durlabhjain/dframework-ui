@@ -1222,7 +1222,8 @@ const GridBase = memo(({
         assigned,
         available,
         model.joinColumn,
-        id
+        id,
+        stableGridColumns
     ]);
 
     const lastAutoFetchSignatureRef = useRef(null);
