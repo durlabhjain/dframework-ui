@@ -24,6 +24,7 @@ import styled from '@emotion/styled';
 import ChipInput from './fields/chipInput';
 import TreeCheckbox from './fields/treeCheckBox';
 import FileUpload from './fields/fileUpload';
+import FilePicker from './fields/filePicker';
 import JSONInput from './fields/jsonInput';
 import utils from '../utils';
 import { useModelTranslation } from '../../hooks/useModelTranslation';
@@ -45,6 +46,7 @@ const fieldMappers = {
     "chipInput": ChipInput,
     "treeCheckbox": TreeCheckbox,
     "fileUpload": FileUpload,
+    "filePicker": FilePicker,
     "json": JSONInput
 };
 
