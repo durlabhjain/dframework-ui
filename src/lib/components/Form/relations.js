@@ -1,5 +1,6 @@
 import React, {
   memo,
+  useCallback,
   useState
 } from "react";
 import Tab from "@mui/material/Tab";
@@ -37,13 +38,39 @@ function a11yProps(index) {
  * @param {Object} params.parent - Parent data
  * @param {Object} params.where - Conditions for the grid
  * @param {Array} params.models - List of available models
+ *
+ * Add/Edit is rendered inline (the child's own Form, switched in via local state)
+ * rather than letting GridBase navigate — there's no standalone route registered
+ * for child-only models like ProductPricing/ProductImage, and navigating away would
+ * lose the parent Form. parentFilters[0] (the same filter used to scope the child
+ * grid's list to the parent) doubles as the default value for the child's FK field
+ * when adding a new record, via baseSaveData.
  */
 const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOnly }) => {
+  const [activeId, setActiveId] = useState(null);
   const modelConfigOfChildGrid = models.find(({ name }) => name === relation);
   if (!modelConfigOfChildGrid) return null;
   const config = { ...modelConfigOfChildGrid, hideBreadcrumb: true };
   const ChildModel = config instanceof UiModel ? config : new UiModel(config);
   if (!ChildModel) return null;
+
+  const closeForm = useCallback(() => setActiveId(null), []);
+  const openForm = useCallback(({ id }) => setActiveId(id ?? 0), []);
+
+  if (activeId !== null) {
+    const { field: fkField, value: parentIdValue } = parentFilters?.[0] || {};
+    return (
+      <ChildModel.Form
+        models={models}
+        readOnly={readOnly}
+        detailPanelId={activeId}
+        baseSaveData={fkField ? { [fkField]: parentIdValue } : {}}
+        navigateBack={false}
+        onCancel={closeForm}
+        onSaveSuccess={closeForm}
+      />
+    );
+  }
 
   return (
     <ChildModel.ChildGrid
@@ -53,6 +80,7 @@ const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOn
       model={config}
       where={where}
       isChildGrid={true}
+      setActiveRecord={openForm}
     />
   );
 });

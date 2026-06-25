@@ -28,6 +28,8 @@ const getFormData = (props) => {
             value = dateFormatterForForm.format(value).replace(',', '');
         } else if (dayjs.isDayjs(value)) {
             value = dateFormatterForForm.format(value.toDate()).replace(',', '');
+        } else if (value instanceof Blob) {
+            // Leave File/Blob as-is so FormData.append sends it as a file part, not "{}".
         } else if (typeof value === "object") {
             value = JSON.stringify(value);
         }
