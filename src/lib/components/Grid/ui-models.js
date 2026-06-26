@@ -262,28 +262,32 @@ class UiModel {
 				config = applyRequired(config, formLabel, type === 'string', t);
 			}
 			if (validate) {
-				const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
-				const notEqualValidator = regexConfig.notEqualValidatorRegex.exec(validate);
-				if (compareValidator) {
-					const compareFieldName = compareValidator[1];
-					const compareField = columnByField.get(compareFieldName);
-					config = config.oneOf(
-						[yup.ref(compareFieldName)],
-						resolveValidationMessage('mustMatch', { label: formLabel, compareLabel: compareField?.label || compareFieldName }, t)
-					);
-				} else if (notEqualValidator) {
-					const [, compareFieldName, compareLabelOverride] = notEqualValidator;
-					const compareLabel = compareLabelOverride || columnByField.get(compareFieldName)?.label || compareFieldName;
-					config = config.test(
-						'not-equal',
-						resolveValidationMessage('notEqual', { label: formLabel, compareLabel }, t),
-						function (value) {
-							const compareValue = this.parent?.[compareFieldName];
-							if (value === undefined || value === null || value === '') return true;
-							if (compareValue === undefined || compareValue === null || compareValue === '') return true;
-							return String(value) !== String(compareValue);
-						}
-					);
+				if (typeof validate === 'function') {
+					config = validate(config, { column, columnByField, id, t, yup });
+				} else {
+					const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
+					const notEqualValidator = regexConfig.notEqualValidatorRegex.exec(validate);
+					if (compareValidator) {
+						const compareFieldName = compareValidator[1];
+						const compareField = columnByField.get(compareFieldName);
+						config = config.oneOf(
+							[yup.ref(compareFieldName)],
+							resolveValidationMessage('mustMatch', { label: formLabel, compareLabel: compareField?.label || compareFieldName }, t)
+						);
+					} else if (notEqualValidator) {
+						const [, compareFieldName, compareLabelOverride] = notEqualValidator;
+						const compareLabel = compareLabelOverride || columnByField.get(compareFieldName)?.label || compareFieldName;
+						config = config.test(
+							'not-equal',
+							resolveValidationMessage('notEqual', { label: formLabel, compareLabel }, t),
+							function (value) {
+								const compareValue = this.parent?.[compareFieldName];
+								if (value === undefined || value === null || value === '') return true;
+								if (compareValue === undefined || compareValue === null || compareValue === '') return true;
+								return String(value) !== String(compareValue);
+							}
+						);
+					}
 				}
 			}
 
