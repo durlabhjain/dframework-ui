@@ -1189,6 +1189,10 @@ const GridBase = memo(({
             return null;
         }
 
+        // Include only the column properties that influence the request payload
+        // (type coercion, date detection, lookup resolution inside buildRequestData).
+        const columnSignature = stableGridColumns.map(({ field, type, lookup }) => ({ field, type, lookup }));
+
         return stableSerialize({
             backendApi: backendApi || null,
             hasStaticData,
@@ -1204,7 +1208,8 @@ const GridBase = memo(({
             assigned: Boolean(assigned),
             available: Boolean(available),
             joinColumn: model.joinColumn ?? null,
-            id: id ?? null
+            id: id ?? null,
+            columns: columnSignature
         });
     }, [
         backendApi,
