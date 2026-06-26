@@ -177,14 +177,16 @@ class UiModel {
 	applyColumnValidation(config, validationContext) {
 		const { column } = validationContext;
 		const { validate } = column;
-		if (!validate) {
-			return config;
-		}
+
+		let nextConfig = config;
+
 		if (typeof validate === 'function') {
-			return validate(config, validationContext);
+			nextConfig = validate.call(this, nextConfig, validationContext);
+		} else {
+			nextConfig = this.applyBuiltInValidation(nextConfig, validationContext);
 		}
-		const builtInConfig = this.applyBuiltInValidation(config, validationContext);
-		return this.applyCustomValidation(builtInConfig, validationContext);
+
+		return this.applyCustomValidation(nextConfig, validationContext);
 	}
 
 	getValidationSchema({ id, tTranslate = (key) => key, tOpts = {} } = {}) {
