@@ -199,7 +199,7 @@ class UiModel {
 			return entries;
 		}));
 		if (this.title && this.idProperty && !columnByField.has(this.idProperty)) {
-			columnByField.set('Id', { field: this.idProperty, label: this.title });
+			columnByField.set(this.idProperty, { field: this.idProperty, label: this.title });
 		}
 		for (const column of columns) {
 			const { field, label, header, type = 'string', requiredIfNew = false, required = false, min = '', max = '' } = column;
