@@ -198,8 +198,8 @@ class UiModel {
 			if (col.formField) entries.push([col.formField, col]);
 			return entries;
 		}));
-		if (this.title && !columnByField.has('Id')) {
-			columnByField.set('Id', { field: 'Id', label: this.title });
+		if (this.title && this.idProperty && !columnByField.has(this.idProperty)) {
+			columnByField.set(this.idProperty, { field: this.idProperty, label: this.title });
 		}
 		for (const column of columns) {
 			const { field, label, header, type = 'string', requiredIfNew = false, required = false, min = '', max = '' } = column;
