@@ -8,6 +8,7 @@ const regexConfig = {
 	password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/,
 	nonAlphaNumeric: /[^a-zA-Z0-9]/g,
 	compareValidatorRegex: /^compare:(.+)$/,
+	notEqualValidatorRegex: /^notEqual:([^:]+)(?::(.+))?$/,
 	email: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
 };
 
@@ -23,7 +24,8 @@ const validationMessageTemplates = {
 	requiredNumber: '${label}: required',
 	minNumber: '${label}: minimum value is ${min}',
 	maxNumber: '${label}: maximum value is ${max}',
-	mustMatch: '${label}: must match ${compareLabel}'
+	mustMatch: '${label}: must match ${compareLabel}',
+	notEqual: '${label}: must not be the same as ${compareLabel}'
 };
 
 const defaultValidationTranslationKeyPrefix = 'validation';
@@ -135,6 +137,58 @@ class UiModel {
 		return defaultValues;
 	}
 
+	applyBuiltInValidation(config, validationContext) {
+		const { column, columnByField, formLabel, t, tTranslate, tOpts } = validationContext;
+		const { validate } = column;
+		if (typeof validate !== 'string') {
+			return config;
+		}
+		const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
+		const notEqualValidator = regexConfig.notEqualValidatorRegex.exec(validate);
+		if (compareValidator) {
+			const compareFieldName = compareValidator[1];
+			const compareField = columnByField.get(compareFieldName);
+			return config.oneOf(
+				[yup.ref(compareFieldName)],
+				resolveValidationMessage('mustMatch', { label: formLabel, compareLabel: tTranslate(compareField?.label || compareFieldName, tOpts) }, t)
+			);
+		}
+		if (notEqualValidator) {
+			const [, compareFieldName, compareLabelOverride] = notEqualValidator;
+			const compareLabel = tTranslate(compareLabelOverride || columnByField.get(compareFieldName)?.label || compareFieldName, tOpts);
+			return config.test(
+				'not-equal',
+				resolveValidationMessage('notEqual', { label: formLabel, compareLabel }, t),
+				function (value) {
+					const compareValue = this.parent?.[compareFieldName];
+					if (value === undefined || value === null || value === '') return true;
+					if (compareValue === undefined || compareValue === null || compareValue === '') return true;
+					return String(value) !== String(compareValue);
+				}
+			);
+		}
+		return config;
+	}
+
+	applyCustomValidation(config, _validationContext) {
+		return config;
+	}
+
+	applyColumnValidation(config, validationContext) {
+		const { column } = validationContext;
+		const { validate } = column;
+
+		let nextConfig = config;
+
+		if (typeof validate === 'function') {
+			nextConfig = validate.call(this, nextConfig, validationContext);
+		} else {
+			nextConfig = this.applyBuiltInValidation(nextConfig, validationContext);
+		}
+
+		return this.applyCustomValidation(nextConfig, validationContext);
+	}
+
 	getValidationSchema({ id, tTranslate = (key) => key, tOpts = {} } = {}) {
 		const { columns } = this;
 		const t = tOpts?.t;
@@ -144,8 +198,11 @@ class UiModel {
 			if (col.formField) entries.push([col.formField, col]);
 			return entries;
 		}));
+		if (this.title && this.idProperty && !columnByField.has(this.idProperty)) {
+			columnByField.set(this.idProperty, { field: this.idProperty, label: this.title });
+		}
 		for (const column of columns) {
-			const { field, label, header, type = 'string', requiredIfNew = false, required = false, min = '', max = '', validate } = column;
+			const { field, label, header, type = 'string', requiredIfNew = false, required = false, min = '', max = '' } = column;
 			const formLabel = tTranslate(label || header || field, tOpts);
 			if (!formLabel) {
 				continue;
@@ -259,17 +316,17 @@ class UiModel {
 			if (requiredIfNew && (!id || id === '')) {
 				config = applyRequired(config, formLabel, type === 'string', t);
 			}
-			if (validate) {
-				const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
-				if (compareValidator) {
-					const compareFieldName = compareValidator[1];
-					const compareField = columnByField.get(compareFieldName);
-					config = config.oneOf(
-						[yup.ref(compareFieldName)],
-						resolveValidationMessage('mustMatch', { label: formLabel, compareLabel: compareField?.label || compareFieldName }, t)
-					);
-				}
-			}
+			config = this.applyColumnValidation(config, {
+				column,
+				columnByField,
+				formLabel,
+				id,
+				resolveValidationMessage,
+				t,
+				tOpts,
+				tTranslate,
+				yup
+			});
 
 			validationConfig[field] = config;
 		}
@@ -295,5 +352,3 @@ class UiModel {
 export {
 	UiModel
 };
-
-
