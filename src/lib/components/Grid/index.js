@@ -652,10 +652,17 @@ const GridBase = memo(({
 
     // Stable slice of column properties that affect the API request only (what buildRequestData reads).
     // Isolates fetchData from render-only changes like headerName, renderCell, filterOperators, etc.
-    const fetchColumns = useMemo(
-        () => stableGridColumns.map(({ field, type, lookup, localize, dependsOn }) => ({ field, type, lookup, localize, dependsOn })),
-        [stableGridColumns]
-    );
+    const fetchColumnsRef = useRef([]);
+    const fetchColumns = useMemo(() => {
+        const next = stableGridColumns.map(({ field, type, lookup, localize, dependsOn }) => ({ field, type, lookup, localize, dependsOn }));
+        const prev = fetchColumnsRef.current;
+        const isSame = Array.isArray(prev)
+            && prev.length === next.length
+            && next.every((col, i) => areEqual(prev[i], col));
+        if (isSame) return prev;
+        fetchColumnsRef.current = next;
+        return next;
+    }, [stableGridColumns]);
 
     // Initialize toolbar filters with default values
     const hasInitializedRef = useRef(false);

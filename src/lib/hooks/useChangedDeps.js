@@ -16,22 +16,23 @@ import { useRef, useEffect } from 'react';
  * @param {boolean} [enabled]  - Default false; set model.debug=true to activate
  */
 export function useChangedDeps(label, namedDeps, enabled = false) {
-    const prevRef = useRef(namedDeps);
+    const prevRef = useRef({});
     useEffect(() => {
+        const deps = namedDeps ?? {};
         if (!enabled) {
-            prevRef.current = namedDeps;
+            prevRef.current = deps;
             return;
         }
-        const prev = prevRef.current;
+        const prev = prevRef.current ?? {};
         const changed = {};
-        for (const key of Object.keys(namedDeps)) {
-            if (!Object.is(namedDeps[key], prev[key])) {
-                changed[key] = { from: prev[key], to: namedDeps[key] };
+        for (const key of Object.keys(deps)) {
+            if (!Object.is(deps[key], prev[key])) {
+                changed[key] = { from: prev[key], to: deps[key] };
             }
         }
         if (Object.keys(changed).length > 0) {
             console.debug(`[Grid/${label}] deps changed:`, changed);
         }
-        prevRef.current = namedDeps;
+        prevRef.current = deps;
     });
 }
