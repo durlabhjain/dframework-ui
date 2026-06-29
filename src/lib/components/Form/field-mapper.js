@@ -27,6 +27,7 @@ import FileUpload from './fields/fileUpload';
 import JSONInput from './fields/jsonInput';
 import utils from '../utils';
 import { useModelTranslation } from '../../hooks/useModelTranslation';
+import RemoteSelectField from './fields/remoteSelectField';
 
 const fieldMappers = {
     "boolean": BooleanField,
@@ -45,7 +46,8 @@ const fieldMappers = {
     "chipInput": ChipInput,
     "treeCheckbox": TreeCheckbox,
     "fileUpload": FileUpload,
-    "json": JSONInput
+    "json": JSONInput,
+    "remoteSelect": RemoteSelectField
 };
 
 const gridContainerStyle = { paddingTop: "2.5px", paddingBottom: "2.5px" };

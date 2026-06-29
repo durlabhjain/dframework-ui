@@ -6,7 +6,8 @@ import {
     useGridApiContext,
     useGridSelector,
     gridRowSelectionStateSelector,
-    getGridNumericOperators
+    getGridNumericOperators,
+    getGridSingleSelectOperators
 } from '@mui/x-data-grid-premium';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIcon from '@mui/icons-material/FileCopy';
@@ -33,6 +34,7 @@ import { useModelTranslation } from '../../hooks/useModelTranslation';
 import { convertDefaultSort, areEqual, getDefaultOperator } from './helper';
 import { styled } from '@mui/material/styles';
 import { ERROR_CODES } from '../../errors';
+import RemoteSelectField from '../Form/fields/remoteSelectField.js';
 
 const defaultPageSize = 50;
 const sortRegex = /(\w+)( ASC| DESC)?/i;
@@ -352,6 +354,23 @@ const GridBase = memo(({
         });
     }, [idProperty]);
 
+    const remoteLookupFilterOperators = useMemo(() => getGridSingleSelectOperators().map(op => ({
+        ...op,
+        InputComponent: ({ item, applyValue }) => {
+            const column = model.columns.find(c => c.field === item.field) ?? {};
+            return (
+                <RemoteSelectField
+                    column={column}
+                    model={model}
+                    lookups={{}}
+                    filterMode
+                    filterValue={item.value ?? ''}
+                    onFilterChange={(val) => applyValue({ ...item, value: val })}
+                />
+            );
+        },
+    })), [model]);
+
     const gridColumnTypes = {
         "radio": {
             "type": "singleSelect",
@@ -403,6 +422,10 @@ const GridBase = memo(({
                 return symbol ? `${symbol}${value}` : String(value);
             }
         },
+        "remoteSelect": {
+            "type": "singleSelect",
+            filterOperators: remoteLookupFilterOperators
+        }
     };
 
     useEffect(() => {
@@ -583,6 +606,10 @@ const GridBase = memo(({
             // Common filter operator pattern
             if (overrides.valueOptions === constants.lookup) {
                 overrides.valueOptions = (params) => lookupOptions({ ...params, lookupMap });
+            }
+            // Column-defined renderCell always wins over whatever the column type set
+            if (column.renderCell) {
+                overrides.renderCell = column.renderCell;
             }
             if (column.linkTo || column.link) {
                 overrides.cellClassName = 'mui-grid-linkColumn';
