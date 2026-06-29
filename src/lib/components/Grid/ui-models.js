@@ -138,7 +138,7 @@ class UiModel {
 	}
 
 	applyBuiltInValidation(config, validationContext) {
-		const { column, columnByField, formLabel, t } = validationContext;
+		const { column, columnByField, formLabel, t, tTranslate, tOpts } = validationContext;
 		const { validate } = column;
 		if (typeof validate !== 'string') {
 			return config;
@@ -150,12 +150,12 @@ class UiModel {
 			const compareField = columnByField.get(compareFieldName);
 			return config.oneOf(
 				[yup.ref(compareFieldName)],
-				resolveValidationMessage('mustMatch', { label: formLabel, compareLabel: compareField?.label || compareFieldName }, t)
+				resolveValidationMessage('mustMatch', { label: formLabel, compareLabel: tTranslate(compareField?.label || compareFieldName, tOpts) }, t)
 			);
 		}
 		if (notEqualValidator) {
 			const [, compareFieldName, compareLabelOverride] = notEqualValidator;
-			const compareLabel = compareLabelOverride || columnByField.get(compareFieldName)?.label || compareFieldName;
+			const compareLabel = tTranslate(compareLabelOverride || columnByField.get(compareFieldName)?.label || compareFieldName, tOpts);
 			return config.test(
 				'not-equal',
 				resolveValidationMessage('notEqual', { label: formLabel, compareLabel }, t),
@@ -199,7 +199,7 @@ class UiModel {
 			return entries;
 		}));
 		if (this.title && this.idProperty && !columnByField.has(this.idProperty)) {
-			columnByField.set(this.idProperty, { field: this.idProperty, label: this.title });
+			columnByField.set('Id', { field: this.idProperty, label: this.title });
 		}
 		for (const column of columns) {
 			const { field, label, header, type = 'string', requiredIfNew = false, required = false, min = '', max = '' } = column;
