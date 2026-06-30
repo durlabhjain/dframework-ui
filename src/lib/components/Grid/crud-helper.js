@@ -210,10 +210,6 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
         requestData.lookupWithDeps = JSON.stringify(lookupWithDeps);
     }
 
-    if (model?.limitToSurveyed) {
-        requestData.limitToSurveyed = model?.limitToSurveyed;
-    }
-
     const url = `${api}/${action}`;
 
     return { requestData, url, where, dateColumns };
