@@ -50,8 +50,14 @@ const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOn
   const [activeId, setActiveId] = useState(null);
   const modelConfigOfChildGrid = models.find(({ name }) => name === relation);
   if (!modelConfigOfChildGrid) return null;
-  const config = { ...modelConfigOfChildGrid, hideBreadcrumb: true };
-  const ChildModel = config instanceof UiModel ? config : new UiModel(config);
+  // Use the model instance directly when it is already a UiModel subclass (e.g. CsUiModel)
+  // so its prototype methods (createRequestPayload, controllerType) are preserved.
+  // Spreading a class instance into a plain object loses the prototype chain, causing
+  // requests to fall back to the default Node.js API routing instead of the correct
+  // controller (e.g. .ashx for CS models).
+  const ChildModel = modelConfigOfChildGrid instanceof UiModel
+    ? modelConfigOfChildGrid
+    : new UiModel({ ...modelConfigOfChildGrid, hideBreadcrumb: true });
   if (!ChildModel) return null;
 
   const closeForm = useCallback(() => setActiveId(null), []);
@@ -77,7 +83,7 @@ const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOn
       readOnly={readOnly}
       parentFilters={parentFilters}
       parent={parent}
-      model={config}
+      model={ChildModel}
       where={where}
       isChildGrid={true}
       setActiveRecord={openForm}
@@ -114,19 +120,22 @@ const Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, 
           })}
         </Tabs>
       </Box>
-      {relations.map((relation, idx) => (
-        <CustomTabPanel value={tabIndex} index={idx} key={relation}>
-          <ChildGrid
-            readOnly={readOnly}
-            relation={relation}
-            key={relation}
-            models={models}
-            parentFilters={relationFilters[relation] || []}
-            parent={parent}
-            where={where}
-          />
-        </CustomTabPanel>
-      ))}
+      {relations.map((relation, idx) => {
+        const modelConfigOfChildGrid = models.find(({ name }) => name === relation) || {};
+        const label = modelConfigOfChildGrid.listTitle || modelConfigOfChildGrid.title || relation;
+        return (
+          <CustomTabPanel value={tabIndex} index={idx} key={relation}>
+            <ChildGrid
+              readOnly={readOnly}
+              relation={relation}
+              models={models}
+              parentFilters={relationFilters[relation] || []}
+              parent={parent}
+              where={where}
+            />
+          </CustomTabPanel>
+        );
+      })}
     </Box>
   );
 });
