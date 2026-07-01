@@ -50,6 +50,7 @@ const Form = ({
   beforeSubmit,
   deletePromptText,
   detailPanelId = null, // Grid Row Detail Panel Id
+  navigateBack: navigateBackProp,
   onCancel,
   onSaveSuccess
 }) => {
@@ -98,7 +99,8 @@ const Form = ({
     model,
     userDefinedPermissions
   });
-  const { hideBreadcrumb = false, navigateBack } = model;
+  const { hideBreadcrumb = false, navigateBack: navigateBackModel } = model;
+  const navigateBack = navigateBackProp !== undefined ? navigateBackProp : navigateBackModel;
   const recordEditable = !("canEdit" in data) || data.canEdit;
 
   const handleNavigation = useCallback(() => {
@@ -338,7 +340,7 @@ const Form = ({
       const childModelConfig = (models || []).find(({ name }) => name === relation);
       const childFields = new Set((childModelConfig?.columns || []).map(({ field }) => field));
       const fkField = childFields.has(pascalField) ? pascalField : childFields.has(camelField) ? camelField : pascalField;
-      merged[relation] = [{ field: fkField, operator: "is", value: id }];
+      merged[relation] = [{ field: fkField, operator: "=", value: Number(id) }];
     });
     return merged;
   }, [relations, relationFilters, parentName, id, models]);
