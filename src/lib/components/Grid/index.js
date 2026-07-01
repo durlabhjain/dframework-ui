@@ -35,6 +35,7 @@ import { convertDefaultSort, areEqual, getDefaultOperator } from './helper';
 import { styled } from '@mui/material/styles';
 import { ERROR_CODES } from '../../errors';
 import RemoteSelectField from '../Form/fields/remoteSelectField.js';
+import { useChangedDeps } from '../../hooks/useChangedDeps';
 
 const defaultPageSize = 50;
 const sortRegex = /(\w+)( ASC| DESC)?/i;
@@ -94,6 +95,7 @@ const EMPTY_FILTER_MODEL = Object.freeze({
 // Stable pagination used when localSortAndFilter is enabled: always request page 0
 // with a large pageSize so the backend returns all rows in one call.
 const LOCAL_MODE_PAGINATION_MODEL = Object.freeze({ page: 0, pageSize: exportPageSize });
+
 
 const normalizeStaticData = (staticData) => {
     const records = Array.isArray(staticData)
@@ -225,6 +227,10 @@ const GridBase = memo(({
     const visibilityModel = useMemo(() => ({ CreatedOn: false, CreatedByUser: false, ...model.columnVisibilityModel }), [model.columnVisibilityModel]);
     const [showAddConfirmation, setShowAddConfirmation] = useState(false);
     const snackbar = useSnackbar();
+    const snackbarRef = useRef(snackbar);
+    snackbarRef.current = snackbar;
+    const onListParamsChangeRef = useRef(onListParamsChange);
+    onListParamsChangeRef.current = onListParamsChange;
     // Force client pagination when localSortAndFilter is enabled so that all data is
     // fetched in a single request and MUI DataGrid handles paging/sort/filter locally.
     const paginationMode = (hasStaticData || model.localSortAndFilter) ? constants.client : (model.paginationMode === constants.client ? constants.client : constants.server);
@@ -294,7 +300,7 @@ const GridBase = memo(({
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
     const enableRowDetailPanel = typeof model.getDetailPanelContent === 'function';
     const gridRows = useMemo(() => data.records || [], [data.records]);
-    const rowCount = useMemo(() => data.recordCount, [data.recordCount]);
+    const rowCount = data.recordCount;
     const [groupingModel, setGroupingModel] = useState(
         () => Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []
     );
@@ -474,15 +480,6 @@ const GridBase = memo(({
         const map = lookupMapParam || {};
         return map[field]?.customLookup || lookupData[map[field]?.lookup] || [];
     }, []);
-
-    useEffect(() => {
-        // Note: PASS_FILTERS_TO_HEADER was removed as component-specific state
-        // This functionality should be handled locally within the Grid component if needed
-        if (props.isChildGrid || !hideTopFilters) {
-            return;
-        }
-        // TODO: If filter header communication is needed, implement using local state or props
-    }, [props.isChildGrid, hideTopFilters]);
 
     const createAction = useCallback(
         ({ key, title, icon, color = "primary", disabled, otherProps }) => (
@@ -680,6 +677,20 @@ const GridBase = memo(({
     // sees new column object references and re-evaluates its memoized currentValueOptions.
     const gridColumns = useMemo(() => stableGridColumns.map(col => ({ ...col })), [stableGridColumns, lookupKeys]);
 
+    // Stable slice of column properties that affect the API request only (what buildRequestData reads).
+    // Isolates fetchData from render-only changes like headerName, renderCell, filterOperators, etc.
+    const fetchColumnsRef = useRef([]);
+    const fetchColumns = useMemo(() => {
+        const next = stableGridColumns.map(({ field, type, lookup, localize, dependsOn }) => ({ field, type, lookup, localize, dependsOn }));
+        const prev = fetchColumnsRef.current;
+        const isSame = Array.isArray(prev)
+            && prev.length === next.length
+            && next.every((col, i) => areEqual(prev[i], col));
+        if (isSame) return prev;
+        fetchColumnsRef.current = next;
+        return next;
+    }, [stableGridColumns]);
+
     // Initialize toolbar filters with default values
     const hasInitializedRef = useRef(false);
     useEffect(() => {
@@ -720,13 +731,15 @@ const GridBase = memo(({
     }, [gridColumns]);
 
 
+    // Logs which dep caused fetchData to be recreated. Enable with model.debug = true.
+    useChangedDeps('fetchData', {
+        hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi,
+        filterModelForFetch, baseFilters, id, assigned, available, selected,
+        extraParams: props.extraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters
+    }, model.debug);
+
     const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
-        if (hasStaticData) {
-            if (!contentType) {
-                setData(normalizedStaticData);
-            }
-            return;
-        }
+        if (hasStaticData || !backendApi || !preferencesReady) return;
         const { pageSize, page } = paginationModelForFetch;
         const isExportRequest = Boolean(contentType);
 
@@ -736,27 +749,22 @@ const GridBase = memo(({
             ...filterModelForFetch,
             items: filterValidItems(filterModelForFetch.items)
         };
-        const finalBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
+
+        const mergedBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
         if (model.joinColumn && id) {
-            finalBaseFilters.push({ field: model.joinColumn, operator: "is", type: "number", value: Number(id) });
+            mergedBaseFilters.push({ field: model.joinColumn, operator: "is", type: "number", value: Number(id) });
+        }
+        if (Array.isArray(parentFilters)) {
+            mergedBaseFilters.push(...parentFilters);
         }
 
         if (additionalFilters) {
             filters.items = [...(filters.items || []), ...additionalFilters];
         }
 
-        // Merge parentFilters and baseFilters into one parameter
-        const mergedBaseFilters = [];
-        if (Array.isArray(finalBaseFilters)) {
-            mergedBaseFilters.push(...finalBaseFilters);
-        }
-        if (Array.isArray(parentFilters)) {
-            mergedBaseFilters.push(...parentFilters);
-        }
-
         const mergedExtraParams = {
             ...extraParams,
-            ...props.extraParams, // Merge any custom params passed via component props
+            ...props.extraParams,
         };
 
         if (assigned || available) {
@@ -792,14 +800,14 @@ const GridBase = memo(({
             pageSize: isExportRequest ? exportPageSize : pageSize,
             sortModel: sortModelForFetch,
             filterModel: filters,
-            gridColumns: stableGridColumns,
+            gridColumns: fetchColumns,
             model,
             baseFilters: mergedBaseFilters,
             api: baseUrl,
             extraParams: mergedExtraParams
         };
-        if (typeof onListParamsChange === 'function') {
-            onListParamsChange(listParams);
+        if (typeof onListParamsChangeRef.current === 'function') {
+            onListParamsChangeRef.current(listParams);
         }
         apiRef.current.listParams = listParams;
         if (!isExportRequest) setIsLoading(true);
@@ -811,14 +819,14 @@ const GridBase = memo(({
             }
         } catch (error) {
             if (error?.aborted || error?.name === 'AbortError' || controller?.signal?.aborted) return;
-            snackbar.showErrorCode(ERROR_CODES.DATA_LOAD_FAILED, error?.message);
+            snackbarRef.current.showErrorCode(ERROR_CODES.DATA_LOAD_FAILED, error?.message);
             if (!isExportRequest) {
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
             }
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [hasStaticData, normalizedStaticData, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, stableGridColumns, parentFilters, onListParamsChange, apiRef, getList, snackbar, additionalFilters]);
+    }, [hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -1174,9 +1182,8 @@ const GridBase = memo(({
     }, [hasStaticData, localSortAndFilter, data?.recordCount, apiRef, gridColumns, snackbar, fetchData, tTranslate, tOpts, recordCounts]);
 
     useEffect(() => {
-        if (hasStaticData || !backendApi || !preferencesReady) return;
         fetchData();
-    }, [backendApi, hasStaticData, preferencesReady, fetchData]);
+    }, [fetchData]);
 
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {

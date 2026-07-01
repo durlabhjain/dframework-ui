@@ -231,7 +231,6 @@ const request = async ({
 };
 
 export {
-    HTTP_STATUS_CODES,
     transport,
     DATA_PARSERS,
     getErrorMessage
