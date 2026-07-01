@@ -125,8 +125,6 @@ const Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, 
         </Tabs>
       </Box>
       {relations.map((relation, idx) => {
-        const modelConfigOfChildGrid = models.find(({ name }) => name === relation) || {};
-        const label = modelConfigOfChildGrid.listTitle || modelConfigOfChildGrid.title || relation;
         return (
           <CustomTabPanel value={tabIndex} index={idx} key={relation}>
             <ChildGrid
