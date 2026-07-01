@@ -44,11 +44,6 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
         }
         setIsLoading(true);
         try {
-            // scopeId carries the one id this fetch is filtered by — either the value to
-            // resolve (lookupId) or the single cascading dependency value, matching the
-            // existing GET ?lookups=&scopeId= protocol's single-id contract. Also pass the
-            // richer structured `where` via reqData.params for backends that override
-            // createRequestPayload and need more than a single scopeId.
             const where = { ...dependencyValues, query: search, start, limit, lookupId };
             const data = await getLookups({
                 api,

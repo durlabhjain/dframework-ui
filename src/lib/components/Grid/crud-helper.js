@@ -445,7 +445,6 @@ const getLookups = async (props = {}) => {
     const searchParams = new URLSearchParams();
     const url = `${api}/lookups`;
     searchParams.set("lookups", lookups);
-    searchParams.set("scopeId", scopeId);
     // Only set when defined — avoids sending the literal string "undefined" in the querystring
     if (scopeId !== undefined) searchParams.set("scopeId", scopeId);
     if (query) searchParams.set("query", query);

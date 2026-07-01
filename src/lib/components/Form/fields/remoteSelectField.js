@@ -25,9 +25,10 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     filterMode = false,
     filterValue,
     onFilterChange,
+    multiSelect: multiSelectProp,
 }) {
     const pageSize = column.pageSize || DEFAULT_PAGE_SIZE;
-    const isMultiSelect = Boolean(column.multiSelect) && !filterMode;
+    const isMultiSelect = Boolean(multiSelectProp) || (Boolean(column.multiSelect) && !filterMode);
     const isReadOnly = Boolean(column.readOnly);
 
     const { options, fetchOptions, isLoading, labelMap } = useCascadingLookup({
@@ -230,6 +231,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                     size="small"
                     onClick={handleClear}
                     tabIndex={-1}
+                    aria-label={tTranslate('Clear value', tOpts)}
                     sx={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)', p: '2px' }}
                 >
                     <Clear fontSize="small" />
@@ -240,6 +242,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                 onClick={handleOpen}
                 disabled={isReadOnly}
                 tabIndex={-1}
+                aria-label={tTranslate(open ? 'Close options' : 'Open options', tOpts)}
                 sx={{ position: 'absolute', right: 2, top: '50%', transform: 'translateY(-50%)', p: '2px' }}
             >
                 {open ? <ArrowDropUp sx={{ fontSize: 22 }} /> : <ArrowDropDown sx={{ fontSize: 22 }} />}
@@ -273,7 +276,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                             startAdornment: <InputAdornment position="start"><Search fontSize="small" /></InputAdornment>,
                             endAdornment: searchInput && (
                                 <InputAdornment position="end">
-                                    <IconButton size="small" onClick={clearSearch}>
+                                    <IconButton size="small" onClick={clearSearch} aria-label={tTranslate('Clear search', tOpts)}>
                                         <Clear fontSize="small" />
                                     </IconButton>
                                 </InputAdornment>
@@ -327,8 +330,8 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
 
             {/* Pagination */}
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.2, px: 1, py: 0.5, borderTop: '1px solid', borderColor: 'divider' }}>
-                <IconButton size="small" onClick={() => handlePageChange(1)} disabled={page === 1 || isLoading}><FirstPage fontSize="small" /></IconButton>
-                <IconButton size="small" onClick={() => handlePageChange(page - 1)} disabled={page === 1 || isLoading}><NavigateBefore fontSize="small" /></IconButton>
+                <IconButton size="small" onClick={() => handlePageChange(1)} disabled={page === 1 || isLoading} aria-label={tTranslate('First page', tOpts)}><FirstPage fontSize="small" /></IconButton>
+                <IconButton size="small" onClick={() => handlePageChange(page - 1)} disabled={page === 1 || isLoading} aria-label={tTranslate('Previous page', tOpts)}><NavigateBefore fontSize="small" /></IconButton>
                 <Typography variant="body2" sx={{ fontSize: 12 }}>{tTranslate('Page', tOpts)}</Typography>
                 <InputBase
                     value={jumpTo}
@@ -336,12 +339,12 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                     onKeyDown={handleJumpSubmit}
                     disabled={isLoading}
                     sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, width: 40, height: 26, fontSize: 12, '& input': { padding: '3px', textAlign: 'center' } }}
-                    inputProps={{ maxLength: 4 }}
+                    inputProps={{ maxLength: 4, 'aria-label': tTranslate('Page number', tOpts) }}
                 />
                 <Typography variant="body2" sx={{ fontSize: 12 }}>{tTranslate('of', tOpts)} {totalPages}</Typography>
-                <IconButton size="small" onClick={() => handlePageChange(page + 1)} disabled={page === totalPages || isLoading}><NavigateNext fontSize="small" /></IconButton>
-                <IconButton size="small" onClick={() => handlePageChange(totalPages)} disabled={page === totalPages || isLoading}><LastPage fontSize="small" /></IconButton>
-                <IconButton size="small" onClick={handleRefresh} disabled={isLoading} sx={{ ml: 0.5 }}><Refresh fontSize="small" /></IconButton>
+                <IconButton size="small" onClick={() => handlePageChange(page + 1)} disabled={page === totalPages || isLoading} aria-label={tTranslate('Next page', tOpts)}><NavigateNext fontSize="small" /></IconButton>
+                <IconButton size="small" onClick={() => handlePageChange(totalPages)} disabled={page === totalPages || isLoading} aria-label={tTranslate('Last page', tOpts)}><LastPage fontSize="small" /></IconButton>
+                <IconButton size="small" onClick={handleRefresh} disabled={isLoading} sx={{ ml: 0.5 }} aria-label={tTranslate('Refresh', tOpts)}><Refresh fontSize="small" /></IconButton>
             </Box>
         </Popover>
     );

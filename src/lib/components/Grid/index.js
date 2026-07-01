@@ -364,13 +364,15 @@ const GridBase = memo(({
         ...op,
         InputComponent: ({ item, applyValue }) => {
             const column = model.columns.find(c => c.field === item.field) ?? {};
+            const isAnyOf = item.operator === 'isAnyOf';
             return (
                 <RemoteSelectField
                     column={column}
                     model={model}
                     lookups={{}}
                     filterMode
-                    filterValue={item.value ?? ''}
+                    multiSelect={isAnyOf}
+                    filterValue={item.value ?? (isAnyOf ? [] : '')}
                     onFilterChange={(val) => applyValue({ ...item, value: val })}
                 />
             );
