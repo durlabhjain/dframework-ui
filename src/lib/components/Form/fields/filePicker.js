@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, Button, Typography } from "@mui/material";
 
 /**
@@ -9,7 +9,13 @@ import { Box, Button, Typography } from "@mui/material";
  */
 function FilePicker({ column, field, formik }) {
     const value = formik.values[field];
-    const [selectedName, setSelectedName] = useState(value instanceof File ? value.name : null);
+    const [selectedName, setSelectedName] = useState(
+        typeof File !== "undefined" && value instanceof File ? value.name : null
+    );
+
+    useEffect(() => {
+        setSelectedName(typeof File !== "undefined" && value instanceof File ? value.name : null);
+    }, [value]);
 
     const handleFileChange = (event) => {
         const file = event.target.files[0];
