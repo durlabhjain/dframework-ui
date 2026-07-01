@@ -325,25 +325,18 @@ const Form = ({
   /**
    * Relation consumers can override the parent->child filter per relation via the
    * relationFilters prop. When they don't, default it to filtering the child by the
-   * parent's id field. Field casing for the FK varies by model convention (PascalCase
-   * for .NET/CS-backed models e.g. "ProductId", camelCase for REST-style models e.g.
-   * "productId"), so prefer whichever one is actually declared on the child model's
-   * columns over guessing a single casing.
+   * parent's id field (e.g. "ProductId").
    */
   const resolvedRelationFilters = useMemo(() => {
     if (!relations.length || !parentName) return relationFilters;
-    const pascalField = `${parentName}Id`;
-    const camelField = `${parentName.charAt(0).toLowerCase()}${parentName.slice(1)}Id`;
+    const fkField = `${parentName}Id`;
     const merged = { ...relationFilters };
     relations.forEach((relation) => {
       if (merged[relation]) return;
-      const childModelConfig = (models || []).find(({ name }) => name === relation);
-      const childFields = new Set((childModelConfig?.columns || []).map(({ field }) => field));
-      const fkField = childFields.has(pascalField) ? pascalField : childFields.has(camelField) ? camelField : pascalField;
       merged[relation] = [{ field: fkField, operator: "=", value: Number(id) }];
     });
     return merged;
-  }, [relations, relationFilters, parentName, id, models]);
+  }, [relations, relationFilters, parentName, id]);
   const readOnlyRelations = !recordEditable || data.readOnlyRelations;
   deletePromptText = deletePromptText || tTranslate("Are you sure you want to delete ?", tOpts);
   const { showPageTitle = true } = model;
