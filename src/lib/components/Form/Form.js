@@ -321,7 +321,7 @@ const Form = ({
   ];
   const showRelations = Number(id) !== 0 && Boolean(relations.length);
   const showSaveButton = searchParams.has("showRelation");
-  const parentName = model.title || "";
+  const parentName = model.name || model.title || "";
   /**
    * Relation consumers can override the parent->child filter per relation via the
    * relationFilters prop. When they don't, default it to filtering the child by the
