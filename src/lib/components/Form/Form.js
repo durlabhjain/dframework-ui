@@ -61,7 +61,7 @@ const Form = ({
   const { stateData, buildUrl, setPageTitle } = useStateContext();
   const params = useParams() || getParams;
   const { id: idWithOptions = "" } = params;
-  const id = detailPanelId || idWithOptions.split("-")[consts.editIdIndex];
+  const id = detailPanelId ?? idWithOptions.split("-")[consts.editIdIndex];
   const searchParams = new URLSearchParams(window.location.search);
   const baseDataFromParams = searchParams.has(consts.baseData) && searchParams.get(consts.baseData);
   if (baseDataFromParams) {
@@ -128,7 +128,7 @@ const Form = ({
 
   const formApi = api || gridApi;
   const idToLoad = useMemo(() => {
-    if (detailPanelId) {
+    if (detailPanelId != null) {
       return detailPanelId;
     }
     const options = idWithOptions.split("-");
