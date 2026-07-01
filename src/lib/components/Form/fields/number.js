@@ -109,7 +109,6 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
     const numberFormat = useMemo(() => {
         if (precision !== undefined) {
             return {
-                minimumFractionDigits: precision,
                 maximumFractionDigits: precision
             };
         }
