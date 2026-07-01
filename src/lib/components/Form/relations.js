@@ -56,7 +56,11 @@ const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOn
   // requests to fall back to the default Node.js API routing instead of the correct
   // controller (e.g. .ashx for CS models).
   const ChildModel = modelConfigOfChildGrid instanceof UiModel
-    ? modelConfigOfChildGrid
+    ? Object.assign(
+      Object.create(Object.getPrototypeOf(modelConfigOfChildGrid)),
+      modelConfigOfChildGrid,
+      { hideBreadcrumb: true }
+    )
     : new UiModel({ ...modelConfigOfChildGrid, hideBreadcrumb: true });
   if (!ChildModel) return null;
 
