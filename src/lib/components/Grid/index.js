@@ -366,7 +366,7 @@ const GridBase = memo(({
     // dynamicColumns is prepended to match stableGridColumns, so remoteSelect columns that
     // only exist in dynamicColumns still resolve their lookup config.
     const baseColumnList = useMemo(() => {
-        const list = columns || model.gridColumns || model.columns;
+        const list = columns || model.gridColumns || model.columns || [];
         return dynamicColumns ? [...dynamicColumns, ...list] : list;
     }, [columns, model.gridColumns, model.columns, dynamicColumns]);
 
