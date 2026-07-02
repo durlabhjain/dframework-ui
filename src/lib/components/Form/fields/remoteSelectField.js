@@ -212,6 +212,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                 variant={filterMode ? 'outlined' : 'standard'}
                 size="small"
                 value={selectedLabel}
+                disableAutoFocus
                 placeholder={isReadOnly ? '' : tTranslate('Select...', tOpts)}
                 onClick={handleOpen}
                 error={!filterMode && Boolean(formik?.touched[field] && formik?.errors[field])}
@@ -224,7 +225,6 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                 <IconButton
                     size="small"
                     onClick={handleClear}
-                    tabIndex={-1}
                     aria-label={tTranslate('Clear value', tOpts)}
                     sx={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)', p: '2px' }}
                 >
@@ -235,7 +235,6 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                 size="small"
                 onClick={handleOpen}
                 disabled={isReadOnly}
-                tabIndex={-1}
                 aria-label={tTranslate(open ? 'Close options' : 'Open options', tOpts)}
                 sx={{ position: 'absolute', right: 2, top: '50%', transform: 'translateY(-50%)', p: '2px' }}
             >
@@ -252,7 +251,6 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
             anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
             transformOrigin={{ vertical: 'top', horizontal: 'left' }}
             slotProps={{ paper: { sx: { width: Math.max(anchorEl?.offsetWidth ?? 0, 280), maxHeight: 460, overflow: 'hidden' } } }}
-            disableAutoFocus
             disableEnforceFocus
         >
             {/* Search */}

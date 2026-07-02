@@ -363,7 +363,12 @@ const GridBase = memo(({
     // Same source-of-truth as the column list stableGridColumns builds below: GridBase can be
     // driven by the columns prop or model.gridColumns instead of model.columns, so the filter
     // input must resolve the column config against whichever one is actually in effect.
-    const baseColumnList = useMemo(() => columns || model.gridColumns || model.columns, [columns, model.gridColumns, model.columns]);
+    // dynamicColumns is prepended to match stableGridColumns, so remoteSelect columns that
+    // only exist in dynamicColumns still resolve their lookup config.
+    const baseColumnList = useMemo(() => {
+        const list = columns || model.gridColumns || model.columns;
+        return dynamicColumns ? [...dynamicColumns, ...list] : list;
+    }, [columns, model.gridColumns, model.columns, dynamicColumns]);
 
     const remoteLookupFilterOperators = useMemo(() => getGridSingleSelectOperators().map(op => ({
         ...op,
