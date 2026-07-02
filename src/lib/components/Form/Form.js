@@ -50,6 +50,7 @@ const Form = ({
   beforeSubmit,
   deletePromptText,
   detailPanelId = null, // Grid Row Detail Panel Id
+  navigateBack: navigateBackProp,
   onCancel,
   onSaveSuccess
 }) => {
@@ -60,7 +61,7 @@ const Form = ({
   const { stateData, buildUrl, setPageTitle } = useStateContext();
   const params = useParams() || getParams;
   const { id: idWithOptions = "" } = params;
-  const id = detailPanelId || idWithOptions.split("-")[consts.editIdIndex];
+  const id = detailPanelId ?? idWithOptions.split("-")[consts.editIdIndex];
   const searchParams = new URLSearchParams(window.location.search);
   const baseDataFromParams = searchParams.has(consts.baseData) && searchParams.get(consts.baseData);
   if (baseDataFromParams) {
@@ -98,7 +99,8 @@ const Form = ({
     model,
     userDefinedPermissions
   });
-  const { hideBreadcrumb = false, navigateBack } = model;
+  const { hideBreadcrumb = false, navigateBack: navigateBackModel } = model;
+  const navigateBack = navigateBackProp !== undefined ? navigateBackProp : navigateBackModel;
   const recordEditable = !("canEdit" in data) || data.canEdit;
 
   const handleNavigation = useCallback(() => {
@@ -126,7 +128,7 @@ const Form = ({
 
   const formApi = api || gridApi;
   const idToLoad = useMemo(() => {
-    if (detailPanelId) {
+    if (detailPanelId != null) {
       return detailPanelId;
     }
     const options = idWithOptions.split("-");
@@ -319,6 +321,22 @@ const Form = ({
   ];
   const showRelations = Number(id) !== 0 && Boolean(relations.length);
   const showSaveButton = searchParams.has("showRelation");
+  const parentName = model.name || model.title || "";
+  /**
+   * Relation consumers can override the parent->child filter per relation via the
+   * relationFilters prop. When they don't, default it to filtering the child by the
+   * parent's id field (e.g. "ProductId").
+   */
+  const resolvedRelationFilters = useMemo(() => {
+    if (!relations.length || !parentName) return relationFilters;
+    const fkField = `${parentName}Id`;
+    const merged = { ...relationFilters };
+    relations.forEach((relation) => {
+      if (merged[relation]) return;
+      merged[relation] = [{ field: fkField, operator: "=", value: Number(id) }];
+    });
+    return merged;
+  }, [relations, relationFilters, parentName, id]);
   const readOnlyRelations = !recordEditable || data.readOnlyRelations;
   deletePromptText = deletePromptText || tTranslate("Are you sure you want to delete ?", tOpts);
   const { showPageTitle = true } = model;
@@ -418,7 +436,7 @@ const Form = ({
             <Relations
               readOnly={readOnlyRelations}
               models={models}
-              relationFilters={relationFilters}
+              relationFilters={resolvedRelationFilters}
               relations={relations}
               parent={model.name || model.title || ""}
             />
