@@ -6,7 +6,8 @@ import {
     useGridApiContext,
     useGridSelector,
     gridRowSelectionStateSelector,
-    getGridNumericOperators
+    getGridNumericOperators,
+    getGridSingleSelectOperators
 } from '@mui/x-data-grid-premium';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIcon from '@mui/icons-material/FileCopy';
@@ -33,6 +34,7 @@ import { useModelTranslation } from '../../hooks/useModelTranslation';
 import { convertDefaultSort, areEqual, getDefaultOperator } from './helper';
 import { styled } from '@mui/material/styles';
 import { ERROR_CODES } from '../../errors';
+import RemoteSelectField from '../Form/fields/remoteSelectField.js';
 import { useChangedDeps } from '../../hooks/useChangedDeps';
 
 const defaultPageSize = 50;
@@ -358,6 +360,35 @@ const GridBase = memo(({
         });
     }, [idProperty]);
 
+    // Same source-of-truth as the column list stableGridColumns builds below: GridBase can be
+    // driven by the columns prop or model.gridColumns instead of model.columns, so the filter
+    // input must resolve the column config against whichever one is actually in effect.
+    // dynamicColumns is prepended to match stableGridColumns, so remoteSelect columns that
+    // only exist in dynamicColumns still resolve their lookup config.
+    const baseColumnList = useMemo(() => {
+        const list = columns || model.gridColumns || model.columns || [];
+        return dynamicColumns ? [...dynamicColumns, ...list] : list;
+    }, [columns, model.gridColumns, model.columns, dynamicColumns]);
+
+    const remoteLookupFilterOperators = useMemo(() => getGridSingleSelectOperators().map(op => ({
+        ...op,
+        InputComponent: ({ item, applyValue }) => {
+            const column = baseColumnList.find(c => c.field === item.field) ?? {};
+            const isAnyOf = item.operator === 'isAnyOf';
+            return (
+                <RemoteSelectField
+                    column={column}
+                    model={model}
+                    lookups={{}}
+                    filterMode
+                    multiSelect={isAnyOf}
+                    filterValue={item.value ?? (isAnyOf ? [] : '')}
+                    onFilterChange={(val) => applyValue({ ...item, value: val })}
+                />
+            );
+        },
+    })), [baseColumnList, model]);
+
     const gridColumnTypes = {
         "radio": {
             "type": "singleSelect",
@@ -409,6 +440,10 @@ const GridBase = memo(({
                 return symbol ? `${symbol}${value}` : String(value);
             }
         },
+        "remoteSelect": {
+            "type": "singleSelect",
+            filterOperators: remoteLookupFilterOperators
+        }
     };
 
     useEffect(() => {
@@ -554,16 +589,13 @@ const GridBase = memo(({
     }, [data?.lookups]);
 
     const { stableGridColumns, pinnedColumns, lookupMap } = useMemo(() => {
-        let baseColumnList = columns || model.gridColumns || model.columns;
-        if (dynamicColumns) {
-            baseColumnList = [...dynamicColumns, ...baseColumnList];
-        }
+        const columnList = baseColumnList;
         const pinnedColumns = { left: [GRID_CHECKBOX_SELECTION_COL_DEF.field], right: [] };
         const finalColumns = [];
         const lookupMap = {};
         const updatedColumnType = { ...gridColumnTypes, ...model.gridColumnTypes };
         const groupingSet = new Set(groupingModel);
-        for (const column of baseColumnList) {
+        for (const column of columnList) {
             if (column.gridLabel === null || (parent && column.lookup === parent) || (column.type === constants.oneToMany && column.countInList === false)) continue;
             const overrides = {};
             if (column.type === constants.oneToMany) {
@@ -580,6 +612,10 @@ const GridBase = memo(({
             // Common filter operator pattern
             if (overrides.valueOptions === constants.lookup) {
                 overrides.valueOptions = (params) => lookupOptions({ ...params, lookupMap });
+            }
+            // Column-defined renderCell always wins over whatever the column type set
+            if (column.renderCell) {
+                overrides.renderCell = column.renderCell;
             }
             if (column.linkTo || column.link) {
                 overrides.cellClassName = 'mui-grid-linkColumn';
