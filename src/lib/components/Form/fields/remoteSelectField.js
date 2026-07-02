@@ -32,7 +32,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     const isMultiSelect = Boolean(multiSelectProp) || (Boolean(column.multiSelect) && !filterMode);
     const isReadOnly = Boolean(column.readOnly);
 
-    const { options, fetchOptions, isLoading, labelMap } = useCascadingLookup({
+    const { options, fetchOptions, labelMap } = useCascadingLookup({
         column, formik, lookups, dependsOn, model, lazy: true,
     });
 
@@ -41,7 +41,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     const currentValue = useMemo(() => {
         if (isMultiSelect) {
             if (!rawValue || rawValue.length === 0) return [];
-            if (!Array.isArray(rawValue)) return String(rawValue).split(',').map(v => (isNaN(v) ? v : Number(v)));
+            if (!Array.isArray(rawValue)) return String(rawValue).split(',').map(v => v.trim()).map(v => (isNaN(v) ? v : Number(v)));
             return rawValue;
         }
         if (rawValue === 0 || rawValue === '0' || rawValue == null) return '';
@@ -54,16 +54,26 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     const [hasMore, setHasMore] = useState(true);
     const [searchInput, setSearchInput] = useState('');
     const searchTerm = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
+    // Tracked locally rather than using the hook's isLoading, which is shared with the
+    // unrelated lookupId label-resolution fetch below — using the shared flag here would
+    // let that fetch's completion clear isLoading while a chunk fetch is still in flight,
+    // allowing handleScroll to fire an overlapping "load more" request.
+    const [isChunkLoading, setIsChunkLoading] = useState(false);
 
     // Fetches one chunk of options and updates hasMore from the response. append=false
     // (a fresh search or the initial open) replaces the list; append=true (infinite scroll)
     // adds the chunk to what's already loaded.
     const loadChunk = useCallback(async ({ start, append }) => {
-        const result = await fetchOptions({ search: searchTerm, start, limit: chunkSize, append });
-        const incomingLength = result?.options?.length ?? 0;
-        setHasMore(result?.recordCount != null
-            ? start + incomingLength < result.recordCount
-            : incomingLength >= chunkSize);
+        setIsChunkLoading(true);
+        try {
+            const result = await fetchOptions({ search: searchTerm, start, limit: chunkSize, append });
+            const incomingLength = result?.options?.length ?? 0;
+            setHasMore(result?.recordCount != null
+                ? start + incomingLength < result.recordCount
+                : incomingLength >= chunkSize);
+        } finally {
+            setIsChunkLoading(false);
+        }
     }, [fetchOptions, searchTerm, chunkSize]);
 
     const reload = useCallback(() => {
@@ -77,14 +87,14 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, reload]);
 
-    // isLoading (from the hook) already reflects an in-flight fetch, so it also guards
+    // isChunkLoading already reflects an in-flight chunk fetch, so it also guards
     // against firing overlapping "load more" requests from rapid scroll events.
     const handleScroll = useCallback((e) => {
-        if (isLoading || !hasMore) return;
+        if (isChunkLoading || !hasMore) return;
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
         if (scrollHeight - scrollTop - clientHeight > SCROLL_LOAD_MORE_THRESHOLD_PX) return;
         loadChunk({ start: options.length, append: true });
-    }, [isLoading, hasMore, loadChunk, options.length]);
+    }, [isChunkLoading, hasMore, loadChunk, options.length]);
 
     // Resolve display label for a pre-selected value that isn't cached in labelMap yet.
     // fetchOptions IS in deps so this re-fires when the hook stabilises with a
@@ -279,7 +289,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
 
             {/* Options list */}
             <List dense sx={{ maxHeight: 280, overflowY: 'auto', py: 0 }} onScroll={handleScroll}>
-                {isLoading && options.length === 0 ? (
+                {isChunkLoading && options.length === 0 ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 3, gap: 1 }}>
                         <CircularProgress size={20} />
                         <Typography variant="body2">{tTranslate('Loading', tOpts)}...</Typography>
@@ -315,7 +325,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                                 <ListItemText primary={option.label} primaryTypographyProps={{ fontSize: 14, noWrap: true }} />
                             </ListItemButton>
                         ))}
-                        {isLoading && (
+                        {isChunkLoading && (
                             <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
                                 <CircularProgress size={16} />
                             </Box>

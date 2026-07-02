@@ -36,7 +36,7 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
     // infinite-scroll paging: the fetched chunk is added to the existing options instead
     // of replacing them.
     const fetchOptions = useCallback(async ({ search = '', start = 0, limit, lookupId, append = false } = {}) => {
-        if (!column.lookup || !model) return;
+        if (!column.lookup || !model || !api) return;
         const allDependenciesHaveValues = Object.values(dependencyValues).every(
             value => !emptyValues.includes(value)
         );
