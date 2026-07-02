@@ -212,7 +212,6 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                 variant={filterMode ? 'outlined' : 'standard'}
                 size="small"
                 value={selectedLabel}
-                disableAutoFocus
                 placeholder={isReadOnly ? '' : tTranslate('Select...', tOpts)}
                 onClick={handleOpen}
                 error={!filterMode && Boolean(formik?.touched[field] && formik?.errors[field])}

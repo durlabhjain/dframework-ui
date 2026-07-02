@@ -589,10 +589,7 @@ const GridBase = memo(({
     }, [data?.lookups]);
 
     const { stableGridColumns, pinnedColumns, lookupMap } = useMemo(() => {
-        let columnList = baseColumnList;
-        if (dynamicColumns) {
-            columnList = [...dynamicColumns, ...columnList];
-        }
+        const columnList = baseColumnList;
         const pinnedColumns = { left: [GRID_CHECKBOX_SELECTION_COL_DEF.field], right: [] };
         const finalColumns = [];
         const lookupMap = {};

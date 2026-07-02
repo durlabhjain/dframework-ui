@@ -18,11 +18,11 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
         const toReturn = {};
         if (!dependsOn.length) return toReturn;
         for (const dependency of dependsOn) {
-            toReturn[dependency] = formik?.values[dependency];
+            toReturn[dependency] = formik?.values?.[dependency];
         }
         return toReturn;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [dependsOnKey, ...dependsOn.map(dep => formik?.values[dep])]);
+    }, [dependsOnKey, ...dependsOn.map(dep => formik?.values?.[dep])]);
 
     // Initial options for non-cascading, non-lazy mode
     const initialOptions = useMemo(() => {
