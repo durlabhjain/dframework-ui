@@ -8,18 +8,17 @@ import { useCallback } from 'react';
 
 const EMPTY_FIELD_CONFIGS = {};
 
-const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS, mode }) => {
+const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS }) => {
     const theme = useTheme();
     let inputValue = formik.values[field] || [];
     if (!Array.isArray(inputValue)) {
         inputValue = inputValue.split(',').map(item => item.trim());
     }
     const isDisabled = React.useMemo(() => {
-        if (mode === 'copy') return true;
         if (typeof fieldConfigs.disabled !== 'undefined') return fieldConfigs.disabled;
         if (typeof column.disabled === 'function') return column.disabled({ isAdd, formik });
         return Boolean(column.disabled);
-    }, [mode, fieldConfigs.disabled, column.disabled, isAdd, formik]);
+    }, [fieldConfigs.disabled, column.disabled, isAdd, formik]);
     const fixedOptions = column.hasDefault && !isAdd ? [inputValue[0]] : [];
 
     const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
