@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
     Box, TextField, List, ListItemButton, ListItemIcon, ListItemText,
-    IconButton, InputBase, Checkbox, CircularProgress, InputAdornment,
+    IconButton, Checkbox, CircularProgress, InputAdornment,
     FormControl, FormHelperText, Typography, Popover
 } from '@mui/material';
 import {
-    FirstPage, LastPage, NavigateBefore, NavigateNext,
-    ArrowDropDown, ArrowDropUp, Search, Clear, Refresh
+    ArrowDropDown, ArrowDropUp, Search, Clear
 } from '@mui/icons-material';
 import useCascadingLookup from '../../../hooks/useCascadingLookup';
 import useDebounce from '../../../hooks/useDebounce';
 
 const DEFAULT_PAGE_SIZE = 50;
+const SEARCH_DEBOUNCE_MS = 300;
+const SCROLL_LOAD_MORE_THRESHOLD_PX = 48;
 
 const RemoteSelectField = React.memo(function RemoteSelectField({
     column,
@@ -27,7 +28,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     onFilterChange,
     multiSelect: multiSelectProp,
 }) {
-    const pageSize = column.pageSize || DEFAULT_PAGE_SIZE;
+    const chunkSize = column.pageSize || DEFAULT_PAGE_SIZE;
     const isMultiSelect = Boolean(multiSelectProp) || (Boolean(column.multiSelect) && !filterMode);
     const isReadOnly = Boolean(column.readOnly);
 
@@ -50,37 +51,50 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
 
-    const [page, setPage] = useState(1);
-    const [jumpTo, setJumpTo] = useState('1');
-    const [totalPages, setTotalPages] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
     const [searchInput, setSearchInput] = useState('');
-    const searchTerm = useDebounce(searchInput, 300);
+    const searchTerm = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
 
-    // ── Fetch when open / page / searchTerm changes ───────────────────────────
+    // Fetches one chunk of options and updates hasMore from the response. append=false
+    // (a fresh search or the initial open) replaces the list; append=true (infinite scroll)
+    // adds the chunk to what's already loaded.
+    const loadChunk = useCallback(async ({ start, append }) => {
+        const result = await fetchOptions({ search: searchTerm, start, limit: chunkSize, append });
+        const incomingLength = result?.options?.length ?? 0;
+        setHasMore(result?.recordCount != null
+            ? start + incomingLength < result.recordCount
+            : incomingLength >= chunkSize);
+    }, [fetchOptions, searchTerm, chunkSize]);
+
+    const reload = useCallback(() => {
+        loadChunk({ start: 0, append: false });
+    }, [loadChunk]);
+
+    // Reload from the start whenever the popover opens or the search term changes.
     useEffect(() => {
         if (!open) return;
-        async function load() {
-            const start = (page - 1) * pageSize;
-            const result = await fetchOptions({ search: searchTerm, start, limit: pageSize });
-            if (result?.recordCount != null) {
-                setTotalPages(Math.max(1, Math.ceil(result.recordCount / pageSize)));
-            } else {
-                const count = result?.options?.length ?? 0;
-                setTotalPages(count >= pageSize ? prev => Math.max(prev, page + 1) : page);
-            }
-        }
-        load();
+        reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, page, searchTerm, fetchOptions, pageSize]);
+    }, [open, reload]);
 
-    // Resolve display label for pre-selected value not in current page.
+    // isLoading (from the hook) already reflects an in-flight fetch, so it also guards
+    // against firing overlapping "load more" requests from rapid scroll events.
+    const handleScroll = useCallback((e) => {
+        if (isLoading || !hasMore) return;
+        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+        if (scrollHeight - scrollTop - clientHeight > SCROLL_LOAD_MORE_THRESHOLD_PX) return;
+        loadChunk({ start: options.length, append: true });
+    }, [isLoading, hasMore, loadChunk, options.length]);
+
+    // Resolve display label for a pre-selected value that isn't cached in labelMap yet.
     // fetchOptions IS in deps so this re-fires when the hook stabilises with a
     // valid model/api after async initialisation.
-    const valueSig = useMemo(() => JSON.stringify(currentValue), [currentValue]);
+    const valueSig = useMemo(() => (
+        Array.isArray(currentValue) ? currentValue.join(',') : currentValue
+    ), [currentValue]);
     useEffect(() => {
         const id = isMultiSelect ? currentValue[0] : currentValue;
-        if (!id || Number(id) === 0) return;
-        if (options.some(o => String(o.value) === String(id))) return;
+        if (!id || Number(id) === 0 || String(id) in labelMap) return;
         fetchOptions({ lookupId: id });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [valueSig, fetchOptions]);
@@ -92,16 +106,9 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     }, [currentValue, isMultiSelect]);
 
     // ── Helpers ───────────────────────────────────────────────────────────────
-    const getLabel = useCallback((key) => {
-        const k = String(key);
-        return options.find(o => String(o.value) === k)?.label ?? labelMap[k] ?? k;
-    }, [options, labelMap]);
-
-    const resetPagination = useCallback(() => {
-        setPage(1);
-        setJumpTo('1');
-        setTotalPages(1);
-    }, []);
+    // labelMap accumulates labels from every fetch (including past chunks and lookupId
+    // resolutions) so it's always a superset of what's in options — no need to scan options.
+    const getLabel = useCallback((key) => labelMap[String(key)] ?? String(key), [labelMap]);
 
     const clearSearch = useCallback(() => setSearchInput(''), []);
 
@@ -126,21 +133,26 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
         return String(currentValue) === String(option.value);
     }, [currentValue, selectedSet]);
 
-    const allPageSelected = useMemo(() =>
-        isMultiSelect && options.length > 0 && selectedSet != null && options.every(o => selectedSet.has(String(o.value))),
-    [isMultiSelect, options, selectedSet]);
-
-    const somePageSelected = useMemo(() =>
-        isMultiSelect && options.length > 0 && !allPageSelected && selectedSet != null && options.some(o => selectedSet.has(String(o.value))),
-    [isMultiSelect, options, selectedSet, allPageSelected]);
+    // Single pass over options instead of separate .every/.some scans for each flag.
+    const { allLoadedSelected, someLoadedSelected } = useMemo(() => {
+        if (!isMultiSelect || !selectedSet || options.length === 0) {
+            return { allLoadedSelected: false, someLoadedSelected: false };
+        }
+        const selectedCount = options.reduce((count, o) => (
+            selectedSet.has(String(o.value)) ? count + 1 : count
+        ), 0);
+        return {
+            allLoadedSelected: selectedCount === options.length,
+            someLoadedSelected: selectedCount > 0 && selectedCount < options.length,
+        };
+    }, [isMultiSelect, options, selectedSet]);
 
     // ── Event handlers ────────────────────────────────────────────────────────
     const handleOpen = useCallback((e) => {
         if (isReadOnly) return;
         setAnchorEl(e.currentTarget);
-        resetPagination();
         clearSearch();
-    }, [isReadOnly, resetPagination, clearSearch]);
+    }, [isReadOnly, clearSearch]);
 
     const handleClose = useCallback(() => {
         setAnchorEl(null);
@@ -149,8 +161,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
 
     const handleSearchChange = useCallback((e) => {
         setSearchInput(e.target.value);
-        resetPagination();
-    }, [resetPagination]);
+    }, []);
 
     const applyValue = useCallback((val) => {
         if (filterMode) {
@@ -164,17 +175,17 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     }, [filterMode, onFilterChange, formik, field, column, tTranslate, tOpts]);
 
     const handleSelect = useCallback((option) => {
+        const already = isOptionSelected(option);
         if (isMultiSelect) {
             const current = Array.isArray(currentValue) ? currentValue : [];
-            const already = selectedSet?.has(String(option.value)) ?? false;
             applyValue(already
                 ? current.filter(v => String(v) !== String(option.value))
                 : [...current, option.value]);
         } else {
-            applyValue(String(currentValue) === String(option.value) ? '' : option.value);
+            applyValue(already ? '' : option.value);
             handleClose();
         }
-    }, [isMultiSelect, currentValue, selectedSet, applyValue, handleClose]);
+    }, [isMultiSelect, currentValue, isOptionSelected, applyValue, handleClose]);
 
     const handleClear = useCallback((e) => {
         e.stopPropagation();
@@ -184,31 +195,14 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     const handleSelectAll = useCallback(() => {
         if (!isMultiSelect) return;
         const current = Array.isArray(currentValue) ? currentValue : [];
-        if (allPageSelected) {
-            const pageVals = new Set(options.map(o => String(o.value)));
-            applyValue(current.filter(v => !pageVals.has(String(v))));
+        if (allLoadedSelected) {
+            const loadedValues = new Set(options.map(o => String(o.value)));
+            applyValue(current.filter(v => !loadedValues.has(String(v))));
         } else {
-            const currentSet = new Set(current.map(v => String(v)));
-            const newOnes = options.filter(o => !currentSet.has(String(o.value)));
+            const newOnes = options.filter(o => !selectedSet?.has(String(o.value)));
             applyValue([...current, ...newOnes.map(o => o.value)]);
         }
-    }, [isMultiSelect, currentValue, options, allPageSelected, applyValue]);
-
-    const handlePageChange = useCallback((newPage) => {
-        const p = Math.max(1, Math.min(totalPages, newPage));
-        setPage(p);
-        setJumpTo(String(p));
-    }, [totalPages]);
-
-    const handleJumpSubmit = useCallback((e) => {
-        if (e.key !== 'Enter') return;
-        const n = parseInt(jumpTo, 10);
-        if (!isNaN(n) && n > 0) handlePageChange(n);
-    }, [jumpTo, handlePageChange]);
-
-    const handleRefresh = useCallback(() => {
-        fetchOptions({ search: searchTerm, start: (page - 1) * pageSize, limit: pageSize });
-    }, [fetchOptions, searchTerm, page, pageSize]);
+    }, [isMultiSelect, currentValue, options, allLoadedSelected, selectedSet, applyValue]);
 
     // ── Render ────────────────────────────────────────────────────────────────
     const trigger = (
@@ -287,8 +281,8 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
             </Box>
 
             {/* Options list */}
-            <List dense sx={{ maxHeight: 280, overflowY: 'auto', py: 0 }}>
-                {isLoading ? (
+            <List dense sx={{ maxHeight: 280, overflowY: 'auto', py: 0 }} onScroll={handleScroll}>
+                {isLoading && options.length === 0 ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 3, gap: 1 }}>
                         <CircularProgress size={20} />
                         <Typography variant="body2">{tTranslate('Loading', tOpts)}...</Typography>
@@ -306,10 +300,10 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                         {isMultiSelect && (
                             <ListItemButton onClick={handleSelectAll} sx={{ py: 0.5, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'action.hover' }}>
                                 <ListItemIcon sx={{ minWidth: 36 }}>
-                                    <Checkbox edge="start" checked={allPageSelected} indeterminate={somePageSelected} size="small" tabIndex={-1} disableRipple />
+                                    <Checkbox edge="start" checked={allLoadedSelected} indeterminate={someLoadedSelected} size="small" tabIndex={-1} disableRipple />
                                 </ListItemIcon>
                                 <ListItemText
-                                    primary={tTranslate(allPageSelected ? 'Unselect All' : 'Select All', tOpts)}
+                                    primary={tTranslate(allLoadedSelected ? 'Unselect All' : 'Select All', tOpts)}
                                     primaryTypographyProps={{ fontSize: 14 }}
                                 />
                             </ListItemButton>
@@ -324,28 +318,14 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                                 <ListItemText primary={option.label} primaryTypographyProps={{ fontSize: 14, noWrap: true }} />
                             </ListItemButton>
                         ))}
+                        {isLoading && (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', py: 1 }}>
+                                <CircularProgress size={16} />
+                            </Box>
+                        )}
                     </>
                 )}
             </List>
-
-            {/* Pagination */}
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 0.2, px: 1, py: 0.5, borderTop: '1px solid', borderColor: 'divider' }}>
-                <IconButton size="small" onClick={() => handlePageChange(1)} disabled={page === 1 || isLoading} aria-label={tTranslate('First page', tOpts)}><FirstPage fontSize="small" /></IconButton>
-                <IconButton size="small" onClick={() => handlePageChange(page - 1)} disabled={page === 1 || isLoading} aria-label={tTranslate('Previous page', tOpts)}><NavigateBefore fontSize="small" /></IconButton>
-                <Typography variant="body2" sx={{ fontSize: 12 }}>{tTranslate('Page', tOpts)}</Typography>
-                <InputBase
-                    value={jumpTo}
-                    onChange={e => /^\d*$/.test(e.target.value) && setJumpTo(e.target.value)}
-                    onKeyDown={handleJumpSubmit}
-                    disabled={isLoading}
-                    sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, width: 40, height: 26, fontSize: 12, '& input': { padding: '3px', textAlign: 'center' } }}
-                    inputProps={{ maxLength: 4, 'aria-label': tTranslate('Page number', tOpts) }}
-                />
-                <Typography variant="body2" sx={{ fontSize: 12 }}>{tTranslate('of', tOpts)} {totalPages}</Typography>
-                <IconButton size="small" onClick={() => handlePageChange(page + 1)} disabled={page === totalPages || isLoading} aria-label={tTranslate('Next page', tOpts)}><NavigateNext fontSize="small" /></IconButton>
-                <IconButton size="small" onClick={() => handlePageChange(totalPages)} disabled={page === totalPages || isLoading} aria-label={tTranslate('Last page', tOpts)}><LastPage fontSize="small" /></IconButton>
-                <IconButton size="small" onClick={handleRefresh} disabled={isLoading} sx={{ ml: 0.5 }} aria-label={tTranslate('Refresh', tOpts)}><Refresh fontSize="small" /></IconButton>
-            </Box>
         </Popover>
     );
 

@@ -360,10 +360,15 @@ const GridBase = memo(({
         });
     }, [idProperty]);
 
+    // Same source-of-truth as the column list stableGridColumns builds below: GridBase can be
+    // driven by the columns prop or model.gridColumns instead of model.columns, so the filter
+    // input must resolve the column config against whichever one is actually in effect.
+    const baseColumnList = useMemo(() => columns || model.gridColumns || model.columns, [columns, model.gridColumns, model.columns]);
+
     const remoteLookupFilterOperators = useMemo(() => getGridSingleSelectOperators().map(op => ({
         ...op,
         InputComponent: ({ item, applyValue }) => {
-            const column = model.columns.find(c => c.field === item.field) ?? {};
+            const column = baseColumnList.find(c => c.field === item.field) ?? {};
             const isAnyOf = item.operator === 'isAnyOf';
             return (
                 <RemoteSelectField
@@ -377,7 +382,7 @@ const GridBase = memo(({
                 />
             );
         },
-    })), [model]);
+    })), [baseColumnList, model]);
 
     const gridColumnTypes = {
         "radio": {
@@ -579,16 +584,16 @@ const GridBase = memo(({
     }, [data?.lookups]);
 
     const { stableGridColumns, pinnedColumns, lookupMap } = useMemo(() => {
-        let baseColumnList = columns || model.gridColumns || model.columns;
+        let columnList = baseColumnList;
         if (dynamicColumns) {
-            baseColumnList = [...dynamicColumns, ...baseColumnList];
+            columnList = [...dynamicColumns, ...columnList];
         }
         const pinnedColumns = { left: [GRID_CHECKBOX_SELECTION_COL_DEF.field], right: [] };
         const finalColumns = [];
         const lookupMap = {};
         const updatedColumnType = { ...gridColumnTypes, ...model.gridColumnTypes };
         const groupingSet = new Set(groupingModel);
-        for (const column of baseColumnList) {
+        for (const column of columnList) {
             if (column.gridLabel === null || (parent && column.lookup === parent) || (column.type === constants.oneToMany && column.countInList === false)) continue;
             const overrides = {};
             if (column.type === constants.oneToMany) {

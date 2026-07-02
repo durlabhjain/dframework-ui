@@ -30,10 +30,12 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
         return column.customLookup || (typeof column.lookup === 'string' ? lookups[column.lookup] : column.lookup);
     }, [column.customLookup, column.lookup, lookups, dependsOn]);
 
-    // fetchOptions({ search, start, limit, lookupId }) — used in lazy mode by the caller.
+    // fetchOptions({ search, start, limit, lookupId, append }) — used in lazy mode by the caller.
     // lookupId asks the server for just that one record (e.g. to resolve the label of a
-    // pre-selected value that isn't on the currently loaded page).
-    const fetchOptions = useCallback(async ({ search = '', start = 0, limit, lookupId } = {}) => {
+    // pre-selected value that isn't on the currently loaded page). append is used for
+    // infinite-scroll paging: the fetched chunk is added to the existing options instead
+    // of replacing them.
+    const fetchOptions = useCallback(async ({ search = '', start = 0, limit, lookupId, append = false } = {}) => {
         if (!column.lookup || !model) return;
         const allDependenciesHaveValues = Object.values(dependencyValues).every(
             value => !emptyValues.includes(value)
@@ -61,11 +63,16 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
             const incoming = Array.isArray(data) ? data : (data?.options ?? []);
             const recordCount = Array.isArray(data) ? null : (data?.recordCount ?? null);
             // A lookupId fetch resolves one record out-of-band (e.g. a pre-selected value not on
-            // the loaded page) — merge it in rather than replacing the page that's already shown.
-            setOptions(lookupId === undefined ? incoming : prev => {
-                const incomingValues = new Set(incoming.map(o => String(o.value)));
-                return [...prev.filter(o => !incomingValues.has(String(o.value))), ...incoming];
-            });
+            // the loaded page), and an append fetch adds the next infinite-scroll chunk — both
+            // merge into the existing options rather than replacing them.
+            if (lookupId !== undefined || append) {
+                setOptions(prev => {
+                    const incomingValues = new Set(incoming.map(o => String(o.value)));
+                    return [...prev.filter(o => !incomingValues.has(String(o.value))), ...incoming];
+                });
+            } else {
+                setOptions(incoming);
+            }
             setLabelMap(prev => {
                 const next = { ...prev };
                 incoming.forEach(o => { next[String(o.value)] = o.label; });

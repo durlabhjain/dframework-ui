@@ -439,17 +439,13 @@ const saveRecord = async function (props = {}) {
  * Fetches lookup data for a given scope. Returns the response or throws on error.
  */
 const getLookups = async (props = {}) => {
-    const { model, lookups, scopeId, reqData, query, start, limit } = props;
+    const { model, lookups, scopeId, reqData } = props;
     let { api } = props;
     api = api || model.api;
     const searchParams = new URLSearchParams();
     const url = `${api}/lookups`;
     searchParams.set("lookups", lookups);
-    // Only set when defined — avoids sending the literal string "undefined" in the querystring
-    if (scopeId !== undefined) searchParams.set("scopeId", scopeId);
-    if (query) searchParams.set("query", query);
-    if (start !== undefined) searchParams.set("start", start);
-    if (limit !== undefined) searchParams.set("limit", limit);
+    searchParams.set("scopeId", scopeId);
 
     // Build context object and execute request hook
     const context = await executeRequestHook(model, {
