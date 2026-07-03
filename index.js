@@ -3637,7 +3637,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const apiRef = propsApiRef ?? internalRef;
 	const backendApi = api || model.api;
 	const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
-	const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
+	const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
 	const sortAndFilterMode = hasStaticData || localSortAndFilter ? constants.client : paginationMode;
 	const sortModelForFetch = localSortAndFilter ? EMPTY_SORT_MODEL : sortModel;
 	const filterModelForFetch = localSortAndFilter ? EMPTY_FILTER_MODEL : filterModel;
