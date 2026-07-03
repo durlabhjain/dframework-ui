@@ -255,7 +255,7 @@ const GridBase = memo(({
     const apiRef = propsApiRef ?? internalRef;
     const backendApi = api || model.api;
     const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
     // When localSortAndFilter is true, sorting and filtering are handled client-side by MUI DataGrid
     // even if paginationMode is server. Sort/filter values are not sent to the API.
     const sortAndFilterMode = (hasStaticData || localSortAndFilter) ? constants.client : paginationMode;
