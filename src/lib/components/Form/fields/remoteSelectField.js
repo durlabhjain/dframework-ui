@@ -67,8 +67,9 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
         setIsChunkLoading(true);
         try {
             const result = await fetchOptions({ search: searchTerm, start, limit: chunkSize, append });
-            const incomingLength = result?.options?.length ?? 0;
-            setHasMore(result?.recordCount != null
+            if (!result) return;
+            const incomingLength = result.options?.length ?? 0;
+            setHasMore(result.recordCount != null
                 ? start + incomingLength < result.recordCount
                 : incomingLength >= chunkSize);
         } finally {
