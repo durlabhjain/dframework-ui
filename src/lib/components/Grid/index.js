@@ -733,7 +733,8 @@ const GridBase = memo(({
         };
 
         if (assigned || available) {
-            mergedExtraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(",") : selected;
+            const selectedValue = Array.isArray(selected) ? selected.join(",") : (selected || '');
+            mergedExtraParams[assigned ? "include" : "exclude"] = selectedValue || '0';
         }
 
         if (isPivotExport) {
@@ -830,7 +831,7 @@ const GridBase = memo(({
         window.open(documentLink, '_blank');
     }, []);
     const onCellClickHandler = useCallback(async (cellParams, event, details) => {
-        let action = cellParams.field === model.linkColumn ? actionTypes.Edit : null;
+        let action = (!disableCellRedirect && cellParams.field === model.linkColumn) ? actionTypes.Edit : null;
         if (!action && cellParams.field === constants.actions) {
             action = details?.action;
             if (!action) {
@@ -1055,7 +1056,9 @@ const GridBase = memo(({
 
     const updateAssignment = useCallback(({ unassign, assign }) => {
         const assignedValues = Array.isArray(selected) ? selected : (selected.length ? selected.split(',') : []);
-        const finalValues = unassign ? assignedValues.filter(id => !unassign.includes(parseInt(id))) : [...assignedValues, ...assign];
+        const unassignSet = new Set((unassign || []).map(id => parseInt(id)));
+        const filtered = assignedValues.filter(id => !unassignSet.has(parseInt(id)));
+        const finalValues = assign ? [...new Set([...filtered, ...assign])] : filtered;
         onAssignChange(typeof selected === constants.string ? finalValues.join(',') : finalValues);
     }, [selected, onAssignChange]);
 

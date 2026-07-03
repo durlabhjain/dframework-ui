@@ -16,9 +16,9 @@ const TransferField = ({ component, name, formik, field, column }) => {
     return (
         <div>
             <DivSpacing>{`${"Available"} ${column.label}`}</DivSpacing>
-            <Component selected={value} available={true} onAssignChange={onAssignChange} disableCellRedirect={column.disableCellRedirect} readOnly={column.readOnly} />
+            <Component selected={value} available={true} onAssignChange={onAssignChange} disableCellRedirect={column.disableCellRedirect} readOnly={column.readOnly} showPageTitle={false} />
             <DivSpacing>{`${"Assigned"} ${column.label}`}</DivSpacing>
-            <Component selected={value} assigned={true} onAssignChange={onAssignChange} disableCellRedirect={column.disableCellRedirect} readOnly={column.readOnly} />
+            <Component selected={value} assigned={true} onAssignChange={onAssignChange} disableCellRedirect={column.disableCellRedirect} readOnly={column.readOnly} showPageTitle={false} />
         </div>
     );
 }
