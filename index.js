@@ -1,5 +1,5 @@
 import * as React$1 from "react";
-import React, { createContext, createElement, memo, useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
+import React, { createContext, memo, use, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 import { useTranslation, withTranslation } from "react-i18next";
@@ -11,7 +11,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import * as locales$1 from "@mui/x-data-grid-premium";
-import { ColumnsPanelTrigger, DataGridPremium, FilterPanelTrigger, GRID_CHECKBOX_SELECTION_COL_DEF, GridActionsCellItem, GridFooter, GridFooterContainer, GridToolbarExportContainer, Toolbar, getGridDateOperators, getGridNumericOperators, gridRowSelectionStateSelector, useGridApiContext, useGridApiRef, useGridSelector } from "@mui/x-data-grid-premium";
+import { ColumnsPanelTrigger, DataGridPremium, FilterPanelTrigger, GRID_CHECKBOX_SELECTION_COL_DEF, GridActionsCellItem, GridFooter, GridFooterContainer, GridToolbarExportContainer, Toolbar, getGridDateOperators, getGridNumericOperators, getGridSingleSelectOperators, gridRowSelectionStateSelector, useGridApiContext, useGridApiRef, useGridSelector } from "@mui/x-data-grid-premium";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CopyIcon from "@mui/icons-material/FileCopy";
 import ArticleIcon from "@mui/icons-material/Article";
@@ -20,11 +20,11 @@ import dayjs from "dayjs";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import { Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, CardContent, Checkbox, CircularProgress, Dialog as Dialog$1, DialogContent as DialogContent$1, DialogTitle as DialogTitle$1, Divider, FilledInput, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, Input, InputAdornment, InputLabel, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField as TextField$1, Tooltip, Typography as Typography$1, styled, useTheme } from "@mui/material";
+import { Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, CardContent, Checkbox, CircularProgress, Dialog as Dialog$1, DialogContent as DialogContent$1, DialogTitle as DialogTitle$1, Divider, FilledInput, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, Input, InputAdornment, InputLabel, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, OutlinedInput, Popover, Radio, RadioGroup, Select, Stack, TextField as TextField$1, Tooltip, Typography as Typography$1, styled, useTheme } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import HelpIcon from "@mui/icons-material/Help";
-import { Close, Code, DataObject, GridOn, Language, Replay, TableChart } from "@mui/icons-material";
+import { ArrowDropDown, ArrowDropUp, Clear, Close, Code, DataObject, GridOn, Language, Replay, Search, TableChart } from "@mui/icons-material";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -180,13 +180,11 @@ var ANCHOR_ORIGIN = {
 	vertical: "bottom",
 	horizontal: "center"
 };
-var Alert = React.forwardRef(function Alert(props, ref) {
-	return /* @__PURE__ */ jsx(MuiAlert, {
-		elevation: 6,
-		ref,
-		variant: "filled",
-		...props
-	});
+var Alert = ({ ref, ...props }) => /* @__PURE__ */ jsx(MuiAlert, {
+	elevation: 6,
+	ref,
+	variant: "filled",
+	...props
 });
 var SnackbarProvider = ({ children }) => {
 	const [snack, setSnack] = useState({
@@ -198,9 +196,10 @@ var SnackbarProvider = ({ children }) => {
 	const { t } = useTranslation();
 	const showMessage = useCallback((title, message, severity = "info", onAction) => {
 		const titleStr = typeof title === "string" ? title : String(title);
+		const text = message ? `${titleStr}: ${typeof message === "string" ? message : String(message)}` : titleStr;
 		setSnack({
 			open: true,
-			message: message ? `${titleStr}: ${typeof message === "string" ? message : String(message)}` : titleStr,
+			message: text,
 			severity,
 			onAction: onAction ?? null
 		});
@@ -209,7 +208,8 @@ var SnackbarProvider = ({ children }) => {
 		showMessage(title, message, severity, onAction);
 	}, [showMessage]);
 	const showErrorCode = useCallback((code, message, severity = "error", onAction) => {
-		showMessage(resolveErrorMessage(code, t), message, severity, onAction);
+		const resolvedTitle = resolveErrorMessage(code, t);
+		showMessage(resolvedTitle, message, severity, onAction);
 	}, [showMessage, t]);
 	const handleClose = () => {
 		const { onAction } = snack;
@@ -243,7 +243,7 @@ var SnackbarProvider = ({ children }) => {
 		})
 	})] });
 };
-var useSnackbar = () => useContext(SnackbarContext);
+var useSnackbar = () => use(SnackbarContext);
 //#endregion
 //#region src/lib/components/Dialog/index.js
 /**
@@ -625,7 +625,6 @@ var buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, b
 	};
 	if (lookups.length) requestData.lookups = lookups.join(",");
 	if (lookupWithDeps.length) requestData.lookupWithDeps = JSON.stringify(lookupWithDeps);
-	if (model?.limitToSurveyed) requestData.limitToSurveyed = model?.limitToSurveyed;
 	return {
 		requestData,
 		url: `${api}/${action}`,
@@ -734,7 +733,8 @@ var getList = async (props = {}) => {
 * Returns { id, title, record, lookups } or throws on error.
 */
 var getRecord = async (props = {}) => {
-	let { api, id, model, parentFilters, where = {} } = props;
+	const { id, model, parentFilters, where = {} } = props;
+	let { api } = props;
 	api = api || model.api;
 	const searchParams = new URLSearchParams();
 	const url = `${api}/${id === void 0 || id === null ? "-" : id}`;
@@ -827,12 +827,13 @@ var saveRecord = async function(props = {}) {
 * Fetches lookup data for a given scope. Returns the response or throws on error.
 */
 var getLookups = async (props = {}) => {
-	let { api, model, lookups, scopeId, reqData } = props;
+	const { model, lookups, scopeId, reqData } = props;
+	let { api } = props;
 	api = api || model.api;
 	const searchParams = new URLSearchParams();
 	const url = `${api}/lookups`;
 	searchParams.set("lookups", lookups);
-	searchParams.set("scopeId", scopeId);
+	if (scopeId !== void 0) searchParams.set("scopeId", scopeId);
 	const response = await request(await executeRequestHook(model, {
 		url: `${url}?${searchParams.toString()}`,
 		method: "GET",
@@ -862,6 +863,11 @@ var crudHelper = {
 };
 //#endregion
 //#region src/lib/components/Grid/footer.js
+var handleKeyPress = (event) => {
+	const keyCode = event.which || event.keyCode;
+	const keyValue = String.fromCharCode(keyCode);
+	if (!/\d/.test(keyValue)) event.preventDefault();
+};
 var Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) => {
 	const page = apiRef.current.state.pagination.paginationModel.page;
 	const rowsPerPage = apiRef.current.state.pagination.paginationModel.pageSize;
@@ -874,6 +880,9 @@ var Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) 
 		i18n
 	};
 	const [pageNumber, setPageNumber] = useState(page + 1);
+	useEffect(() => {
+		setPageNumber(page + 1);
+	}, [page]);
 	const handleChange = function(e) {
 		let value = e.target?.value;
 		if (value === "") setPageNumber("");
@@ -883,9 +892,6 @@ var Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) 
 			setPageNumber(value);
 		}
 	};
-	useEffect(() => {
-		setPageNumber(page + 1);
-	}, [page, rowsPerPage]);
 	const onPageChange = function() {
 		let targetPage = pageNumber === "" ? 1 : pageNumber;
 		targetPage = Math.max(targetPage, 1);
@@ -893,11 +899,6 @@ var Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) 
 		apiRef.current.setPage(targetPage - 1);
 		setPageNumber(targetPage);
 		if (pageNumber === "") setPageNumber(1);
-	};
-	const handleKeyPress = (event) => {
-		const keyCode = event.which || event.keyCode;
-		const keyValue = String.fromCharCode(keyCode);
-		if (!/\d/.test(keyValue)) event.preventDefault();
 	};
 	return /* @__PURE__ */ jsxs(GridFooterContainer, { children: [/* @__PURE__ */ jsx(Box, {
 		sx: {
@@ -978,34 +979,41 @@ function MuiTypography({ variant = "h2", component = "h2", text = "", name = nul
 }
 //#endregion
 //#region src/lib/components/useMobile.js
+/**
+* Detects the current device type and screen orientation via User-Agent sniffing and window dimensions.
+* @returns {{ mobile: boolean, tablet: boolean, portrait: boolean, landscape: boolean }}
+*/
+var SSR_DEFAULT = {
+	mobile: false,
+	tablet: false,
+	portrait: false,
+	landscape: false
+};
+function checkDevice() {
+	if (typeof window === "undefined") return SSR_DEFAULT;
+	let userAgent = navigator.userAgent;
+	const mobile = Boolean(userAgent.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i));
+	userAgent = userAgent.toLowerCase();
+	const tablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(userAgent);
+	const currentOrientation = window.innerWidth <= window.innerHeight ? "portrait" : "landscape";
+	return {
+		mobile,
+		tablet,
+		portrait: currentOrientation === "portrait",
+		landscape: currentOrientation === "landscape"
+	};
+}
 function useMobile(onlyMobile = false) {
-	const [view, setView] = useState(checkDevice());
-	function handleWindowSizeChange() {
-		setTimeout(() => {
-			setView(checkDevice());
-		}, 10);
-	}
+	const [view, setView] = useState(checkDevice);
 	useEffect(() => {
+		const handleWindowSizeChange = () => {
+			setTimeout(() => setView(checkDevice()), 10);
+		};
 		window.addEventListener("resize", handleWindowSizeChange);
 		return () => {
 			window.removeEventListener("resize", handleWindowSizeChange);
 		};
 	}, []);
-	function checkDevice() {
-		let userAgent = typeof window.navigator === "undefined" ? "" : navigator.userAgent;
-		const mobile = Boolean(userAgent.match(/Android|BlackBerry|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i));
-		userAgent = userAgent.toLowerCase();
-		const tablet = /(ipad|tablet|(android(?!.*mobile))|(windows(?!.*phone)(.*touch))|kindle|playbook|silk|(puffin(?!.*(IP|AP|WP))))/.test(userAgent);
-		let currentOrientation = null;
-		if (window.innerWidth <= window.innerHeight) currentOrientation = "portrait";
-		else currentOrientation = "landscape";
-		return {
-			mobile,
-			tablet,
-			portrait: currentOrientation === "portrait",
-			landscape: currentOrientation === "landscape"
-		};
-	}
 	return onlyMobile ? view.mobile : view;
 }
 //#endregion
@@ -1215,7 +1223,6 @@ var ptPT_default = { components: { MuiDataGrid: { defaultProps: { localeText: {
 	detailPanelToggle: "Alternar painel de detalhes",
 	expandDetailPanel: "Expandir",
 	collapseDetailPanel: "Recolher",
-	MuiTablePagination: {},
 	rowReorderingHeaderName: "Reorganização de linhas",
 	aggregationMenuItemHeader: "Agregação",
 	aggregationFunctionLabelSum: "soma",
@@ -1261,7 +1268,8 @@ dayjs.extend(timezone);
 var StateContext = createContext();
 var RouterContext = createContext(null);
 var snackbarWarning = () => console.warn("SnackbarProvider not found. Wrap StateProvider with SnackbarProvider.");
-var StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => {
+var EMPTY_API_ENDPOINTS = Object.freeze({});
+var StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API_ENDPOINTS }) => {
 	const [locale, setLocaleState] = useState("en");
 	const [dateTime, setDateTimeState] = useState("MM/DD/YYYY hh:mm:ss A");
 	const [pageTitle, setPageTitleState] = useState(null);
@@ -1272,7 +1280,7 @@ var StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => {
 	const [isLoading, setIsLoading] = useState(false);
 	const { t, i18n } = useTranslation();
 	const snackbar = useSnackbar();
-	const apiEndpoints = useRef(initialApiEndpoints);
+	const apiEndpoints = useRef({ ...initialApiEndpoints });
 	const setApiEndpoint = useCallback((key, endpoint) => {
 		apiEndpoints.current[key] = endpoint;
 	}, []);
@@ -1459,44 +1467,43 @@ var StateProvider = ({ children, apiEndpoints: initialApiEndpoints = {} }) => {
 };
 var RouterProvider = RouterContext.Provider;
 var useRouter = () => {
-	return useContext(RouterContext);
+	return use(RouterContext);
 };
 var useStateContext = () => {
-	const context = useContext(StateContext);
+	const context = use(StateContext);
 	if (context === void 0) throw new Error("useStateContext must be used within a StateProvider");
 	return context;
 };
 //#endregion
 //#region src/lib/components/HelpModal/index.js
+var RATIO = 16 / 9;
 var HelpModal = () => {
 	const [height, setHeight] = useState();
 	const [loading, setLoading] = useState(false);
 	const { stateData, setModal } = useStateContext();
 	const openModal = stateData.modal;
-	const ratio = 16 / 9;
-	let zoom = (window.outerWidth - 10) / window.innerWidth * 100;
-	const updateHeight = () => {
+	const updateHeight = useCallback(() => {
 		let widthPercentage = document.getElementById("tutorial-iframe");
 		if (widthPercentage) {
 			widthPercentage = widthPercentage.offsetWidth;
 			widthPercentage = widthPercentage / window.innerWidth;
 		} else widthPercentage = .9;
-		const calculatedHeight = window.innerWidth * widthPercentage * (1 / ratio);
+		const calculatedHeight = window.innerWidth * widthPercentage * (1 / RATIO);
 		const maxHeight = window.innerHeight - 180;
 		setHeight(Math.min(calculatedHeight, maxHeight));
-	};
+	}, []);
 	useEffect(() => {
 		if (openModal?.status) {
 			setLoading(true);
 			updateHeight();
 		}
-	}, [openModal, zoom]);
+	}, [openModal, updateHeight]);
 	useEffect(() => {
 		window.addEventListener("resize", updateHeight);
 		return () => {
 			window.removeEventListener("resize", updateHeight);
 		};
-	}, []);
+	}, [updateHeight]);
 	function resetIframe() {
 		const iframe = document.getElementById("tutorial-iframe");
 		iframe.src = openModal?.data?.url;
@@ -1554,9 +1561,10 @@ var HelpModal = () => {
 				},
 				title: openModal?.data?.title || "",
 				src: openModal?.data?.url,
-				allowfullscreen: true,
-				frameborder: "0",
+				allowFullScreen: true,
+				frameBorder: "0",
 				loading: "lazy",
+				sandbox: "allow-scripts allow-popups allow-forms allow-presentation",
 				onLoad: () => setLoading(false)
 			})]
 		})]
@@ -1564,7 +1572,8 @@ var HelpModal = () => {
 };
 //#endregion
 //#region src/lib/components/PageTitle/index.js
-function PageTitle({ titleHeading, navigate, name = null, RightComponent = null, mobileRightComponent, title = "", titleClass = "text-theme-blue text-max-width", showBreadcrumbs, breadcrumbs = [], enableBackButton = false, breadcrumbColor, showHelpButton = false, model }) {
+var EMPTY_BREADCRUMBS = [];
+function PageTitle({ titleHeading, navigate, name = null, RightComponent = null, mobileRightComponent, title = "", titleClass = "text-theme-blue text-max-width", showBreadcrumbs, breadcrumbs = EMPTY_BREADCRUMBS, enableBackButton = false, breadcrumbColor, showHelpButton = false, model }) {
 	const isMobile = useMobile(true);
 	const breadcrumbsLasIndex = breadcrumbs.length - 1;
 	const needToShowBreadcrumbs = showBreadcrumbs && breadcrumbs.length;
@@ -1611,11 +1620,11 @@ function PageTitle({ titleHeading, navigate, name = null, RightComponent = null,
 										color: "#1976d2"
 									},
 									children: breadcrumb.text
-								}, index) : /* @__PURE__ */ jsx(Typography$1, {
+								}, `${index}-${breadcrumb.text}`) : /* @__PURE__ */ jsx(Typography$1, {
 									className: `${titleClass} breadcrumbs-text-title text-max-width`,
 									variant: "inherit",
 									children: breadcrumb.text
-								}, index))
+								}, `${index}-${breadcrumb.text}`))
 							})
 						}),
 						enableBackButton && /* @__PURE__ */ jsx(Grid, {
@@ -1767,6 +1776,10 @@ var componentMap = {
 	date: DatePicker,
 	dateTime: DateTimePicker
 };
+var isValidDate = (date) => {
+	const parsedDate = dayjs(date);
+	return parsedDate.isValid() && parsedDate.year() > 1900;
+};
 var LocalizedDatePicker = (props) => {
 	const { fixedFilterFormat } = utils;
 	const { item, applyValue, convert, colDef } = props;
@@ -1774,10 +1787,6 @@ var LocalizedDatePicker = (props) => {
 	const columnType = colDef?.type || "date";
 	const filterFormat = fixedFilterFormat[columnType];
 	const localize = colDef?.localize ?? props.localize ?? false;
-	const isValidDate = (date) => {
-		const parsedDate = dayjs(date);
-		return parsedDate.isValid() && parsedDate.year() > 1900;
-	};
 	const format = systemDateTimeFormat(columnType !== "dateTime", false, stateData.dateTime);
 	const handleFilterChange = (newValue) => {
 		if (columnType !== "date" && columnType !== "dateTime") return;
@@ -1919,7 +1928,7 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts })
 					title: actionTypes$1.Edit,
 					children: /* @__PURE__ */ jsx(EditIcon, {})
 				}),
-				tabIndex: 1,
+				tabIndex: 0,
 				"data-action": actionTypes$1.Edit,
 				label: t("Edit", tOpts),
 				color: "primary"
@@ -1935,7 +1944,7 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts })
 					title: actionTypes$1.Delete,
 					children: /* @__PURE__ */ jsx(DeleteIcon, {})
 				}),
-				tabIndex: 2,
+				tabIndex: 0,
 				"data-action": actionTypes$1.Delete,
 				label: t("Delete", tOpts),
 				color: "error"
@@ -1952,14 +1961,14 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts })
 		setDialogState(DIALOG_TYPES.NONE);
 		handleClose();
 	};
-	const resetToDefault = () => {
+	const resetToDefault = useCallback(() => {
 		if (gridRef.current?.initialGridState) {
 			gridRef.current.restoreState(gridRef.current.initialGridState);
 			setCurrentPreference(null);
 			if (onPreferenceChange) onPreferenceChange(null);
-			handleClose();
+			setMenuAnchorEl(null);
 		}
-	};
+	}, [gridRef, onPreferenceChange]);
 	const loadPreferences = useCallback(async ({ applyDefault = false }) => {
 		const response = await request({
 			url: preferenceApi,
@@ -2012,7 +2021,7 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts })
 		let gridState;
 		try {
 			gridState = typeof preference.prefValue === "string" ? JSON.parse(preference.prefValue) : preference.prefValue;
-		} catch (error) {
+		} catch {
 			snackbar.showMessage(t("Failed to parse preference data.", tOpts));
 			return;
 		}
@@ -2384,16 +2393,16 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts })
 //#region src/lib/components/Grid/helper.js
 var convertDefaultSort = (defaultSort, constants, sortRegex) => {
 	if (typeof defaultSort !== constants.string) return [];
-	return defaultSort.split(",").map((sortField) => {
+	return defaultSort.split(",").flatMap((sortField) => {
 		sortRegex.lastIndex = 0;
 		const sortInfo = sortRegex.exec(sortField);
-		if (!sortInfo) return null;
+		if (!sortInfo) return [];
 		const [, field, direction = "ASC"] = sortInfo;
-		return {
+		return [{
 			field: field.trim(),
 			sort: direction.trim().toLowerCase()
-		};
-	}).filter(Boolean);
+		}];
+	});
 };
 var ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, icon }) => /* @__PURE__ */ jsxs(MenuItem$1, {
 	onClick: handleExport,
@@ -2498,7 +2507,11 @@ var ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTransla
 		const value = existingFilter.value;
 		if (value === void 0 || value === null) return isMultiple ? [] : "";
 		return value;
-	}, [existingFilter, isMultiple]);
+	}, [
+		existingFilter,
+		isMultiple,
+		operator
+	]);
 	const handleFilterChange = useCallback((newValue) => {
 		setFilterModel((prevFilterModel) => {
 			const currentItems = prevFilterModel?.items || [];
@@ -2521,7 +2534,11 @@ var ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTransla
 				items: [...otherFilters, newFilter]
 			};
 		});
-	}, [column, setFilterModel]);
+	}, [
+		column,
+		setFilterModel,
+		operator
+	]);
 	const getOperatorLabel = useCallback((operator, type) => {
 		if (type === "number") return {
 			"=": "=",
@@ -2609,7 +2626,7 @@ var ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTransla
 			}
 			case "select":
 			case "singleSelect":
-			case "lookup":
+			case "lookup": {
 				const options = column.customLookup || lookupData?.[column.lookup] || [];
 				const normalizedOptions = typeof column.lookup === "string" ? options.map((option) => ({
 					label: option?.label || "",
@@ -2630,11 +2647,11 @@ var ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTransla
 						multiple: isMultiple,
 						size: "small",
 						renderValue: (selected) => {
-							const labels = (Array.isArray(selected) ? selected : selected != null && selected !== "" ? [selected] : []).map((v) => {
-								if (v && typeof v === "object" && "label" in v) return tTranslate(v.label, tOpts);
+							const labels = (Array.isArray(selected) ? selected : selected != null && selected !== "" ? [selected] : []).flatMap((v) => {
+								if (v && typeof v === "object" && "label" in v) return [tTranslate(v.label, tOpts)];
 								const opt = normalizedOptions.find((o) => String(o.value) === String(v));
-								return opt ? tTranslate(opt.label, tOpts) : "";
-							}).filter(Boolean);
+								return opt ? [tTranslate(opt.label, tOpts)] : [];
+							});
 							if (labels.length === 0) return "";
 							if (labels.length <= displayLimit) return labels.join(", ");
 							const firstTwo = labels.slice(0, displayLimit).join(", ");
@@ -2651,8 +2668,9 @@ var ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTransla
 						}, option.value))
 					})]
 				});
+			}
 			case "date":
-			case "dateTime":
+			case "dateTime": {
 				const columnType = column.type;
 				const filterFormat = fixedFilterFormat[columnType];
 				const format = systemDateTimeFormat(columnType === "date", false, stateData.dateTime);
@@ -2679,6 +2697,7 @@ var ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTransla
 						} }
 					})
 				});
+			}
 			default: return /* @__PURE__ */ jsx(TextField$1, {
 				variant: "standard",
 				label: tTranslate(label, tOpts),
@@ -2703,12 +2722,12 @@ var GridToolBar = styled$1(Toolbar)({
 	minHeight: "auto",
 	borderBottom: "none"
 });
+var hasNonEmptyValue = (value) => value !== null && value !== void 0 && value !== "" && !(Array.isArray(value) && value.length === 0);
+var filterValidItems$1 = (items = []) => items.filter((item) => ["isEmpty", "isNotEmpty"].includes(item.operator) || hasNonEmptyValue(item.value));
 var CustomToolbar = function(props) {
 	const { model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, tTranslate, tOpts, filterModel, setFilterModel, onPreferenceChange, toolbarItems, gridColumns, customExportOptions, isStaticDataMode } = props;
 	const addText = model.customAddText || (model.title ? `Add ${model.title}` : "Add");
-	const hasNonEmptyValue = (value) => value !== null && value !== void 0 && value !== "" && !(Array.isArray(value) && value.length === 0);
-	const filterValidItems = (items = []) => items.filter((item) => ["isEmpty", "isNotEmpty"].includes(item.operator) || hasNonEmptyValue(item.value));
-	const activeFilterCount = filterValidItems(filterModel?.items || []).length || 0;
+	const activeFilterCount = filterValidItems$1(filterModel?.items || []).length || 0;
 	const toolbarFilterColumns = gridColumns?.filter((col) => col.toolbarFilter) || [];
 	const lookupData = data?.lookups || {};
 	const records = data?.records || [];
@@ -2864,6 +2883,557 @@ function useModelTranslation(model) {
 	};
 }
 //#endregion
+//#region src/lib/hooks/useCascadingLookup.js
+var emptyValues = [
+	null,
+	void 0,
+	""
+];
+function useCascadingLookup({ column, formik, lookups, dependsOn = [], isAutoComplete = false, userSelected, model, lazy = false }) {
+	const [options, setOptions] = useState([]);
+	const [labelMap, setLabelMap] = useState({});
+	const [isLoading, setIsLoading] = useState(false);
+	const { buildUrl } = useStateContext();
+	const snackbar = useSnackbar();
+	const api = buildUrl(model?.api);
+	const dependencyValues = useMemo(() => {
+		const toReturn = {};
+		if (!dependsOn.length) return toReturn;
+		for (const dependency of dependsOn) toReturn[dependency] = formik?.values?.[dependency];
+		return toReturn;
+	}, [dependsOn.join(","), ...dependsOn.map((dep) => formik?.values?.[dep])]);
+	const initialOptions = useMemo(() => {
+		if (dependsOn.length) return [];
+		return column.customLookup || (typeof column.lookup === "string" ? lookups[column.lookup] : column.lookup);
+	}, [
+		column.customLookup,
+		column.lookup,
+		lookups,
+		dependsOn
+	]);
+	const fetchOptions = useCallback(async ({ search = "", start = 0, limit, lookupId, append = false } = {}) => {
+		if (!column.lookup || !model || !api) return;
+		if (!Object.values(dependencyValues).every((value) => !emptyValues.includes(value))) {
+			setOptions([]);
+			return;
+		}
+		setIsLoading(true);
+		try {
+			const where = {
+				...dependencyValues,
+				query: search,
+				start,
+				limit,
+				lookupId
+			};
+			const data = await getLookups({
+				api,
+				model,
+				lookups: column.lookup,
+				lookupId,
+				query: search,
+				start,
+				limit,
+				reqData: { params: { lookups: [{
+					lookup: column.lookup,
+					where
+				}] } }
+			});
+			const incoming = Array.isArray(data) ? data : data?.options ?? [];
+			const recordCount = Array.isArray(data) ? null : data?.recordCount ?? null;
+			if (lookupId !== void 0 || append) setOptions((prev) => {
+				const incomingValues = new Set(incoming.map((o) => String(o.value)));
+				return [...prev.filter((o) => !incomingValues.has(String(o.value))), ...incoming];
+			});
+			else setOptions(incoming);
+			setLabelMap((prev) => {
+				const next = { ...prev };
+				incoming.forEach((o) => {
+					next[String(o.value)] = o.label;
+				});
+				return next;
+			});
+			return {
+				options: incoming,
+				recordCount
+			};
+		} catch (error) {
+			snackbar.showError("Could not load lookups", error.message);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [
+		column.lookup,
+		dependencyValues,
+		api,
+		model,
+		snackbar
+	]);
+	useEffect(() => {
+		if (lazy) return;
+		if (dependsOn.length) {
+			fetchOptions();
+			return;
+		}
+		if (isAutoComplete || !userSelected.current) setOptions(initialOptions || []);
+	}, [
+		lazy,
+		dependsOn.length,
+		fetchOptions,
+		isAutoComplete,
+		initialOptions
+	]);
+	return {
+		options,
+		fetchOptions,
+		isLoading,
+		labelMap
+	};
+}
+//#endregion
+//#region src/lib/hooks/useDebounce.js
+function useDebounce(value, delay) {
+	const [debouncedValue, setDebouncedValue] = useState(value);
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			setDebouncedValue(value);
+		}, delay);
+		return () => {
+			clearTimeout(timer);
+		};
+	}, [value, delay]);
+	return debouncedValue;
+}
+//#endregion
+//#region src/lib/components/Form/fields/remoteSelectField.js
+var DEFAULT_PAGE_SIZE = 50;
+var SEARCH_DEBOUNCE_MS = 300;
+var SCROLL_LOAD_MORE_THRESHOLD_PX = 48;
+var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, formik, model, lookups = {}, dependsOn = [], tTranslate = (k) => k, tOpts = {}, filterMode = false, filterValue, onFilterChange, multiSelect: multiSelectProp }) {
+	const chunkSize = column.pageSize || DEFAULT_PAGE_SIZE;
+	const isMultiSelect = Boolean(multiSelectProp) || Boolean(column.multiSelect) && !filterMode;
+	const isReadOnly = Boolean(column.readOnly);
+	const { options, fetchOptions, labelMap } = useCascadingLookup({
+		column,
+		formik,
+		lookups,
+		dependsOn,
+		model,
+		lazy: true
+	});
+	const rawValue = filterMode ? filterValue : formik?.values[field];
+	const currentValue = useMemo(() => {
+		if (isMultiSelect) {
+			if (!rawValue || rawValue.length === 0) return [];
+			if (!Array.isArray(rawValue)) return String(rawValue).split(",").map((v) => v.trim()).map((v) => isNaN(v) ? v : Number(v));
+			return rawValue;
+		}
+		if (rawValue === 0 || rawValue === "0" || rawValue == null) return "";
+		return rawValue;
+	}, [rawValue, isMultiSelect]);
+	const [anchorEl, setAnchorEl] = useState(null);
+	const open = Boolean(anchorEl);
+	const [hasMore, setHasMore] = useState(true);
+	const [searchInput, setSearchInput] = useState("");
+	const searchTerm = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
+	const [isChunkLoading, setIsChunkLoading] = useState(false);
+	const loadChunk = useCallback(async ({ start, append }) => {
+		setIsChunkLoading(true);
+		try {
+			const result = await fetchOptions({
+				search: searchTerm,
+				start,
+				limit: chunkSize,
+				append
+			});
+			if (!result) return;
+			const incomingLength = result.options?.length ?? 0;
+			setHasMore(result.recordCount != null ? start + incomingLength < result.recordCount : incomingLength >= chunkSize);
+		} finally {
+			setIsChunkLoading(false);
+		}
+	}, [
+		fetchOptions,
+		searchTerm,
+		chunkSize
+	]);
+	const reload = useCallback(() => {
+		loadChunk({
+			start: 0,
+			append: false
+		});
+	}, [loadChunk]);
+	useEffect(() => {
+		if (!open) return;
+		reload();
+	}, [open, reload]);
+	const handleScroll = useCallback((e) => {
+		if (isChunkLoading || !hasMore) return;
+		const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+		if (scrollHeight - scrollTop - clientHeight > SCROLL_LOAD_MORE_THRESHOLD_PX) return;
+		loadChunk({
+			start: options.length,
+			append: true
+		});
+	}, [
+		isChunkLoading,
+		hasMore,
+		loadChunk,
+		options.length
+	]);
+	useEffect(() => {
+		const id = isMultiSelect ? currentValue[0] : currentValue;
+		if (!id || Number(id) === 0 || String(id) in labelMap) return;
+		fetchOptions({ lookupId: id });
+	}, [useMemo(() => Array.isArray(currentValue) ? currentValue.join(",") : currentValue, [currentValue]), fetchOptions]);
+	const selectedSet = useMemo(() => {
+		if (!isMultiSelect || !Array.isArray(currentValue)) return null;
+		return new Set(currentValue.map((v) => String(v)));
+	}, [currentValue, isMultiSelect]);
+	const getLabel = useCallback((key) => labelMap[String(key)] ?? String(key), [labelMap]);
+	const clearSearch = useCallback(() => setSearchInput(""), []);
+	const selectedLabel = useMemo(() => {
+		if (isMultiSelect) {
+			const count = Array.isArray(currentValue) ? currentValue.length : 0;
+			if (count === 0) return "";
+			if (count > 1) return tTranslate(`${count} selected`, tOpts);
+			return getLabel(currentValue[0]);
+		}
+		if (currentValue === "") return "";
+		return getLabel(currentValue);
+	}, [
+		currentValue,
+		isMultiSelect,
+		tTranslate,
+		tOpts,
+		getLabel
+	]);
+	const hasValue = isMultiSelect ? Array.isArray(currentValue) && currentValue.length > 0 : currentValue !== "";
+	const isOptionSelected = useCallback((option) => {
+		if (selectedSet) return selectedSet.has(String(option.value));
+		return String(currentValue) === String(option.value);
+	}, [currentValue, selectedSet]);
+	const { allLoadedSelected, someLoadedSelected } = useMemo(() => {
+		if (!isMultiSelect || !selectedSet || options.length === 0) return {
+			allLoadedSelected: false,
+			someLoadedSelected: false
+		};
+		const selectedCount = options.reduce((count, o) => selectedSet.has(String(o.value)) ? count + 1 : count, 0);
+		return {
+			allLoadedSelected: selectedCount === options.length,
+			someLoadedSelected: selectedCount > 0 && selectedCount < options.length
+		};
+	}, [
+		isMultiSelect,
+		options,
+		selectedSet
+	]);
+	const handleOpen = useCallback((e) => {
+		if (isReadOnly) return;
+		setAnchorEl(e.currentTarget);
+		clearSearch();
+	}, [isReadOnly, clearSearch]);
+	const handleClose = useCallback(() => {
+		setAnchorEl(null);
+		clearSearch();
+	}, [clearSearch]);
+	const handleSearchChange = useCallback((e) => {
+		setSearchInput(e.target.value);
+	}, []);
+	const applyValue = useCallback((val) => {
+		if (filterMode) onFilterChange?.(val);
+		else if (formik) {
+			formik.setFieldValue(field, val);
+			if (typeof column.onChange === "function") column.onChange({
+				formik,
+				value: val,
+				t: tTranslate,
+				tOpts
+			});
+		}
+	}, [
+		filterMode,
+		onFilterChange,
+		formik,
+		field,
+		column,
+		tTranslate,
+		tOpts
+	]);
+	const handleSelect = useCallback((option) => {
+		const already = isOptionSelected(option);
+		if (isMultiSelect) {
+			const current = Array.isArray(currentValue) ? currentValue : [];
+			applyValue(already ? current.filter((v) => String(v) !== String(option.value)) : [...current, option.value]);
+		} else {
+			applyValue(already ? "" : option.value);
+			handleClose();
+		}
+	}, [
+		isMultiSelect,
+		currentValue,
+		isOptionSelected,
+		applyValue,
+		handleClose
+	]);
+	const handleClear = useCallback((e) => {
+		e.stopPropagation();
+		applyValue(isMultiSelect ? [] : "");
+	}, [isMultiSelect, applyValue]);
+	const handleSelectAll = useCallback(() => {
+		if (!isMultiSelect) return;
+		const current = Array.isArray(currentValue) ? currentValue : [];
+		if (allLoadedSelected) {
+			const loadedValues = new Set(options.map((o) => String(o.value)));
+			applyValue(current.filter((v) => !loadedValues.has(String(v))));
+		} else {
+			const newOnes = options.filter((o) => !selectedSet?.has(String(o.value)));
+			applyValue([...current, ...newOnes.map((o) => o.value)]);
+		}
+	}, [
+		isMultiSelect,
+		currentValue,
+		options,
+		allLoadedSelected,
+		selectedSet,
+		applyValue
+	]);
+	const trigger = /* @__PURE__ */ jsxs(Box$1, {
+		sx: {
+			position: "relative",
+			width: "100%"
+		},
+		children: [
+			/* @__PURE__ */ jsx(TextField$1, {
+				fullWidth: true,
+				variant: filterMode ? "outlined" : "standard",
+				size: "small",
+				value: selectedLabel,
+				placeholder: isReadOnly ? "" : tTranslate("Select...", tOpts),
+				onClick: handleOpen,
+				error: !filterMode && Boolean(formik?.touched[field] && formik?.errors[field]),
+				slotProps: {
+					htmlInput: {
+						readOnly: true,
+						style: { cursor: isReadOnly ? "default" : "pointer" }
+					},
+					input: { sx: { "&&": { paddingRight: "52px" } } }
+				}
+			}),
+			hasValue && !isReadOnly && /* @__PURE__ */ jsx(IconButton, {
+				size: "small",
+				onClick: handleClear,
+				"aria-label": tTranslate("Clear value", tOpts),
+				sx: {
+					position: "absolute",
+					right: 28,
+					top: "50%",
+					transform: "translateY(-50%)",
+					p: "2px"
+				},
+				children: /* @__PURE__ */ jsx(Clear, { fontSize: "small" })
+			}),
+			/* @__PURE__ */ jsx(IconButton, {
+				size: "small",
+				onClick: handleOpen,
+				disabled: isReadOnly,
+				"aria-label": tTranslate(open ? "Close options" : "Open options", tOpts),
+				sx: {
+					position: "absolute",
+					right: 2,
+					top: "50%",
+					transform: "translateY(-50%)",
+					p: "2px"
+				},
+				children: open ? /* @__PURE__ */ jsx(ArrowDropUp, { sx: { fontSize: 22 } }) : /* @__PURE__ */ jsx(ArrowDropDown, { sx: { fontSize: 22 } })
+			})
+		]
+	});
+	const popover = /* @__PURE__ */ jsxs(Popover, {
+		open,
+		anchorEl,
+		onClose: handleClose,
+		anchorOrigin: {
+			vertical: "bottom",
+			horizontal: "left"
+		},
+		transformOrigin: {
+			vertical: "top",
+			horizontal: "left"
+		},
+		slotProps: { paper: { sx: {
+			width: Math.max(anchorEl?.offsetWidth ?? 0, 280),
+			maxHeight: 460,
+			overflow: "hidden"
+		} } },
+		disableEnforceFocus: true,
+		children: [/* @__PURE__ */ jsx(Box$1, {
+			sx: {
+				p: .75,
+				borderBottom: "1px solid",
+				borderColor: "divider"
+			},
+			children: /* @__PURE__ */ jsx(TextField$1, {
+				variant: "outlined",
+				placeholder: tTranslate("Search...", tOpts),
+				value: searchInput,
+				onChange: handleSearchChange,
+				size: "small",
+				fullWidth: true,
+				autoFocus: true,
+				slotProps: { input: {
+					startAdornment: /* @__PURE__ */ jsx(InputAdornment, {
+						position: "start",
+						children: /* @__PURE__ */ jsx(Search, { fontSize: "small" })
+					}),
+					endAdornment: searchInput && /* @__PURE__ */ jsx(InputAdornment, {
+						position: "end",
+						children: /* @__PURE__ */ jsx(IconButton, {
+							size: "small",
+							onClick: clearSearch,
+							"aria-label": tTranslate("Clear search", tOpts),
+							children: /* @__PURE__ */ jsx(Clear, { fontSize: "small" })
+						})
+					})
+				} }
+			})
+		}), /* @__PURE__ */ jsx(List, {
+			dense: true,
+			sx: {
+				maxHeight: 280,
+				overflowY: "auto",
+				py: 0
+			},
+			onScroll: handleScroll,
+			children: isChunkLoading && options.length === 0 ? /* @__PURE__ */ jsxs(Box$1, {
+				sx: {
+					display: "flex",
+					justifyContent: "center",
+					alignItems: "center",
+					py: 3,
+					gap: 1
+				},
+				children: [/* @__PURE__ */ jsx(CircularProgress, { size: 20 }), /* @__PURE__ */ jsxs(Typography$1, {
+					variant: "body2",
+					children: [tTranslate("Loading", tOpts), "..."]
+				})]
+			}) : options.length === 0 ? /* @__PURE__ */ jsx(Box$1, {
+				sx: {
+					display: "flex",
+					justifyContent: "center",
+					py: 3
+				},
+				children: /* @__PURE__ */ jsx(Typography$1, {
+					variant: "body2",
+					color: "text.secondary",
+					children: searchInput ? `${tTranslate("No results for", tOpts)} "${searchInput}"` : tTranslate("No options available", tOpts)
+				})
+			}) : /* @__PURE__ */ jsxs(Fragment, { children: [
+				isMultiSelect && /* @__PURE__ */ jsxs(ListItemButton, {
+					onClick: handleSelectAll,
+					sx: {
+						py: .5,
+						borderBottom: "1px solid",
+						borderColor: "divider",
+						bgcolor: "action.hover"
+					},
+					children: [/* @__PURE__ */ jsx(ListItemIcon, {
+						sx: { minWidth: 36 },
+						children: /* @__PURE__ */ jsx(Checkbox, {
+							edge: "start",
+							checked: allLoadedSelected,
+							indeterminate: someLoadedSelected,
+							size: "small",
+							tabIndex: -1,
+							disableRipple: true
+						})
+					}), /* @__PURE__ */ jsx(ListItemText, {
+						primary: tTranslate(allLoadedSelected ? "Unselect All" : "Select All", tOpts),
+						primaryTypographyProps: { fontSize: 14 }
+					})]
+				}),
+				options.map((option) => /* @__PURE__ */ jsxs(ListItemButton, {
+					onClick: () => handleSelect(option),
+					sx: { py: .5 },
+					children: [isMultiSelect && /* @__PURE__ */ jsx(ListItemIcon, {
+						sx: { minWidth: 36 },
+						children: /* @__PURE__ */ jsx(Checkbox, {
+							edge: "start",
+							checked: isOptionSelected(option),
+							size: "small",
+							tabIndex: -1,
+							disableRipple: true
+						})
+					}), /* @__PURE__ */ jsx(ListItemText, {
+						primary: option.label,
+						primaryTypographyProps: {
+							fontSize: 14,
+							noWrap: true
+						}
+					})]
+				}, option.value)),
+				isChunkLoading && /* @__PURE__ */ jsx(Box$1, {
+					sx: {
+						display: "flex",
+						justifyContent: "center",
+						py: 1
+					},
+					children: /* @__PURE__ */ jsx(CircularProgress, { size: 16 })
+				})
+			] })
+		})]
+	});
+	if (filterMode) return /* @__PURE__ */ jsxs(Box$1, {
+		sx: { width: "100%" },
+		children: [trigger, popover]
+	});
+	return /* @__PURE__ */ jsxs(FormControl, {
+		fullWidth: true,
+		error: Boolean(formik?.touched[field] && formik?.errors[field]),
+		variant: "standard",
+		children: [
+			trigger,
+			popover,
+			/* @__PURE__ */ jsx(FormHelperText, { children: formik?.touched[field] && formik?.errors[field] })
+		]
+	});
+});
+//#endregion
+//#region src/lib/hooks/useChangedDeps.js
+/**
+* Logs which named dependencies changed between renders.
+*
+* Set `enabled` (or model.debug) to true to activate. Shows the previous and
+* next value for every dep whose reference changed, making it straightforward
+* to spot unstable objects from parent components (e.g. parentFilters being
+* recreated on every parent render even though its content is identical).
+*
+* This is intentionally a no-op when disabled so it can be left in place
+* without affecting production behaviour.
+*
+* @param {string} label       - Human-readable identifier shown in the log
+* @param {object} namedDeps   - { depName: currentValue } map
+* @param {boolean} [enabled]  - Default false; set model.debug=true to activate
+*/
+function useChangedDeps(label, namedDeps, enabled = false) {
+	const prevRef = useRef({});
+	useEffect(() => {
+		const deps = namedDeps ?? {};
+		if (!enabled) {
+			prevRef.current = deps;
+			return;
+		}
+		const prev = prevRef.current ?? {};
+		const changed = {};
+		for (const key of Object.keys(deps)) if (!Object.is(deps[key], prev[key])) changed[key] = {
+			from: prev[key],
+			to: deps[key]
+		};
+		if (Object.keys(changed).length > 0) console.debug(`[Grid/${label}] deps changed:`, changed);
+		prevRef.current = deps;
+	});
+}
+//#endregion
 //#region src/lib/components/Grid/index.js
 var defaultPageSize = 50;
 var sortRegex = /(\w+)( ASC| DESC)?/i;
@@ -2925,6 +3495,11 @@ var constants = {
 	defaultActionWidth: 50
 };
 var NO_VALUE_OPERATORS = ["isEmpty", "isNotEmpty"];
+var EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze([
+	"isEmpty",
+	"isNotEmpty",
+	"isAnyOf"
+]);
 var EMPTY_SORT_MODEL = Object.freeze([]);
 var EMPTY_FILTER_MODEL = Object.freeze({
 	items: [],
@@ -3003,7 +3578,7 @@ var CustomCheckBox = ({ params, handleSelectRow, idProperty }) => {
 		inputProps: { "aria-label": "checkbox" }
 	});
 };
-var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, showFullScreenLoader, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, reRenderKey, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, ...props }) => {
+var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, ...props }) => {
 	const staticDataSource = props.staticData ?? model.staticData;
 	const hasStaticData = Array.isArray(staticDataSource) || Array.isArray(staticDataSource?.records);
 	const normalizedStaticData = useMemo(() => hasStaticData ? normalizeStaticData(staticDataSource) : null, [hasStaticData, staticDataSource]);
@@ -3024,17 +3599,21 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	});
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [record, setRecord] = useState(null);
-	const visibilityModel = {
+	const visibilityModel = useMemo(() => ({
 		CreatedOn: false,
 		CreatedByUser: false,
 		...model.columnVisibilityModel
-	};
+	}), [model.columnVisibilityModel]);
 	const [showAddConfirmation, setShowAddConfirmation] = useState(false);
 	const snackbar = useSnackbar();
+	const snackbarRef = useRef(snackbar);
+	snackbarRef.current = snackbar;
+	const onListParamsChangeRef = useRef(onListParamsChange);
+	onListParamsChangeRef.current = onListParamsChange;
 	const paginationMode = hasStaticData || model.localSortAndFilter ? constants.client : model.paginationMode === constants.client ? constants.client : constants.server;
 	const { translate, tOpts, tTranslate } = useModelTranslation(model);
 	const [errorMessage, setErrorMessage] = useState("");
-	const [sortModel, setSortModel] = useState(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
+	const [sortModel, setSortModel] = useState(() => convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
 	const initialFilterModel = {
 		items: [],
 		logicOperator: "and",
@@ -3048,10 +3627,14 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		});
 	}
 	const [filterModel, setFilterModel] = useState({ ...initialFilterModel });
+	const [prevCustomFilters, setPrevCustomFilters] = useState(() => ({}));
+	const [prevHasStaticData, setPrevHasStaticData] = useState(hasStaticData);
+	const [prevNormalizedStaticData, setPrevNormalizedStaticData] = useState(normalizedStaticData);
 	const { navigate, getParams, useParams, pathname } = useRouter();
 	const { id: idWithOptions } = useParams() || getParams;
 	const id = idWithOptions?.split("-")[0];
-	const apiRef = propsApiRef || useGridApiRef();
+	const internalRef = useGridApiRef();
+	const apiRef = propsApiRef ?? internalRef;
 	const backendApi = api || model.api;
 	const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
 	const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, hideTopFilters = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
@@ -3068,20 +3651,15 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		fetchAbortControllerRef.current = null;
 	}, []);
 	const showAddIcon = model.showAddIcon === true;
-	const toLink = model.columns.filter(({ link }) => Boolean(link)).map((item) => item.link);
+	const toLink = model.columns.flatMap(({ link }) => link ? [link] : []);
 	const { stateData, formatDate, getApiEndpoint, buildUrl, setPageTitle } = useStateContext();
 	const [isLoading, setIsLoading] = useState(false);
-	const { timeZone } = stateData;
 	const effectivePermissions = useMemo(() => ({
 		...constants.permissions,
 		...model.permissions,
 		...permissions
 	}), [model.permissions, permissions]);
-	const emptyIsAnyOfOperatorFilters = [
-		"isEmpty",
-		"isNotEmpty",
-		"isAnyOf"
-	];
+	const emptyIsAnyOfOperatorFilters = EMPTY_IS_ANY_OF_OPERATOR_FILTERS;
 	const userData = stateData.userData || {};
 	const documentField = model.columns.find((ele) => ele.type === "fileUpload")?.field || "";
 	const { canAdd, canEdit, canDelete } = getPermissions({
@@ -3103,8 +3681,13 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
 	const enableRowDetailPanel = typeof model.getDetailPanelContent === "function";
 	const gridRows = useMemo(() => data.records || [], [data.records]);
-	const rowCount = useMemo(() => data.recordCount, [data.recordCount]);
-	const [groupingModel, setGroupingModel] = useState([]);
+	const rowCount = data.recordCount;
+	const [groupingModel, setGroupingModel] = useState(() => Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []);
+	const [prevRowGroupingField, setPrevRowGroupingField] = useState(props.rowGroupingField);
+	if (prevRowGroupingField !== props.rowGroupingField) {
+		setPrevRowGroupingField(props.rowGroupingField);
+		setGroupingModel(Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []);
+	}
 	useEffect(() => {
 		if (!apiRef.current) return;
 		apiRef.current.prefKey = preferenceKey;
@@ -3125,10 +3708,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		translate,
 		tTranslate
 	]);
-	useEffect(() => {
-		if (Array.isArray(props.rowGroupingField)) setGroupingModel(props.rowGroupingField);
-		else setGroupingModel([]);
-	}, [props.rowGroupingField]);
 	const baseDataFromParams = searchParams.has("baseData") && searchParams.get("baseData");
 	const baseSaveData = useMemo(() => {
 		if (baseDataFromParams) try {
@@ -3151,13 +3730,41 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			};
 		});
 	}, [idProperty]);
+	const baseColumnList = useMemo(() => {
+		const list = columns || model.gridColumns || model.columns || [];
+		return dynamicColumns ? [...dynamicColumns, ...list] : list;
+	}, [
+		columns,
+		model.gridColumns,
+		model.columns,
+		dynamicColumns
+	]);
+	const remoteLookupFilterOperators = useMemo(() => getGridSingleSelectOperators().map((op) => ({
+		...op,
+		InputComponent: ({ item, applyValue }) => {
+			const column = baseColumnList.find((c) => c.field === item.field) ?? {};
+			const isAnyOf = item.operator === "isAnyOf";
+			return /* @__PURE__ */ jsx(RemoteSelectField, {
+				column,
+				model,
+				lookups: {},
+				filterMode: true,
+				multiSelect: isAnyOf,
+				filterValue: item.value ?? (isAnyOf ? [] : ""),
+				onFilterChange: (val) => applyValue({
+					...item,
+					value: val
+				})
+			});
+		}
+	})), [baseColumnList, model]);
 	const gridColumnTypes = {
 		"radio": {
 			"type": "singleSelect",
 			"valueOptions": "lookup"
 		},
 		"date": {
-			"valueFormatter": (value, row, column) => formatDate({
+			"valueFormatter": (value) => formatDate({
 				value,
 				useSystemFormat: true,
 				showOnlyDate: false,
@@ -3166,7 +3773,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			"filterOperators": localizedDateFormat({ columnType: "date" })
 		},
 		"dateTime": {
-			"valueFormatter": (value, row, column) => formatDate({
+			"valueFormatter": (value) => formatDate({
 				value,
 				useSystemFormat: false,
 				showOnlyDate: false,
@@ -3192,7 +3799,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			type: "number",
 			align: "right",
 			filterOperators: [...getGridNumericOperators()].filter((op) => !["!="].includes(op.value)),
-			"valueFormatter": (value) => {
+			"valueFormatter": ({ value }) => {
 				if (value == null) return "";
 				const numericValue = Number(value);
 				return !isNaN(numericValue) ? `${numericValue.toFixed(1)}%` : "";
@@ -3202,41 +3809,41 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			type: "number",
 			align: "right",
 			filterOperators: [...getGridNumericOperators()].filter((op) => !["!="].includes(op.value)),
-			"valueFormatter": (value) => {
+			"valueFormatter": ({ value }) => {
 				if (value == null) return "";
 				const symbol = userData?.userData?.CurrencySymbol || "";
 				return symbol ? `${symbol}${value}` : String(value);
 			}
+		},
+		"remoteSelect": {
+			"type": "singleSelect",
+			filterOperators: remoteLookupFilterOperators
 		}
 	};
 	useEffect(() => {
 		dataRef.current = data;
 		if (typeof props.onDataLoaded === "function") props.onDataLoaded(data);
 	}, [data]);
-	useEffect(() => {
-		if (hasStaticData) {
-			setData(normalizedStaticData);
-			return;
-		}
-		setData((prevData) => ({
+	if (hasStaticData !== prevHasStaticData || normalizedStaticData !== prevNormalizedStaticData) {
+		setPrevHasStaticData(hasStaticData);
+		setPrevNormalizedStaticData(normalizedStaticData);
+		if (hasStaticData) setData(normalizedStaticData);
+		else setData((prevData) => ({
 			...prevData || {},
 			records: [],
 			recordCount: 0,
 			lookups: {}
 		}));
-	}, [hasStaticData, normalizedStaticData]);
-	useEffect(() => {
-		if (!customFilters || !Object.keys(customFilters).length) return;
-		if (customFilters.clear) {
-			setFilterModel({
-				items: [],
-				logicOperator: "and",
-				quickFilterValues: [],
-				quickFilterLogicOperator: "and"
-			});
-			return;
-		}
-		setFilterModel({
+	}
+	if (prevCustomFilters !== customFilters) {
+		setPrevCustomFilters(customFilters);
+		if (customFilters && Object.keys(customFilters).length) if (customFilters.clear) setFilterModel({
+			items: [],
+			logicOperator: "and",
+			quickFilterValues: [],
+			quickFilterLogicOperator: "and"
+		});
+		else setFilterModel({
 			items: Object.entries(customFilters).reduce((acc, [key, value]) => {
 				if (key === constants.startDate || key === constants.endDate) acc.push(value);
 				else if (key in customFilters) acc.push({
@@ -3251,15 +3858,12 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			quickFilterValues: [],
 			quickFilterLogicOperator: "and"
 		});
-	}, [customFilters]);
+	}
 	const lookupOptions = useCallback(({ field, lookupMap: lookupMapParam }) => {
 		const lookupData = dataRef.current.lookups || {};
 		const map = lookupMapParam || {};
 		return map[field]?.customLookup || lookupData[map[field]?.lookup] || [];
 	}, []);
-	useEffect(() => {
-		if (props.isChildGrid || !hideTopFilters) return;
-	}, [props.isChildGrid, hideTopFilters]);
 	const createAction = useCallback(({ key, title, icon, color = "primary", disabled, otherProps }) => /* @__PURE__ */ jsx(GridActionsCellItem, {
 		icon: /* @__PURE__ */ jsx(Tooltip, {
 			title: tTranslate(title, tOpts),
@@ -3318,7 +3922,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		documentField.length,
 		customActions
 	]);
-	const getActions = useCallback(({ row }) => actionConfig.map(({ key, title, icon, color, disabled, show, action, ...otherProps }) => createAction({
+	const getActions = useCallback(({ row }) => actionConfig.map(({ key, title, icon, color, disabled, action, ...otherProps }) => createAction({
 		key,
 		title: title || action,
 		icon,
@@ -3331,8 +3935,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		return Object.keys(lookups).sort().join(",");
 	}, [data?.lookups]);
 	const { stableGridColumns, pinnedColumns, lookupMap } = useMemo(() => {
-		let baseColumnList = columns || model.gridColumns || model.columns;
-		if (dynamicColumns) baseColumnList = [...dynamicColumns, ...baseColumnList];
+		const columnList = dynamicColumns ? [...dynamicColumns, ...columns || model.gridColumns || model.columns || []] : columns || model.gridColumns || model.columns || [];
 		const pinnedColumns = {
 			left: [GRID_CHECKBOX_SELECTION_COL_DEF.field],
 			right: []
@@ -3343,7 +3946,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			...gridColumnTypes,
 			...model.gridColumnTypes
 		};
-		for (const column of baseColumnList) {
+		const groupingSet = new Set(groupingModel);
+		for (const column of columnList) {
 			if (column.gridLabel === null || parent && column.lookup === parent || column.type === constants.oneToMany && column.countInList === false) continue;
 			const overrides = {};
 			if (column.type === constants.oneToMany) {
@@ -3356,6 +3960,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				...params,
 				lookupMap
 			});
+			if (column.renderCell) overrides.renderCell = column.renderCell;
 			if (column.linkTo || column.link) overrides.cellClassName = "mui-grid-linkColumn";
 			if (column.hyperlinkURL && !column.renderCell) {
 				const { hyperlinkURL, hyperlinkIndex } = column;
@@ -3373,7 +3978,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			}
 			if (!disableRowGrouping) overrides.groupable = column.groupable ?? false;
 			const finalField = overrides.field ?? column.field;
-			overrides.filterable = column.filterable === false ? false : !groupingModel.includes(finalField);
+			overrides.filterable = column.filterable === false ? false : !groupingSet.has(finalField);
 			const headerName = tTranslate((typeof column.gridLabel === "function" ? column.gridLabel({
 				column,
 				t: tTranslate,
@@ -3442,6 +4047,20 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		enableRowDetailPanel
 	]);
 	const gridColumns = useMemo(() => stableGridColumns.map((col) => ({ ...col })), [stableGridColumns, lookupKeys]);
+	const fetchColumnsRef = useRef([]);
+	const fetchColumns = useMemo(() => {
+		const next = stableGridColumns.map(({ field, type, lookup, localize, dependsOn }) => ({
+			field,
+			type,
+			lookup,
+			localize,
+			dependsOn
+		}));
+		const prev = fetchColumnsRef.current;
+		if (Array.isArray(prev) && prev.length === next.length && next.every((col, i) => areEqual(prev[i], col))) return prev;
+		fetchColumnsRef.current = next;
+		return next;
+	}, [stableGridColumns]);
 	const hasInitializedRef = useRef(false);
 	useEffect(() => {
 		if (hasInitializedRef.current) return;
@@ -3451,21 +4070,19 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			hasInitializedRef.current = true;
 			return;
 		}
-		const toolbarFilters = toolbarFilterColumns.map((col) => {
+		const toolbarFilters = toolbarFilterColumns.flatMap((col) => {
 			const operator = getDefaultOperator(col.type, col.toolbarFilter?.defaultOperator);
 			const normalizedValue = utils.normalizeFilterValue({
 				operator,
 				value: col.toolbarFilter.defaultFilterValue
 			});
-			return {
+			if (Array.isArray(normalizedValue) && normalizedValue.length === 0) return [];
+			return [{
 				field: col.field,
 				operator,
 				value: normalizedValue,
 				type: col.type
-			};
-		}).filter((f) => {
-			const v = f.value;
-			return !(Array.isArray(v) && v.length === 0);
+			}];
 		});
 		if (toolbarFilters.length > 0) setFilterModel((prev) => ({
 			...prev,
@@ -3473,11 +4090,27 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		}));
 		hasInitializedRef.current = true;
 	}, [gridColumns]);
+	useChangedDeps("fetchData", {
+		hasStaticData,
+		preferencesReady,
+		paginationModelForFetch,
+		buildUrl,
+		model,
+		backendApi,
+		filterModelForFetch,
+		baseFilters,
+		id,
+		assigned,
+		available,
+		selected,
+		extraParams: props.extraParams,
+		sortModelForFetch,
+		fetchColumns,
+		parentFilters,
+		additionalFilters
+	}, model.debug);
 	const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
-		if (hasStaticData) {
-			if (!contentType) setData(normalizedStaticData);
-			return;
-		}
+		if (hasStaticData || !backendApi || !preferencesReady) return;
 		const { pageSize, page } = paginationModelForFetch;
 		const isExportRequest = Boolean(contentType);
 		const baseUrl = buildUrl(isPivotExport && model.pivotApi ? model.pivotApi : backendApi);
@@ -3485,17 +4118,15 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			...filterModelForFetch,
 			items: filterValidItems(filterModelForFetch.items)
 		};
-		const finalBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
-		if (model.joinColumn && id) finalBaseFilters.push({
+		const mergedBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
+		if (model.joinColumn && id) mergedBaseFilters.push({
 			field: model.joinColumn,
 			operator: "is",
 			type: "number",
 			value: Number(id)
 		});
-		if (additionalFilters) filters.items = [...filters.items || [], ...additionalFilters];
-		const mergedBaseFilters = [];
-		if (Array.isArray(finalBaseFilters)) mergedBaseFilters.push(...finalBaseFilters);
 		if (Array.isArray(parentFilters)) mergedBaseFilters.push(...parentFilters);
+		if (additionalFilters) filters.items = [...filters.items || [], ...additionalFilters];
 		const mergedExtraParams = {
 			...extraParams,
 			...props.extraParams
@@ -3520,13 +4151,13 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			pageSize: isExportRequest ? exportPageSize : pageSize,
 			sortModel: sortModelForFetch,
 			filterModel: filters,
-			gridColumns: stableGridColumns,
+			gridColumns: fetchColumns,
 			model,
 			baseFilters: mergedBaseFilters,
 			api: baseUrl,
 			extraParams: mergedExtraParams
 		};
-		if (typeof onListParamsChange === "function") onListParamsChange(listParams);
+		if (typeof onListParamsChangeRef.current === "function") onListParamsChangeRef.current(listParams);
 		apiRef.current.listParams = listParams;
 		if (!isExportRequest) setIsLoading(true);
 		try {
@@ -3542,7 +4173,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			}
 		} catch (error) {
 			if (error?.aborted || error?.name === "AbortError" || controller?.signal?.aborted) return;
-			snackbar.showErrorCode(ERROR_CODES.DATA_LOAD_FAILED, error?.message);
+			snackbarRef.current.showErrorCode(ERROR_CODES.DATA_LOAD_FAILED, error?.message);
 			if (!isExportRequest) setData((prevData) => ({
 				...prevData,
 				records: [],
@@ -3553,7 +4184,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		}
 	}, [
 		hasStaticData,
-		normalizedStaticData,
+		preferencesReady,
 		paginationModelForFetch,
 		buildUrl,
 		model,
@@ -3566,12 +4197,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		selected,
 		props.extraParams,
 		sortModelForFetch,
-		stableGridColumns,
+		fetchColumns,
 		parentFilters,
-		onListParamsChange,
-		apiRef,
-		getList,
-		snackbar,
 		additionalFilters
 	]);
 	const openForm = useCallback(async ({ id, record = {}, mode }) => {
@@ -3598,8 +4225,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		if (mode === "copy") path += "0-" + id;
 		else path += id;
 		if (addUrlParamKey) {
-			searchParams.set(addUrlParamKey, record[addUrlParamKey]);
-			path += `?${searchParams.toString()}`;
+			const currentParams = new URLSearchParams(window.location.search);
+			currentParams.set(addUrlParamKey, record[addUrlParamKey]);
+			path += `?${currentParams.toString()}`;
 		}
 		navigate(path);
 	}, [
@@ -3611,7 +4239,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		where,
 		pathname,
 		addUrlParamKey,
-		searchParams,
 		navigate,
 		getRecord,
 		buildUrl,
@@ -3664,8 +4291,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 						id: record[idProperty]
 					});
 					break;
-				case actionTypes.History: return navigate(`${getApiEndpoint("history")}?tableName=${tableName}&id=${record[idProperty]}&breadCrumb=${searchParamKey ? searchParams.get(searchParamKey) : gridTitle}`);
-				default:
+				case actionTypes.History: return navigate(`${getApiEndpoint("history")}?tableName=${tableName}&id=${record[idProperty]}&breadCrumb=${searchParamKey ? new URLSearchParams(window.location.search).get(searchParamKey) : gridTitle}`);
+				default: {
 					const foundCustomAction = customActions.find((ca) => ca.action === action && typeof ca.onClick === constants.function);
 					if (foundCustomAction) {
 						foundCustomAction.onClick({
@@ -3675,6 +4302,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 						return;
 					}
 					break;
+				}
 			}
 		}
 		if (action === actionTypes.Download) handleDownload({ documentLink: record[documentField] });
@@ -3696,7 +4324,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		customActions,
 		tableName,
 		searchParamKey,
-		searchParams,
 		gridTitle,
 		getApiEndpoint,
 		handleDownload,
@@ -3729,7 +4356,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		model,
 		fetchData,
 		tTranslate,
-		tOpts
+		tOpts,
+		buildUrl
 	]);
 	const clearError = useCallback(() => {
 		setErrorMessage(null);
@@ -3766,8 +4394,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		model.rowRedirectLink,
 		model.addRecordToState,
 		navigate,
-		onRowDoubleClick,
-		template_default
+		onRowDoubleClick
 	]);
 	const handleAddRecords = useCallback(async () => {
 		if (rowSelectionModel.ids.size < 1) {
@@ -3822,7 +4449,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		model,
 		fetchData,
 		tTranslate,
-		tOpts
+		tOpts,
+		buildUrl
 	]);
 	const onAdd = useCallback(() => {
 		if (selectionApi.length > 0) {
@@ -3924,8 +4552,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		}
 		const { orderedFields, columnVisibilityModel, lookup } = apiRef.current.state.columns;
 		const hiddenColumns = Object.keys(columnVisibilityModel).filter((key) => columnVisibilityModel[key] === false);
-		const nonExportColumns = new Set(gridColumns.filter((col) => col.exportable === false).map((col) => col.field));
-		const visibleColumns = orderedFields.filter((field) => !nonExportColumns.has(field) && !hiddenColumns.includes(field) && field !== "__check__" && field !== "actions" && !gridGroupByColumnName.includes(field));
+		const nonExportColumns = new Set(gridColumns.flatMap((col) => col.exportable === false ? [col.field] : []));
+		const hiddenColumnSet = new Set(hiddenColumns);
+		const visibleColumns = orderedFields.filter((field) => !nonExportColumns.has(field) && !hiddenColumnSet.has(field) && field !== "__check__" && field !== "actions" && !gridGroupByColumnName.includes(field));
 		if (visibleColumns.length === 0) {
 			snackbar.showMessage(tTranslate("You cannot export while all columns are hidden... please show at least 1 column before exporting", tOpts));
 			return;
@@ -3961,20 +4590,14 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		apiRef,
 		gridColumns,
 		snackbar,
-		model,
 		fetchData,
 		tTranslate,
-		tOpts
+		tOpts,
+		recordCounts
 	]);
 	useEffect(() => {
-		if (!backendApi && !hasStaticData || !preferencesReady) return;
 		fetchData();
-	}, [
-		backendApi,
-		hasStaticData,
-		preferencesReady,
-		fetchData
-	]);
+	}, [fetchData]);
 	useEffect(() => {
 		if (props.isChildGrid || forAssignment || !updatePageTitle) return;
 		setPageTitle({
@@ -4021,7 +4644,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		});
 	}, [
 		gridColumns,
-		constants.Number,
 		emptyIsAnyOfOperatorFilters,
 		isElasticScreen,
 		setFilterModel
@@ -4033,7 +4655,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				return;
 			}
 		}
-		setSortModel(e.map((ele) => {
+		const sort = e.map((ele) => {
 			const field = gridColumns.filter((element) => element.field === ele.field)[0] || {};
 			const isKeywordField = isElasticScreen && field.isKeywordField;
 			const obj = {
@@ -4042,11 +4664,15 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			};
 			if (field.dataIndex) obj.filterField = field.dataIndex;
 			return obj;
-		}));
+		});
+		setSortModel(sort);
 	}, [
 		gridColumns,
 		isElasticScreen,
-		setSortModel
+		setSortModel,
+		snackbar,
+		tTranslate,
+		tOpts
 	]);
 	const pageTitle = title || model.gridTitle || model.title;
 	const breadCrumbs = searchParamKey ? [{ text: searchParams.get(searchParamKey) || pageTitle }] : [{ text: pageTitle }];
@@ -4272,7 +4898,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		toolbarItems,
 		props.headerActions,
 		customExportOptions,
-		hasStaticData
+		hasStaticData,
+		localSortAndFilter,
+		disablePagination
 	]);
 	const initialState = useMemo(() => ({
 		columns: { columnVisibilityModel: visibilityModel },
@@ -4408,11 +5036,15 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 }, areEqual);
 //#endregion
 //#region src/lib/components/Form/fields/boolean.js
-var Field$8 = ({ column, field, formik, otherProps }) => {
+var Field$10 = ({ column, field, formik, otherProps }) => {
 	const handleChange = (event) => {
 		formik.setFieldValue(field, event.target.checked);
 	};
-	const checked = useMemo(() => formik.values[field] ?? !!column.defaultValue, [formik, column]);
+	const checked = useMemo(() => formik.values[field] ?? !!column.defaultValue, [
+		formik.values[field],
+		field,
+		column.defaultValue
+	]);
 	const isDisabled = typeof column.readOnly === "function" ? column.readOnly(formik) : column.readOnly;
 	return /* @__PURE__ */ jsxs("div", { children: [/* @__PURE__ */ jsx(FormControlLabel$1, { control: /* @__PURE__ */ jsx(Checkbox$1, {
 		...otherProps,
@@ -4429,7 +5061,7 @@ var Field$8 = ({ column, field, formik, otherProps }) => {
 };
 //#endregion
 //#region src/lib/components/Form/fields/string.js
-var field$1 = ({ column, field, formik, otherProps }) => {
+var Field$9 = ({ column, field, formik, otherProps }) => {
 	const theme = useTheme();
 	const rows = column.rows || (column.multiline ? 5 : 1);
 	return /* @__PURE__ */ jsx(TextField, {
@@ -4454,20 +5086,6 @@ var field$1 = ({ column, field, formik, otherProps }) => {
 		defaultValue: column.defaultValue
 	}, field);
 };
-//#endregion
-//#region src/lib/hooks/useDebounce.js
-function useDebounce(value, delay) {
-	const [debouncedValue, setDebouncedValue] = useState(value);
-	useEffect(() => {
-		const timer = setTimeout(() => {
-			setDebouncedValue(value);
-		}, delay);
-		return () => {
-			clearTimeout(timer);
-		};
-	}, [value, delay]);
-	return debouncedValue;
-}
 //#endregion
 //#region src/lib/components/Form/fields/number.js
 var resolveValue = ({ value, state }) => {
@@ -4515,7 +5133,7 @@ var NumberFieldAdornment = () => /* @__PURE__ */ jsxs(InputAdornment, {
 		})
 	})]
 });
-var Field$7 = ({ column, otherProps, formik, field, ...props }) => {
+var Field$8 = ({ column, otherProps, formik, field, ...props }) => {
 	const { min, max, readOnly, precision } = column;
 	const theme = useTheme();
 	const resolvedMin = useMemo(() => resolveValue({
@@ -4533,7 +5151,7 @@ var Field$7 = ({ column, otherProps, formik, field, ...props }) => {
 		if (debouncedValue !== formikFieldValue) formik.setFieldValue(field, debouncedValue);
 	}, [debouncedValue]);
 	useEffect(() => {
-		if (formikFieldValue !== inputValue) setInputValue(formikFieldValue);
+		setInputValue(formikFieldValue);
 	}, [formikFieldValue]);
 	const handleValueChange = (value) => {
 		setInputValue(value);
@@ -4554,7 +5172,7 @@ var Field$7 = ({ column, otherProps, formik, field, ...props }) => {
 		max: resolvedMax,
 		disabled: readOnly,
 		format: numberFormat,
-		render: (baseProps, state) => /* @__PURE__ */ jsx(FormControl, {
+		render: (baseProps) => /* @__PURE__ */ jsx(FormControl, {
 			fullWidth: true,
 			ref: baseProps.ref,
 			error: formik.touched[field] && Boolean(formik.errors[field]),
@@ -4590,12 +5208,12 @@ var Field$7 = ({ column, otherProps, formik, field, ...props }) => {
 };
 //#endregion
 //#region src/lib/components/Form/fields/password.js
-var Field$6 = ({ otherProps, ...props }) => {
+var handleMouseDownPassword = (event) => {
+	event.preventDefault();
+};
+var Field$7 = ({ otherProps, ...props }) => {
 	const [showPassword, setShowPassword] = React.useState(false);
 	const handleClickShowPassword = () => setShowPassword((show) => !show);
-	const handleMouseDownPassword = (event) => {
-		event.preventDefault();
-	};
 	const { readOnly = false, disabled = false } = props.column || {};
 	otherProps = {
 		type: showPassword ? "text" : "password",
@@ -4618,19 +5236,20 @@ var Field$6 = ({ otherProps, ...props }) => {
 		},
 		...otherProps
 	};
-	return /* @__PURE__ */ jsx(field$1, {
+	return /* @__PURE__ */ jsx(Field$9, {
 		otherProps,
 		...props
 	});
 };
 //#endregion
 //#region src/lib/components/Form/fields/date.js
-var Field$5 = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) => {
+var EMPTY_FIELD_CONFIGS$2 = {};
+var Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$2, mode }) => {
 	const isDisabled = mode !== "copy" && fieldConfigs.disabled;
 	const { systemDateTimeFormat, stateData } = useStateContext();
 	const dateValue = useMemo(() => {
 		return formik.values[field] ? dayjs(formik.values[field]) : null;
-	}, [formik.values[field]]);
+	}, [formik.values[field], field]);
 	const minFieldValue = column.minField ? formik.values[column.minField] : void 0;
 	const maxFieldValue = column.maxField ? formik.values[column.maxField] : void 0;
 	const minDateValue = useMemo(() => {
@@ -4659,11 +5278,10 @@ var Field$5 = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) =
 		const isoString = dayjs(value).hour(12).toISOString();
 		formik.setFieldValue(field, isoString);
 	}, [field, formik]);
-	return /* @__PURE__ */ createElement(DatePicker, {
+	return /* @__PURE__ */ jsx(DatePicker, {
 		...otherProps,
 		variant: "standard",
 		readOnly: column?.readOnly === true,
-		key: field,
 		fullWidth: true,
 		format: systemDateTimeFormat(true, false, stateData.dateTime),
 		name: field,
@@ -4678,23 +5296,22 @@ var Field$5 = ({ column, field, formik, otherProps, fieldConfigs = {}, mode }) =
 			fullWidth: true,
 			variant: "standard"
 		} }
-	});
+	}, field);
 };
 //#endregion
 //#region src/lib/components/Form/fields/dateTime.js
 dayjs.extend(utc);
-var Field$4 = ({ column, field, formik, otherProps }) => {
+var Field$5 = ({ column, field, formik, otherProps }) => {
 	const { systemDateTimeFormat, stateData } = useStateContext();
 	const dateTimeValue = useMemo(() => {
 		const val = formik.values[field];
 		if (!val) return null;
 		return dayjs(val);
-	}, [formik.values[field], column]);
-	return /* @__PURE__ */ createElement(DateTimePicker, {
+	}, [formik.values[field], field]);
+	return /* @__PURE__ */ jsx(DateTimePicker, {
 		...otherProps,
 		variant: "standard",
 		readOnly: column?.readOnly === true,
-		key: field,
 		fullWidth: true,
 		format: systemDateTimeFormat(false, false, stateData.dateTime),
 		name: field,
@@ -4713,19 +5330,18 @@ var Field$4 = ({ column, field, formik, otherProps }) => {
 			helperText: formik.errors[field],
 			variant: "standard"
 		} }
-	});
+	}, field);
 };
 //#endregion
 //#region src/lib/components/Form/fields/time.js
 dayjs.extend(utcPlugin);
-var field = ({ column, field, formik, otherProps }) => {
+var Field$4 = ({ column, field, formik, otherProps }) => {
 	let inputValue = formik.values[field];
 	if (!column.localize && inputValue) inputValue = dayjs.utc(inputValue).utcOffset(dayjs().utcOffset(), true).format();
-	return /* @__PURE__ */ createElement(TimePicker, {
+	return /* @__PURE__ */ jsx(TimePicker, {
 		...otherProps,
 		variant: "standard",
 		readOnly: column.readOnly === true,
-		key: field,
 		fullWidth: true,
 		name: field,
 		value: inputValue ? dayjs(inputValue) : null,
@@ -4740,79 +5356,14 @@ var field = ({ column, field, formik, otherProps }) => {
 			helperText: formik.errors[field],
 			variant: "standard"
 		} }
-	});
+	}, field);
 };
-//#endregion
-//#region src/lib/hooks/useCascadingLookup.js
-var emptyValues = [
-	null,
-	void 0,
-	""
-];
-function useCascadingLookup({ column, formik, lookups, dependsOn = [], isAutoComplete = false, userSelected, model }) {
-	const [options, setOptions] = useState([]);
-	const { buildUrl } = useStateContext();
-	const snackbar = useSnackbar();
-	const api = buildUrl(model.api);
-	const dependencyValues = useMemo(() => {
-		const toReturn = {};
-		if (!dependsOn.length) return toReturn;
-		for (const dependency of dependsOn) toReturn[dependency] = formik.values[dependency];
-		return toReturn;
-	}, dependsOn.map((dep) => formik.values[dep]));
-	const initialOptions = useMemo(() => {
-		if (dependsOn.length) return [];
-		return column.customLookup || (typeof column.lookup === "string" ? lookups[column.lookup] : column.lookup);
-	}, [
-		column.customLookup,
-		column.lookup,
-		lookups,
-		dependsOn
-	]);
-	const fetchOptions = useCallback(async () => {
-		if (!column.lookup) return;
-		if (!Object.values(dependencyValues).every((value) => !emptyValues.includes(value))) {
-			setOptions([]);
-			return;
-		}
-		try {
-			setOptions(await getLookups({
-				api,
-				model,
-				lookups,
-				reqData: { params: { lookups: [{
-					lookup: column.lookup,
-					where: dependencyValues
-				}] } }
-			}));
-		} catch (error) {
-			snackbar.showError("Could not load lookups", error.message);
-		}
-	}, [
-		column.lookup,
-		dependencyValues,
-		api,
-		model,
-		lookups,
-		snackbar
-	]);
-	useEffect(() => {
-		if (dependsOn.length) fetchOptions();
-		else if (isAutoComplete || !userSelected.current) setOptions(initialOptions || []);
-	}, [
-		dependsOn.length,
-		fetchOptions,
-		isAutoComplete,
-		initialOptions
-	]);
-	return options;
-}
 //#endregion
 //#region src/lib/components/Form/fields/select.js
 var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, tTranslate, tOpts, ...otherProps }) => {
 	const userSelected = React.useRef(false);
 	const { placeHolder } = column;
-	const options = useCascadingLookup({
+	const { options } = useCascadingLookup({
 		column,
 		formik,
 		lookups,
@@ -4854,6 +5405,7 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 		field
 	]);
 	const handleChange = useCallback((event) => {
+		formik.handleChange(event);
 		if (typeof column.onChange === "function") column.onChange({
 			formik,
 			value: event.target.value,
@@ -4862,12 +5414,13 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 			t: tTranslate,
 			tOpts
 		});
-		formik.handleChange(event);
 		userSelected.current = true;
 	}, [
-		formik.values[field],
+		formik,
 		column.onChange,
-		options
+		options,
+		tTranslate,
+		tOpts
 	]);
 	const hasValue = useMemo(() => {
 		if (column.multiSelect) return Array.isArray(inputValue) && inputValue.length > 0;
@@ -4983,7 +5536,8 @@ var TransferField = ({ component, name, formik, field, column }) => {
 };
 //#endregion
 //#region src/lib/components/Form/fields/radio.js
-var Field$3 = ({ field, formik, orientation = "row", label, lookups, fieldConfigs = {}, mode, tTranslate, tOpts, ...otherProps }) => {
+var EMPTY_FIELD_CONFIGS$1 = {};
+var Field$3 = ({ field, formik, orientation = "row", label, lookups, fieldConfigs = EMPTY_FIELD_CONFIGS$1, mode, tTranslate, tOpts, ...otherProps }) => {
 	const handleChange = (event) => {
 		formik.setFieldValue(field, event.target.value);
 	};
@@ -5000,12 +5554,12 @@ var Field$3 = ({ field, formik, orientation = "row", label, lookups, fieldConfig
 			name: field,
 			value: formik.values[field] ?? "",
 			onChange: handleChange,
-			children: options?.map((option, index) => /* @__PURE__ */ jsx(FormControlLabel, {
+			children: options?.map((option) => /* @__PURE__ */ jsx(FormControlLabel, {
 				value: option.value,
 				control: /* @__PURE__ */ jsx(Radio, {}),
 				label: tTranslate(option.label, tOpts),
 				disabled: isDisabled || (otherProps?.column?.disableForValues || [])?.includes?.(formik.values[field])
-			}, index))
+			}, option.value))
 		})
 	}), isError && /* @__PURE__ */ jsx(FormHelperText, {
 		style: { color: theme.palette.error.main },
@@ -5016,7 +5570,7 @@ var Field$3 = ({ field, formik, orientation = "row", label, lookups, fieldConfig
 //#region src/lib/components/Form/fields/autocomplete.js
 var consts$2 = { limitTags: 5 };
 var Field$2 = React$1.memo(({ column, field, formik, lookups, dependsOn = [], fieldConfigs = {}, mode, model, ...otherProps }) => {
-	const options = useCascadingLookup({
+	const { options } = useCascadingLookup({
 		column,
 		formik,
 		lookups,
@@ -5098,7 +5652,7 @@ var days = [
 		display: "S"
 	}
 ];
-var CustomAvator = styled(Avatar)(({ theme, isSelected }) => ({
+var CustomAvator = styled(Avatar)(({ isSelected }) => ({
 	width: 34,
 	height: 34,
 	padding: 1,
@@ -5137,7 +5691,7 @@ var DaySelection = ({ name, field, formik, expired }) => {
 			setFieldValue(name || field, finalValue);
 			setPresetSelected(true);
 		} else {
-			let baseValue = presetSelected ? defaultVal : selectedDays;
+			const baseValue = presetSelected ? defaultVal : selectedDays;
 			const finalValue = baseValue.slice(0, newValue) + (baseValue[newValue] === "1" ? "0" : "1") + baseValue.slice(newValue + 1);
 			setSelectedDays(finalValue);
 			setFieldValue(name || field, finalValue);
@@ -5212,13 +5766,19 @@ var DaySelection = ({ name, field, formik, expired }) => {
 	})] });
 };
 //#endregion
+//#region src/lib/components/Form/context.js
+var ActiveStepContext = createContext({
+	activeStep: 0,
+	setActiveStep: () => {}
+});
+//#endregion
 //#region src/lib/components/Form/fields/chipInput.js
-var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = {}, mode }) => {
+var EMPTY_FIELD_CONFIGS = {};
+var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS }) => {
 	const theme = useTheme();
 	let inputValue = formik.values[field] || [];
 	if (!Array.isArray(inputValue)) inputValue = inputValue.split(",").map((item) => item.trim());
 	const isDisabled = React$1.useMemo(() => {
-		if (mode === "copy") return true;
 		if (typeof fieldConfigs.disabled !== "undefined") return fieldConfigs.disabled;
 		if (typeof column.disabled === "function") return column.disabled({
 			isAdd,
@@ -5226,9 +5786,10 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = {}, mo
 		});
 		return Boolean(column.disabled);
 	}, [
-		mode,
 		fieldConfigs.disabled,
-		column.disabled
+		column.disabled,
+		isAdd,
+		formik
 	]);
 	const fixedOptions = column.hasDefault && !isAdd ? [inputValue[0]] : [];
 	const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
@@ -5241,7 +5802,12 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = {}, mo
 		if (fixedOptions && fixedOptions.includes(item.option) && action === "removeOption") newValue = [item.option];
 		if (column.dataFormat !== "array") newValue = newValue.length ? newValue.join(",") : "";
 		formik.setFieldValue(field, newValue);
-	}, [formik, field]);
+	}, [
+		formik,
+		field,
+		column,
+		fixedOptions
+	]);
 	return /* @__PURE__ */ jsxs(FormControl$1, {
 		fullWidth: true,
 		variant: "standard",
@@ -5428,12 +5994,17 @@ function FileUpload({ column, field, formik }) {
 		}
 	};
 	const host = new URL(url, window.location.origin).hostname.toLowerCase();
-	React.useEffect(() => {
-		setFormState({
-			...formState,
-			isExternal: !inputValue.toLowerCase().includes(host) ? "yes" : "no"
+	const [prevSyncKey, setPrevSyncKey] = useState(() => ({}));
+	if (prevSyncKey.inputValue !== inputValue || prevSyncKey.host !== host) {
+		setPrevSyncKey({
+			inputValue,
+			host
 		});
-	}, [inputValue, setFormState]);
+		setFormState((prev) => ({
+			...prev,
+			isExternal: !inputValue.toLowerCase().includes(host) ? "yes" : "no"
+		}));
+	}
 	const isLengthExceeded = formik.values[field]?.length > (column.max || consts$1.maxLength);
 	const colorScheme = isLengthExceeded ? "red" : "";
 	return /* @__PURE__ */ jsxs(Box$1, { children: [
@@ -5525,6 +6096,7 @@ function FileUpload({ column, field, formik }) {
 					children: ["Choose File", /* @__PURE__ */ jsx("input", {
 						type: "file",
 						hidden: true,
+						"aria-label": "Choose file",
 						onChange: handleFileChange
 					})]
 				}),
@@ -5552,17 +6124,17 @@ function FileUpload({ column, field, formik }) {
 }
 //#endregion
 //#region src/lib/components/Form/fields/jsonInput.js
+var parseJson = (raw) => {
+	if (!raw) return {};
+	try {
+		return JSON.parse(raw);
+	} catch {
+		return {};
+	}
+};
 var Field = ({ field, formik }) => {
-	const [state, setState] = React$1.useState({});
+	const [state, setState] = React$1.useState(() => parseJson(formik.values[field]));
 	const debouncedState = useDebounce(state, 300);
-	React$1.useEffect(() => {
-		if (!formik.values[field]) return;
-		try {
-			setState(JSON.parse(formik.values[field]));
-		} catch (e) {
-			setState({});
-		}
-	}, [formik.values[field]]);
 	React$1.useEffect(() => {
 		const nextValue = JSON.stringify(debouncedState);
 		if (formik.values[field] !== nextValue) formik.setFieldValue(field, nextValue);
@@ -5572,11 +6144,15 @@ var Field = ({ field, formik }) => {
 		formik,
 		formik.values[field]
 	]);
+	React$1.useEffect(() => {
+		setState(parseJson(formik.values[field]));
+	}, [formik.values[field], field]);
 	const handleChange = (key, value) => {
-		setState({
+		const updatedState = {
 			...state,
 			[key]: value
-		});
+		};
+		setState(updatedState);
 	};
 	return /* @__PURE__ */ jsx(FormControl$1, {
 		fullWidth: true,
@@ -5611,23 +6187,24 @@ var Field = ({ field, formik }) => {
 //#endregion
 //#region src/lib/components/Form/field-mapper.js
 var fieldMappers = {
-	"boolean": Field$8,
+	"boolean": Field$10,
 	"select": SelectField,
-	"string": field$1,
-	"number": Field$7,
-	"password": Field$6,
-	"date": Field$5,
-	"dateTime": Field$4,
-	"time": field,
+	"string": Field$9,
+	"number": Field$8,
+	"password": Field$7,
+	"date": Field$6,
+	"dateTime": Field$5,
+	"time": Field$4,
 	"oneToMany": TransferField,
 	"radio": Field$3,
 	"autocomplete": Field$2,
 	"dayRadio": DaySelection,
-	"email": field$1,
+	"email": Field$9,
 	"chipInput": Field$1,
 	"treeCheckbox": treeCheckBox,
 	"fileUpload": FileUpload,
-	"json": Field
+	"json": Field,
+	"remoteSelect": RemoteSelectField
 };
 var gridContainerStyle = {
 	paddingTop: "2.5px",
@@ -5638,7 +6215,7 @@ var ImportantSpan = styled$2("span")({ color: "red !important" });
 var RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, handleSubmit }) => {
 	const [skipped, setSkipped] = React$1.useState(/* @__PURE__ */ new Set());
 	const { tOpts, tTranslate } = useModelTranslation(model);
-	const { activeStep, setActiveStep } = React$1.useContext(ActiveStepContext);
+	const { activeStep, setActiveStep } = use(ActiveStepContext);
 	const skipSteps = {};
 	for (let index = 0, len = model.columns.length; index < len; index++) {
 		const { field, skip } = model.columns[index];
@@ -5861,7 +6438,7 @@ var FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayI
 			showTabs: showTabbedLayout,
 			showGrouped: !showTabbedLayout && showGrouped && hasTabColumns
 		};
-	}, [model]);
+	}, [model, displayId]);
 	return /* @__PURE__ */ jsxs("div", { children: [/* @__PURE__ */ jsx(RenderColumns, {
 		isAdd,
 		formElements,
@@ -5949,11 +6526,12 @@ var ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOnly
 		isChildGrid: true
 	});
 });
+var EMPTY_WHERE = [];
 /**
 * Relations component using MUI Tabs
 * Renders a tab for each relation, and a ChildGrid in each panel
 */
-var Relations = React.memo(({ relations, parent, where = [], models, relationFilters, readOnly }) => {
+var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, relationFilters, readOnly }) => {
 	const [tabIndex, setTabIndex] = useState(0);
 	const handleChange = (_, newValue) => {
 		setTabIndex(newValue);
@@ -5993,8 +6571,10 @@ var Relations = React.memo(({ relations, parent, where = [], models, relationFil
 });
 //#endregion
 //#region src/lib/components/Form/Form.js
-var ActiveStepContext = createContext(1);
 var defaultFieldConfigs = {};
+var DEFAULT_RELATION_FILTERS = {};
+var DEFAULT_PERMISSIONS = {};
+var DEFAULT_BASE_SAVE_DATA = {};
 var consts = {
 	object: "object",
 	function: "function",
@@ -6007,7 +6587,7 @@ var consts = {
 	loadIdIndex: 1,
 	editIdIndex: 0
 };
-var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout = FormLayout, baseSaveData = {}, sx, readOnly, beforeSubmit, deletePromptText, detailPanelId = null, onCancel, onSaveSuccess }) => {
+var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, permissions = DEFAULT_PERMISSIONS, Layout = FormLayout, baseSaveData = DEFAULT_BASE_SAVE_DATA, sx, readOnly, beforeSubmit, deletePromptText, detailPanelId = null, onCancel, onSaveSuccess }) => {
 	const formTitle = model.formTitle || model.title;
 	const { translate, tOpts, tTranslate } = useModelTranslation(model);
 	const { navigate, getParams, useParams, pathname } = useRouter();
@@ -6030,8 +6610,11 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 	const [lookups, setLookups] = useState({});
 	const [isDeleting, setIsDeleting] = useState(false);
 	const snackbar = useSnackbar();
-	const [validationSchema, setValidationSchema] = useState(null);
 	const [activeStep, setActiveStep] = useState(0);
+	const activeStepContextValue = useMemo(() => ({
+		activeStep,
+		setActiveStep
+	}), [activeStep, setActiveStep]);
 	const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 	const [deleteError, setDeleteError] = useState(null);
 	const [errorMessage, setErrorMessage] = useState("");
@@ -6060,7 +6643,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 			case consts.function:
 				navigatePath = navigateBack({
 					params,
-					searchParams,
+					searchParams: new URLSearchParams(window.location.search),
 					data
 				});
 				break;
@@ -6077,7 +6660,6 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 		navigateBack,
 		navigate,
 		params,
-		searchParams,
 		data,
 		pathname
 	]);
@@ -6093,7 +6675,9 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 	}, [
 		model.initialValues,
 		data,
-		id
+		id,
+		baseSaveData,
+		isNew
 	]);
 	const formApi = api || gridApi;
 	const idToLoad = useMemo(() => {
@@ -6108,11 +6692,12 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 	const loadRecord = useCallback(async () => {
 		setIsLoading(true);
 		try {
-			setActiveRecord(await getRecord({
+			const data = await getRecord({
 				api: formApi,
 				model,
 				id: idToLoad
-			}));
+			});
+			setActiveRecord(data);
 		} catch (error) {
 			errorOnLoad(error);
 		} finally {
@@ -6132,24 +6717,20 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 		formApi,
 		loadRecord
 	]);
-	useEffect(() => {
-		setValidationSchema(model.getValidationSchema({
-			id,
-			tTranslate,
-			tOpts
-		}));
-	}, [
-		id,
-		model,
-		setValidationSchema,
-		translate,
-		tOpts,
-		tTranslate
-	]);
 	const formik = useFormik({
 		enableReinitialize: true,
 		initialValues,
-		validationSchema,
+		validationSchema: useMemo(() => model.getValidationSchema({
+			id,
+			tTranslate,
+			tOpts
+		}), [
+			id,
+			model,
+			translate,
+			tOpts,
+			tTranslate
+		]),
 		validateOnBlur: model?.validateOnBlur ?? false,
 		onSubmit: async (values, { resetForm }) => {
 			Object.keys(values).forEach((key) => {
@@ -6198,7 +6779,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 		snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, error?.message);
 		handleNavigation();
 	}, [snackbar, handleNavigation]);
-	const setActiveRecord = function({ id, title, record, lookups }) {
+	const setActiveRecord = function({ id, record, lookups }) {
 		const isCopy = idWithOptions.indexOf("-") > -1;
 		const isNew = !id || id === "0";
 		const pageTitle = isNew ? consts.create : isCopy ? consts.copy : consts.edit;
@@ -6250,10 +6831,8 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 	}, [
 		id,
 		api,
-		model.api,
-		snackbar,
-		setErrorMessage,
 		model,
+		snackbar,
 		navigateBack,
 		handleNavigation,
 		tTranslate,
@@ -6308,10 +6887,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 		model,
 		enableBackButton: navigateBack !== void 0
 	}), /* @__PURE__ */ jsx(ActiveStepContext.Provider, {
-		value: {
-			activeStep,
-			setActiveStep
-		},
+		value: activeStepContextValue,
 		children: /* @__PURE__ */ jsxs(Paper, {
 			sx: {
 				padding: 2,
@@ -6402,7 +6978,7 @@ var Form = ({ model, api, models, relationFilters = {}, permissions = {}, Layout
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.133.0/helpers/esm/typeof.js
+//#region \0@oxc-project+runtime@0.138.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -6412,7 +6988,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.133.0/helpers/esm/toPrimitive.js
+//#region \0@oxc-project+runtime@0.138.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -6424,13 +7000,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.133.0/helpers/esm/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.138.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.133.0/helpers/esm/defineProperty.js
+//#region \0@oxc-project+runtime@0.138.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
@@ -6445,6 +7021,7 @@ var regexConfig = {
 	password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/,
 	nonAlphaNumeric: /[^a-zA-Z0-9]/g,
 	compareValidatorRegex: /^compare:(.+)$/,
+	notEqualValidatorRegex: /^notEqual:([^:]+)(?::(.+))?$/,
 	email: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
 };
 var validationMessageTemplates = {
@@ -6459,7 +7036,8 @@ var validationMessageTemplates = {
 	requiredNumber: "${label}: required",
 	minNumber: "${label}: minimum value is ${min}",
 	maxNumber: "${label}: maximum value is ${max}",
-	mustMatch: "${label}: must match ${compareLabel}"
+	mustMatch: "${label}: must match ${compareLabel}",
+	notEqual: "${label}: must not be the same as ${compareLabel}"
 };
 var defaultValidationTranslationKeyPrefix = "validation";
 /**
@@ -6500,14 +7078,14 @@ var defaultValueConfigs = {
 };
 var UiModel = class UiModel {
 	constructor(modelConfig) {
-		_defineProperty(this, "Form", ({ match, ...props }) => {
+		_defineProperty(this, "Form", ({ ...props }) => {
 			return /* @__PURE__ */ jsx(Form, {
 				model: this,
 				Layout: this.Layout,
 				...props
 			});
 		});
-		_defineProperty(this, "Grid", ({ match, ...props }) => {
+		_defineProperty(this, "Grid", ({ ...props }) => {
 			return /* @__PURE__ */ jsx(GridBase, {
 				model: this,
 				showRowsSelected,
@@ -6566,12 +7144,61 @@ var UiModel = class UiModel {
 		}
 		return defaultValues;
 	}
+	applyBuiltInValidation(config, validationContext) {
+		const { column, columnByField, formLabel, t, tTranslate, tOpts } = validationContext;
+		const { validate } = column;
+		if (typeof validate !== "string") return config;
+		const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
+		const notEqualValidator = regexConfig.notEqualValidatorRegex.exec(validate);
+		if (compareValidator) {
+			const compareFieldName = compareValidator[1];
+			const compareField = columnByField.get(compareFieldName);
+			return config.oneOf([yup.ref(compareFieldName)], resolveValidationMessage("mustMatch", {
+				label: formLabel,
+				compareLabel: tTranslate(compareField?.label || compareFieldName, tOpts)
+			}, t));
+		}
+		if (notEqualValidator) {
+			const [, compareFieldName, compareLabelOverride] = notEqualValidator;
+			const compareLabel = tTranslate(compareLabelOverride || columnByField.get(compareFieldName)?.label || compareFieldName, tOpts);
+			return config.test("not-equal", resolveValidationMessage("notEqual", {
+				label: formLabel,
+				compareLabel
+			}, t), function(value) {
+				const compareValue = this.parent?.[compareFieldName];
+				if (value === void 0 || value === null || value === "") return true;
+				if (compareValue === void 0 || compareValue === null || compareValue === "") return true;
+				return String(value) !== String(compareValue);
+			});
+		}
+		return config;
+	}
+	applyCustomValidation(config, _validationContext) {
+		return config;
+	}
+	applyColumnValidation(config, validationContext) {
+		const { column } = validationContext;
+		const { validate } = column;
+		let nextConfig = config;
+		if (typeof validate === "function") nextConfig = validate.call(this, nextConfig, validationContext);
+		else nextConfig = this.applyBuiltInValidation(nextConfig, validationContext);
+		return this.applyCustomValidation(nextConfig, validationContext);
+	}
 	getValidationSchema({ id, tTranslate = (key) => key, tOpts = {} } = {}) {
 		const { columns } = this;
 		const t = tOpts?.t;
 		const validationConfig = {};
+		const columnByField = new Map(columns.flatMap((col) => {
+			const entries = [[col.field, col]];
+			if (col.formField) entries.push([col.formField, col]);
+			return entries;
+		}));
+		if (this.title && this.idProperty && !columnByField.has(this.idProperty)) columnByField.set(this.idProperty, {
+			field: this.idProperty,
+			label: this.title
+		});
 		for (const column of columns) {
-			const { field, label, header, type = "string", requiredIfNew = false, required = false, min = "", max = "", validate } = column;
+			const { field, label, header, type = "string", requiredIfNew = false, required = false, min = "", max = "" } = column;
 			const formLabel = tTranslate(label || header || field, tOpts);
 			if (!formLabel) continue;
 			if (label === null || label === "") continue;
@@ -6655,17 +7282,17 @@ var UiModel = class UiModel {
 			else if (type === "number") config = config.required(resolveValidationMessage("requiredNumber", { label: formLabel }, t));
 			else config = applyRequired(config, formLabel, false, t);
 			if (requiredIfNew && (!id || id === "")) config = applyRequired(config, formLabel, type === "string", t);
-			if (validate) {
-				const compareValidator = regexConfig.compareValidatorRegex.exec(validate);
-				if (compareValidator) {
-					const compareFieldName = compareValidator[1];
-					const compareField = columns.find((f) => (f.formField === compareFieldName || f.field) === compareFieldName);
-					config = config.oneOf([yup.ref(compareFieldName)], resolveValidationMessage("mustMatch", {
-						label: formLabel,
-						compareLabel: compareField?.label || compareFieldName
-					}, t));
-				}
-			}
+			config = this.applyColumnValidation(config, {
+				column,
+				columnByField,
+				formLabel,
+				id,
+				resolveValidationMessage,
+				t,
+				tOpts,
+				tTranslate,
+				yup
+			});
 			validationConfig[field] = config;
 		}
 		return yup.object({
