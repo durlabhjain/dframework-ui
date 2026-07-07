@@ -161,8 +161,8 @@ class UiModel {
 				resolveValidationMessage('notEqual', { label: formLabel, compareLabel }, t),
 				function (value) {
 					const compareValue = this.parent?.[compareFieldName];
-					if (value === undefined || value === null || value === '') return true;
-					if (compareValue === undefined || compareValue === null || compareValue === '') return true;
+					const isEmpty = (v) => v === undefined || v === null || v === '' || v === 0 || v === '0';
+					if (isEmpty(value) || isEmpty(compareValue)) return true;
 					return String(value) !== String(compareValue);
 				}
 			);
