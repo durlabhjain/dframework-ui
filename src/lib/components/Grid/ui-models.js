@@ -156,8 +156,11 @@ class UiModel {
 		if (notEqualValidator) {
 			const [, compareFieldName, compareLabelOverride] = notEqualValidator;
 			const compareLabel = tTranslate(compareLabelOverride || columnByField.get(compareFieldName)?.label || compareFieldName, tOpts);
-			// Only treat 0 as empty here when one side of the comparison is a RemoteSelect
-			const treatZeroAsEmpty = column.type === 'remoteSelect' || columnByField.get(compareFieldName)?.type === 'remoteSelect';
+			let treatZeroAsEmpty = column.treatZeroAsEmpty;
+			if (typeof treatZeroAsEmpty !== 'boolean') {
+				treatZeroAsEmpty = !!column.lookup;
+				column.treatZeroAsEmpty = treatZeroAsEmpty;
+			}
 			return config.test(
 				'not-equal',
 				resolveValidationMessage('notEqual', { label: formLabel, compareLabel }, t),
