@@ -6978,7 +6978,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.138.0/helpers/esm/typeof.js
+//#region \0@oxc-project+runtime@0.139.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -6988,7 +6988,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.138.0/helpers/esm/toPrimitive.js
+//#region \0@oxc-project+runtime@0.139.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -7000,13 +7000,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.138.0/helpers/esm/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.139.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.138.0/helpers/esm/defineProperty.js
+//#region \0@oxc-project+runtime@0.139.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
@@ -7161,13 +7161,14 @@ var UiModel = class UiModel {
 		if (notEqualValidator) {
 			const [, compareFieldName, compareLabelOverride] = notEqualValidator;
 			const compareLabel = tTranslate(compareLabelOverride || columnByField.get(compareFieldName)?.label || compareFieldName, tOpts);
+			const treatZeroAsEmpty = typeof column.treatZeroAsEmpty === "boolean" ? column.treatZeroAsEmpty : !!column.lookup;
 			return config.test("not-equal", resolveValidationMessage("notEqual", {
 				label: formLabel,
 				compareLabel
 			}, t), function(value) {
 				const compareValue = this.parent?.[compareFieldName];
-				if (value === void 0 || value === null || value === "") return true;
-				if (compareValue === void 0 || compareValue === null || compareValue === "") return true;
+				const isEmpty = (v) => v === void 0 || v === null || v === "" || treatZeroAsEmpty && (v === 0 || v === "0");
+				if (isEmpty(value) || isEmpty(compareValue)) return true;
 				return String(value) !== String(compareValue);
 			});
 		}
