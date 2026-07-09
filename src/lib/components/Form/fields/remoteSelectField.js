@@ -221,7 +221,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
 
     // ── Render ────────────────────────────────────────────────────────────────
     const trigger = (
-        <Box sx={{ position: 'relative', width: '100%', ...(filterMode && { height: '100%' }) }} onClick={handleOpen}>
+        <Box sx={{ position: 'relative', width: '100%', ...(filterMode && { height: '100%' }) }} onClick={open ? handleClose : handleOpen}>
             <TextField
                 fullWidth
                 variant={filterMode ? 'outlined' : 'standard'}
