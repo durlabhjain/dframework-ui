@@ -4,8 +4,9 @@ import {
     IconButton, Checkbox, CircularProgress, InputAdornment,
     FormControl, FormHelperText, Typography, Popover
 } from '@mui/material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import {
-    ArrowDropDown, ArrowDropUp, Search, Clear
+    Search, Clear
 } from '@mui/icons-material';
 import useCascadingLookup from '../../../hooks/useCascadingLookup';
 import useDebounce from '../../../hooks/useDebounce';
@@ -49,7 +50,9 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     }, [rawValue, isMultiSelect]);
 
     const [anchorEl, setAnchorEl] = useState(null);
+    const [anchorWidth, setAnchorWidth] = useState(0);
     const open = Boolean(anchorEl);
+    // Click handler lives on the wrapping Box so e.currentTarget is stable regardless of which inner element was clicked.
 
     const [hasMore, setHasMore] = useState(true);
     const [searchInput, setSearchInput] = useState('');
@@ -162,6 +165,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     const handleOpen = useCallback((e) => {
         if (isReadOnly) return;
         setAnchorEl(e.currentTarget);
+        setAnchorWidth(e.currentTarget.offsetWidth);
         clearSearch();
     }, [isReadOnly, clearSearch]);
 
@@ -217,18 +221,20 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
 
     // ── Render ────────────────────────────────────────────────────────────────
     const trigger = (
-        <Box sx={{ position: 'relative', width: '100%' }}>
+        <Box sx={{ position: 'relative', width: '100%', ...(filterMode && { height: '100%' }) }} onClick={open ? handleClose : handleOpen}>
             <TextField
                 fullWidth
                 variant={filterMode ? 'outlined' : 'standard'}
                 size="small"
                 value={selectedLabel}
-                placeholder={isReadOnly ? '' : tTranslate('Select...', tOpts)}
-                onClick={handleOpen}
                 error={!filterMode && Boolean(formik?.touched[field] && formik?.errors[field])}
+                sx={filterMode ? {
+                    height: '100%',
+                    '& .MuiInputBase-root': { height: '100%' },
+                } : undefined}
                 slotProps={{
                     htmlInput: { readOnly: true, style: { cursor: isReadOnly ? 'default' : 'pointer' } },
-                    input: { sx: { '&&': { paddingRight: '52px' } } },
+                    input: { sx: { '&&': { paddingRight: '48px', ...(filterMode && { fontSize: '14px' }) } } },
                 }}
             />
             {hasValue && !isReadOnly && (
@@ -236,19 +242,22 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                     size="small"
                     onClick={handleClear}
                     aria-label={tTranslate('Clear value', tOpts)}
-                    sx={{ position: 'absolute', right: 28, top: '50%', transform: 'translateY(-50%)', p: '2px' }}
+                    sx={{ position: 'absolute', right: 24, top: '50%', transform: 'translateY(-50%)', p: '2px' }}
                 >
                     <Clear fontSize="small" />
                 </IconButton>
             )}
             <IconButton
                 size="small"
-                onClick={handleOpen}
                 disabled={isReadOnly}
                 aria-label={tTranslate(open ? 'Close options' : 'Open options', tOpts)}
-                sx={{ position: 'absolute', right: 2, top: '50%', transform: 'translateY(-50%)', p: '2px' }}
+                sx={{
+                    position: 'absolute', right: 0, top: '50%', p: 0,
+                    transform: open ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%) rotate(0deg)',
+                    transition: 'transform 0.2s',
+                }}
             >
-                {open ? <ArrowDropUp sx={{ fontSize: 22 }} /> : <ArrowDropDown sx={{ fontSize: 22 }} />}
+                <KeyboardArrowDownIcon />
             </IconButton>
         </Box>
     );
@@ -260,7 +269,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
             onClose={handleClose}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
             transformOrigin={{ vertical: 'top', horizontal: 'left' }}
-            slotProps={{ paper: { sx: { width: Math.max(anchorEl?.offsetWidth ?? 0, 280), maxHeight: 460, overflow: 'hidden' } } }}
+            slotProps={{ paper: { sx: { width: Math.max(anchorWidth, 280), maxHeight: 460, overflow: 'hidden' } } }}
             disableEnforceFocus
         >
             {/* Search */}
