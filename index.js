@@ -24,7 +24,7 @@ import { Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, Car
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import HelpIcon from "@mui/icons-material/Help";
-import { ArrowDropDown, ArrowDropUp, Clear, Close, Code, DataObject, GridOn, Language, Replay, Search, TableChart } from "@mui/icons-material";
+import { Clear, Close, Code, DataObject, GridOn, Language, Replay, Search, TableChart } from "@mui/icons-material";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -48,13 +48,13 @@ import MenuItem$1 from "@mui/material/MenuItem";
 import HistoryIcon from "@mui/icons-material/History";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import Checkbox$1 from "@mui/material/Checkbox";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import Paper from "@mui/material/Paper";
 import Stack$1 from "@mui/material/Stack";
 import CircularProgress$1 from "@mui/material/CircularProgress";
 import FormControlLabel$1 from "@mui/material/FormControlLabel";
 import { NumberField } from "@base-ui/react/number-field";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
@@ -3032,6 +3032,7 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 		return rawValue;
 	}, [rawValue, isMultiSelect]);
 	const [anchorEl, setAnchorEl] = useState(null);
+	const [anchorWidth, setAnchorWidth] = useState(0);
 	const open = Boolean(anchorEl);
 	const [hasMore, setHasMore] = useState(true);
 	const [searchInput, setSearchInput] = useState("");
@@ -3131,6 +3132,7 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 	const handleOpen = useCallback((e) => {
 		if (isReadOnly) return;
 		setAnchorEl(e.currentTarget);
+		setAnchorWidth(e.currentTarget.offsetWidth);
 		clearSearch();
 	}, [isReadOnly, clearSearch]);
 	const handleClose = useCallback(() => {
@@ -3201,23 +3203,30 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 	const trigger = /* @__PURE__ */ jsxs(Box$1, {
 		sx: {
 			position: "relative",
-			width: "100%"
+			width: "100%",
+			...filterMode && { height: "100%" }
 		},
+		onClick: open ? handleClose : handleOpen,
 		children: [
 			/* @__PURE__ */ jsx(TextField$1, {
 				fullWidth: true,
 				variant: filterMode ? "outlined" : "standard",
 				size: "small",
 				value: selectedLabel,
-				placeholder: isReadOnly ? "" : tTranslate("Select...", tOpts),
-				onClick: handleOpen,
 				error: !filterMode && Boolean(formik?.touched[field] && formik?.errors[field]),
+				sx: filterMode ? {
+					height: "100%",
+					"& .MuiInputBase-root": { height: "100%" }
+				} : void 0,
 				slotProps: {
 					htmlInput: {
 						readOnly: true,
 						style: { cursor: isReadOnly ? "default" : "pointer" }
 					},
-					input: { sx: { "&&": { paddingRight: "52px" } } }
+					input: { sx: { "&&": {
+						paddingRight: "48px",
+						...filterMode && { fontSize: "14px" }
+					} } }
 				}
 			}),
 			hasValue && !isReadOnly && /* @__PURE__ */ jsx(IconButton, {
@@ -3226,7 +3235,7 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 				"aria-label": tTranslate("Clear value", tOpts),
 				sx: {
 					position: "absolute",
-					right: 28,
+					right: 24,
 					top: "50%",
 					transform: "translateY(-50%)",
 					p: "2px"
@@ -3235,17 +3244,17 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 			}),
 			/* @__PURE__ */ jsx(IconButton, {
 				size: "small",
-				onClick: handleOpen,
 				disabled: isReadOnly,
 				"aria-label": tTranslate(open ? "Close options" : "Open options", tOpts),
 				sx: {
 					position: "absolute",
-					right: 2,
+					right: 0,
 					top: "50%",
-					transform: "translateY(-50%)",
-					p: "2px"
+					p: 0,
+					transform: open ? "translateY(-50%) rotate(180deg)" : "translateY(-50%) rotate(0deg)",
+					transition: "transform 0.2s"
 				},
-				children: open ? /* @__PURE__ */ jsx(ArrowDropUp, { sx: { fontSize: 22 } }) : /* @__PURE__ */ jsx(ArrowDropDown, { sx: { fontSize: 22 } })
+				children: /* @__PURE__ */ jsx(KeyboardArrowDownIcon, {})
 			})
 		]
 	});
@@ -3262,7 +3271,7 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 			horizontal: "left"
 		},
 		slotProps: { paper: { sx: {
-			width: Math.max(anchorEl?.offsetWidth ?? 0, 280),
+			width: Math.max(anchorWidth, 280),
 			maxHeight: 460,
 			overflow: "hidden"
 		} } },
