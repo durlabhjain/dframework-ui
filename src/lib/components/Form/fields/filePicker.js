@@ -18,10 +18,11 @@ function FilePicker({ column, field, formik }) {
     }, [value]);
 
     const handleFileChange = (event) => {
-        const file = event.target.files[0];
+        const file = event.target.files?.[0];
         if (!file) return;
         formik.setFieldValue(field, file);
         setSelectedName(file.name);
+        event.target.value = "";
     };
 
     const displayName = selectedName || (typeof value === "string" ? value : "");
