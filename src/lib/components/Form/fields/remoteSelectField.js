@@ -103,9 +103,11 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
 
     // No reset here: MUI also opens as a side effect of the first keystroke when focused-but-closed (e.g. grid filter auto-focus), which would wipe that keystroke.
     const handleOpen = useCallback(() => setOpen(true), []);
-    const handleClose = useCallback(() => { setOpen(false); setSearchInput(''); }, []);
+    // Also clears isChunkLoading: closing while a chunk request is in flight marks it stale,
+    // and loadChunk's finally then skips clearing the flag, which would otherwise leave the spinner stuck.
+    const handleClose = useCallback(() => { setOpen(false); setSearchInput(''); setIsChunkLoading(false); }, []);
     const handleInputChange = useCallback((e, value, reason) => {
-        if (reason === 'input') setSearchInput(value);
+        if (reason === 'input' || reason === 'clear') setSearchInput(value);
     }, []);
 
     // Clear search on an actual pick/unpick (content change), not on every `value` reference change Autocomplete resets internally in multi-select.
