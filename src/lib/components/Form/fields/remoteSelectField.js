@@ -52,11 +52,11 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     // Separate from the hook's isLoading, which is shared with the lookupId label-resolution fetch below.
     const [isChunkLoading, setIsChunkLoading] = useState(false);
 
-    // append=false replaces the list, append=true adds a chunk; isStale (checked post-await) drops responses superseded by a newer request.
+    // append replaces vs. adds; isStale (forwarded into fetchOptions) cancels a reload superseded by a later one - a reload racing an in-flight scroll-append is an accepted, self-correcting edge case.
     const loadChunk = useCallback(async ({ start, append, isStale }) => {
         setIsChunkLoading(true);
         try {
-            const result = await fetchOptions({ search: searchTerm, start, limit: chunkSize, append });
+            const result = await fetchOptions({ search: searchTerm, start, limit: chunkSize, append, isStale });
             if (isStale?.() || !result) return;
             const incomingLength = result.options?.length ?? 0;
             setHasMore(result.recordCount != null
@@ -67,14 +67,13 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
         }
     }, [fetchOptions, searchTerm, chunkSize]);
 
-    // Reload from the start when the dropdown opens or the search term changes; cancelled guards against out-of-order responses.
+    // Reloads on open/searchTerm change or when loadChunk's identity changes (e.g. fetchOptions becoming ready); cancelled discards out-of-order responses.
     useEffect(() => {
         if (!open) return;
         let cancelled = false;
         loadChunk({ start: 0, append: false, isStale: () => cancelled });
         return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [open, searchTerm]);
+    }, [open, loadChunk]);
 
     // isChunkLoading also guards against overlapping "load more" requests from rapid scroll events.
     const handleScroll = useCallback((e) => {
@@ -103,8 +102,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
 
     // No reset here: MUI also opens as a side effect of the first keystroke when focused-but-closed (e.g. grid filter auto-focus), which would wipe that keystroke.
     const handleOpen = useCallback(() => setOpen(true), []);
-    // Also clears isChunkLoading: closing while a chunk request is in flight marks it stale,
-    // and loadChunk's finally then skips clearing the flag, which would otherwise leave the spinner stuck.
+    // Also resets isChunkLoading, since a cancelled fetch's finally otherwise leaves it stuck.
     const handleClose = useCallback(() => { setOpen(false); setSearchInput(''); setIsChunkLoading(false); }, []);
     const handleInputChange = useCallback((e, value, reason) => {
         if (reason === 'input' || reason === 'clear') setSearchInput(value);
