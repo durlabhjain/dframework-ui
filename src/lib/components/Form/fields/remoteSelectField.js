@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
     TextField, Autocomplete, Checkbox, CircularProgress,
     FormControl, FormHelperText, Typography,
@@ -52,34 +52,54 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     // Separate from the hook's isLoading, which is shared with the lookupId label-resolution fetch below.
     const [isChunkLoading, setIsChunkLoading] = useState(false);
 
-    // append replaces vs. adds; isStale (forwarded into fetchOptions) cancels a reload superseded by a later one - a reload racing an in-flight scroll-append is an accepted, self-correcting edge case.
-    const loadChunk = useCallback(async ({ start, append, isStale }) => {
+    // Id of the most recently started request (reload or append), so a response from a
+    // superseded request (e.g. an append pre-dating a later reload) is never committed.
+    const latestRequestId = useRef(0);
+    // DOM node of the listbox (via slotProps.listbox.ref below) and the scrollTop to reapply once an
+    // appended chunk lands - see the scroll-restore effect below for why this is needed.
+    const [listboxNode, setListboxNode] = useState(null);
+    const [pendingScrollRestore, setPendingScrollRestore] = useState(null);
+
+    // append replaces vs. adds; isStale (forwarded into fetchOptions) skips committing a response a later request has superseded.
+    const loadChunk = useCallback(async ({ start, append }) => {
+        const requestId = ++latestRequestId.current;
+        const isStale = () => requestId !== latestRequestId.current;
         setIsChunkLoading(true);
         try {
             const result = await fetchOptions({ search: searchTerm, start, limit: chunkSize, append, isStale });
-            if (isStale?.() || !result) return;
+            if (isStale() || !result) return;
             const incomingLength = result.options?.length ?? 0;
             setHasMore(result.recordCount != null
                 ? start + incomingLength < result.recordCount
                 : incomingLength >= chunkSize);
         } finally {
-            if (!isStale?.()) setIsChunkLoading(false);
+            if (!isStale()) setIsChunkLoading(false);
         }
     }, [fetchOptions, searchTerm, chunkSize]);
 
-    // Reloads on open/searchTerm change or when loadChunk's identity changes (e.g. fetchOptions becoming ready); cancelled discards out-of-order responses.
+    // Reloads on open/searchTerm change or when loadChunk's identity changes (e.g. fetchOptions becoming ready).
     useEffect(() => {
         if (!open) return;
-        let cancelled = false;
-        loadChunk({ start: 0, append: false, isStale: () => cancelled });
-        return () => { cancelled = true; };
+        setPendingScrollRestore(null);
+        loadChunk({ start: 0, append: false });
     }, [open, loadChunk]);
 
-    // isChunkLoading also guards against overlapping "load more" requests from rapid scroll events.
+    // MUI resets listbox scroll toward the selected option whenever the options array reference
+    // changes (e.g. an appended chunk); restore the scrollTop the user was at. Scoped to [options] only.
+    useEffect(() => {
+        if (pendingScrollRestore == null || !listboxNode) return;
+        listboxNode.scrollTop = pendingScrollRestore;
+        setPendingScrollRestore(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [options]);
+
+    // isChunkLoading also guards against overlapping "load more" requests from rapid scroll events;
+    // loadChunk's own request-id guard covers ordering against a reload started mid-append.
     const handleScroll = useCallback((e) => {
         if (isChunkLoading || !hasMore) return;
         const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
         if (scrollHeight - scrollTop - clientHeight > SCROLL_LOAD_MORE_THRESHOLD_PX) return;
+        setPendingScrollRestore(scrollTop);
         loadChunk({ start: options.length, append: true });
     }, [isChunkLoading, hasMore, loadChunk, options.length]);
 
@@ -154,7 +174,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
             popupIcon={<KeyboardArrowDownIcon />}
             fullWidth
             limitTags={column.limitTags || 5}
-            slotProps={{ listbox: { onScroll: handleScroll, style: { maxHeight: 280 } } }}
+            slotProps={{ listbox: { ref: setListboxNode, onScroll: handleScroll, style: { maxHeight: 280 } } }}
             renderOption={(props, option, { selected }) => {
                 const { key, ...optionProps } = props;
                 return (

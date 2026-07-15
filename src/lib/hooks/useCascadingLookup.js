@@ -60,15 +60,16 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
             // parseResponsePayload may return [{ value, label }] or { options, recordCount }
             const incoming = Array.isArray(data) ? data : (data?.options ?? []);
             const recordCount = Array.isArray(data) ? null : (data?.recordCount ?? null);
-            // A lookupId fetch resolves one record out-of-band (e.g. a pre-selected value not on
-            // the loaded page), and an append fetch adds the next infinite-scroll chunk — both
-            // merge into the existing options rather than replacing them.
-            if (lookupId !== undefined || append) {
+            // An append fetch adds the next infinite-scroll chunk and merges into the existing options.
+            // A lookupId fetch resolves one record out-of-band (e.g. a pre-selected value not on the
+            // loaded page) purely for its label — it must not touch options, since remoteSelectField
+            // uses options.length as the next page's start offset for scroll paging.
+            if (append) {
                 setOptions(prev => {
                     const incomingValues = new Set(incoming.map(o => String(o.value)));
                     return [...prev.filter(o => !incomingValues.has(String(o.value))), ...incoming];
                 });
-            } else {
+            } else if (lookupId === undefined) {
                 setOptions(incoming);
             }
             setLabelMap(prev => {
