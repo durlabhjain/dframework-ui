@@ -103,13 +103,22 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
         loadChunk({ start: options.length, append: true });
     }, [isChunkLoading, hasMore, loadChunk, options.length]);
 
-    // Resolve display label for a pre-selected value that isn't cached in labelMap yet.
-    const preselectedId = isMultiSelect ? currentValue[0] : currentValue;
+    // Resolve display labels for pre-selected values that aren't cached in labelMap yet.
+    // Tracks ids already requested so a labelMap update (which recomputes selectedIds) doesn't re-fire the fetch.
+    const requestedLookupIdsRef = useRef(new Set());
+    const selectedIds = isMultiSelect ? currentValue : (currentValue !== '' ? [currentValue] : []);
+    const selectedIdsKey = selectedIds.map(String).join(',');
     useEffect(() => {
-        if (!preselectedId || Number(preselectedId) === 0 || String(preselectedId) in labelMap) return;
-        fetchOptions({ lookupId: preselectedId });
+        selectedIds.forEach(id => {
+            const idKey = String(id);
+            if (!id || Number(id) === 0) return;
+            if (idKey in labelMap) return;
+            if (requestedLookupIdsRef.current.has(idKey)) return;
+            requestedLookupIdsRef.current.add(idKey);
+            fetchOptions({ lookupId: id });
+        });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [preselectedId, fetchOptions]);
+    }, [selectedIdsKey, fetchOptions]);
 
     // labelMap is a superset of options (it also carries past chunks and lookupId resolutions).
     const getLabel = useCallback((key) => labelMap[String(key)] ?? String(key), [labelMap]);

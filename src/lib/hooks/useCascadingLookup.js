@@ -56,7 +56,7 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
                     params: { lookups: [{ lookup: column.lookup, where }] }
                 }
             });
-            if (isStale?.()) return;
+            if (typeof isStale === 'function' && isStale()) return;
             // parseResponsePayload may return [{ value, label }] or { options, recordCount }
             const incoming = Array.isArray(data) ? data : (data?.options ?? []);
             const recordCount = Array.isArray(data) ? null : (data?.recordCount ?? null);
