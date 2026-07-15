@@ -115,7 +115,9 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
             if (idKey in labelMap) return;
             if (requestedLookupIdsRef.current.has(idKey)) return;
             requestedLookupIdsRef.current.add(idKey);
-            fetchOptions({ lookupId: id });
+            fetchOptions({ lookupId: id }).then(result => {
+                if (!result) requestedLookupIdsRef.current.delete(idKey);
+            });
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedIdsKey, fetchOptions]);
