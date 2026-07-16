@@ -20,11 +20,11 @@ import dayjs from "dayjs";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import { Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, CardContent, Checkbox, CircularProgress, Dialog as Dialog$1, DialogContent as DialogContent$1, DialogTitle as DialogTitle$1, Divider, FilledInput, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, Input, InputAdornment, InputLabel, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, OutlinedInput, Popover, Radio, RadioGroup, Select, Stack, TextField as TextField$1, Tooltip, Typography as Typography$1, styled, useTheme } from "@mui/material";
+import { Autocomplete, Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, CardContent, Checkbox, CircularProgress, Dialog as Dialog$1, DialogContent as DialogContent$1, DialogTitle as DialogTitle$1, Divider, FilledInput, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, Input, InputAdornment, InputLabel, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField as TextField$1, Tooltip, Typography as Typography$1, styled, useTheme } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import HelpIcon from "@mui/icons-material/Help";
-import { Clear, Close, Code, DataObject, GridOn, Language, Replay, Search, TableChart } from "@mui/icons-material";
+import { Close, Code, DataObject, GridOn, Language, Replay, TableChart } from "@mui/icons-material";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -63,7 +63,7 @@ import FormControl$1 from "@mui/material/FormControl";
 import InputLabel$1 from "@mui/material/InputLabel";
 import Select$1 from "@mui/material/Select";
 import Grid$1 from "@mui/material/Grid";
-import Autocomplete from "@mui/material/Autocomplete";
+import Autocomplete$1 from "@mui/material/Autocomplete";
 import Stepper from "@mui/material/Stepper";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
@@ -320,7 +320,7 @@ var getFormData = (props) => {
 		if (value === null) value = "";
 		else if (value instanceof Date) value = dateFormatterForForm.format(value).replace(",", "");
 		else if (dayjs.isDayjs(value)) value = dateFormatterForForm.format(value.toDate()).replace(",", "");
-		else if (typeof value === "object") value = JSON.stringify(value);
+		else if (typeof Blob !== "undefined" && value instanceof Blob) {} else if (typeof value === "object") value = JSON.stringify(value);
 		formData.append(key, value);
 	}
 	return formData;
@@ -2911,7 +2911,7 @@ function useCascadingLookup({ column, formik, lookups, dependsOn = [], isAutoCom
 		lookups,
 		dependsOn
 	]);
-	const fetchOptions = useCallback(async ({ search = "", start = 0, limit, lookupId, append = false } = {}) => {
+	const fetchOptions = useCallback(async ({ search = "", start = 0, limit, lookupId, append = false, isStale } = {}) => {
 		if (!column.lookup || !model || !api) return;
 		if (!Object.values(dependencyValues).every((value) => !emptyValues.includes(value))) {
 			setOptions([]);
@@ -2939,13 +2939,14 @@ function useCascadingLookup({ column, formik, lookups, dependsOn = [], isAutoCom
 					where
 				}] } }
 			});
+			if (typeof isStale === "function" && isStale()) return;
 			const incoming = Array.isArray(data) ? data : data?.options ?? [];
 			const recordCount = Array.isArray(data) ? null : data?.recordCount ?? null;
-			if (lookupId !== void 0 || append) setOptions((prev) => {
+			if (append) setOptions((prev) => {
 				const incomingValues = new Set(incoming.map((o) => String(o.value)));
 				return [...prev.filter((o) => !incomingValues.has(String(o.value))), ...incoming];
 			});
-			else setOptions(incoming);
+			else if (lookupId === void 0) setOptions(incoming);
 			setLabelMap((prev) => {
 				const next = { ...prev };
 				incoming.forEach((o) => {
@@ -3031,47 +3032,55 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 		if (rawValue === 0 || rawValue === "0" || rawValue == null) return "";
 		return rawValue;
 	}, [rawValue, isMultiSelect]);
-	const [anchorEl, setAnchorEl] = useState(null);
-	const [anchorWidth, setAnchorWidth] = useState(0);
-	const open = Boolean(anchorEl);
+	const [open, setOpen] = useState(false);
 	const [hasMore, setHasMore] = useState(true);
 	const [searchInput, setSearchInput] = useState("");
 	const searchTerm = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
 	const [isChunkLoading, setIsChunkLoading] = useState(false);
+	const latestRequestId = useRef(0);
+	const [listboxNode, setListboxNode] = useState(null);
+	const [pendingScrollRestore, setPendingScrollRestore] = useState(null);
 	const loadChunk = useCallback(async ({ start, append }) => {
+		const requestId = ++latestRequestId.current;
+		const isStale = () => requestId !== latestRequestId.current;
 		setIsChunkLoading(true);
 		try {
 			const result = await fetchOptions({
 				search: searchTerm,
 				start,
 				limit: chunkSize,
-				append
+				append,
+				isStale
 			});
-			if (!result) return;
+			if (isStale() || !result) return;
 			const incomingLength = result.options?.length ?? 0;
 			setHasMore(result.recordCount != null ? start + incomingLength < result.recordCount : incomingLength >= chunkSize);
 		} finally {
-			setIsChunkLoading(false);
+			if (!isStale()) setIsChunkLoading(false);
 		}
 	}, [
 		fetchOptions,
 		searchTerm,
 		chunkSize
 	]);
-	const reload = useCallback(() => {
+	useEffect(() => {
+		if (!open) return;
+		setPendingScrollRestore(null);
 		loadChunk({
 			start: 0,
 			append: false
 		});
-	}, [loadChunk]);
+	}, [open, loadChunk]);
 	useEffect(() => {
-		if (!open) return;
-		reload();
-	}, [open, reload]);
+		if (pendingScrollRestore == null || !listboxNode) return;
+		listboxNode.scrollTop = pendingScrollRestore;
+		setPendingScrollRestore(null);
+	}, [options]);
 	const handleScroll = useCallback((e) => {
 		if (isChunkLoading || !hasMore) return;
 		const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
 		if (scrollHeight - scrollTop - clientHeight > SCROLL_LOAD_MORE_THRESHOLD_PX) return;
+		setPendingScrollRestore(scrollTop);
 		loadChunk({
 			start: options.length,
 			append: true
@@ -3082,66 +3091,48 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 		loadChunk,
 		options.length
 	]);
+	const requestedLookupIdsRef = useRef(/* @__PURE__ */ new Set());
+	const selectedIds = isMultiSelect ? currentValue : currentValue !== "" ? [currentValue] : [];
 	useEffect(() => {
-		const id = isMultiSelect ? currentValue[0] : currentValue;
-		if (!id || Number(id) === 0 || String(id) in labelMap) return;
-		fetchOptions({ lookupId: id });
-	}, [useMemo(() => Array.isArray(currentValue) ? currentValue.join(",") : currentValue, [currentValue]), fetchOptions]);
-	const selectedSet = useMemo(() => {
-		if (!isMultiSelect || !Array.isArray(currentValue)) return null;
-		return new Set(currentValue.map((v) => String(v)));
-	}, [currentValue, isMultiSelect]);
+		selectedIds.forEach((id) => {
+			const idKey = String(id);
+			if (!id || Number(id) === 0) return;
+			if (Object.prototype.hasOwnProperty.call(labelMap, idKey)) return;
+			if (requestedLookupIdsRef.current.has(idKey)) return;
+			requestedLookupIdsRef.current.add(idKey);
+			fetchOptions({ lookupId: id }).then((result) => {
+				if (!result) requestedLookupIdsRef.current.delete(idKey);
+			});
+		});
+	}, [selectedIds.map(String).join(","), fetchOptions]);
 	const getLabel = useCallback((key) => labelMap[String(key)] ?? String(key), [labelMap]);
-	const clearSearch = useCallback(() => setSearchInput(""), []);
-	const selectedLabel = useMemo(() => {
-		if (isMultiSelect) {
-			const count = Array.isArray(currentValue) ? currentValue.length : 0;
-			if (count === 0) return "";
-			if (count > 1) return tTranslate(`${count} selected`, tOpts);
-			return getLabel(currentValue[0]);
-		}
-		if (currentValue === "") return "";
-		return getLabel(currentValue);
+	const selectedValue = useMemo(() => {
+		if (isMultiSelect) return currentValue.map((v) => ({
+			value: v,
+			label: getLabel(v)
+		}));
+		return currentValue === "" ? null : {
+			value: currentValue,
+			label: getLabel(currentValue)
+		};
 	}, [
 		currentValue,
 		isMultiSelect,
-		tTranslate,
-		tOpts,
 		getLabel
 	]);
-	const hasValue = isMultiSelect ? Array.isArray(currentValue) && currentValue.length > 0 : currentValue !== "";
-	const isOptionSelected = useCallback((option) => {
-		if (selectedSet) return selectedSet.has(String(option.value));
-		return String(currentValue) === String(option.value);
-	}, [currentValue, selectedSet]);
-	const { allLoadedSelected, someLoadedSelected } = useMemo(() => {
-		if (!isMultiSelect || !selectedSet || options.length === 0) return {
-			allLoadedSelected: false,
-			someLoadedSelected: false
-		};
-		const selectedCount = options.reduce((count, o) => selectedSet.has(String(o.value)) ? count + 1 : count, 0);
-		return {
-			allLoadedSelected: selectedCount === options.length,
-			someLoadedSelected: selectedCount > 0 && selectedCount < options.length
-		};
-	}, [
-		isMultiSelect,
-		options,
-		selectedSet
-	]);
-	const handleOpen = useCallback((e) => {
-		if (isReadOnly) return;
-		setAnchorEl(e.currentTarget);
-		setAnchorWidth(e.currentTarget.offsetWidth);
-		clearSearch();
-	}, [isReadOnly, clearSearch]);
+	const handleOpen = useCallback(() => setOpen(true), []);
 	const handleClose = useCallback(() => {
-		setAnchorEl(null);
-		clearSearch();
-	}, [clearSearch]);
-	const handleSearchChange = useCallback((e) => {
-		setSearchInput(e.target.value);
+		setOpen(false);
+		setSearchInput("");
+		setIsChunkLoading(false);
 	}, []);
+	const handleInputChange = useCallback((e, value, reason) => {
+		if (reason === "input" || reason === "clear") setSearchInput(value);
+	}, []);
+	const selectionSignature = isMultiSelect ? currentValue.map(String).join(",") : null;
+	useEffect(() => {
+		if (selectionSignature !== null) setSearchInput("");
+	}, [selectionSignature]);
 	const applyValue = useCallback((val) => {
 		if (filterMode) onFilterChange?.(val);
 		else if (formik) {
@@ -3162,249 +3153,74 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 		tTranslate,
 		tOpts
 	]);
-	const handleSelect = useCallback((option) => {
-		const already = isOptionSelected(option);
-		if (isMultiSelect) {
-			const current = Array.isArray(currentValue) ? currentValue : [];
-			applyValue(already ? current.filter((v) => String(v) !== String(option.value)) : [...current, option.value]);
-		} else {
-			applyValue(already ? "" : option.value);
-			handleClose();
-		}
-	}, [
-		isMultiSelect,
-		currentValue,
-		isOptionSelected,
-		applyValue,
-		handleClose
-	]);
-	const handleClear = useCallback((e) => {
-		e.stopPropagation();
-		applyValue(isMultiSelect ? [] : "");
+	const handleChange = useCallback((e, newValue) => {
+		applyValue(isMultiSelect ? newValue.map((o) => o.value) : newValue ? newValue.value : "");
 	}, [isMultiSelect, applyValue]);
-	const handleSelectAll = useCallback(() => {
-		if (!isMultiSelect) return;
-		const current = Array.isArray(currentValue) ? currentValue : [];
-		if (allLoadedSelected) {
-			const loadedValues = new Set(options.map((o) => String(o.value)));
-			applyValue(current.filter((v) => !loadedValues.has(String(v))));
-		} else {
-			const newOnes = options.filter((o) => !selectedSet?.has(String(o.value)));
-			applyValue([...current, ...newOnes.map((o) => o.value)]);
-		}
-	}, [
-		isMultiSelect,
-		currentValue,
+	const control = /* @__PURE__ */ jsx(Autocomplete, {
+		multiple: isMultiSelect,
+		disabled: isReadOnly,
 		options,
-		allLoadedSelected,
-		selectedSet,
-		applyValue
-	]);
-	const trigger = /* @__PURE__ */ jsxs(Box$1, {
-		sx: {
-			position: "relative",
-			width: "100%",
-			...filterMode && { height: "100%" }
-		},
-		onClick: open ? handleClose : handleOpen,
-		children: [
-			/* @__PURE__ */ jsx(TextField$1, {
-				fullWidth: true,
-				variant: filterMode ? "outlined" : "standard",
-				size: "small",
-				value: selectedLabel,
-				error: !filterMode && Boolean(formik?.touched[field] && formik?.errors[field]),
-				sx: filterMode ? {
-					height: "100%",
-					"& .MuiInputBase-root": { height: "100%" }
-				} : void 0,
-				slotProps: {
-					htmlInput: {
-						readOnly: true,
-						style: { cursor: isReadOnly ? "default" : "pointer" }
-					},
-					input: { sx: { "&&": {
-						paddingRight: "48px",
-						...filterMode && { fontSize: "14px" }
-					} } }
-				}
-			}),
-			hasValue && !isReadOnly && /* @__PURE__ */ jsx(IconButton, {
-				size: "small",
-				onClick: handleClear,
-				"aria-label": tTranslate("Clear value", tOpts),
-				sx: {
-					position: "absolute",
-					right: 24,
-					top: "50%",
-					transform: "translateY(-50%)",
-					p: "2px"
-				},
-				children: /* @__PURE__ */ jsx(Clear, { fontSize: "small" })
-			}),
-			/* @__PURE__ */ jsx(IconButton, {
-				size: "small",
-				disabled: isReadOnly,
-				"aria-label": tTranslate(open ? "Close options" : "Open options", tOpts),
-				sx: {
-					position: "absolute",
-					right: 0,
-					top: "50%",
-					p: 0,
-					transform: open ? "translateY(-50%) rotate(180deg)" : "translateY(-50%) rotate(0deg)",
-					transition: "transform 0.2s"
-				},
-				children: /* @__PURE__ */ jsx(KeyboardArrowDownIcon, {})
-			})
-		]
-	});
-	const popover = /* @__PURE__ */ jsxs(Popover, {
-		open,
-		anchorEl,
+		sx: { "& .MuiAutocomplete-clearIndicator": { visibility: "visible" } },
+		getOptionKey: (option) => option.value,
+		filterOptions: (x) => x,
+		loading: isChunkLoading,
+		loadingText: `${tTranslate("Loading", tOpts)}...`,
+		noOptionsText: searchInput ? `${tTranslate("No results for", tOpts)} "${searchInput}"` : tTranslate("No options available", tOpts),
+		getOptionLabel: (option) => option.label ?? "",
+		isOptionEqualToValue: (option, value) => String(option.value) === String(value.value),
+		value: selectedValue,
+		onChange: handleChange,
+		onOpen: handleOpen,
 		onClose: handleClose,
-		anchorOrigin: {
-			vertical: "bottom",
-			horizontal: "left"
-		},
-		transformOrigin: {
-			vertical: "top",
-			horizontal: "left"
-		},
-		slotProps: { paper: { sx: {
-			width: Math.max(anchorWidth, 280),
-			maxHeight: 460,
-			overflow: "hidden"
-		} } },
-		disableEnforceFocus: true,
-		children: [/* @__PURE__ */ jsx(Box$1, {
-			sx: {
-				p: .75,
-				borderBottom: "1px solid",
-				borderColor: "divider"
-			},
-			children: /* @__PURE__ */ jsx(TextField$1, {
-				variant: "outlined",
-				placeholder: tTranslate("Search...", tOpts),
-				value: searchInput,
-				onChange: handleSearchChange,
-				size: "small",
-				fullWidth: true,
-				autoFocus: true,
-				slotProps: { input: {
-					startAdornment: /* @__PURE__ */ jsx(InputAdornment, {
-						position: "start",
-						children: /* @__PURE__ */ jsx(Search, { fontSize: "small" })
-					}),
-					endAdornment: searchInput && /* @__PURE__ */ jsx(InputAdornment, {
-						position: "end",
-						children: /* @__PURE__ */ jsx(IconButton, {
-							size: "small",
-							onClick: clearSearch,
-							"aria-label": tTranslate("Clear search", tOpts),
-							children: /* @__PURE__ */ jsx(Clear, { fontSize: "small" })
-						})
-					})
-				} }
-			})
-		}), /* @__PURE__ */ jsx(List, {
-			dense: true,
-			sx: {
-				maxHeight: 280,
-				overflowY: "auto",
-				py: 0
-			},
+		onInputChange: handleInputChange,
+		disableCloseOnSelect: isMultiSelect,
+		size: "small",
+		popupIcon: /* @__PURE__ */ jsx(KeyboardArrowDownIcon, {}),
+		fullWidth: true,
+		limitTags: column.limitTags || 5,
+		slotProps: { listbox: {
+			ref: setListboxNode,
 			onScroll: handleScroll,
-			children: isChunkLoading && options.length === 0 ? /* @__PURE__ */ jsxs(Box$1, {
-				sx: {
-					display: "flex",
-					justifyContent: "center",
-					alignItems: "center",
-					py: 3,
-					gap: 1
-				},
-				children: [/* @__PURE__ */ jsx(CircularProgress, { size: 20 }), /* @__PURE__ */ jsxs(Typography$1, {
+			style: { maxHeight: 280 }
+		} },
+		renderOption: (props, option, { selected }) => {
+			const { key, ...optionProps } = props;
+			return /* @__PURE__ */ jsxs("li", {
+				...optionProps,
+				children: [isMultiSelect && /* @__PURE__ */ jsx(Checkbox, {
+					size: "small",
+					disableRipple: true,
+					sx: {
+						mr: 1,
+						p: 0
+					},
+					checked: selected
+				}), /* @__PURE__ */ jsx(Typography$1, {
 					variant: "body2",
-					children: [tTranslate("Loading", tOpts), "..."]
+					noWrap: true,
+					children: option.label
 				})]
-			}) : options.length === 0 ? /* @__PURE__ */ jsx(Box$1, {
-				sx: {
-					display: "flex",
-					justifyContent: "center",
-					py: 3
-				},
-				children: /* @__PURE__ */ jsx(Typography$1, {
-					variant: "body2",
-					color: "text.secondary",
-					children: searchInput ? `${tTranslate("No results for", tOpts)} "${searchInput}"` : tTranslate("No options available", tOpts)
-				})
-			}) : /* @__PURE__ */ jsxs(Fragment, { children: [
-				isMultiSelect && /* @__PURE__ */ jsxs(ListItemButton, {
-					onClick: handleSelectAll,
-					sx: {
-						py: .5,
-						borderBottom: "1px solid",
-						borderColor: "divider",
-						bgcolor: "action.hover"
-					},
-					children: [/* @__PURE__ */ jsx(ListItemIcon, {
-						sx: { minWidth: 36 },
-						children: /* @__PURE__ */ jsx(Checkbox, {
-							edge: "start",
-							checked: allLoadedSelected,
-							indeterminate: someLoadedSelected,
-							size: "small",
-							tabIndex: -1,
-							disableRipple: true
-						})
-					}), /* @__PURE__ */ jsx(ListItemText, {
-						primary: tTranslate(allLoadedSelected ? "Unselect All" : "Select All", tOpts),
-						primaryTypographyProps: { fontSize: 14 }
-					})]
-				}),
-				options.map((option) => /* @__PURE__ */ jsxs(ListItemButton, {
-					onClick: () => handleSelect(option),
-					sx: { py: .5 },
-					children: [isMultiSelect && /* @__PURE__ */ jsx(ListItemIcon, {
-						sx: { minWidth: 36 },
-						children: /* @__PURE__ */ jsx(Checkbox, {
-							edge: "start",
-							checked: isOptionSelected(option),
-							size: "small",
-							tabIndex: -1,
-							disableRipple: true
-						})
-					}), /* @__PURE__ */ jsx(ListItemText, {
-						primary: option.label,
-						primaryTypographyProps: {
-							fontSize: 14,
-							noWrap: true
-						}
-					})]
-				}, option.value)),
-				isChunkLoading && /* @__PURE__ */ jsx(Box$1, {
-					sx: {
-						display: "flex",
-						justifyContent: "center",
-						py: 1
-					},
-					children: /* @__PURE__ */ jsx(CircularProgress, { size: 16 })
-				})
-			] })
-		})]
+			}, key);
+		},
+		renderInput: (params) => /* @__PURE__ */ jsx(TextField$1, {
+			...params,
+			variant: filterMode ? "outlined" : "standard",
+			error: !filterMode && Boolean(formik?.touched[field] && formik?.errors[field]),
+			InputProps: {
+				...params.InputProps,
+				endAdornment: /* @__PURE__ */ jsxs(Fragment, { children: [isChunkLoading && /* @__PURE__ */ jsx(CircularProgress, {
+					color: "inherit",
+					size: 16
+				}), params.InputProps.endAdornment] })
+			}
+		})
 	});
-	if (filterMode) return /* @__PURE__ */ jsxs(Box$1, {
-		sx: { width: "100%" },
-		children: [trigger, popover]
-	});
+	if (filterMode) return control;
 	return /* @__PURE__ */ jsxs(FormControl, {
 		fullWidth: true,
 		error: Boolean(formik?.touched[field] && formik?.errors[field]),
 		variant: "standard",
-		children: [
-			trigger,
-			popover,
-			/* @__PURE__ */ jsx(FormHelperText, { children: formik?.touched[field] && formik?.errors[field] })
-		]
+		children: [control, /* @__PURE__ */ jsx(FormHelperText, { children: formik?.touched[field] && formik?.errors[field] })]
 	});
 });
 //#endregion
@@ -3587,7 +3403,7 @@ var CustomCheckBox = ({ params, handleSelectRow, idProperty }) => {
 		inputProps: { "aria-label": "checkbox" }
 	});
 };
-var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, ...props }) => {
+var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, relationName, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, ...props }) => {
 	const staticDataSource = props.staticData ?? model.staticData;
 	const hasStaticData = Array.isArray(staticDataSource) || Array.isArray(staticDataSource?.records);
 	const normalizedStaticData = useMemo(() => hasStaticData ? normalizeStaticData(staticDataSource) : null, [hasStaticData, staticDataSource]);
@@ -4231,6 +4047,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		}
 		let path = pathname;
 		if (!path.endsWith("/")) path += "/";
+		if (relationName) path += `${encodeURIComponent(String(relationName))}/`;
 		if (mode === "copy") path += "0-" + id;
 		else path += id;
 		if (addUrlParamKey) {
@@ -4247,6 +4064,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		parentFilters,
 		where,
 		pathname,
+		relationName,
 		addUrlParamKey,
 		navigate,
 		getRecord,
@@ -5600,7 +5418,7 @@ var Field$2 = React$1.memo(({ column, field, formik, lookups, dependsOn = [], fi
 		fullWidth: true,
 		variant: "standard",
 		error: formik.touched[field] && Boolean(formik.errors[field]),
-		children: [/* @__PURE__ */ jsx(Autocomplete, {
+		children: [/* @__PURE__ */ jsx(Autocomplete$1, {
 			...otherProps,
 			multiple: true,
 			id: field,
@@ -5821,7 +5639,7 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
 		fullWidth: true,
 		variant: "standard",
 		error: formik.touched[field] && Boolean(formik.errors[field]),
-		children: [/* @__PURE__ */ jsx(Autocomplete, {
+		children: [/* @__PURE__ */ jsx(Autocomplete$1, {
 			...otherProps,
 			multiple: true,
 			id: field,
@@ -6132,6 +5950,50 @@ function FileUpload({ column, field, formik }) {
 	] });
 }
 //#endregion
+//#region src/lib/components/Form/fields/filePicker.js
+/**
+* Defers the actual upload to whenever the surrounding Form is submitted: stores the
+* raw File object in the formik field value so it travels through the normal save
+* request as a multipart part (see httpRequest.js getFormData), instead of uploading
+* immediately like fields/fileUpload.js does for the single-document-link use case.
+*/
+function FilePicker({ column, field, formik }) {
+	const value = formik.values[field];
+	const [selectedName, setSelectedName] = useState(typeof File !== "undefined" && value instanceof File ? value.name : null);
+	useEffect(() => {
+		setSelectedName(typeof File !== "undefined" && value instanceof File ? value.name : null);
+	}, [value]);
+	const handleFileChange = (event) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+		formik.setFieldValue(field, file);
+		setSelectedName(file.name);
+		event.target.value = "";
+	};
+	const displayName = selectedName || (typeof value === "string" ? value : "");
+	return /* @__PURE__ */ jsxs(Box$1, {
+		sx: {
+			display: "flex",
+			alignItems: "center",
+			gap: 2
+		},
+		children: [/* @__PURE__ */ jsxs(Button$1, {
+			variant: "outlined",
+			component: "label",
+			children: ["Choose File", /* @__PURE__ */ jsx("input", {
+				type: "file",
+				hidden: true,
+				accept: column.accept,
+				"aria-label": "Choose file",
+				onChange: handleFileChange
+			})]
+		}), displayName && /* @__PURE__ */ jsx(Typography$1, {
+			variant: "body2",
+			children: displayName
+		})]
+	});
+}
+//#endregion
 //#region src/lib/components/Form/fields/jsonInput.js
 var parseJson = (raw) => {
 	if (!raw) return {};
@@ -6212,6 +6074,7 @@ var fieldMappers = {
 	"chipInput": Field$1,
 	"treeCheckbox": treeCheckBox,
 	"fileUpload": FileUpload,
+	"filePicker": FilePicker,
 	"json": Field,
 	"remoteSelect": RemoteSelectField
 };
@@ -6520,16 +6383,20 @@ function a11yProps(index) {
 var ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOnly }) => {
 	const modelConfigOfChildGrid = models.find(({ name }) => name === relation);
 	if (!modelConfigOfChildGrid) return null;
-	const config = {
-		...modelConfigOfChildGrid,
-		hideBreadcrumb: true
-	};
-	const ChildModel = config instanceof UiModel ? config : new UiModel(config);
+	const { config, ChildModel } = React.useMemo(() => {
+		const baseConfig = modelConfigOfChildGrid instanceof UiModel ? Object.assign(Object.create(Object.getPrototypeOf(modelConfigOfChildGrid)), modelConfigOfChildGrid) : { ...modelConfigOfChildGrid };
+		baseConfig.hideBreadcrumb = true;
+		return {
+			config: baseConfig,
+			ChildModel: baseConfig instanceof UiModel ? baseConfig : new UiModel(baseConfig)
+		};
+	}, [modelConfigOfChildGrid]);
 	if (!ChildModel) return null;
 	return /* @__PURE__ */ jsx(ChildModel.ChildGrid, {
 		readOnly,
 		parentFilters,
 		parent,
+		relationName: relation,
 		model: config,
 		where,
 		isChildGrid: true
