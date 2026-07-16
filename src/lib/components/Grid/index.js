@@ -858,7 +858,7 @@ const GridBase = memo(({
             path += "/";
         }
         if (relationName) {
-            path += relationName + "/";
+            path += `${encodeURIComponent(String(relationName))}/`;
         }
         if (mode === "copy") {
             path += "0-" + id;
