@@ -41,7 +41,11 @@ function a11yProps(index) {
 const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOnly }) => {
   const modelConfigOfChildGrid = models.find(({ name }) => name === relation);
   if (!modelConfigOfChildGrid) return null;
-  const config = { ...modelConfigOfChildGrid, hideBreadcrumb: true };
+  // Preserve the prototype chain when modelConfigOfChildGrid is already a UiModel (sub)class
+  // instance — a plain spread would drop its prototype methods (createRequestPayload, etc.).
+  const config = modelConfigOfChildGrid instanceof UiModel
+    ? Object.assign(Object.create(Object.getPrototypeOf(modelConfigOfChildGrid)), modelConfigOfChildGrid, { hideBreadcrumb: true })
+    : { ...modelConfigOfChildGrid, hideBreadcrumb: true };
   const ChildModel = config instanceof UiModel ? config : new UiModel(config);
   if (!ChildModel) return null;
 
@@ -50,6 +54,7 @@ const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOn
       readOnly={readOnly}
       parentFilters={parentFilters}
       parent={parent}
+      relationName={relation}
       model={config}
       where={where}
       isChildGrid={true}

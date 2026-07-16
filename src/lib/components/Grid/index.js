@@ -177,6 +177,7 @@ const GridBase = memo(({
     setActiveRecord,
     parentFilters,
     parent,
+    relationName,
     where,
     title,
     showPageTitle,
@@ -856,6 +857,9 @@ const GridBase = memo(({
         if (!path.endsWith("/")) {
             path += "/";
         }
+        if (relationName) {
+            path += relationName + "/";
+        }
         if (mode === "copy") {
             path += "0-" + id;
         } else {
@@ -867,7 +871,7 @@ const GridBase = memo(({
             path += `?${currentParams.toString()}`;
         }
         navigate(path);
-    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, addUrlParamKey, navigate, getRecord, buildUrl, snackbar]);
+    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, relationName, addUrlParamKey, navigate, getRecord, buildUrl, snackbar]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
