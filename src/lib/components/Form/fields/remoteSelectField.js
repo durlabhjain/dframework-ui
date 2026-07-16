@@ -112,7 +112,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
         selectedIds.forEach(id => {
             const idKey = String(id);
             if (!id || Number(id) === 0) return;
-            if (idKey in labelMap) return;
+            if (Object.prototype.hasOwnProperty.call(labelMap, idKey)) return;
             if (requestedLookupIdsRef.current.has(idKey)) return;
             requestedLookupIdsRef.current.add(idKey);
             fetchOptions({ lookupId: id }).then(result => {
