@@ -41,12 +41,18 @@ function a11yProps(index) {
 const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOnly }) => {
   const modelConfigOfChildGrid = models.find(({ name }) => name === relation);
   if (!modelConfigOfChildGrid) return null;
-  // Preserve the prototype chain when modelConfigOfChildGrid is already a UiModel (sub)class
-  // instance — a plain spread would drop its prototype methods (createRequestPayload, etc.).
-  const config = modelConfigOfChildGrid instanceof UiModel
-    ? Object.assign(Object.create(Object.getPrototypeOf(modelConfigOfChildGrid)), modelConfigOfChildGrid, { hideBreadcrumb: true })
-    : { ...modelConfigOfChildGrid, hideBreadcrumb: true };
-  const ChildModel = config instanceof UiModel ? config : new UiModel(config);
+  // Memoize derived model/config so ChildModel.ChildGrid component identity stays stable
+  // across re-renders (UiModel defines ChildGrid as an instance field).
+  const { config, ChildModel } = React.useMemo(() => {
+    const baseConfig = modelConfigOfChildGrid instanceof UiModel
+      ? Object.assign(Object.create(Object.getPrototypeOf(modelConfigOfChildGrid)), modelConfigOfChildGrid)
+      : { ...modelConfigOfChildGrid };
+
+    baseConfig.hideBreadcrumb = true;
+
+    const modelInstance = baseConfig instanceof UiModel ? baseConfig : new UiModel(baseConfig);
+    return { config: baseConfig, ChildModel: modelInstance };
+  }, [modelConfigOfChildGrid]);
   if (!ChildModel) return null;
 
   return (
