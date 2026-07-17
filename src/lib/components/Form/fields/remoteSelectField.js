@@ -126,7 +126,9 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     const getLabel = useCallback((key) => labelMap[String(key)] ?? String(key), [labelMap]);
 
     // Keyed on just the selected ids' labels (not getLabel/labelMap directly) so unrelated labelMap growth from a search reload doesn't change this reference mid-keystroke and trigger MUI's internal input-reset.
-    const selectedLabelsKey = selectedIds.map(id => `${id}:${labelMap[String(id)] ?? ''}`).join('|');
+    // JSON.stringify (not a manual join) avoids delimiter-collision: a label containing the join
+    // separator could otherwise make two different id/label sets serialize to the same key.
+    const selectedLabelsKey = JSON.stringify(selectedIds.map(id => [id, labelMap[String(id)] ?? '']));
     // Synthesised from labelMap (not looked up in options) so a selection outside the loaded/filtered page still shows its label.
     const selectedValue = useMemo(() => {
         if (isMultiSelect) return currentValue.map(v => ({ value: v, label: getLabel(v) }));
