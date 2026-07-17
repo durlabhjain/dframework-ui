@@ -4398,8 +4398,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				type: col.type,
 				isParsable: col.isParsable,
 				lookup: col.lookup,
-				hyperlinkURL: col.hyperlinkURL,
-				hyperlinkIndex: col.hyperlinkIndex,
+				hyperlinkURL: gridCol?.hyperlinkURL ?? col.hyperlinkURL,
+				hyperlinkIndex: gridCol?.hyperlinkIndex ?? col.hyperlinkIndex,
 				localize: col.localize,
 				exportIndex: col.exportIndex
 			};
