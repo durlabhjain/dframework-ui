@@ -125,18 +125,29 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     // labelMap is a superset of options (it also carries past chunks and lookupId resolutions).
     const getLabel = useCallback((key) => labelMap[String(key)] ?? String(key), [labelMap]);
 
+    // Keyed on just the selected ids' labels (not getLabel/labelMap directly) so unrelated labelMap growth from a search reload doesn't change this reference mid-keystroke and trigger MUI's internal input-reset.
+    // JSON.stringify (not a manual join) avoids delimiter-collision: a label containing the join
+    // separator could otherwise make two different id/label sets serialize to the same key.
+    // A missing labelMap entry and one resolved to '' must serialize differently, or a resolution to
+    // '' won't change this key and selectedValue will keep showing the stale getLabel fallback.
+    const selectedLabelsKey = JSON.stringify(selectedIds.map(id => {
+        const idKey = String(id);
+        return Object.prototype.hasOwnProperty.call(labelMap, idKey) ? [idKey, labelMap[idKey]] : [idKey];
+    }));
     // Synthesised from labelMap (not looked up in options) so a selection outside the loaded/filtered page still shows its label.
     const selectedValue = useMemo(() => {
         if (isMultiSelect) return currentValue.map(v => ({ value: v, label: getLabel(v) }));
         return currentValue === '' ? null : { value: currentValue, label: getLabel(currentValue) };
-    }, [currentValue, isMultiSelect, getLabel]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentValue, isMultiSelect, selectedLabelsKey]);
 
     // No reset here: MUI also opens as a side effect of the first keystroke when focused-but-closed (e.g. grid filter auto-focus), which would wipe that keystroke.
     const handleOpen = useCallback(() => setOpen(true), []);
-    // Also resets isChunkLoading, since a cancelled fetch's finally otherwise leaves it stuck.
-    const handleClose = useCallback(() => { setOpen(false); setSearchInput(''); setIsChunkLoading(false); }, []);
+    // Search text isn't cleared here - it stays in sync with what's still visibly typed (see handleInputChange), so a later reload keeps filtering by it instead of silently going unfiltered.
+    const handleClose = useCallback(() => { setOpen(false); setIsChunkLoading(false); }, []);
+    // 'blur' syncs a real blur-away revert; 'reset' is excluded since MUI also fires it on every async labelMap-driven value reference change, which would wipe an in-progress keystroke.
     const handleInputChange = useCallback((e, value, reason) => {
-        if (reason === 'input' || reason === 'clear') setSearchInput(value);
+        if (reason === 'input' || reason === 'clear' || reason === 'blur') setSearchInput(value);
     }, []);
 
     // Clear search on an actual pick/unpick (content change), not on every `value` reference change Autocomplete resets internally in multi-select.
