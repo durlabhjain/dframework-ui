@@ -2735,7 +2735,7 @@ var CustomToolbar = function(props) {
 		style: {
 			display: "flex",
 			justifyContent: "space-between",
-			padding: "10px"
+			padding: "5px 10px"
 		},
 		children: [/* @__PURE__ */ jsxs("div", { children: [
 			model.gridSubTitle && /* @__PURE__ */ jsxs(Typography, {
@@ -2841,7 +2841,7 @@ var CustomToolbar = function(props) {
 		sx: {
 			display: "flex",
 			justifyContent: "flex-start",
-			padding: "0 10px 10px 10px"
+			padding: toolbarFilterColumns.length > 0 ? "0 10px 0 10px" : 0
 		},
 		children: toolbarFilterColumns.length > 0 && /* @__PURE__ */ jsx("div", {
 			style: {
@@ -3118,16 +3118,18 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 	}, [
 		currentValue,
 		isMultiSelect,
-		getLabel
+		JSON.stringify(selectedIds.map((id) => {
+			const idKey = String(id);
+			return Object.prototype.hasOwnProperty.call(labelMap, idKey) ? [idKey, labelMap[idKey]] : [idKey];
+		}))
 	]);
 	const handleOpen = useCallback(() => setOpen(true), []);
 	const handleClose = useCallback(() => {
 		setOpen(false);
-		setSearchInput("");
 		setIsChunkLoading(false);
 	}, []);
 	const handleInputChange = useCallback((e, value, reason) => {
-		if (reason === "input" || reason === "clear") setSearchInput(value);
+		if (reason === "input" || reason === "clear" || reason === "blur") setSearchInput(value);
 	}, []);
 	const selectionSignature = isMultiSelect ? currentValue.map(String).join(",") : null;
 	useEffect(() => {
