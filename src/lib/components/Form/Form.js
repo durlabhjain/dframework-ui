@@ -421,6 +421,8 @@ const Form = ({
               relationFilters={relationFilters}
               relations={relations}
               parent={model.name || model.title || ""}
+              tTranslate={tTranslate}
+              tOpts={tOpts}
             />
           ) : null}
         </Paper>
