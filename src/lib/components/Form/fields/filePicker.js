@@ -24,12 +24,13 @@ function FilePicker({ column, field, formik, tOpts }) {
     const handleFileChange = (event) => {
         const file = event.target.files?.[0];
         if (!file) return;
-        const fileExtension = `.${file.name.split(".").pop()}`.toLowerCase();
-        if (Array.isArray(formats) && !formats.some((format) => format.toLowerCase() === fileExtension)) {
-            const message = tOpts.t('validation.invalidFileFormat', {
+        if (Array.isArray(formats) && !formats.includes(file.type)) {
+            const t = tOpts?.t ?? ((key, opts) => opts?.defaultValue ?? key);
+            const message = t('validation.invalidFileFormat', {
                 defaultValue: 'Invalid file format. Allowed formats: ${formats}.'
             });
-            snackbar.showError(utils.replaceTags(message, { formats: formats.join(", ") }));
+            const extensions = formats.map((mimeType) => `.${mimeType.split("/").pop()}`).join(", ");
+            snackbar.showError(utils.replaceTags(message, { formats: extensions }));
             event.target.value = "";
             return;
         }
