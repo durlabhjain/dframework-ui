@@ -20,6 +20,7 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
         return Boolean(column.disabled);
     }, [fieldConfigs.disabled, column.disabled, isAdd, formik]);
     const fixedOptions = column.hasDefault && !isAdd ? [inputValue[0]] : [];
+    const [inputText, setInputText] = React.useState('');
 
     const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
         const lastElement = newValue.pop()?.trim();
@@ -40,6 +41,14 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
         formik.setFieldValue(field, newValue);
     }, [formik, field, column, fixedOptions]);
 
+    const handleInputBlur = useCallback((e) => {
+        const typedValue = e.target.value?.trim();
+        if (typedValue) {
+            handleAutoCompleteChange(e, [...inputValue, typedValue], 'createOption');
+        }
+        setInputText('');
+    }, [handleAutoCompleteChange, inputValue]);
+
     return (
         <FormControl
             fullWidth
@@ -53,10 +62,12 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
                 id={field}
                 freeSolo={true}
                 value={inputValue}
+                inputValue={inputText}
+                onInputChange={(e, newInputValue) => setInputText(newInputValue)}
                 options={[]}
                 renderInput={(params) => (
-                    <TextField 
-                        {...params} 
+                    <TextField
+                        {...params}
                         variant="standard"
                         InputProps={{
                             ...params.InputProps,
@@ -64,6 +75,10 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
                                 ...params.InputProps?.sx,
                                 ...(isDisabled && { backgroundColor: theme.palette?.action?.disabled })
                             }
+                        }}
+                        onBlur={(e) => {
+                            params.inputProps?.onBlur?.(e);
+                            handleInputBlur(e);
                         }}
                     />
                 )}

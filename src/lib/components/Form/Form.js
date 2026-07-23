@@ -79,13 +79,13 @@ const Form = ({
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const [deleteError, setDeleteError] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const userData = stateData.userData || {};
   const fieldConfigs = typeof model.applyFieldConfig === consts.function
-    ? model.applyFieldConfig({ data, lookups })
+    ? model.applyFieldConfig({ data, lookups, userData })
     : defaultFieldConfigs;
   const gridApi = buildUrl(model.api);
   // Determine mode from URL pattern: "0-{id}" indicates copy mode
   const mode = idWithOptions.includes('-') && idWithOptions.split('-')[0] === '0' ? 'copy' : '';
-  const userData = stateData.userData || {};
   const userDefinedPermissions = {
     add: true,
     edit: true,
