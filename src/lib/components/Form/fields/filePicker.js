@@ -60,9 +60,9 @@ function FilePicker({ column, field, formik }) {
                     <PageviewIcon />
                 </IconButton>
             )}
-            <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md">
+            <Dialog open={previewOpen && Boolean(previewSrc)} onClose={() => setPreviewOpen(false)} maxWidth="md">
                 <DialogContent>
-                    <img src={previewSrc} alt={displayName || "File preview"} style={{ maxWidth: 400, maxHeight: 400, width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }} />
+                    {previewSrc && <img src={previewSrc} alt={displayName || "File preview"} style={{ maxWidth: 400, maxHeight: 400, width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }} />}
                 </DialogContent>
             </Dialog>
         </Box>
