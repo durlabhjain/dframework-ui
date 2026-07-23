@@ -72,6 +72,7 @@ import styled$2 from "@emotion/styled";
 import Chip from "@mui/material/Chip";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
+import PageviewIcon from "@mui/icons-material/PageviewOutlined";
 import Input$1 from "@mui/material/Input";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
@@ -3010,6 +3011,7 @@ function useDebounce(value, delay) {
 var DEFAULT_PAGE_SIZE = 50;
 var SEARCH_DEBOUNCE_MS = 300;
 var SCROLL_LOAD_MORE_THRESHOLD_PX = 48;
+var EMPTY_ARRAY = [];
 var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, formik, model, lookups = {}, dependsOn = [], tTranslate = (k) => k, tOpts = {}, filterMode = false, filterValue, onFilterChange, multiSelect: multiSelectProp }) {
 	const chunkSize = column.pageSize || DEFAULT_PAGE_SIZE;
 	const isMultiSelect = Boolean(multiSelectProp) || Boolean(column.multiSelect) && !filterMode;
@@ -3025,7 +3027,7 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 	const rawValue = filterMode ? filterValue : formik?.values[field];
 	const currentValue = useMemo(() => {
 		if (isMultiSelect) {
-			if (!rawValue || rawValue.length === 0) return [];
+			if (!rawValue || rawValue.length === 0) return EMPTY_ARRAY;
 			if (!Array.isArray(rawValue)) return String(rawValue).split(",").map((v) => v.trim()).map((v) => isNaN(v) ? v : Number(v));
 			return rawValue;
 		}
@@ -3107,7 +3109,7 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 	}, [selectedIds.map(String).join(","), fetchOptions]);
 	const getLabel = useCallback((key) => labelMap[String(key)] ?? String(key), [labelMap]);
 	const selectedValue = useMemo(() => {
-		if (isMultiSelect) return currentValue.map((v) => ({
+		if (isMultiSelect) return currentValue.length === 0 ? EMPTY_ARRAY : currentValue.map((v) => ({
 			value: v,
 			label: getLabel(v)
 		}));
@@ -3131,10 +3133,9 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 	const handleInputChange = useCallback((e, value, reason) => {
 		if (reason === "input" || reason === "clear" || reason === "blur") setSearchInput(value);
 	}, []);
-	const selectionSignature = isMultiSelect ? currentValue.map(String).join(",") : null;
 	useEffect(() => {
-		if (selectionSignature !== null) setSearchInput("");
-	}, [selectionSignature]);
+		setSearchInput("");
+	}, [isMultiSelect ? currentValue.map(String).join(",") : String(currentValue)]);
 	const applyValue = useCallback((val) => {
 		if (filterMode) onFilterChange?.(val);
 		else if (formik) {
@@ -5072,8 +5073,8 @@ var Field$7 = ({ otherProps, ...props }) => {
 };
 //#endregion
 //#region src/lib/components/Form/fields/date.js
-var EMPTY_FIELD_CONFIGS$2 = {};
-var Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$2, mode }) => {
+var EMPTY_FIELD_CONFIGS$4 = {};
+var Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$4, mode }) => {
 	const isDisabled = mode !== "copy" && fieldConfigs.disabled;
 	const { systemDateTimeFormat, stateData } = useStateContext();
 	const dateValue = useMemo(() => {
@@ -5130,7 +5131,9 @@ var Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
 //#endregion
 //#region src/lib/components/Form/fields/dateTime.js
 dayjs.extend(utc);
-var Field$5 = ({ column, field, formik, otherProps }) => {
+var EMPTY_FIELD_CONFIGS$3 = {};
+var Field$5 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$3 }) => {
+	const isReadOnly = column?.readOnly === true || Boolean(fieldConfigs.readOnly);
 	const { systemDateTimeFormat, stateData } = useStateContext();
 	const dateTimeValue = useMemo(() => {
 		const val = formik.values[field];
@@ -5140,7 +5143,7 @@ var Field$5 = ({ column, field, formik, otherProps }) => {
 	return /* @__PURE__ */ jsx(DateTimePicker, {
 		...otherProps,
 		variant: "standard",
-		readOnly: column?.readOnly === true,
+		readOnly: isReadOnly,
 		fullWidth: true,
 		format: systemDateTimeFormat(false, false, stateData.dateTime),
 		name: field,
@@ -5189,7 +5192,9 @@ var Field$4 = ({ column, field, formik, otherProps }) => {
 };
 //#endregion
 //#region src/lib/components/Form/fields/select.js
-var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, tTranslate, tOpts, ...otherProps }) => {
+var EMPTY_FIELD_CONFIGS$2 = {};
+var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, tTranslate, tOpts, fieldConfigs = EMPTY_FIELD_CONFIGS$2, ...otherProps }) => {
+	const isReadOnly = column.readOnly === true || Boolean(fieldConfigs.readOnly);
 	const userSelected = React.useRef(false);
 	const { placeHolder } = column;
 	const { options } = useCascadingLookup({
@@ -5294,20 +5299,20 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 					...otherProps,
 					name: field,
 					multiple: column.multiSelect === true,
-					readOnly: column.readOnly === true,
+					readOnly: isReadOnly,
 					value: column.multiSelect ? Array.isArray(inputValue) ? inputValue : [] : `${inputValue ?? ""}`,
 					onChange: handleChange,
 					onBlur: formik.handleBlur,
 					sx: {
 						width: "100%",
-						backgroundColor: column.readOnly ? theme.palette?.action?.disabled : ""
+						backgroundColor: isReadOnly ? theme.palette?.action?.disabled : ""
 					},
 					children: Array.isArray(options) && options.map((option) => /* @__PURE__ */ jsx(MenuItem$1, {
 						value: option.value,
 						disabled: option.isDisabled,
 						children: option.label
 					}, option.value))
-				}), hasValue && !column.readOnly && /* @__PURE__ */ jsx(IconButton, {
+				}), hasValue && !isReadOnly && /* @__PURE__ */ jsx(IconButton, {
 					size: "small",
 					onClick: clearSelection,
 					tabIndex: -1,
@@ -5621,6 +5626,7 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
 		formik
 	]);
 	const fixedOptions = column.hasDefault && !isAdd ? [inputValue[0]] : [];
+	const [inputText, setInputText] = React$1.useState("");
 	const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
 		const lastElement = newValue.pop()?.trim();
 		if (!newValue.includes(lastElement)) newValue.push(lastElement);
@@ -5637,6 +5643,11 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
 		column,
 		fixedOptions
 	]);
+	const handleInputBlur = useCallback((e) => {
+		const typedValue = e.target.value?.trim();
+		if (typedValue) handleAutoCompleteChange(e, [...inputValue, typedValue], "createOption");
+		setInputText("");
+	}, [handleAutoCompleteChange, inputValue]);
 	return /* @__PURE__ */ jsxs(FormControl$1, {
 		fullWidth: true,
 		variant: "standard",
@@ -5647,6 +5658,8 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
 			id: field,
 			freeSolo: true,
 			value: inputValue,
+			inputValue: inputText,
+			onInputChange: (e, newInputValue) => setInputText(newInputValue),
 			options: [],
 			renderInput: (params) => /* @__PURE__ */ jsx(TextField, {
 				...params,
@@ -5657,6 +5670,10 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
 						...params.InputProps?.sx,
 						...isDisabled && { backgroundColor: theme.palette?.action?.disabled }
 					}
+				},
+				onBlur: (e) => {
+					params.inputProps?.onBlur?.(e);
+					handleInputBlur(e);
 				}
 			}),
 			onChange: handleAutoCompleteChange,
@@ -5962,9 +5979,24 @@ function FileUpload({ column, field, formik }) {
 function FilePicker({ column, field, formik }) {
 	const value = formik.values[field];
 	const [selectedName, setSelectedName] = useState(typeof File !== "undefined" && value instanceof File ? value.name : null);
+	const [previewOpen, setPreviewOpen] = useState(false);
 	useEffect(() => {
 		setSelectedName(typeof File !== "undefined" && value instanceof File ? value.name : null);
 	}, [value]);
+	const savedPreviewSrc = typeof column.previewUrl === "function" ? column.previewUrl({
+		formik,
+		value
+	}) : null;
+	const [objectUrl, setObjectUrl] = useState(null);
+	useEffect(() => {
+		if (typeof File !== "undefined" && value instanceof File) {
+			const url = URL.createObjectURL(value);
+			setObjectUrl(url);
+			return () => URL.revokeObjectURL(url);
+		}
+		setObjectUrl(null);
+	}, [value]);
+	const previewSrc = objectUrl || savedPreviewSrc || null;
 	const handleFileChange = (event) => {
 		const file = event.target.files?.[0];
 		if (!file) return;
@@ -5979,20 +6011,46 @@ function FilePicker({ column, field, formik }) {
 			alignItems: "center",
 			gap: 2
 		},
-		children: [/* @__PURE__ */ jsxs(Button$1, {
-			variant: "outlined",
-			component: "label",
-			children: ["Choose File", /* @__PURE__ */ jsx("input", {
-				type: "file",
-				hidden: true,
-				accept: column.accept,
-				"aria-label": "Choose file",
-				onChange: handleFileChange
-			})]
-		}), displayName && /* @__PURE__ */ jsx(Typography$1, {
-			variant: "body2",
-			children: displayName
-		})]
+		children: [
+			/* @__PURE__ */ jsxs(Button$1, {
+				variant: "outlined",
+				component: "label",
+				children: ["Choose File", /* @__PURE__ */ jsx("input", {
+					type: "file",
+					hidden: true,
+					accept: column.accept,
+					"aria-label": "Choose file",
+					onChange: handleFileChange
+				})]
+			}),
+			displayName && /* @__PURE__ */ jsx(Typography$1, {
+				variant: "body2",
+				children: displayName
+			}),
+			previewSrc && /* @__PURE__ */ jsx(IconButton, {
+				className: "button-outline",
+				"aria-label": "Preview file",
+				onClick: () => setPreviewOpen(true),
+				children: /* @__PURE__ */ jsx(PageviewIcon, {})
+			}),
+			/* @__PURE__ */ jsx(Dialog$1, {
+				open: previewOpen && Boolean(previewSrc),
+				onClose: () => setPreviewOpen(false),
+				maxWidth: "md",
+				children: /* @__PURE__ */ jsx(DialogContent$1, { children: previewSrc && /* @__PURE__ */ jsx("img", {
+					src: previewSrc,
+					alt: displayName || "File preview",
+					style: {
+						maxWidth: 400,
+						maxHeight: 400,
+						width: "auto",
+						height: "auto",
+						objectFit: "contain",
+						display: "block"
+					}
+				}) })
+			})
+		]
 	});
 }
 //#endregion
@@ -6209,6 +6267,11 @@ var RenderColumns = ({ formElements, model, formik, data, onChange, combos, look
 		const fieldConfig = fieldConfigs?.[field] ?? {};
 		if (fieldConfig.hidden) return null;
 		const displayLabel = fieldConfig.label ?? (column.label || field);
+		const value = formik.values[field];
+		const externalIcon = typeof column.externalIcon === "function" ? column.externalIcon({
+			formik,
+			value
+		}) : null;
 		return /* @__PURE__ */ jsxs(Grid$1, {
 			container: true,
 			spacing: 2,
@@ -6235,22 +6298,35 @@ var RenderColumns = ({ formElements, model, formik, data, onChange, combos, look
 			}) : null, /* @__PURE__ */ jsx(Grid$1, {
 				size: { xs: isGridComponent ? 12 : 9 },
 				sx: gridContainerStyle,
-				children: /* @__PURE__ */ jsx(Component, {
-					isAdd,
-					model,
-					fieldConfigs: fieldConfigs[field],
-					mode,
-					column,
-					field,
-					label,
-					formik,
-					data,
-					onChange,
-					combos,
-					lookups,
-					tTranslate,
-					tOpts,
-					...otherProps
+				children: /* @__PURE__ */ jsxs(Box, {
+					sx: {
+						display: "flex",
+						alignItems: "center",
+						gap: 2
+					},
+					children: [/* @__PURE__ */ jsx(Box, {
+						sx: {
+							flex: 1,
+							minWidth: 0
+						},
+						children: /* @__PURE__ */ jsx(Component, {
+							isAdd,
+							model,
+							fieldConfigs: fieldConfigs[field],
+							mode,
+							column,
+							field,
+							label,
+							formik,
+							data,
+							onChange,
+							combos,
+							lookups,
+							tTranslate,
+							tOpts,
+							...otherProps
+						})
+					}), externalIcon]
 				})
 			})]
 		}, key);
@@ -6496,14 +6572,16 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 	const [deleteError, setDeleteError] = useState(null);
 	const [errorMessage, setErrorMessage] = useState("");
+	const userData = stateData.userData || {};
 	const fieldConfigs = typeof model.applyFieldConfig === consts.function ? model.applyFieldConfig({
 		data,
-		lookups
+		lookups,
+		userData
 	}) : defaultFieldConfigs;
 	const gridApi = buildUrl(model.api);
 	const mode = idWithOptions.includes("-") && idWithOptions.split("-")[0] === "0" ? "copy" : "";
 	const { canEdit } = getPermissions({
-		userData: stateData.userData || {},
+		userData,
 		model,
 		userDefinedPermissions: {
 			add: true,
