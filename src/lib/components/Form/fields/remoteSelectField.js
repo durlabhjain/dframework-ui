@@ -10,6 +10,10 @@ import useDebounce from '../../../hooks/useDebounce';
 const DEFAULT_PAGE_SIZE = 50;
 const SEARCH_DEBOUNCE_MS = 300;
 const SCROLL_LOAD_MORE_THRESHOLD_PX = 48;
+// Stable reference for "nothing selected" in multi-select: a fresh `[]` literal on every render would make
+// Autocomplete's `value` prop change identity every time, tripping MUI's internal input-reset (which always
+// blanks the input in multi-select) on every re-render - e.g. every state update while a chunk is loading.
+const EMPTY_ARRAY = [];
 
 const RemoteSelectField = React.memo(function RemoteSelectField({
     column,
@@ -36,7 +40,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     const rawValue = filterMode ? filterValue : formik?.values[field];
     const currentValue = useMemo(() => {
         if (isMultiSelect) {
-            if (!rawValue || rawValue.length === 0) return [];
+            if (!rawValue || rawValue.length === 0) return EMPTY_ARRAY;
             if (!Array.isArray(rawValue)) return String(rawValue).split(',').map(v => v.trim()).map(v => (isNaN(v) ? v : Number(v)));
             return rawValue;
         }
@@ -136,7 +140,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     }));
     // Synthesised from labelMap (not looked up in options) so a selection outside the loaded/filtered page still shows its label.
     const selectedValue = useMemo(() => {
-        if (isMultiSelect) return currentValue.map(v => ({ value: v, label: getLabel(v) }));
+        if (isMultiSelect) return currentValue.length === 0 ? EMPTY_ARRAY : currentValue.map(v => ({ value: v, label: getLabel(v) }));
         return currentValue === '' ? null : { value: currentValue, label: getLabel(currentValue) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentValue, isMultiSelect, selectedLabelsKey]);
@@ -151,9 +155,11 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     }, []);
 
     // Clear search on an actual pick/unpick (content change), not on every `value` reference change Autocomplete resets internally in multi-select.
-    const selectionSignature = isMultiSelect ? currentValue.map(String).join(',') : null;
+    // Covers single-select too: picking a value closes the dropdown without clearing searchInput, so a stale search term would otherwise
+    // survive (handleClose intentionally preserves it) and filter the list down on the next reopen.
+    const selectionSignature = isMultiSelect ? currentValue.map(String).join(',') : String(currentValue);
     useEffect(() => {
-        if (selectionSignature !== null) setSearchInput('');
+        setSearchInput('');
     }, [selectionSignature]);
 
     const applyValue = useCallback((val) => {
