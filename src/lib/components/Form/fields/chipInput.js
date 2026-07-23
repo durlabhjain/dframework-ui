@@ -23,9 +23,11 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
     const [inputText, setInputText] = React.useState('');
 
     const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
-        const lastElement = newValue.pop()?.trim();
-        if (!newValue.includes(lastElement)) {
-            newValue.push(lastElement);
+        if (newValue.length) {
+            const lastElement = newValue.pop().trim();
+            if (!newValue.includes(lastElement)) {
+                newValue.push(lastElement);
+            }
         }
         if (column.max && newValue.length > column.max) {
             newValue.pop(); // remove the last added tag, exceeding the limit

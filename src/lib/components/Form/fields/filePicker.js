@@ -38,6 +38,12 @@ function FilePicker({ column, field, formik }) {
 
     const previewSrc = objectUrl || savedPreviewSrc || null;
 
+    // Without this, clearing the value while the dialog is open would leave previewOpen
+    // stuck true, so the dialog would silently reopen if a previewSrc reappears later.
+    useEffect(() => {
+        if (!previewSrc) setPreviewOpen(false);
+    }, [previewSrc]);
+
     const handleFileChange = (event) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -60,7 +66,7 @@ function FilePicker({ column, field, formik }) {
                     <PageviewIcon />
                 </IconButton>
             )}
-            <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md">
+            <Dialog open={previewOpen && Boolean(previewSrc)} onClose={() => setPreviewOpen(false)} maxWidth="md">
                 <DialogContent>
                     <img src={previewSrc} alt={displayName || "File preview"} style={{ maxWidth: 400, maxHeight: 400, width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }} />
                 </DialogContent>
