@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, Button, Typography, IconButton, Dialog, DialogContent } from "@mui/material";
 import PageviewIcon from "@mui/icons-material/PageviewOutlined";
 
@@ -23,10 +23,20 @@ function FilePicker({ column, field, formik }) {
     // image. The column owns the base URL, filename field, and "does an image actually exist" check,
     // since those vary per model (e.g. a computed filename that's non-empty even with no upload yet).
     const savedPreviewSrc = typeof column.previewUrl === "function" ? column.previewUrl({ formik, value }) : null;
-    const previewSrc = useMemo(() => {
-        if (typeof File !== "undefined" && value instanceof File) return URL.createObjectURL(value);
-        return savedPreviewSrc || null;
-    }, [value, savedPreviewSrc]);
+    const [objectUrl, setObjectUrl] = useState(null);
+
+    // Object URLs are only revoked here, not by the browser, so we must explicitly
+    // release the previous one whenever value changes and on unmount to avoid leaking blobs.
+    useEffect(() => {
+        if (typeof File !== "undefined" && value instanceof File) {
+            const url = URL.createObjectURL(value);
+            setObjectUrl(url);
+            return () => URL.revokeObjectURL(url);
+        }
+        setObjectUrl(null);
+    }, [value]);
+
+    const previewSrc = objectUrl || savedPreviewSrc || null;
 
     const handleFileChange = (event) => {
         const file = event.target.files?.[0];
@@ -46,13 +56,13 @@ function FilePicker({ column, field, formik }) {
             </Button>
             {displayName && <Typography variant="body2">{displayName}</Typography>}
             {previewSrc && (
-                <IconButton className="button-outline" onClick={() => setPreviewOpen(true)}>
+                <IconButton className="button-outline" aria-label="Preview file" onClick={() => setPreviewOpen(true)}>
                     <PageviewIcon />
                 </IconButton>
             )}
             <Dialog open={previewOpen} onClose={() => setPreviewOpen(false)} maxWidth="md">
                 <DialogContent>
-                    <img src={previewSrc} alt={displayName} style={{ maxWidth: 400, maxHeight: 400, width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }} />
+                    <img src={previewSrc} alt={displayName || "File preview"} style={{ maxWidth: 400, maxHeight: 400, width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }} />
                 </DialogContent>
             </Dialog>
         </Box>
