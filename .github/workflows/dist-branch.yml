@@ -24,9 +24,28 @@ jobs:
           npm run build
 
       - name: Prepare Dist for NPM
-        # This copies package.json to /dist so NPM recognizes it as a package
-        # We use 'cp' to ensure the build folder is a valid standalone package
-        run: cp package.json dist/
+        # Writes a minimal package.json into dist/ instead of copying the source
+        # one verbatim. The source package.json carries devDependencies and a
+        # "prepare": "husky" script for local development; shipping those as-is
+        # breaks installs when this branch is consumed as a git dependency,
+        # since husky's prepare step fails when it can't find a .git directory
+        # in the temp clone yarn/npm use, aborting the dependency's install
+        # before its build output gets linked into node_modules.
+        run: |
+          node -e "
+            const pkg = require('./package.json');
+            const distPkg = {
+              name: pkg.name,
+              version: pkg.version,
+              private: pkg.private,
+              type: pkg.type,
+              main: pkg.main,
+              module: pkg.module,
+              exports: pkg.exports,
+              peerDependencies: pkg.peerDependencies
+            };
+            require('fs').writeFileSync('dist/package.json', JSON.stringify(distPkg, null, 2) + '\n');
+          "
 
       - name: Deploy to Dist Branch
         uses: JamesIves/github-pages-deploy-action@v4

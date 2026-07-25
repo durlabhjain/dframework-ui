@@ -41,8 +41,18 @@ function a11yProps(index) {
 const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOnly }) => {
   const modelConfigOfChildGrid = models.find(({ name }) => name === relation);
   if (!modelConfigOfChildGrid) return null;
-  const config = { ...modelConfigOfChildGrid, hideBreadcrumb: true };
-  const ChildModel = config instanceof UiModel ? config : new UiModel(config);
+  // Memoize derived model/config so ChildModel.ChildGrid component identity stays stable
+  // across re-renders (UiModel defines ChildGrid as an instance field).
+  const { config, ChildModel } = React.useMemo(() => {
+    const baseConfig = modelConfigOfChildGrid instanceof UiModel
+      ? Object.assign(Object.create(Object.getPrototypeOf(modelConfigOfChildGrid)), modelConfigOfChildGrid)
+      : { ...modelConfigOfChildGrid };
+
+    baseConfig.hideBreadcrumb = true;
+
+    const modelInstance = baseConfig instanceof UiModel ? baseConfig : new UiModel(baseConfig);
+    return { config: baseConfig, ChildModel: modelInstance };
+  }, [modelConfigOfChildGrid]);
   if (!ChildModel) return null;
 
   return (
@@ -50,6 +60,7 @@ const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOn
       readOnly={readOnly}
       parentFilters={parentFilters}
       parent={parent}
+      relationName={relation}
       model={config}
       where={where}
       isChildGrid={true}

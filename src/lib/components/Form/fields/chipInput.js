@@ -8,19 +8,19 @@ import { useCallback } from 'react';
 
 const EMPTY_FIELD_CONFIGS = {};
 
-const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS, mode }) => {
+const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS }) => {
     const theme = useTheme();
     let inputValue = formik.values[field] || [];
     if (!Array.isArray(inputValue)) {
         inputValue = inputValue.split(',').map(item => item.trim());
     }
     const isDisabled = React.useMemo(() => {
-        if (mode === 'copy') return true;
         if (typeof fieldConfigs.disabled !== 'undefined') return fieldConfigs.disabled;
         if (typeof column.disabled === 'function') return column.disabled({ isAdd, formik });
         return Boolean(column.disabled);
-    }, [mode, fieldConfigs.disabled, column.disabled, isAdd, formik]);
+    }, [fieldConfigs.disabled, column.disabled, isAdd, formik]);
     const fixedOptions = column.hasDefault && !isAdd ? [inputValue[0]] : [];
+    const [inputText, setInputText] = React.useState('');
 
     const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
         const lastElement = newValue.pop()?.trim();
@@ -41,6 +41,14 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
         formik.setFieldValue(field, newValue);
     }, [formik, field, column, fixedOptions]);
 
+    const handleInputBlur = useCallback((e) => {
+        const typedValue = e.target.value?.trim();
+        if (typedValue) {
+            handleAutoCompleteChange(e, [...inputValue, typedValue], 'createOption');
+        }
+        setInputText('');
+    }, [handleAutoCompleteChange, inputValue]);
+
     return (
         <FormControl
             fullWidth
@@ -54,10 +62,12 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
                 id={field}
                 freeSolo={true}
                 value={inputValue}
+                inputValue={inputText}
+                onInputChange={(e, newInputValue) => setInputText(newInputValue)}
                 options={[]}
                 renderInput={(params) => (
-                    <TextField 
-                        {...params} 
+                    <TextField
+                        {...params}
                         variant="standard"
                         InputProps={{
                             ...params.InputProps,
@@ -65,6 +75,10 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
                                 ...params.InputProps?.sx,
                                 ...(isDisabled && { backgroundColor: theme.palette?.action?.disabled })
                             }
+                        }}
+                        onBlur={(e) => {
+                            params.inputProps?.onBlur?.(e);
+                            handleInputBlur(e);
                         }}
                     />
                 )}

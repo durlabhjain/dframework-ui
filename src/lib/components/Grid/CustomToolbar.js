@@ -88,7 +88,7 @@ const CustomToolbar = function (props) {
                 style={{
                     display: 'flex',
                     justifyContent: 'space-between',
-                    padding: '10px'
+                    padding: '5px 10px'
                 }}
             >
                 <div>
@@ -160,7 +160,7 @@ const CustomToolbar = function (props) {
                     }
                 </GridToolBar>
             </div >
-            <Box sx={{ display: 'flex', justifyContent: 'flex-start', padding: '0 10px 10px 10px' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', padding: toolbarFilterColumns.length > 0 ? '0 10px 0 10px' : 0 }}>
                 {toolbarFilterColumns.length > 0 && (
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         {toolbarFilterColumns.map((column) => (

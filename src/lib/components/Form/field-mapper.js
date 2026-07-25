@@ -24,9 +24,11 @@ import styled from '@emotion/styled';
 import ChipInput from './fields/chipInput';
 import TreeCheckbox from './fields/treeCheckBox';
 import FileUpload from './fields/fileUpload';
+import FilePicker from './fields/filePicker';
 import JSONInput from './fields/jsonInput';
 import utils from '../utils';
 import { useModelTranslation } from '../../hooks/useModelTranslation';
+import RemoteSelectField from './fields/remoteSelectField';
 
 const fieldMappers = {
     "boolean": BooleanField,
@@ -45,7 +47,9 @@ const fieldMappers = {
     "chipInput": ChipInput,
     "treeCheckbox": TreeCheckbox,
     "fileUpload": FileUpload,
-    "json": JSONInput
+    "filePicker": FilePicker,
+    "json": JSONInput,
+    "remoteSelect": RemoteSelectField
 };
 
 const gridContainerStyle = { paddingTop: "2.5px", paddingBottom: "2.5px" };
@@ -193,6 +197,11 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
                     if (fieldConfig.hidden) return null;
                     // fieldConfig.label: runtime label override (e.g. rename based on record data)
                     const displayLabel = fieldConfig.label ?? (column.label || field);
+                    const value = formik.values[field];
+                    // column.externalIcon: ({ formik, value }) => JSX | null — lets a column render
+                    // a self-contained widget (icon, click handling, any dialog state it needs) next
+                    // to its input, e.g. a preview icon that opens a read-only viewer on click.
+                    const externalIcon = typeof column.externalIcon === 'function' ? column.externalIcon({ formik, value }) : null;
                     return (
                         <Grid container spacing={2} key={key} sx={{ marginTop: "1rem", marginBottom: "1rem" }} alignItems={isGridComponent ? "flex-start" : "center"}>
                             {column?.showLabel !== false ?
@@ -202,7 +211,12 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
                                 : null
                             }
                             <Grid size={{ xs: isGridComponent ? 12 : 9 }} sx={gridContainerStyle}>
-                                <Component isAdd={isAdd} model={model} fieldConfigs={fieldConfigs[field]} mode={mode} column={column} field={field} label={label} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} tTranslate={tTranslate} tOpts={tOpts} {...otherProps} />
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                                        <Component isAdd={isAdd} model={model} fieldConfigs={fieldConfigs[field]} mode={mode} column={column} field={field} label={label} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} tTranslate={tTranslate} tOpts={tOpts} {...otherProps} />
+                                    </Box>
+                                    {externalIcon}
+                                </Box>
                             </Grid>
                         </Grid >
                     );

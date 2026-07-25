@@ -156,13 +156,14 @@ class UiModel {
 		if (notEqualValidator) {
 			const [, compareFieldName, compareLabelOverride] = notEqualValidator;
 			const compareLabel = tTranslate(compareLabelOverride || columnByField.get(compareFieldName)?.label || compareFieldName, tOpts);
+			const treatZeroAsEmpty = typeof column.treatZeroAsEmpty === 'boolean' ? column.treatZeroAsEmpty : !!column.lookup;
 			return config.test(
 				'not-equal',
 				resolveValidationMessage('notEqual', { label: formLabel, compareLabel }, t),
 				function (value) {
 					const compareValue = this.parent?.[compareFieldName];
-					if (value === undefined || value === null || value === '') return true;
-					if (compareValue === undefined || compareValue === null || compareValue === '') return true;
+					const isEmpty = (v) => v === undefined || v === null || v === '' || (treatZeroAsEmpty && (v === 0 || v === '0'));
+					if (isEmpty(value) || isEmpty(compareValue)) return true;
 					return String(value) !== String(compareValue);
 				}
 			);

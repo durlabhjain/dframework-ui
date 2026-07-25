@@ -210,10 +210,6 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
         requestData.lookupWithDeps = JSON.stringify(lookupWithDeps);
     }
 
-    if (model?.limitToSurveyed) {
-        requestData.limitToSurveyed = model?.limitToSurveyed;
-    }
-
     const url = `${api}/${action}`;
 
     return { requestData, url, where, dateColumns };
@@ -449,7 +445,8 @@ const getLookups = async (props = {}) => {
     const searchParams = new URLSearchParams();
     const url = `${api}/lookups`;
     searchParams.set("lookups", lookups);
-    searchParams.set("scopeId", scopeId);
+    // Only set when defined — avoids sending the literal string "undefined" in the querystring
+    if (scopeId !== undefined) searchParams.set("scopeId", scopeId);
 
     // Build context object and execute request hook
     const context = await executeRequestHook(model, {

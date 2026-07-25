@@ -10,7 +10,7 @@ const consts = {
 }
 
 const Field = React.memo(({ column, field, formik, lookups, dependsOn = [], fieldConfigs = {}, mode, model, ...otherProps }) => {
-    const options = useCascadingLookup({ column, formik, lookups, dependsOn, model, isAutoComplete: true });
+    const { options } = useCascadingLookup({ column, formik, lookups, dependsOn, model, isAutoComplete: true });
     let inputValue = formik.values[field] || [];
     if (!Array.isArray(inputValue)) {
         inputValue = inputValue.split(", ").map(Number);

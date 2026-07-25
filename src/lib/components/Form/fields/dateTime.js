@@ -6,7 +6,10 @@ import { useStateContext } from '../../useRouter/StateProvider'
 
 dayjs.extend(utc);
 
-const Field = ({ column, field, formik, otherProps }) => {
+const EMPTY_FIELD_CONFIGS = {};
+
+const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS }) => {
+    const isReadOnly = column?.readOnly === true || Boolean(fieldConfigs.readOnly);
     const { systemDateTimeFormat, stateData } = useStateContext();
     const dateTimeValue = useMemo(() => {
         const val = formik.values[field];
@@ -18,7 +21,7 @@ const Field = ({ column, field, formik, otherProps }) => {
         key={field}
         {...otherProps}
         variant="standard"
-        readOnly={column?.readOnly === true}
+        readOnly={isReadOnly}
         fullWidth
         format={systemDateTimeFormat(false, false, stateData.dateTime)}
         name={field}

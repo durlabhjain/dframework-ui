@@ -1,6 +1,6 @@
 {
   "name": "@durlabh/dframework-ui",
-  "version": "2.0.24",
+  "version": "2.0.33",
   "private": true,
   "type": "module",
   "main": "./index.js",
@@ -41,6 +41,11 @@
     "rollup-plugin-visualizer": "^6.0.11",
     "vite": "^8.0.10",
     "vite-plugin-static-copy": "^3.4.0"
+  },
+  "overrides": {
+    "eslint-plugin-react": {
+      "eslint": "$eslint"
+    }
   },
   "scripts": {
     "dev": "vite",

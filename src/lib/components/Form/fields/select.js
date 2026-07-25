@@ -8,10 +8,13 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import useCascadingLookup from '../../../hooks/useCascadingLookup';
 
-const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, tTranslate, tOpts, ...otherProps }) => {
+const EMPTY_FIELD_CONFIGS = {};
+
+const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, tTranslate, tOpts, fieldConfigs = EMPTY_FIELD_CONFIGS, ...otherProps }) => {
+    const isReadOnly = column.readOnly === true || Boolean(fieldConfigs.readOnly);
     const userSelected = React.useRef(false);
     const { placeHolder } = column;
-    const options = useCascadingLookup({ column, formik, lookups, dependsOn, userSelected, model });
+    const { options } = useCascadingLookup({ column, formik, lookups, dependsOn, userSelected, model });
     const theme = useTheme();
 
     // Memoize input value processing to avoid recalculation on each render
@@ -93,13 +96,13 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
                     {...otherProps}
                     name={field}
                     multiple={column.multiSelect === true}
-                    readOnly={column.readOnly === true}
+                    readOnly={isReadOnly}
                     value={column.multiSelect ? (Array.isArray(inputValue) ? inputValue : []) : `${inputValue ?? ''}`}
                     onChange={handleChange}
                     onBlur={formik.handleBlur}
                     sx={{
                         width: '100%',
-                        backgroundColor: column.readOnly ? theme.palette?.action?.disabled : ''
+                        backgroundColor: isReadOnly ? theme.palette?.action?.disabled : ''
                     }}
                 >
                     {Array.isArray(options) && options.map(option => (
@@ -108,7 +111,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
                         </MenuItem>
                     ))}
                 </Select>
-                {hasValue && !column.readOnly && (
+                {hasValue && !isReadOnly && (
                     <IconButton
                         size="small"
                         onClick={clearSelection}
