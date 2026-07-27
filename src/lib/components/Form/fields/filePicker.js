@@ -45,13 +45,12 @@ function FilePicker({ column, field, formik, tOpts }) {
     const handleFileChange = (event) => {
         const file = event.target.files?.[0];
         if (!file) return;
-        if (Array.isArray(formats) && !formats.includes(file.type)) {
+        if (Array.isArray(formats) && file.type && !formats.includes(file.type)) {
             const t = tOpts?.t ?? ((key, opts) => opts?.defaultValue ?? key);
-            const message = t('validation.invalidFileFormat', {
-                defaultValue: 'Invalid file format. Allowed formats: ${formats}.'
+            const message = t("validation.invalidFileFormat", {
+                defaultValue: "Invalid file format. Allowed formats: ${formats}."
             });
-            const extensions = formats.map((mimeType) => `.${mimeType.split("/").pop()}`).join(", ");
-            snackbar.showError(utils.replaceTags(message, { formats: extensions }));
+            snackbar.showError(utils.replaceTags(message, { formats: formats.join(", ") }));
             event.target.value = "";
             return;
         }
