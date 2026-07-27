@@ -5976,8 +5976,10 @@ function FileUpload({ column, field, formik }) {
 * request as a multipart part (see httpRequest.js getFormData), instead of uploading
 * immediately like fields/fileUpload.js does for the single-document-link use case.
 */
-function FilePicker({ column, field, formik }) {
+function FilePicker({ column, field, formik, tOpts }) {
 	const value = formik.values[field];
+	const { formats } = column;
+	const snackbar = useSnackbar();
 	const [selectedName, setSelectedName] = useState(typeof File !== "undefined" && value instanceof File ? value.name : null);
 	const [previewOpen, setPreviewOpen] = useState(false);
 	useEffect(() => {
@@ -6000,6 +6002,12 @@ function FilePicker({ column, field, formik }) {
 	const handleFileChange = (event) => {
 		const file = event.target.files?.[0];
 		if (!file) return;
+		if (Array.isArray(formats) && file.type && !formats.includes(file.type)) {
+			const message = (tOpts?.t ?? ((key, opts) => opts?.defaultValue ?? key))("validation.invalidFileFormat", { defaultValue: "Invalid file format. Allowed formats: ${formats}." });
+			snackbar.showError(utils.replaceTags(message, { formats: formats.join(", ") }));
+			event.target.value = "";
+			return;
+		}
 		formik.setFieldValue(field, file);
 		setSelectedName(file.name);
 		event.target.value = "";
@@ -6485,7 +6493,7 @@ var EMPTY_WHERE = [];
 * Relations component using MUI Tabs
 * Renders a tab for each relation, and a ChildGrid in each panel
 */
-var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, relationFilters, readOnly }) => {
+var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, relationFilters, readOnly, tTranslate = (key) => key, tOpts = {} }) => {
 	const [tabIndex, setTabIndex] = useState(0);
 	const handleChange = (_, newValue) => {
 		setTabIndex(newValue);
@@ -6504,7 +6512,7 @@ var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, re
 				children: relations.map((relation, idx) => {
 					const modelConfigOfChildGrid = models.find(({ name }) => name === relation) || {};
 					return /* @__PURE__ */ jsx(Tab, {
-						label: modelConfigOfChildGrid.listTitle || modelConfigOfChildGrid.title || relation,
+						label: tTranslate(modelConfigOfChildGrid.listTitle || modelConfigOfChildGrid.title || relation, tOpts),
 						...a11yProps(idx)
 					}, relation);
 				})
@@ -6927,7 +6935,9 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 					models,
 					relationFilters,
 					relations,
-					parent: model.name || model.title || ""
+					parent: model.name || model.title || "",
+					tTranslate,
+					tOpts
 				}) : null
 			]
 		})
