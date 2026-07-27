@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Box, Button, Typography, IconButton, Dialog, DialogContent } from "@mui/material";
 import PageviewIcon from "@mui/icons-material/PageviewOutlined";
+import { useSnackbar } from "../../SnackBar";
+import utils from "../../utils";
 
 /**
  * Defers the actual upload to whenever the surrounding Form is submitted: stores the
@@ -8,8 +10,10 @@ import PageviewIcon from "@mui/icons-material/PageviewOutlined";
  * request as a multipart part (see httpRequest.js getFormData), instead of uploading
  * immediately like fields/fileUpload.js does for the single-document-link use case.
  */
-function FilePicker({ column, field, formik }) {
+function FilePicker({ column, field, formik, tOpts }) {
     const value = formik.values[field];
+    const { formats } = column;
+    const snackbar = useSnackbar();
     const [selectedName, setSelectedName] = useState(
         typeof File !== "undefined" && value instanceof File ? value.name : null
     );
@@ -41,6 +45,15 @@ function FilePicker({ column, field, formik }) {
     const handleFileChange = (event) => {
         const file = event.target.files?.[0];
         if (!file) return;
+        if (Array.isArray(formats) && file.type && !formats.includes(file.type)) {
+            const t = tOpts?.t ?? ((key, opts) => opts?.defaultValue ?? key);
+            const message = t("validation.invalidFileFormat", {
+                defaultValue: "Invalid file format. Allowed formats: ${formats}."
+            });
+            snackbar.showError(utils.replaceTags(message, { formats: formats.join(", ") }));
+            event.target.value = "";
+            return;
+        }
         formik.setFieldValue(field, file);
         setSelectedName(file.name);
         event.target.value = "";
