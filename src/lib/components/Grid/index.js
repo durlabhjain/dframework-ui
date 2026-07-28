@@ -949,7 +949,7 @@ const GridBase = memo(({
             historyObject.state = row;
         }
         navigate(historyObject);
-    }, [isReadOnly, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, gridTitle, getApiEndpoint, handleDownload, openForm]);
+    }, [disableCellRedirect, isReadOnly, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, gridTitle, getApiEndpoint, handleDownload, openForm]);
 
     const handleDelete = useCallback(async () => {
         if (isStaticDataWithoutBackendApi) {
@@ -1103,7 +1103,7 @@ const GridBase = memo(({
     
 
     const updateAssignment = useCallback(({ unassign, assign }) => {
-        const assignedValues = Array.isArray(selected) ? selected : (selected.length ? selected.split(',') : []);
+        const assignedValues = Array.isArray(selected) ? selected : (selected ? selected.split(',') : []);
         const unassignSet = new Set((unassign || []).map(id => parseInt(id)));
         const filtered = assignedValues.filter(id => !unassignSet.has(parseInt(id)));
         const finalValues = assign ? [...new Set([...filtered, ...assign])] : filtered;
