@@ -30,6 +30,12 @@ import utils from '../utils';
 import { useModelTranslation } from '../../hooks/useModelTranslation';
 import RemoteSelectField from './fields/remoteSelectField';
 
+const ChildGridField = ({ column }) => {
+    const Component = column.relation;
+    if (!Component) return null;
+    return <Component disableCellRedirect={column.disableCellRedirect} readOnly={column.readOnly} showPageTitle={false} />;
+};
+
 const fieldMappers = {
     "boolean": BooleanField,
     "select": SelectField,
@@ -40,6 +46,7 @@ const fieldMappers = {
     "dateTime": DateTimeField,
     "time": TimeField,
     "oneToMany": GridTransfer,
+    "childGrid": ChildGridField,
     "radio": RadioField,
     "autocomplete": AutocompleteField,
     "dayRadio": DaySelection,
