@@ -3959,7 +3959,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			...extraParams,
 			...props.extraParams
 		};
-		if (assigned || available) mergedExtraParams[assigned ? "include" : "exclude"] = Array.isArray(selected) ? selected.join(",") : selected;
+		if (assigned || available) mergedExtraParams[assigned ? "include" : "exclude"] = (Array.isArray(selected) ? selected.join(",") : selected || "") || "0";
 		if (isPivotExport) {
 			if (model.exportTemplate) mergedExtraParams.template = model.exportTemplate;
 			if (model.configFileName) mergedExtraParams.configFileName = model.configFileName;
@@ -4079,7 +4079,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		window.open(documentLink, "_blank");
 	}, []);
 	const onCellClickHandler = useCallback(async (cellParams, event, details) => {
-		let action = cellParams.field === model.linkColumn ? actionTypes.Edit : null;
+		let action = !disableCellRedirect && cellParams.field === model.linkColumn ? actionTypes.Edit : null;
 		if (!action && cellParams.field === constants.actions) {
 			action = details?.action;
 			if (!action) {
@@ -4143,6 +4143,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		if (model.addRecordToState) historyObject.state = row;
 		navigate(historyObject);
 	}, [
+		disableCellRedirect,
 		isReadOnly,
 		onCellClick,
 		lookupMap,
@@ -4333,8 +4334,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		props.onRowSelectionModelChange?.(normalizedModel);
 	}, [getSelectedRowIds, props.onRowSelectionModelChange]);
 	const updateAssignment = useCallback(({ unassign, assign }) => {
-		const assignedValues = Array.isArray(selected) ? selected : selected.length ? selected.split(",") : [];
-		const finalValues = unassign ? assignedValues.filter((id) => !unassign.includes(parseInt(id))) : [...assignedValues, ...assign];
+		const assignedValues = Array.isArray(selected) ? selected : selected ? selected.split(",") : [];
+		const unassignSet = new Set((unassign || []).map((id) => parseInt(id)));
+		const filtered = assignedValues.filter((id) => !unassignSet.has(parseInt(id)));
+		const finalValues = assign ? [.../* @__PURE__ */ new Set([...filtered, ...assign])] : filtered;
 		onAssignChange(typeof selected === constants.string ? finalValues.join(",") : finalValues);
 	}, [selected, onAssignChange]);
 	const onAssign = useCallback(() => {
@@ -5356,7 +5359,8 @@ var TransferField = ({ component, name, formik, field, column }) => {
 			available: true,
 			onAssignChange,
 			disableCellRedirect: column.disableCellRedirect,
-			readOnly: column.readOnly
+			readOnly: column.readOnly,
+			showPageTitle: false
 		}),
 		/* @__PURE__ */ jsx(DivSpacing, { children: `Assigned ${column.label}` }),
 		/* @__PURE__ */ jsx(Component, {
@@ -5364,7 +5368,8 @@ var TransferField = ({ component, name, formik, field, column }) => {
 			assigned: true,
 			onAssignChange,
 			disableCellRedirect: column.disableCellRedirect,
-			readOnly: column.readOnly
+			readOnly: column.readOnly,
+			showPageTitle: false
 		})
 	] });
 };
@@ -6125,6 +6130,15 @@ var Field = ({ field, formik }) => {
 };
 //#endregion
 //#region src/lib/components/Form/field-mapper.js
+var ChildGridField = ({ column }) => {
+	const Component = column.relation;
+	if (!Component) return null;
+	return /* @__PURE__ */ jsx(Component, {
+		disableCellRedirect: column.disableCellRedirect,
+		readOnly: column.readOnly,
+		showPageTitle: false
+	});
+};
 var fieldMappers = {
 	"boolean": Field$10,
 	"select": SelectField,
@@ -6135,6 +6149,7 @@ var fieldMappers = {
 	"dateTime": Field$5,
 	"time": Field$4,
 	"oneToMany": TransferField,
+	"childGrid": ChildGridField,
 	"radio": Field$3,
 	"autocomplete": Field$2,
 	"dayRadio": DaySelection,
