@@ -22,6 +22,7 @@ function FilePicker({ column, field, formik, tOpts }) {
     const [previewOpen, setPreviewOpen] = useState(false);
     const canvasRef = useRef(null);
     const [hasCanvasPreview, setHasCanvasPreview] = useState(false);
+    const [previewUnsupported, setPreviewUnsupported] = useState(false);
 
     useEffect(() => {
         setSelectedName(isSelectedFile ? value.name : null);
@@ -39,18 +40,17 @@ function FilePicker({ column, field, formik, tOpts }) {
     useEffect(() => {
         if (!isSelectedImage) {
             setHasCanvasPreview(false);
+            setPreviewUnsupported(false);
             return;
         }
         let cancelled = false;
         setHasCanvasPreview(false);
+        setPreviewUnsupported(false);
 
         if (typeof createImageBitmap !== "function") {
-            return () => {
-                cancelled = true;
-            };
-        }
-
-        if (typeof createImageBitmap !== "function") {
+            // No blob:/data: <img> fallback here: that's the CSP img-src hazard this canvas approach
+            // was built to avoid. Surface a message instead of a silently missing preview icon.
+            setPreviewUnsupported(true);
             return () => {
                 cancelled = true;
             };
@@ -122,6 +122,11 @@ function FilePicker({ column, field, formik, tOpts }) {
                     <PageviewIcon />
                 </IconButton>
             )}
+            {previewUnsupported && !hasPreview && (
+                <Typography variant="caption" color="text.secondary">
+                    Preview not supported in this browser
+                </Typography>
+            )}
             {/* keepMounted: canvas must exist before the file is chosen since the draw effect fires on selection, not on dialog open */}
             <Dialog open={previewOpen && hasPreview} onClose={() => setPreviewOpen(false)} maxWidth="md" keepMounted>
                 <DialogContent>
@@ -139,7 +144,7 @@ function FilePicker({ column, field, formik, tOpts }) {
                             <img
                                 src={previewSrc}
                                 alt={displayName || "File preview"}
-                                style={{ maxWidth: 400, maxHeight: 400, width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }}
+                                style={{ maxWidth: CANVAS_PREVIEW_MAX_SIZE, maxHeight: CANVAS_PREVIEW_MAX_SIZE, width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }}
                             />
                         )
                     )}
