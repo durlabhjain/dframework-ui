@@ -42,6 +42,14 @@ function FilePicker({ column, field, formik, tOpts }) {
             return;
         }
         let cancelled = false;
+        setHasCanvasPreview(false);
+
+        if (typeof createImageBitmap !== "function") {
+            return () => {
+                cancelled = true;
+            };
+        }
+
         if (typeof createImageBitmap !== "function") {
             return () => {
                 cancelled = true;
@@ -49,20 +57,34 @@ function FilePicker({ column, field, formik, tOpts }) {
         }
         createImageBitmap(value)
             .then((bitmap) => {
-                if (cancelled) return;
+                if (cancelled) {
+                    bitmap.close();
+                    return;
+                }
                 const canvas = canvasRef.current;
-                if (!canvas) return;
-                const scale = Math.min(CANVAS_PREVIEW_MAX_SIZE / bitmap.width, CANVAS_PREVIEW_MAX_SIZE / bitmap.height, 1);
-                canvas.width = bitmap.width * scale;
-                canvas.height = bitmap.height * scale;
-                canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                const ctx = canvas?.getContext("2d");
+                if (!canvas || !ctx) {
+                    bitmap.close();
+                    return;
+                }
+                const scale = Math.min(
+                    CANVAS_PREVIEW_MAX_SIZE / bitmap.width,
+                    CANVAS_PREVIEW_MAX_SIZE / bitmap.height,
+                    1
+                );
+                const targetWidth = Math.round(bitmap.width * scale);
+                const targetHeight = Math.round(bitmap.height * scale);
+                canvas.width = targetWidth;
+                canvas.height = targetHeight;
+                ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
                 bitmap.close();
                 setHasCanvasPreview(true);
             })
-            .catch(() => setHasCanvasPreview(false));
+            .catch(() => {
+                if (!cancelled) setHasCanvasPreview(false);
+            });
         return () => {
             cancelled = true;
-            setHasCanvasPreview(false);
         };
     }, [isSelectedImage, value]);
 
@@ -106,9 +128,12 @@ function FilePicker({ column, field, formik, tOpts }) {
                     {isSelectedImage ? (
                         <canvas
                             ref={canvasRef}
+                            role="img"
                             aria-label={displayName || "File preview"}
-                            style={{ maxWidth: 400, maxHeight: 400, width: 'auto', height: 'auto', display: hasCanvasPreview ? 'block' : 'none' }}
-                        />
+                            style={{ maxWidth: CANVAS_PREVIEW_MAX_SIZE, maxHeight: CANVAS_PREVIEW_MAX_SIZE, width: "auto", height: "auto", display: hasCanvasPreview ? "block" : "none" }}
+                        >
+                            {displayName || "File preview"}
+                        </canvas>
                     ) : (
                         previewSrc && (
                             <img
