@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
-    TextField, Autocomplete, Checkbox, CircularProgress,
-    FormControl, FormHelperText, Typography,
+    TextField, Autocomplete, Checkbox, Chip, CircularProgress,
+    FormControl, FormHelperText, Typography, Box,
 } from '@mui/material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import useCascadingLookup from '../../../hooks/useCascadingLookup';
@@ -50,6 +50,9 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
 
     // Open is tracked locally (not passed to Autocomplete) purely to gate the reload effect below.
     const [open, setOpen] = useState(false);
+    // Tracks DOM focus (distinct from `open`) so renderTags can mirror MUI's own limitTags rule:
+    // collapse to column.limitTags while blurred, show every chip in a scrollable box once focused.
+    const [isFocused, setIsFocused] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [searchInput, setSearchInput] = useState('');
     const searchTerm = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
@@ -149,6 +152,8 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     const handleOpen = useCallback(() => setOpen(true), []);
     // Search text isn't cleared here - it stays in sync with what's still visibly typed (see handleInputChange), so a later reload keeps filtering by it instead of silently going unfiltered.
     const handleClose = useCallback(() => { setOpen(false); setIsChunkLoading(false); }, []);
+    const handleFocus = useCallback(() => setIsFocused(true), []);
+    const handleBlur = useCallback(() => setIsFocused(false), []);
     // 'blur' syncs a real blur-away revert; 'reset' is excluded since MUI also fires it on every async labelMap-driven value reference change, which would wipe an in-progress keystroke.
     const handleInputChange = useCallback((e, value, reason) => {
         if (reason === 'input' || reason === 'clear' || reason === 'blur') setSearchInput(value);
@@ -182,7 +187,12 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
             multiple={isMultiSelect}
             disabled={isReadOnly}
             options={options}
-            sx={{ '& .MuiAutocomplete-clearIndicator': { visibility: 'visible' } }}
+            sx={{
+                '& .MuiAutocomplete-clearIndicator': { visibility: 'visible' },
+                '& .MuiAutocomplete-inputRoot': {
+                    flexWrap: 'wrap',
+                },
+            }}
             getOptionKey={(option) => option.value}
             filterOptions={(x) => x}
             loading={isChunkLoading}
@@ -196,13 +206,58 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
             onChange={handleChange}
             onOpen={handleOpen}
             onClose={handleClose}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             onInputChange={handleInputChange}
             disableCloseOnSelect={isMultiSelect}
             size="small"
             popupIcon={<KeyboardArrowDownIcon />}
             fullWidth
-            limitTags={column.limitTags || 5}
-            slotProps={{ listbox: { ref: setListboxNode, onScroll: handleScroll, style: { maxHeight: 280 } } }}
+            slotProps={{
+                // MUI's default 8px top padding lives on the listbox itself, which also scrolls -
+                // so it's part of the scrollable content and disappears the instant you scroll.
+                // Move it onto the (non-scrolling) Paper frame instead so it stays visible.
+                paper: { sx: { pt: 1 } },
+                listbox: { ref: setListboxNode, onScroll: handleScroll, style: { maxHeight: 280, paddingTop: 0 } },
+            }}
+            renderTags={(tagValue, getTagProps) => {
+                const tagLimit = column.limitTags || 5;
+                // Collapsed (blurred): mirror MUI's own limitTags rule, no scroll box needed since the count is bounded.
+                if (!isFocused && tagValue.length > tagLimit) {
+                    const hiddenCount = tagValue.length - tagLimit;
+                    return (
+                        <>
+                            {tagValue.slice(0, tagLimit).map((option, index) => {
+                                const { key, ...tagProps } = getTagProps({ index });
+                                return <Chip key={key} {...tagProps} label={option.label} size="small" />;
+                            })}
+                            <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
+                                {`+${hiddenCount}`}
+                            </Typography>
+                        </>
+                    );
+                }
+                // Focused (or few enough to fit anyway): render every chip inside its own bounded,
+                // scrollable box - not on `.MuiAutocomplete-inputRoot` itself, since that element also
+                // owns the outlined border/radius and its native scrollbar isn't reliably clipped to it.
+                return (
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 0.5,
+                            width: '100%',
+                            maxHeight: 180,
+                            overflowY: 'auto',
+                        }}
+                    >
+                        {tagValue.map((option, index) => {
+                            const { key, ...tagProps } = getTagProps({ index });
+                            return <Chip key={key} {...tagProps} label={option.label} size="small" />;
+                        })}
+                    </Box>
+                );
+            }}
             renderOption={(props, option, { selected }) => {
                 const { key, ...optionProps } = props;
                 return (
