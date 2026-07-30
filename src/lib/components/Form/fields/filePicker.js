@@ -81,7 +81,10 @@ function FilePicker({ column, field, formik, tOpts }) {
                 setHasCanvasPreview(true);
             })
             .catch(() => {
-                if (!cancelled) setHasCanvasPreview(false);
+                if (!cancelled) {
+                    setHasCanvasPreview(false);
+                    setPreviewUnsupported(true);
+                }
             });
         return () => {
             cancelled = true;
@@ -124,7 +127,7 @@ function FilePicker({ column, field, formik, tOpts }) {
             )}
             {previewUnsupported && !hasPreview && (
                 <Typography variant="caption" color="text.secondary">
-                    Preview not supported in this browser
+                    Preview unavailable for this file
                 </Typography>
             )}
             {/* keepMounted: canvas must exist before the file is chosen since the draw effect fires on selection, not on dialog open */}
