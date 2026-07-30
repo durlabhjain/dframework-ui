@@ -231,7 +231,14 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                                 const { key, ...tagProps } = getTagProps({ index });
                                 return <Chip key={key} {...tagProps} label={option.label} size="small" />;
                             })}
-                            <Typography component="span" variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
+                            <Typography
+                                component="span"
+                                variant="body2"
+                                color="text.secondary"
+                                sx={{ ml: 0.5 }}
+                                aria-label={`${hiddenCount} ${tTranslate('more selected', tOpts)}`}
+                                title={`${hiddenCount} ${tTranslate('more selected', tOpts)}`}
+                            >
                                 {`+${hiddenCount}`}
                             </Typography>
                         </>

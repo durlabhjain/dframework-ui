@@ -42,6 +42,11 @@ function FilePicker({ column, field, formik, tOpts }) {
             return;
         }
         let cancelled = false;
+        if (typeof createImageBitmap !== "function") {
+            return () => {
+                cancelled = true;
+            };
+        }
         createImageBitmap(value)
             .then((bitmap) => {
                 if (cancelled) return;
