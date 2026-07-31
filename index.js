@@ -20,7 +20,7 @@ import dayjs from "dayjs";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import { Autocomplete, Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, CardContent, Checkbox, CircularProgress, Dialog as Dialog$1, DialogContent as DialogContent$1, DialogTitle as DialogTitle$1, Divider, FilledInput, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, Input, InputAdornment, InputLabel, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField as TextField$1, Tooltip, Typography as Typography$1, styled, useTheme } from "@mui/material";
+import { Autocomplete, Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, CardContent, Checkbox, Chip, CircularProgress, Dialog as Dialog$1, DialogContent as DialogContent$1, DialogTitle as DialogTitle$1, Divider, FilledInput, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, Input, InputAdornment, InputLabel, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField as TextField$1, Tooltip, Typography as Typography$1, styled, useTheme } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import HelpIcon from "@mui/icons-material/Help";
@@ -69,7 +69,7 @@ import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import { grey } from "@mui/material/colors";
 import styled$2 from "@emotion/styled";
-import Chip from "@mui/material/Chip";
+import Chip$1 from "@mui/material/Chip";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import PageviewIcon from "@mui/icons-material/PageviewOutlined";
@@ -1830,12 +1830,13 @@ var LocalizedDatePicker = (props) => {
 		}
 	};
 	const ComponentToRender = componentMap[columnType];
+	const Dateformatvalue = item?.value ? dayjs(item.value) : null;
 	return /* @__PURE__ */ jsx(LocalizationProvider, {
 		dateAdapter: AdapterDayjs,
 		children: /* @__PURE__ */ jsx(ComponentToRender, {
 			fullWidth: true,
 			format,
-			value: item?.value ? dayjs(item.value) : null,
+			value: Dateformatvalue,
 			onChange: handleFilterChange,
 			slotProps: { textField: {
 				variant: "standard",
@@ -2657,8 +2658,9 @@ var ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTransla
 							if (labels.length <= displayLimit) return labels.join(", ");
 							const firstTwo = labels.slice(0, displayLimit).join(", ");
 							const remaining = labels.length - displayLimit;
+							const full = labels.join(", ");
 							return /* @__PURE__ */ jsx(Tooltip, {
-								title: labels.join(", "),
+								title: full,
 								placement: "top",
 								children: /* @__PURE__ */ jsx("span", { children: `${firstTwo} +${remaining}` })
 							});
@@ -2897,12 +2899,13 @@ function useCascadingLookup({ column, formik, lookups, dependsOn = [], isAutoCom
 	const { buildUrl } = useStateContext();
 	const snackbar = useSnackbar();
 	const api = buildUrl(model?.api);
+	const dependsOnKey = dependsOn.join(",");
 	const dependencyValues = useMemo(() => {
 		const toReturn = {};
 		if (!dependsOn.length) return toReturn;
 		for (const dependency of dependsOn) toReturn[dependency] = formik?.values?.[dependency];
 		return toReturn;
-	}, [dependsOn.join(","), ...dependsOn.map((dep) => formik?.values?.[dep])]);
+	}, [dependsOnKey, ...dependsOn.map((dep) => formik?.values?.[dep])]);
 	const initialOptions = useMemo(() => {
 		if (dependsOn.length) return [];
 		return column.customLookup || (typeof column.lookup === "string" ? lookups[column.lookup] : column.lookup);
@@ -3035,6 +3038,7 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 		return rawValue;
 	}, [rawValue, isMultiSelect]);
 	const [open, setOpen] = useState(false);
+	const [isFocused, setIsFocused] = useState(false);
 	const [hasMore, setHasMore] = useState(true);
 	const [searchInput, setSearchInput] = useState("");
 	const searchTerm = useDebounce(searchInput, SEARCH_DEBOUNCE_MS);
@@ -3095,6 +3099,7 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 	]);
 	const requestedLookupIdsRef = useRef(/* @__PURE__ */ new Set());
 	const selectedIds = isMultiSelect ? currentValue : currentValue !== "" ? [currentValue] : [];
+	const selectedIdsKey = selectedIds.map(String).join(",");
 	useEffect(() => {
 		selectedIds.forEach((id) => {
 			const idKey = String(id);
@@ -3106,8 +3111,12 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 				if (!result) requestedLookupIdsRef.current.delete(idKey);
 			});
 		});
-	}, [selectedIds.map(String).join(","), fetchOptions]);
+	}, [selectedIdsKey, fetchOptions]);
 	const getLabel = useCallback((key) => labelMap[String(key)] ?? String(key), [labelMap]);
+	const selectedLabelsKey = JSON.stringify(selectedIds.map((id) => {
+		const idKey = String(id);
+		return Object.prototype.hasOwnProperty.call(labelMap, idKey) ? [idKey, labelMap[idKey]] : [idKey];
+	}));
 	const selectedValue = useMemo(() => {
 		if (isMultiSelect) return currentValue.length === 0 ? EMPTY_ARRAY : currentValue.map((v) => ({
 			value: v,
@@ -3120,22 +3129,22 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 	}, [
 		currentValue,
 		isMultiSelect,
-		JSON.stringify(selectedIds.map((id) => {
-			const idKey = String(id);
-			return Object.prototype.hasOwnProperty.call(labelMap, idKey) ? [idKey, labelMap[idKey]] : [idKey];
-		}))
+		selectedLabelsKey
 	]);
 	const handleOpen = useCallback(() => setOpen(true), []);
 	const handleClose = useCallback(() => {
 		setOpen(false);
 		setIsChunkLoading(false);
 	}, []);
+	const handleFocus = useCallback(() => setIsFocused(true), []);
+	const handleBlur = useCallback(() => setIsFocused(false), []);
 	const handleInputChange = useCallback((e, value, reason) => {
 		if (reason === "input" || reason === "clear" || reason === "blur") setSearchInput(value);
 	}, []);
+	const selectionSignature = isMultiSelect ? currentValue.map(String).join(",") : String(currentValue);
 	useEffect(() => {
 		setSearchInput("");
-	}, [isMultiSelect ? currentValue.map(String).join(",") : String(currentValue)]);
+	}, [selectionSignature]);
 	const applyValue = useCallback((val) => {
 		if (filterMode) onFilterChange?.(val);
 		else if (formik) {
@@ -3163,7 +3172,10 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 		multiple: isMultiSelect,
 		disabled: isReadOnly,
 		options,
-		sx: { "& .MuiAutocomplete-clearIndicator": { visibility: "visible" } },
+		sx: {
+			"& .MuiAutocomplete-clearIndicator": { visibility: "visible" },
+			"& .MuiAutocomplete-inputRoot": { flexWrap: "wrap" }
+		},
 		getOptionKey: (option) => option.value,
 		filterOptions: (x) => x,
 		loading: isChunkLoading,
@@ -3175,17 +3187,64 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 		onChange: handleChange,
 		onOpen: handleOpen,
 		onClose: handleClose,
+		onFocus: handleFocus,
+		onBlur: handleBlur,
 		onInputChange: handleInputChange,
 		disableCloseOnSelect: isMultiSelect,
 		size: "small",
 		popupIcon: /* @__PURE__ */ jsx(KeyboardArrowDownIcon, {}),
 		fullWidth: true,
-		limitTags: column.limitTags || 5,
-		slotProps: { listbox: {
-			ref: setListboxNode,
-			onScroll: handleScroll,
-			style: { maxHeight: 280 }
-		} },
+		slotProps: {
+			paper: { sx: { pt: 1 } },
+			listbox: {
+				ref: setListboxNode,
+				onScroll: handleScroll,
+				style: {
+					maxHeight: 280,
+					paddingTop: 0
+				}
+			}
+		},
+		renderTags: (tagValue, getTagProps) => {
+			const tagLimit = column.limitTags || 5;
+			if (!isFocused && tagValue.length > tagLimit) {
+				const hiddenCount = tagValue.length - tagLimit;
+				return /* @__PURE__ */ jsxs(Fragment, { children: [tagValue.slice(0, tagLimit).map((option, index) => {
+					const { key, ...tagProps } = getTagProps({ index });
+					return /* @__PURE__ */ jsx(Chip, {
+						...tagProps,
+						label: option.label,
+						size: "small"
+					}, key);
+				}), /* @__PURE__ */ jsx(Typography$1, {
+					component: "span",
+					variant: "body2",
+					color: "text.secondary",
+					sx: { ml: .5 },
+					"aria-label": `${hiddenCount} ${tTranslate("more selected", tOpts)}`,
+					title: `${hiddenCount} ${tTranslate("more selected", tOpts)}`,
+					children: `+${hiddenCount}`
+				})] });
+			}
+			return /* @__PURE__ */ jsx(Box$1, {
+				sx: {
+					display: "flex",
+					flexWrap: "wrap",
+					gap: .5,
+					width: "100%",
+					maxHeight: 180,
+					overflowY: "auto"
+				},
+				children: tagValue.map((option, index) => {
+					const { key, ...tagProps } = getTagProps({ index });
+					return /* @__PURE__ */ jsx(Chip, {
+						...tagProps,
+						label: option.label,
+						size: "small"
+					}, key);
+				})
+			});
+		},
 		renderOption: (props, option, { selected }) => {
 			const { key, ...optionProps } = props;
 			return /* @__PURE__ */ jsxs("li", {
@@ -3796,8 +3855,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					const { value, formattedValue, row } = params;
 					if (value === null || value === void 0 || value === "") return value;
 					const urlValue = hyperlinkIndex ? row[hyperlinkIndex] : value;
+					const hyperlink = hyperlinkURL.replace("{0}", encodeURIComponent(String(urlValue)));
 					return /* @__PURE__ */ jsx("a", {
-						href: hyperlinkURL.replace("{0}", encodeURIComponent(String(urlValue))),
+						href: hyperlink,
 						rel: "noopener noreferrer",
 						target: "_blank",
 						children: formattedValue ?? value
@@ -3959,7 +4019,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			...extraParams,
 			...props.extraParams
 		};
-		if (assigned || available) mergedExtraParams[assigned ? "include" : "exclude"] = (Array.isArray(selected) ? selected.join(",") : selected || "") || "0";
+		if (assigned || available) {
+			const selectedValue = Array.isArray(selected) ? selected.join(",") : selected || "";
+			mergedExtraParams[assigned ? "include" : "exclude"] = selectedValue || "0";
+		}
 		if (isPivotExport) {
 			if (model.exportTemplate) mergedExtraParams.template = model.exportTemplate;
 			if (model.configFileName) mergedExtraParams.configFileName = model.configFileName;
@@ -5685,7 +5748,7 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
 			size: "small",
 			renderTags: (tagValue, getTagProps) => tagValue.map((option, index) => {
 				const { key, ...tagProps } = getTagProps({ index });
-				return /* @__PURE__ */ jsx(Chip, {
+				return /* @__PURE__ */ jsx(Chip$1, {
 					label: option,
 					...tagProps,
 					disabled: fixedOptions.includes(option)
@@ -5771,7 +5834,7 @@ function treeCheckBox({ column, field, formik, lookups, fieldConfigs, mode }) {
 //#region src/lib/components/Form/fields/fileUpload.js
 var consts$1 = { maxLength: 500 };
 var { errorMapping } = utils;
-var MB = 1024 * 1024;
+var MB = 1048576;
 function FileUpload({ column, field, formik }) {
 	const inputValue = formik.values[field] || "";
 	const { getApiEndpoint } = useStateContext();
@@ -5975,6 +6038,7 @@ function FileUpload({ column, field, formik }) {
 }
 //#endregion
 //#region src/lib/components/Form/fields/filePicker.js
+var CANVAS_PREVIEW_MAX_SIZE = 400;
 /**
 * Defers the actual upload to whenever the surrounding Form is submitted: stores the
 * raw File object in the formik field value so it travels through the normal save
@@ -5983,27 +6047,68 @@ function FileUpload({ column, field, formik }) {
 */
 function FilePicker({ column, field, formik, tOpts }) {
 	const value = formik.values[field];
+	const isSelectedFile = typeof File !== "undefined" && value instanceof File;
+	const isSelectedImage = isSelectedFile && Boolean(value.type) && value.type.startsWith("image/");
 	const { formats } = column;
 	const snackbar = useSnackbar();
-	const [selectedName, setSelectedName] = useState(typeof File !== "undefined" && value instanceof File ? value.name : null);
+	const [selectedName, setSelectedName] = useState(isSelectedFile ? value.name : null);
 	const [previewOpen, setPreviewOpen] = useState(false);
+	const canvasRef = useRef(null);
+	const [hasCanvasPreview, setHasCanvasPreview] = useState(false);
+	const [previewUnsupported, setPreviewUnsupported] = useState(false);
 	useEffect(() => {
-		setSelectedName(typeof File !== "undefined" && value instanceof File ? value.name : null);
-	}, [value]);
-	const savedPreviewSrc = typeof column.previewUrl === "function" ? column.previewUrl({
+		setSelectedName(isSelectedFile ? value.name : null);
+	}, [isSelectedFile, value]);
+	const savedPreviewSrc = typeof column.previewUrl === "function" && !isSelectedFile ? column.previewUrl({
 		formik,
 		value
 	}) : null;
-	const [objectUrl, setObjectUrl] = useState(null);
 	useEffect(() => {
-		if (typeof File !== "undefined" && value instanceof File) {
-			const url = URL.createObjectURL(value);
-			setObjectUrl(url);
-			return () => URL.revokeObjectURL(url);
+		if (!isSelectedImage) {
+			setHasCanvasPreview(false);
+			setPreviewUnsupported(false);
+			return;
 		}
-		setObjectUrl(null);
-	}, [value]);
-	const previewSrc = objectUrl || savedPreviewSrc || null;
+		let cancelled = false;
+		setHasCanvasPreview(false);
+		setPreviewUnsupported(false);
+		if (typeof createImageBitmap !== "function") {
+			setPreviewUnsupported(true);
+			return () => {
+				cancelled = true;
+			};
+		}
+		createImageBitmap(value).then((bitmap) => {
+			if (cancelled) {
+				bitmap.close();
+				return;
+			}
+			const canvas = canvasRef.current;
+			const ctx = canvas?.getContext("2d");
+			if (!canvas || !ctx) {
+				bitmap.close();
+				return;
+			}
+			const scale = Math.min(CANVAS_PREVIEW_MAX_SIZE / bitmap.width, CANVAS_PREVIEW_MAX_SIZE / bitmap.height, 1);
+			const targetWidth = Math.round(bitmap.width * scale);
+			const targetHeight = Math.round(bitmap.height * scale);
+			canvas.width = targetWidth;
+			canvas.height = targetHeight;
+			ctx.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+			bitmap.close();
+			setHasCanvasPreview(true);
+		}).catch(() => {
+			if (!cancelled) {
+				setHasCanvasPreview(false);
+				setPreviewUnsupported(true);
+			}
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [isSelectedImage, value]);
+	const previewSrc = !isSelectedFile ? savedPreviewSrc : null;
+	const hasPreview = hasCanvasPreview || Boolean(previewSrc);
 	const handleFileChange = (event) => {
 		const file = event.target.files?.[0];
 		if (!file) return;
@@ -6040,22 +6145,40 @@ function FilePicker({ column, field, formik, tOpts }) {
 				variant: "body2",
 				children: displayName
 			}),
-			previewSrc && /* @__PURE__ */ jsx(IconButton, {
+			hasPreview && /* @__PURE__ */ jsx(IconButton, {
 				className: "button-outline",
 				"aria-label": "Preview file",
 				onClick: () => setPreviewOpen(true),
 				children: /* @__PURE__ */ jsx(PageviewIcon, {})
 			}),
+			previewUnsupported && !hasPreview && /* @__PURE__ */ jsx(Typography$1, {
+				variant: "caption",
+				color: "text.secondary",
+				children: "Preview unavailable for this file"
+			}),
 			/* @__PURE__ */ jsx(Dialog$1, {
-				open: previewOpen && Boolean(previewSrc),
+				open: previewOpen && hasPreview,
 				onClose: () => setPreviewOpen(false),
 				maxWidth: "md",
-				children: /* @__PURE__ */ jsx(DialogContent$1, { children: previewSrc && /* @__PURE__ */ jsx("img", {
+				keepMounted: true,
+				children: /* @__PURE__ */ jsx(DialogContent$1, { children: isSelectedImage ? /* @__PURE__ */ jsx("canvas", {
+					ref: canvasRef,
+					role: "img",
+					"aria-label": displayName || "File preview",
+					style: {
+						maxWidth: CANVAS_PREVIEW_MAX_SIZE,
+						maxHeight: CANVAS_PREVIEW_MAX_SIZE,
+						width: "auto",
+						height: "auto",
+						display: hasCanvasPreview ? "block" : "none"
+					},
+					children: displayName || "File preview"
+				}) : previewSrc && /* @__PURE__ */ jsx("img", {
 					src: previewSrc,
 					alt: displayName || "File preview",
 					style: {
-						maxWidth: 400,
-						maxHeight: 400,
+						maxWidth: CANVAS_PREVIEW_MAX_SIZE,
+						maxHeight: CANVAS_PREVIEW_MAX_SIZE,
 						width: "auto",
 						height: "auto",
 						objectFit: "contain",
@@ -6526,8 +6649,9 @@ var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, re
 				"aria-label": "relations tabs",
 				children: relations.map((relation, idx) => {
 					const modelConfigOfChildGrid = models.find(({ name }) => name === relation) || {};
+					const label = modelConfigOfChildGrid.listTitle || modelConfigOfChildGrid.title || relation;
 					return /* @__PURE__ */ jsx(Tab, {
-						label: tTranslate(modelConfigOfChildGrid.listTitle || modelConfigOfChildGrid.title || relation, tOpts),
+						label: tTranslate(label, tOpts),
 						...a11yProps(idx)
 					}, relation);
 				})
@@ -6630,9 +6754,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 			case consts.string:
 				navigatePath = navigateBack;
 				break;
-			default:
-				navigatePath = pathname.substring(0, pathname.lastIndexOf("/"));
-				break;
+			default: navigatePath = pathname.substring(0, pathname.lastIndexOf("/"));
 		}
 		navigate(navigatePath);
 	}, [
@@ -6696,20 +6818,21 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 		formApi,
 		loadRecord
 	]);
+	const validationSchema = useMemo(() => model.getValidationSchema({
+		id,
+		tTranslate,
+		tOpts
+	}), [
+		id,
+		model,
+		translate,
+		tOpts,
+		tTranslate
+	]);
 	const formik = useFormik({
 		enableReinitialize: true,
 		initialValues,
-		validationSchema: useMemo(() => model.getValidationSchema({
-			id,
-			tTranslate,
-			tOpts
-		}), [
-			id,
-			model,
-			translate,
-			tOpts,
-			tTranslate
-		]),
+		validationSchema,
 		validateOnBlur: model?.validateOnBlur ?? false,
 		onSubmit: async (values, { resetForm }) => {
 			Object.keys(values).forEach((key) => {
@@ -6959,7 +7082,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.139.0/helpers/esm/typeof.js
+//#region \0@oxc-project+runtime@0.142.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -6969,7 +7092,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.139.0/helpers/esm/toPrimitive.js
+//#region \0@oxc-project+runtime@0.142.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -6981,13 +7104,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.139.0/helpers/esm/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.142.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.139.0/helpers/esm/defineProperty.js
+//#region \0@oxc-project+runtime@0.142.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
@@ -7253,9 +7376,7 @@ var UiModel = class UiModel {
 				case "fileUpload":
 					config = yup.string().trim().label(formLabel);
 					break;
-				default:
-					config = yup.mixed().nullable().label(formLabel);
-					break;
+				default: config = yup.mixed().nullable().label(formLabel);
 			}
 			if (required) if (type === "string") config = applyRequired(config, formLabel, true, t);
 			else if (type === "radio" || type === "dayRadio") config = config.required(resolveValidationMessage("requiredSelectOption", { label: formLabel }, t));
