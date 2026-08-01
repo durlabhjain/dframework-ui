@@ -1572,33 +1572,35 @@ const GridBase = memo(({
 
 export default GridBase;
 
+const renderersCache = new Map();
+
 const renderers = {
-    cache: new Map(),
-    number: function ({ precision, ifNanN = '-' }) {
-        const key = `number.${precision}:${ifNanN}`;
-        if (!this.cache.has(key)) {
+    number: function ({ precision, ifNaN = '-' }) {
+        const key = `number.${precision}:${ifNaN}`;
+        if (!renderersCache.has(key)) {
+            const numberFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: precision, maximumFractionDigits: precision });
             const formatter = function (value) {
                 if (isNaN(value)) {
-                    return ifNanN;
+                    return ifNaN;
                 }
-                return new Intl.NumberFormat(undefined, { minimumFractionDigits: precision, maximumFractionDigits: precision }).format(value);
+                return numberFormat.format(value);
             }
-            this.cache.set(key, formatter);
+            renderersCache.set(key, formatter);
         }
-        return this.cache.get(key);
+        return renderersCache.get(key);
     },
     stringwithDefaultOnEmpty: function (defaultValue = '') {
         const key = `stringwithDefaultOnEmpty:${defaultValue}`;
-        if (!this.cache.has(key)) {
+        if (!renderersCache.has(key)) {
             const formatter = function (value) {
                 if (value === null || value === undefined || value === '') {
                     return defaultValue;
                 }
                 return value;
             }
-            this.cache.set(key, formatter);
+            renderersCache.set(key, formatter);
         }
-        return this.cache.get(key);
+        return renderersCache.get(key);
     }
 }
 
