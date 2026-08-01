@@ -6045,7 +6045,7 @@ var CANVAS_PREVIEW_MAX_SIZE = 400;
 * request as a multipart part (see httpRequest.js getFormData), instead of uploading
 * immediately like fields/fileUpload.js does for the single-document-link use case.
 */
-function FilePicker({ column, field, formik, tOpts }) {
+function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key }) {
 	const value = formik.values[field];
 	const isSelectedFile = typeof File !== "undefined" && value instanceof File;
 	const isSelectedImage = isSelectedFile && Boolean(value.type) && value.type.startsWith("image/");
@@ -6133,11 +6133,11 @@ function FilePicker({ column, field, formik, tOpts }) {
 			/* @__PURE__ */ jsxs(Button$1, {
 				variant: "outlined",
 				component: "label",
-				children: ["Choose File", /* @__PURE__ */ jsx("input", {
+				children: [tTranslate("Choose File", tOpts), /* @__PURE__ */ jsx("input", {
 					type: "file",
 					hidden: true,
 					accept: column.accept,
-					"aria-label": "Choose file",
+					"aria-label": tTranslate("Choose File", tOpts),
 					onChange: handleFileChange
 				})]
 			}),
@@ -6147,14 +6147,14 @@ function FilePicker({ column, field, formik, tOpts }) {
 			}),
 			hasPreview && /* @__PURE__ */ jsx(IconButton, {
 				className: "button-outline",
-				"aria-label": "Preview file",
+				"aria-label": tTranslate("Preview file", tOpts),
 				onClick: () => setPreviewOpen(true),
 				children: /* @__PURE__ */ jsx(PageviewIcon, {})
 			}),
 			previewUnsupported && !hasPreview && /* @__PURE__ */ jsx(Typography$1, {
 				variant: "caption",
 				color: "text.secondary",
-				children: "Preview unavailable for this file"
+				children: tTranslate("Preview unavailable for this file", tOpts)
 			}),
 			/* @__PURE__ */ jsx(Dialog$1, {
 				open: previewOpen && hasPreview,
@@ -6164,7 +6164,7 @@ function FilePicker({ column, field, formik, tOpts }) {
 				children: /* @__PURE__ */ jsx(DialogContent$1, { children: isSelectedImage ? /* @__PURE__ */ jsx("canvas", {
 					ref: canvasRef,
 					role: "img",
-					"aria-label": displayName || "File preview",
+					"aria-label": displayName || tTranslate("File preview", tOpts),
 					style: {
 						maxWidth: CANVAS_PREVIEW_MAX_SIZE,
 						maxHeight: CANVAS_PREVIEW_MAX_SIZE,
@@ -6172,10 +6172,10 @@ function FilePicker({ column, field, formik, tOpts }) {
 						height: "auto",
 						display: hasCanvasPreview ? "block" : "none"
 					},
-					children: displayName || "File preview"
+					children: displayName || tTranslate("File preview", tOpts)
 				}) : previewSrc && /* @__PURE__ */ jsx("img", {
 					src: previewSrc,
-					alt: displayName || "File preview",
+					alt: displayName || tTranslate("File preview", tOpts),
 					style: {
 						maxWidth: CANVAS_PREVIEW_MAX_SIZE,
 						maxHeight: CANVAS_PREVIEW_MAX_SIZE,
