@@ -117,7 +117,7 @@ function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key })
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button variant="outlined" component="label">
                 {tTranslate("Choose File", tOpts)}
-                <input type="file" hidden accept={column.accept} aria-label={tTranslate("Choose file", tOpts)} onChange={handleFileChange} />
+                <input type="file" hidden accept={column.accept} aria-label={tTranslate("Choose File", tOpts)} onChange={handleFileChange} />
             </Button>
             {displayName && <Typography variant="body2">{displayName}</Typography>}
             {hasPreview && (
