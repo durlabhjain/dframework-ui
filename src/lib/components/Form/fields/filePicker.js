@@ -12,7 +12,7 @@ const CANVAS_PREVIEW_MAX_SIZE = 400;
  * request as a multipart part (see httpRequest.js getFormData), instead of uploading
  * immediately like fields/fileUpload.js does for the single-document-link use case.
  */
-function FilePicker({ column, field, formik, tOpts }) {
+function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key }) {
     const value = formik.values[field];
     const isSelectedFile = typeof File !== "undefined" && value instanceof File;
     const isSelectedImage = isSelectedFile && Boolean(value.type) && value.type.startsWith("image/");
@@ -116,18 +116,18 @@ function FilePicker({ column, field, formik, tOpts }) {
     return (
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button variant="outlined" component="label">
-                Choose File
-                <input type="file" hidden accept={column.accept} aria-label="Choose file" onChange={handleFileChange} />
+                {tTranslate("Choose File", tOpts)}
+                <input type="file" hidden accept={column.accept} aria-label={tTranslate("Choose file", tOpts)} onChange={handleFileChange} />
             </Button>
             {displayName && <Typography variant="body2">{displayName}</Typography>}
             {hasPreview && (
-                <IconButton className="button-outline" aria-label="Preview file" onClick={() => setPreviewOpen(true)}>
+                <IconButton className="button-outline" aria-label={tTranslate("Preview file", tOpts)} onClick={() => setPreviewOpen(true)}>
                     <PageviewIcon />
                 </IconButton>
             )}
             {previewUnsupported && !hasPreview && (
                 <Typography variant="caption" color="text.secondary">
-                    Preview unavailable for this file
+                    {tTranslate("Preview unavailable for this file", tOpts)}
                 </Typography>
             )}
             {/* keepMounted: canvas must exist before the file is chosen since the draw effect fires on selection, not on dialog open */}
@@ -137,16 +137,16 @@ function FilePicker({ column, field, formik, tOpts }) {
                         <canvas
                             ref={canvasRef}
                             role="img"
-                            aria-label={displayName || "File preview"}
+                            aria-label={displayName || tTranslate("File preview", tOpts)}
                             style={{ maxWidth: CANVAS_PREVIEW_MAX_SIZE, maxHeight: CANVAS_PREVIEW_MAX_SIZE, width: "auto", height: "auto", display: hasCanvasPreview ? "block" : "none" }}
                         >
-                            {displayName || "File preview"}
+                            {displayName || tTranslate("File preview", tOpts)}
                         </canvas>
                     ) : (
                         previewSrc && (
                             <img
                                 src={previewSrc}
-                                alt={displayName || "File preview"}
+                                alt={displayName || tTranslate("File preview", tOpts)}
                                 style={{ maxWidth: CANVAS_PREVIEW_MAX_SIZE, maxHeight: CANVAS_PREVIEW_MAX_SIZE, width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }}
                             />
                         )
