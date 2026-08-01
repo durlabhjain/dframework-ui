@@ -1,7 +1,7 @@
 
 import { SnackbarProvider, SnackbarContext, useSnackbar } from './components/SnackBar';
 import { DialogComponent } from './components/Dialog';
-import GridBase from './components/Grid/index';
+import GridBase, { renderers } from './components/Grid/index';
 import { UiModel } from './components/Grid/ui-models';
 import HelpModal from './components/HelpModal';
 import PageTitle from './components/PageTitle';
@@ -28,6 +28,7 @@ export {
   DialogComponent,
   UiModel,
   GridBase,
+  renderers,
   RouterProvider,
   MuiTypography,
   PageTitle,

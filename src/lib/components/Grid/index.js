@@ -1571,3 +1571,35 @@ const GridBase = memo(({
 }, areEqual);
 
 export default GridBase;
+
+const renderers = {
+    cache: new Map(),
+    number: function ({ precision, ifNanN = '-' }) {
+        const key = `number.${precision}:${ifNanN}`;
+        if (!this.cache.has(key)) {
+            const formatter = function (value) {
+                if (isNaN(value)) {
+                    return ifNanN;
+                }
+                return new Intl.NumberFormat(undefined, { minimumFractionDigits: precision, maximumFractionDigits: precision }).format(value);
+            }
+            this.cache.set(key, formatter);
+        }
+        return this.cache.get(key);
+    },
+    stringwithDefaultOnEmpty: function (defaultValue = '') {
+        const key = `stringwithDefaultOnEmpty:${defaultValue}`;
+        if (!this.cache.has(key)) {
+            const formatter = function (value) {
+                if (value === null || value === undefined || value === '') {
+                    return defaultValue;
+                }
+                return value;
+            }
+            this.cache.set(key, formatter);
+        }
+        return this.cache.get(key);
+    }
+}
+
+export { renderers };
