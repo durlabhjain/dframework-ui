@@ -1575,22 +1575,26 @@ export default GridBase;
 const renderersCache = new Map();
 
 const renderers = {
-    number: function ({ precision, ifNaN = '-' }) {
+    number: function ({ precision = 2, ifNaN = '-' } = {}) {
         const key = `number.${precision}:${ifNaN}`;
         if (!renderersCache.has(key)) {
             const numberFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: precision, maximumFractionDigits: precision });
             const formatter = function (value) {
-                if (isNaN(value)) {
+                if (value === null || value === undefined || value === '') {
                     return ifNaN;
                 }
-                return numberFormat.format(value);
+                const numericValue = Number(value);
+                if (isNaN(numericValue)) {
+                    return ifNaN;
+                }
+                return numberFormat.format(numericValue);
             }
             renderersCache.set(key, formatter);
         }
         return renderersCache.get(key);
     },
-    stringwithDefaultOnEmpty: function (defaultValue = '') {
-        const key = `stringwithDefaultOnEmpty:${defaultValue}`;
+    stringWithDefaultOnEmpty: function (defaultValue = '') {
+        const key = `stringWithDefaultOnEmpty:${defaultValue}`;
         if (!renderersCache.has(key)) {
             const formatter = function (value) {
                 if (value === null || value === undefined || value === '') {
