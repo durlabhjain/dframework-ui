@@ -4930,6 +4930,37 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		]
 	})] });
 }, areEqual);
+var renderersCache = /* @__PURE__ */ new Map();
+var renderers = {
+	number: function({ precision = 2, ifNaN = "-" } = {}) {
+		const key = `number.${precision}:${ifNaN}`;
+		if (!renderersCache.has(key)) {
+			const numberFormat = new Intl.NumberFormat(void 0, {
+				minimumFractionDigits: precision,
+				maximumFractionDigits: precision
+			});
+			const formatter = function(value) {
+				if (value === null || value === void 0 || value === "") return ifNaN;
+				const numericValue = Number(value);
+				if (isNaN(numericValue)) return ifNaN;
+				return numberFormat.format(numericValue);
+			};
+			renderersCache.set(key, formatter);
+		}
+		return renderersCache.get(key);
+	},
+	stringWithDefaultOnEmpty: function(defaultValue = "") {
+		const key = `stringWithDefaultOnEmpty:${defaultValue}`;
+		if (!renderersCache.has(key)) {
+			const formatter = function(value) {
+				if (value === null || value === void 0 || value === "") return defaultValue;
+				return value;
+			};
+			renderersCache.set(key, formatter);
+		}
+		return renderersCache.get(key);
+	}
+};
 //#endregion
 //#region src/lib/components/Form/fields/boolean.js
 var Field$10 = ({ column, field, formik, otherProps }) => {
@@ -7410,6 +7441,6 @@ _defineProperty(UiModel, "defaultPermissions", {
 	delete: true
 });
 //#endregion
-export { AppError, DialogComponent, ERROR_CODES, ERROR_MESSAGES, GridBase, HelpModal, MuiTypography, PageTitle_default as PageTitle, RouterProvider, SnackbarContext, SnackbarProvider, StateProvider, UiModel, crudHelper, daDKGrid, deDEGrid, elGRGrid, esESGrid, frFRGrid, request as httpRequest, itITGrid, locales, ptPT_default as ptPT, resolveErrorMessage, trTRGrid, useMobile, useModelTranslation, useRouter, useSnackbar, useStateContext };
+export { AppError, DialogComponent, ERROR_CODES, ERROR_MESSAGES, GridBase, HelpModal, MuiTypography, PageTitle_default as PageTitle, RouterProvider, SnackbarContext, SnackbarProvider, StateProvider, UiModel, crudHelper, daDKGrid, deDEGrid, elGRGrid, esESGrid, frFRGrid, request as httpRequest, itITGrid, locales, ptPT_default as ptPT, renderers, resolveErrorMessage, trTRGrid, useMobile, useModelTranslation, useRouter, useSnackbar, useStateContext };
 
 //# sourceMappingURL=index.js.map
