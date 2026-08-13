@@ -11,7 +11,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import * as locales$1 from "@mui/x-data-grid-premium";
-import { ColumnsPanelTrigger, DataGridPremium, FilterPanelTrigger, GRID_CHECKBOX_SELECTION_COL_DEF, GridActionsCellItem, GridFooter, GridFooterContainer, GridToolbarExportContainer, Toolbar, getGridDateOperators, getGridNumericOperators, getGridSingleSelectOperators, gridRowSelectionStateSelector, useGridApiContext, useGridApiRef, useGridSelector } from "@mui/x-data-grid-premium";
+import { ColumnsPanelTrigger, DataGridPremium, FilterPanelTrigger, GRID_CHECKBOX_SELECTION_COL_DEF, GridActionsCellItem, GridFooter, GridFooterContainer, GridToolbarExportContainer, Toolbar, getGridBooleanOperators, getGridDateOperators, getGridNumericOperators, getGridSingleSelectOperators, getGridStringOperators, gridRowSelectionStateSelector, useGridApiContext, useGridApiRef, useGridSelector } from "@mui/x-data-grid-premium";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CopyIcon from "@mui/icons-material/FileCopy";
 import ArticleIcon from "@mui/icons-material/Article";
@@ -342,12 +342,14 @@ var transport = async (config) => {
 		headers: { ...headers },
 		...rest
 	};
-	if (data) if (headers["Content-Type"] === "multipart/form-data") {
-		delete fetchOptions.headers["Content-Type"];
-		fetchOptions.body = data instanceof FormData ? data : getFormData(data);
-	} else {
-		fetchOptions.headers["Content-Type"] = headers["Content-Type"] || "application/json";
-		fetchOptions.body = typeof data === "string" ? data : JSON.stringify(data);
+	if (data) {
+		if (headers["Content-Type"] === "multipart/form-data") {
+			delete fetchOptions.headers["Content-Type"];
+			fetchOptions.body = data instanceof FormData ? data : getFormData(data);
+		} else {
+			fetchOptions.headers["Content-Type"] = headers["Content-Type"] || "application/json";
+			fetchOptions.body = typeof data === "string" ? data : JSON.stringify(data);
+		}
 	}
 	const response = await fetch(url, fetchOptions);
 	const contentType = response.headers.get("content-type") || {};
@@ -1313,12 +1315,13 @@ var StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API_E
 			if (userData) {
 				userDateFormat = userData.split(" ");
 				userDateFormat[0] = userDateFormat[0].toUpperCase();
-				if (!isDateFormatOnly) if (showOnlyDate) userDateFormat = userDateFormat[0].toUpperCase();
-				else {
-					userDateFormat[1] += !userDateFormat[1].includes(":ss") ? ":ss" : "";
-					userDateFormat = userDateFormat.join(" ");
-				}
-				else userDateFormat = userDateFormat[0];
+				if (!isDateFormatOnly) {
+					if (showOnlyDate) userDateFormat = userDateFormat[0].toUpperCase();
+					else {
+						userDateFormat[1] += !userDateFormat[1].includes(":ss") ? ":ss" : "";
+						userDateFormat = userDateFormat.join(" ");
+					}
+				} else userDateFormat = userDateFormat[0];
 			}
 			return userDateFormat;
 		}
@@ -3387,6 +3390,12 @@ var EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze([
 	"isNotEmpty",
 	"isAnyOf"
 ]);
+var DEFAULT_FILTER_OPERATORS_BY_TYPE = {
+	string: getGridStringOperators,
+	number: getGridNumericOperators,
+	boolean: getGridBooleanOperators,
+	singleSelect: getGridSingleSelectOperators
+};
 var EMPTY_SORT_MODEL = Object.freeze([]);
 var EMPTY_FILTER_MODEL = Object.freeze({
 	items: [],
@@ -3724,27 +3733,29 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	}
 	if (prevCustomFilters !== customFilters) {
 		setPrevCustomFilters(customFilters);
-		if (customFilters && Object.keys(customFilters).length) if (customFilters.clear) setFilterModel({
-			items: [],
-			logicOperator: "and",
-			quickFilterValues: [],
-			quickFilterLogicOperator: "and"
-		});
-		else setFilterModel({
-			items: Object.entries(customFilters).reduce((acc, [key, value]) => {
-				if (key === constants.startDate || key === constants.endDate) acc.push(value);
-				else if (key in customFilters) acc.push({
-					field: key,
-					value,
-					operator: "equals",
-					type: "string"
-				});
-				return acc;
-			}, []),
-			logicOperator: "and",
-			quickFilterValues: [],
-			quickFilterLogicOperator: "and"
-		});
+		if (customFilters && Object.keys(customFilters).length) {
+			if (customFilters.clear) setFilterModel({
+				items: [],
+				logicOperator: "and",
+				quickFilterValues: [],
+				quickFilterLogicOperator: "and"
+			});
+			else setFilterModel({
+				items: Object.entries(customFilters).reduce((acc, [key, value]) => {
+					if (key === constants.startDate || key === constants.endDate) acc.push(value);
+					else if (key in customFilters) acc.push({
+						field: key,
+						value,
+						operator: "equals",
+						type: "string"
+					});
+					return acc;
+				}, []),
+				logicOperator: "and",
+				quickFilterValues: [],
+				quickFilterLogicOperator: "and"
+			});
+		}
 	}
 	const lookupOptions = useCallback(({ field, lookupMap: lookupMapParam }) => {
 		const lookupData = dataRef.current.lookups || {};
@@ -3843,6 +3854,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			}
 			if (updatedColumnType[column.type]) Object.assign(overrides, updatedColumnType[column.type]);
 			if (column.filterOperators) overrides.filterOperators = column.filterOperators;
+			if (column.allowEmpty === false) {
+				const finalType = overrides.type ?? column.type ?? "string";
+				overrides.filterOperators = (overrides.filterOperators ?? DEFAULT_FILTER_OPERATORS_BY_TYPE[finalType]?.() ?? getGridStringOperators()).filter((op) => !NO_VALUE_OPERATORS.includes(op.value));
+			}
 			if (overrides.valueOptions === constants.lookup) overrides.valueOptions = (params) => lookupOptions({
 				...params,
 				lookupMap
@@ -4932,8 +4947,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 }, areEqual);
 var renderersCache = /* @__PURE__ */ new Map();
 var renderers = {
-	number: function({ precision = 2, ifNaN = "-" } = {}) {
-		const key = `number.${precision}:${ifNaN}`;
+	number: function({ precision = 2, ifNaN = "-", prefix = "", suffix = "" } = {}) {
+		const key = `number.${precision}:${ifNaN}:${prefix}:${suffix}`;
 		if (!renderersCache.has(key)) {
 			const numberFormat = new Intl.NumberFormat(void 0, {
 				minimumFractionDigits: precision,
@@ -4943,7 +4958,7 @@ var renderers = {
 				if (value === null || value === void 0 || value === "") return ifNaN;
 				const numericValue = Number(value);
 				if (isNaN(numericValue)) return ifNaN;
-				return numberFormat.format(numericValue);
+				return `${prefix}${numberFormat.format(numericValue)}${suffix}`;
 			};
 			renderersCache.set(key, formatter);
 		}
@@ -7113,7 +7128,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.142.0/helpers/esm/typeof.js
+//#region \0@oxc-project+runtime@0.144.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -7123,7 +7138,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.142.0/helpers/esm/toPrimitive.js
+//#region \0@oxc-project+runtime@0.144.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -7135,13 +7150,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.142.0/helpers/esm/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.144.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.142.0/helpers/esm/defineProperty.js
+//#region \0@oxc-project+runtime@0.144.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
@@ -7409,12 +7424,14 @@ var UiModel = class UiModel {
 					break;
 				default: config = yup.mixed().nullable().label(formLabel);
 			}
-			if (required) if (type === "string") config = applyRequired(config, formLabel, true, t);
-			else if (type === "radio" || type === "dayRadio") config = config.required(resolveValidationMessage("requiredSelectOption", { label: formLabel }, t));
-			else if (type === "date" || type === "dateTime") config = config.required(resolveValidationMessage("required", { label: formLabel }, t));
-			else if (type === "select" || type === "autocomplete") config = config.required(resolveValidationMessage("requiredSelect", { label: formLabel }, t));
-			else if (type === "number") config = config.required(resolveValidationMessage("requiredNumber", { label: formLabel }, t));
-			else config = applyRequired(config, formLabel, false, t);
+			if (required) {
+				if (type === "string") config = applyRequired(config, formLabel, true, t);
+				else if (type === "radio" || type === "dayRadio") config = config.required(resolveValidationMessage("requiredSelectOption", { label: formLabel }, t));
+				else if (type === "date" || type === "dateTime") config = config.required(resolveValidationMessage("required", { label: formLabel }, t));
+				else if (type === "select" || type === "autocomplete") config = config.required(resolveValidationMessage("requiredSelect", { label: formLabel }, t));
+				else if (type === "number") config = config.required(resolveValidationMessage("requiredNumber", { label: formLabel }, t));
+				else config = applyRequired(config, formLabel, false, t);
+			}
 			if (requiredIfNew && (!id || id === "")) config = applyRequired(config, formLabel, type === "string", t);
 			config = this.applyColumnValidation(config, {
 				column,
