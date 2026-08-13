@@ -7,7 +7,9 @@ import {
     useGridSelector,
     gridRowSelectionStateSelector,
     getGridNumericOperators,
-    getGridSingleSelectOperators
+    getGridSingleSelectOperators,
+    getGridStringOperators,
+    getGridBooleanOperators
 } from '@mui/x-data-grid-premium';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIcon from '@mui/icons-material/FileCopy';
@@ -82,6 +84,12 @@ const constants = {
 // Operators that do not require a value
 const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
 const EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze(['isEmpty', 'isNotEmpty', 'isAnyOf']);
+const DEFAULT_FILTER_OPERATORS_BY_TYPE = {
+    string: getGridStringOperators,
+    number: getGridNumericOperators,
+    boolean: getGridBooleanOperators,
+    singleSelect: getGridSingleSelectOperators
+};
 
 // Stable empty references used when localSortAndFilter is enabled to prevent
 // fetchData from being recreated (and re-triggering API calls) on sort/filter changes
@@ -609,6 +617,13 @@ const GridBase = memo(({
             }
             if (column.filterOperators) {
                 overrides.filterOperators = column.filterOperators;
+            }
+            if (column.allowEmpty === false) {
+                const finalType = overrides.type ?? column.type ?? 'string';
+                const baseOperators = overrides.filterOperators
+                    ?? DEFAULT_FILTER_OPERATORS_BY_TYPE[finalType]?.()
+                    ?? getGridStringOperators();
+                overrides.filterOperators = baseOperators.filter(op => !NO_VALUE_OPERATORS.includes(op.value));
             }
             // Common filter operator pattern
             if (overrides.valueOptions === constants.lookup) {
@@ -1575,8 +1590,8 @@ export default GridBase;
 const renderersCache = new Map();
 
 const renderers = {
-    number: function ({ precision = 2, ifNaN = '-' } = {}) {
-        const key = `number.${precision}:${ifNaN}`;
+    number: function ({ precision = 2, ifNaN = '-', prefix = '', suffix = '' } = {}) {
+        const key = `number.${precision}:${ifNaN}:${prefix}:${suffix}`;
         if (!renderersCache.has(key)) {
             const numberFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: precision, maximumFractionDigits: precision });
             const formatter = function (value) {
@@ -1587,7 +1602,7 @@ const renderers = {
                 if (isNaN(numericValue)) {
                     return ifNaN;
                 }
-                return numberFormat.format(numericValue);
+                return `${prefix}${numberFormat.format(numericValue)}${suffix}`;
             }
             renderersCache.set(key, formatter);
         }
