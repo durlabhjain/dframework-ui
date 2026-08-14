@@ -763,7 +763,7 @@ const GridBase = memo(({
         extraParams: props.extraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters
     }, model.debug);
 
-    const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
+    const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns, exportKey } = {}) => {
         if (hasStaticData || !backendApi || !preferencesReady) return;
         const { pageSize, page } = paginationModelForFetch;
         const isExportRequest = Boolean(contentType);
@@ -838,7 +838,11 @@ const GridBase = memo(({
         apiRef.current.listParams = listParams;
         if (!isExportRequest) setIsLoading(true);
         try {
-            const result = await getList({ ...listParams, contentType, columns, signal });
+            let listParameters = { ...listParams, contentType, columns, signal };
+            if (typeof model.beforeList === 'function') {
+                listParameters = await model.beforeList({ ...listParameters, t: tTranslate, tOpts, exportKey }) || listParameters;
+            }
+            const result = await getList(listParameters);
             if (!isExportRequest && result !== undefined && fetchAbortControllerRef.current === controller) {
                 if (result?.aborted) return;
                 setData(result);
@@ -852,7 +856,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters]);
+    }, [hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters, tTranslate, tOpts]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -1207,6 +1211,7 @@ const GridBase = memo(({
         fetchData({
             action: "export",
             isPivotExport,
+            exportKey: e.currentTarget.dataset.exportKey,
             contentType,
             columns
         });

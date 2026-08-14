@@ -16,12 +16,13 @@ export const convertDefaultSort = (defaultSort, constants, sortRegex) => {
 };
 
 // Export menu item component (internal use only — used by CustomExportButton below)
-export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, icon }) => (
+export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, exportKey, icon }) => (
     <MenuItem
         onClick={handleExport}
         data-type={type}
         data-content-type={contentType}
         data-is-pivot-export={isPivotExport}
+        data-export-key={exportKey}
     >
         <Box className="grid-icons" sx={{ pointerEvents: 'none', marginTop: 1 }}>{icon}</Box>
         {tTranslate(type, tOpts)}
@@ -43,6 +44,7 @@ export const CustomExportButton = ({ exportFormats, customExportOptions, isStati
                 {...props}
                 icon={item.icon || <TableChart fontSize="small" />}
                 type={item.label || 'Excel'}
+                exportKey={item.key}
                 contentType={item.contentType || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
                 handleExport={item.handleExport || props.handleExport}
             />
