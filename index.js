@@ -2409,11 +2409,12 @@ var convertDefaultSort = (defaultSort, constants, sortRegex) => {
 		}];
 	});
 };
-var ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, icon }) => /* @__PURE__ */ jsxs(MenuItem$1, {
+var ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, exportKey, icon }) => /* @__PURE__ */ jsxs(MenuItem$1, {
 	onClick: handleExport,
 	"data-type": type,
 	"data-content-type": contentType,
 	"data-is-pivot-export": isPivotExport,
+	"data-export-key": exportKey,
 	children: [/* @__PURE__ */ jsx(Box, {
 		className: "grid-icons",
 		sx: {
@@ -2429,43 +2430,50 @@ var CustomExportButton = ({ exportFormats, customExportOptions, isStaticDataMode
 			...props,
 			icon: /* @__PURE__ */ jsx(GridOn, { fontSize: "small" }),
 			type: "CSV",
-			contentType: "text/csv"
+			contentType: "text/csv",
+			exportKey: "csvExport"
 		}, "csv"),
 		exportFormats.excel !== false && /* @__PURE__ */ jsx(ExportMenuItem, {
 			...props,
 			icon: /* @__PURE__ */ jsx(TableChart, { fontSize: "small" }),
 			type: "Excel",
-			contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+			contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			exportKey: "excelExport"
 		}, "excel"),
 		!isStaticDataMode && props.showPivotExportBtn && /* @__PURE__ */ jsx(ExportMenuItem, {
 			...props,
 			icon: /* @__PURE__ */ jsx(TableChart, { fontSize: "small" }),
 			type: "Excel With Pivot",
 			contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-			isPivotExport: true
+			isPivotExport: true,
+			exportKey: "pivotExport"
 		}, "pivot"),
 		!isStaticDataMode && exportFormats.xml !== false && /* @__PURE__ */ jsx(ExportMenuItem, {
 			...props,
 			icon: /* @__PURE__ */ jsx(Code, { fontSize: "small" }),
 			type: "XML",
-			contentType: "text/xml"
+			contentType: "text/xml",
+			exportKey: "xmlExport"
 		}, "xml"),
 		!isStaticDataMode && exportFormats.html !== false && /* @__PURE__ */ jsx(ExportMenuItem, {
 			...props,
 			icon: /* @__PURE__ */ jsx(Language, { fontSize: "small" }),
 			type: "HTML",
-			contentType: "text/html"
+			contentType: "text/html",
+			exportKey: "htmlExport"
 		}, "html"),
 		!isStaticDataMode && exportFormats.json !== false && /* @__PURE__ */ jsx(ExportMenuItem, {
 			...props,
 			icon: /* @__PURE__ */ jsx(DataObject, { fontSize: "small" }),
 			type: "JSON",
-			contentType: "application/json"
+			contentType: "application/json",
+			exportKey: "jsonExport"
 		}, "json"),
 		!isStaticDataMode && Array.isArray(customExportOptions) && customExportOptions.map((item, index) => /* @__PURE__ */ jsx(ExportMenuItem, {
 			...props,
 			icon: item.icon || /* @__PURE__ */ jsx(TableChart, { fontSize: "small" }),
 			type: item.label || "Excel",
+			exportKey: item.key,
 			contentType: item.contentType || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 			handleExport: item.handleExport || props.handleExport
 		}, item.key || index))
@@ -4012,7 +4020,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		parentFilters,
 		additionalFilters
 	}, model.debug);
-	const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns } = {}) => {
+	const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns, exportKey } = {}) => {
 		if (hasStaticData || !backendApi || !preferencesReady) return;
 		const { pageSize, page } = paginationModelForFetch;
 		const isExportRequest = Boolean(contentType);
@@ -4067,12 +4075,19 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		apiRef.current.listParams = listParams;
 		if (!isExportRequest) setIsLoading(true);
 		try {
-			const result = await getList({
+			let listParameters = {
 				...listParams,
 				contentType,
 				columns,
 				signal
-			});
+			};
+			if (typeof model.beforeList === "function") listParameters = await model.beforeList({
+				...listParameters,
+				t: tTranslate,
+				tOpts,
+				exportKey
+			}) || listParameters;
+			const result = await getList(listParameters);
 			if (!isExportRequest && result !== void 0 && fetchAbortControllerRef.current === controller) {
 				if (result?.aborted) return;
 				setData(result);
@@ -4105,7 +4120,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		sortModelForFetch,
 		fetchColumns,
 		parentFilters,
-		additionalFilters
+		additionalFilters,
+		tTranslate,
+		tOpts
 	]);
 	const openForm = useCallback(async ({ id, record = {}, mode }) => {
 		if (setActiveRecord) {
@@ -4491,6 +4508,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		fetchData({
 			action: "export",
 			isPivotExport,
+			exportKey: e.currentTarget?.dataset?.exportKey || e.target?.dataset?.exportKey,
 			contentType,
 			columns
 		});
