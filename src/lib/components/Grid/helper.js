@@ -16,12 +16,13 @@ export const convertDefaultSort = (defaultSort, constants, sortRegex) => {
 };
 
 // Export menu item component (internal use only — used by CustomExportButton below)
-export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, icon }) => (
+export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, exportKey, icon }) => (
     <MenuItem
         onClick={handleExport}
         data-type={type}
         data-content-type={contentType}
         data-is-pivot-export={isPivotExport}
+        data-export-key={exportKey}
     >
         <Box className="grid-icons" sx={{ pointerEvents: 'none', marginTop: 1 }}>{icon}</Box>
         {tTranslate(type, tOpts)}
@@ -31,18 +32,19 @@ export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, t
 // Custom export button component
 export const CustomExportButton = ({ exportFormats, customExportOptions, isStaticDataMode = false, ...props }) => {
     const exportItems = [
-        exportFormats.csv !== false && <ExportMenuItem key="csv" {...props} icon={<GridOn fontSize="small" />} type="CSV" contentType="text/csv" />,
-        exportFormats.excel !== false && <ExportMenuItem key="excel" {...props} icon={<TableChart fontSize="small" />} type="Excel" contentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />,
-        !isStaticDataMode && props.showPivotExportBtn && <ExportMenuItem key="pivot" {...props} icon={<TableChart fontSize="small" />} type="Excel With Pivot" contentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" isPivotExport={true} />,
-        !isStaticDataMode && exportFormats.xml !== false && <ExportMenuItem key="xml" {...props} icon={<Code fontSize="small" />} type="XML" contentType="text/xml" />,
-        !isStaticDataMode && exportFormats.html !== false && <ExportMenuItem key="html" {...props} icon={<Language fontSize="small" />} type="HTML" contentType="text/html" />,
-        !isStaticDataMode && exportFormats.json !== false && <ExportMenuItem key="json" {...props} icon={<DataObjectIcon fontSize="small" />} type="JSON" contentType="application/json" />,
+        exportFormats.csv !== false && <ExportMenuItem key="csv" {...props} icon={<GridOn fontSize="small" />} type="CSV" contentType="text/csv" exportKey="csvExport" />,
+        exportFormats.excel !== false && <ExportMenuItem key="excel" {...props} icon={<TableChart fontSize="small" />} type="Excel" contentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" exportKey="excelExport" />,
+        !isStaticDataMode && props.showPivotExportBtn && <ExportMenuItem key="pivot" {...props} icon={<TableChart fontSize="small" />} type="Excel With Pivot" contentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" isPivotExport={true} exportKey="pivotExport" />,
+        !isStaticDataMode && exportFormats.xml !== false && <ExportMenuItem key="xml" {...props} icon={<Code fontSize="small" />} type="XML" contentType="text/xml" exportKey="xmlExport" />,
+        !isStaticDataMode && exportFormats.html !== false && <ExportMenuItem key="html" {...props} icon={<Language fontSize="small" />} type="HTML" contentType="text/html" exportKey="htmlExport" />,
+        !isStaticDataMode && exportFormats.json !== false && <ExportMenuItem key="json" {...props} icon={<DataObjectIcon fontSize="small" />} type="JSON" contentType="application/json" exportKey="jsonExport" />,
         !isStaticDataMode && Array.isArray(customExportOptions) && customExportOptions.map((item, index) => (
             <ExportMenuItem
                 key={item.key || index}
                 {...props}
                 icon={item.icon || <TableChart fontSize="small" />}
                 type={item.label || 'Excel'}
+                exportKey={item.key}
                 contentType={item.contentType || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}
                 handleExport={item.handleExport || props.handleExport}
             />
