@@ -1211,7 +1211,7 @@ const GridBase = memo(({
         fetchData({
             action: "export",
             isPivotExport,
-            exportKey: e.currentTarget.dataset.exportKey,
+            exportKey: e.currentTarget?.dataset?.exportKey || e.target?.dataset?.exportKey,
             contentType,
             columns
         });
