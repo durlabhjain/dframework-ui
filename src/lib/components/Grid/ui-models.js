@@ -2,6 +2,7 @@ import GridBase from './index';
 import * as yup from 'yup';
 import { Divider } from '@mui/material';
 import Form from '../Form/Form';
+import Relations from '../Form/relations';
 import utils from '../utils';
 
 const regexConfig = {
@@ -347,6 +348,13 @@ class UiModel {
 			<GridBase model={this} {...props} customStyle={customStyle} showRowsSelected={showRowsSelected} />
 			<Divider orientation='horizontal' sx={{ mt: 2 }} />
 		</>;
+	};
+
+	// Renders this model's declared childGrids (related UiModel/CsUiModel instances) as a Relations tab panel.
+	ChildGrids = (props) => {
+		if (!this.childGrids?.length) return null;
+		const relations = this.childGrids.map(childModel => childModel.name);
+		return <Relations relations={relations} models={this.childGrids} {...props} />;
 	};
 }
 
