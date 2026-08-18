@@ -93,7 +93,7 @@ const DEFAULT_FILTER_OPERATORS_BY_TYPE = {
 
 // Fills and internally scrolls within a bounded-height flex ancestor; used when model.childGrids is set.
 const CHILD_GRIDS_FILL_STYLE = Object.freeze({ height: '100%', overflowY: 'auto' });
-// Rough allowance for the app header/page padding above the grid; tune here if a consumer's chrome differs.
+// Default assumes an ~88px app header at the viewport top; override via the childGridsContainerHeight prop or model option.
 const CHILD_GRIDS_CONTAINER_HEIGHT = 'calc(100vh - 88px)';
 
 // Stable empty references used when localSortAndFilter is enabled to prevent
@@ -219,8 +219,11 @@ const GridBase = memo(({
     customExportOptions,
     sx: propsSx,
     gridProps,
+    childGridsContainerHeight: propsChildGridsContainerHeight,
     ...props
 }) => {
+    // Overridable per-call or per-model since consumer chrome above the grid varies.
+    const childGridsContainerHeight = propsChildGridsContainerHeight ?? model.childGridsContainerHeight ?? CHILD_GRIDS_CONTAINER_HEIGHT;
     const staticDataSource = props.staticData ?? model.staticData;
     const hasStaticData = Array.isArray(staticDataSource) || Array.isArray(staticDataSource?.records);
     const normalizedStaticData = useMemo(
@@ -1626,7 +1629,7 @@ const GridBase = memo(({
             {showPageTitle !== false && <PageTitle navigate={navigate} showBreadcrumbs={!hideBreadcrumb && !hideBreadcrumbInGrid}
                 breadcrumbs={breadCrumbs} enableBackButton={navigateBack} breadcrumbColor={breadcrumbColor} model={model} />}
             {hasChildGrids ? (
-                <Box sx={{ display: 'flex', flexDirection: 'column', height: CHILD_GRIDS_CONTAINER_HEIGHT, gap: 2 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', height: childGridsContainerHeight, gap: 2 }}>
                     <Box sx={{ flex: 3, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
                         {mainGridElement}
                     </Box>

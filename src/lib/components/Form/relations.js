@@ -82,7 +82,7 @@ const EMPTY_WHERE = [];
  * Relations component using MUI Tabs
  * Renders a tab for each relation, and a ChildGrid in each panel
  */
-const Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, relationFilters, readOnly, disableCellRedirect, onCellDoubleClickOverrides, onCellClickOverrides, childGridStyle, showChildHeaderFilters = false, tTranslate = (key) => key, tOpts = {} }) => {
+const Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, relationFilters, readOnly, disableCellRedirect, onCellDoubleClickOverrides, onCellClickOverrides, childGridStyle, showChildHeaderFilters, tTranslate = (key) => key, tOpts = {} }) => {
   const [tabIndex, setTabIndex] = useState(0);
 
   const handleChange = (_, newValue) => {
