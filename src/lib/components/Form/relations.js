@@ -40,7 +40,7 @@ function a11yProps(index) {
  * @param {Object} params.where - Conditions for the grid
  * @param {Array} params.models - List of available models
  */
-const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOnly, disableCellRedirect, onCellDoubleClickOverride, onCellClick, gridStyle, showHeaderFilters }) => {
+const ChildGrid = memo(({ relation, parentFilters, extraParams, parent, where, models, readOnly, disableCellRedirect, onCellDoubleClickOverride, onCellClick, gridStyle, showHeaderFilters, sx }) => {
   const modelConfigOfChildGrid = models.find(({ name }) => name === relation);
   if (!modelConfigOfChildGrid) return null;
   // Memoize derived model/config so ChildModel.ChildGrid component identity stays stable
@@ -73,6 +73,7 @@ const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOn
       onCellDoubleClickOverride={onCellDoubleClickOverride}
       onCellClick={onCellClick}
       gridStyle={gridStyle}
+      sx={sx}
     />
   );
 });
@@ -82,7 +83,7 @@ const EMPTY_WHERE = [];
  * Relations component using MUI Tabs
  * Renders a tab for each relation, and a ChildGrid in each panel
  */
-const Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, relationFilters, readOnly, disableCellRedirect, onCellDoubleClickOverrides, onCellClickOverrides, childGridStyle, showChildHeaderFilters, tTranslate = (key) => key, tOpts = {} }) => {
+const Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, relationFilters, readOnly, disableCellRedirect, onCellDoubleClickOverrides, onCellClickOverrides, childGridStyle, showChildHeaderFilters, sx, tTranslate = (key) => key, tOpts = {} }) => {
   const [tabIndex, setTabIndex] = useState(0);
 
   const handleChange = (_, newValue) => {
@@ -123,6 +124,7 @@ const Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, 
             onCellClick={onCellClickOverrides?.[relation]}
             gridStyle={childGridStyle}
             showHeaderFilters={showChildHeaderFilters}
+            sx={sx}
           />
         </CustomTabPanel>
       ))}

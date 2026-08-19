@@ -808,12 +808,21 @@ const GridBase = memo(({
             items: filterValidItems(filterModelForFetch.items)
         };
 
-        const mergedBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
+        const joinFilterItems = [];
         if (model.joinColumn && id) {
-            mergedBaseFilters.push({ field: model.joinColumn, operator: "is", type: "number", value: Number(id) });
+            joinFilterItems.push({ field: model.joinColumn, operator: "is", type: "number", value: Number(id) });
         }
         if (Array.isArray(parentFilters)) {
-            mergedBaseFilters.push(...parentFilters);
+            joinFilterItems.push(...parentFilters);
+        }
+
+        const mergedBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
+        // joinColumnAsParam sends the join value(s) as flat request params instead of where-clause filters.
+        const joinParams = {};
+        if (model.joinColumnAsParam) {
+            joinFilterItems.forEach(({ field, value }) => { joinParams[field] = value; });
+        } else {
+            mergedBaseFilters.push(...joinFilterItems);
         }
 
         if (additionalFilters) {
@@ -823,6 +832,7 @@ const GridBase = memo(({
         const mergedExtraParams = {
             ...extraParams,
             ...props.extraParams,
+            ...joinParams,
         };
 
         if (assigned || available) {
@@ -1642,6 +1652,7 @@ const GridBase = memo(({
                                 disableCellRedirect
                                 tTranslate={tTranslate}
                                 tOpts={tOpts}
+                                sx={propsSx}
                                 {...props.childGridProps}
                             />
                         ) : (
