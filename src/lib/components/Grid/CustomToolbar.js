@@ -48,6 +48,7 @@ const CustomToolbar = function (props) {
         currentPreference,
         isReadOnly,
         canAdd,
+        canDelete,
         forAssignment,
         showAddIcon,
         onAdd,
@@ -107,8 +108,8 @@ const CustomToolbar = function (props) {
                         </ButtonWithMargin>) :
                         <></>
                     }
-                    {available && <ButtonWithMargin startIcon={!showAddIcon ? null : <AddIcon />} onClick={onAssign} size="medium" variant="contained"  >{tTranslate("Assign", tOpts)}</ButtonWithMargin>}
-                    {assigned && <ButtonWithMargin startIcon={!showAddIcon ? null : <RemoveIcon />} onClick={onUnassign} size="medium" variant="contained"  >{tTranslate("Remove", tOpts)}</ButtonWithMargin>}
+                    {available && <ButtonWithMargin disabled={!canAdd} startIcon={!showAddIcon ? null : <AddIcon />} onClick={onAssign} size="medium" variant="contained"  >{tTranslate("Assign", tOpts)}</ButtonWithMargin>}
+                    {assigned && <ButtonWithMargin disabled={!canDelete} startIcon={!showAddIcon ? null : <RemoveIcon />} onClick={onUnassign} size="medium" variant="contained"  >{tTranslate("Remove", tOpts)}</ButtonWithMargin>}
                 </div>
                 <GridToolBar {...props}>
                     {effectivePermissions.showColumnsOrder && (

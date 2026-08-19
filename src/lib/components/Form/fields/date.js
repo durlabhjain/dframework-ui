@@ -27,16 +27,25 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
         if (column.maxField && maxFieldValue) return dayjs(maxFieldValue);
         return null;
     }, [column.max, column.maxField, maxFieldValue]);
-    
+
+    // minField + maxRangeDays: days past minField + maxRangeDays stay visible on the calendar but disabled, rather than bounding maxDate (which would also block navigating to those months).
+    const rangeLimitDate = useMemo(() => {
+        if (column.minField && column.maxRangeDays && minFieldValue) return dayjs(minFieldValue).add(column.maxRangeDays, 'day');
+        return null;
+    }, [column.minField, column.maxRangeDays, minFieldValue]);
+
+    const shouldDisableDate = useCallback((day) => Boolean(rangeLimitDate) && day.isAfter(rangeLimitDate, 'day'), [rangeLimitDate]);
+
     const handleChange = useCallback((value) => {
         if (value === null) {
             formik.setFieldValue(field, null);
             return;
         }
         const adjustedDate = dayjs(value).hour(12);
-        const isoString = adjustedDate.toISOString();
-        formik.setFieldValue(field, isoString);
-    }, [field, formik]);
+        formik.setFieldValue(field, adjustedDate.toISOString());
+
+        if (column.maxField && column.maxRangeDays) formik.setFieldValue(column.maxField, adjustedDate.add(column.maxRangeDays, 'day').toISOString());
+    }, [field, formik, column.maxField, column.maxRangeDays]);
     
     return <DatePicker
         key={field}
@@ -52,6 +61,7 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
         helperText={formik.touched[field] && formik.errors[field]}
         minDate={minDateValue}
         maxDate={maxDateValue}
+        shouldDisableDate={rangeLimitDate ? shouldDisableDate : undefined}
         disabled={isDisabled}
         slotProps={{ textField: { fullWidth: true, variant: "standard" } }}
     />

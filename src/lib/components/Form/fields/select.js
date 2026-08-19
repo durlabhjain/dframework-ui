@@ -106,7 +106,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
                     }}
                 >
                     {Array.isArray(options) && options.map(option => (
-                        <MenuItem key={option.value} value={option.value} disabled={option.isDisabled}>
+                        <MenuItem key={option.value} value={option.value} disabled={option.isDisabled || fieldConfigs.disabledOptions?.includes(option.value)}>
                             {option.label}
                         </MenuItem>
                     ))}
