@@ -11,11 +11,11 @@ const EMPTY_FIELD_CONFIGS = {};
 const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS }) => {
     const isReadOnly = column?.readOnly === true || Boolean(fieldConfigs.readOnly);
     const { systemDateTimeFormat, stateData } = useStateContext();
+    const fieldValue = formik.values[field];
     const dateTimeValue = useMemo(() => {
-        const val = formik.values[field];
-        if (!val) return null;
-        return dayjs(val);
-    }, [formik.values[field], field]);
+        if (!fieldValue) return null;
+        return dayjs(fieldValue);
+    }, [fieldValue]);
     
     return <DateTimePicker
         key={field}

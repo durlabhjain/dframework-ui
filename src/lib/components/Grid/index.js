@@ -224,6 +224,7 @@ const GridBase = memo(({
 }) => {
     // Overridable per-call or per-model since consumer chrome above the grid varies.
     const childGridsContainerHeight = propsChildGridsContainerHeight ?? model.childGridsContainerHeight ?? CHILD_GRIDS_CONTAINER_HEIGHT;
+    const { onDataLoaded, processRowUpdate: processRowUpdateProp, onRowSelectionModelChange: onRowSelectionModelChangeProp } = props;
     const staticDataSource = props.staticData ?? model.staticData;
     const hasStaticData = Array.isArray(staticDataSource) || Array.isArray(staticDataSource?.records);
     const normalizedStaticData = useMemo(
@@ -305,7 +306,17 @@ const GridBase = memo(({
     // useCallback is not recreated (and the data-fetching useEffect not re-triggered)
     // when the user changes sort/filter — the DataGrid handles those changes locally.
     const sortModelForFetch = localSortAndFilter ? EMPTY_SORT_MODEL : sortModel;
-    const filterModelForFetch = localSortAndFilter ? EMPTY_FILTER_MODEL : filterModel;
+    // Keyed on valid items only, so an operator change on a still-empty item doesn't change the key.
+    const filterModelFetchKey = useMemo(
+        () => JSON.stringify(filterValidItems(filterModel.items)),
+        [filterModel.items]
+    );
+    // react-doctor-disable-next-line no-usememo-simple-expression -- memoized for referential stability of the deps array below (narrower than filterModel itself), not for compute cost
+    const filterModelForFetch = useMemo(
+        () => (localSortAndFilter ? EMPTY_FILTER_MODEL : filterModel),
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on filterModelFetchKey to stay stable while a filter item has no value yet
+        [localSortAndFilter, filterModelFetchKey, filterModel.logicOperator, filterModel.quickFilterValues, filterModel.quickFilterLogicOperator]
+    );
     // Use a stable large-page pagination when localSortAndFilter is enabled so that
     // the entire dataset is loaded in one request and user page changes don't re-trigger
     // fetchData (since all rows are already in memory for the DataGrid to page locally).
@@ -372,6 +383,7 @@ const GridBase = memo(({
             ...group,
             headerName: group.headerName ? tTranslate(group.headerName, tOpts) : group.headerName
         }));
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
     }, [model.columnGroupingModel, tOpts, translate, tTranslate]);
 
     const baseDataFromParams = searchParams.has('baseData') && searchParams.get('baseData');
@@ -431,7 +443,8 @@ const GridBase = memo(({
         },
     })), [baseColumnList, model]);
 
-    const gridColumnTypes = {
+    const currencySymbol = userData?.userData?.CurrencySymbol;
+    const gridColumnTypes = useMemo(() => ({
         "radio": {
             "type": "singleSelect",
             "valueOptions": "lookup"
@@ -478,7 +491,7 @@ const GridBase = memo(({
             filterOperators: [...getGridNumericOperators()].filter(op => !['!='].includes(op.value)),
             "valueFormatter": ({ value }) => {
                 if (value == null) return '';
-                const symbol = userData?.userData?.CurrencySymbol || '';
+                const symbol = currencySymbol || '';
                 return symbol ? `${symbol}${value}` : String(value);
             }
         },
@@ -486,14 +499,14 @@ const GridBase = memo(({
             "type": "singleSelect",
             filterOperators: remoteLookupFilterOperators
         }
-    };
+    }), [stateData.dateTime, currencySymbol, handleSelectRow, idProperty, remoteLookupFilterOperators, formatDate]);
 
     useEffect(() => {
         dataRef.current = data;
-        if (typeof props.onDataLoaded === 'function') {
-            props.onDataLoaded(data);
+        if (typeof onDataLoaded === 'function') {
+            onDataLoaded(data);
         }
-    }, [data]);
+    }, [data, onDataLoaded]);
 
     if (hasStaticData !== prevHasStaticData || normalizedStaticData !== prevNormalizedStaticData) {
         setPrevHasStaticData(hasStaticData);
@@ -547,6 +560,7 @@ const GridBase = memo(({
                 {...otherProps}
             />
         ),
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
         [translate, tOpts, tTranslate]
     );
     const { customActions = [] } = model;
@@ -656,6 +670,7 @@ const GridBase = memo(({
                 const baseOperators = overrides.filterOperators
                     ?? DEFAULT_FILTER_OPERATORS_BY_TYPE[finalType]?.()
                     ?? getGridStringOperators();
+                // react-doctor-disable-next-line js-set-map-lookups -- NO_VALUE_OPERATORS is a fixed 2-item constant, not a growing collection; a Set adds hashing overhead for no real gain here
                 overrides.filterOperators = baseOperators.filter(op => !NO_VALUE_OPERATORS.includes(op.value));
             }
             // Common filter operator pattern
@@ -709,7 +724,8 @@ const GridBase = memo(({
                     if (type === constants.dateTime) {
                         column.filterOperators = LocalizedDatePicker({ columnType: 'dateTime' });
                         column.valueFormatter = gridColumnTypes.dateTime.valueFormatter;
-                        column.localize = true;
+                        // Audit date columns localize by default; models can opt out via isAuditColumnLocalized: false
+                        column.localize = model.isAuditColumnLocalized ?? true;
                     }
                     finalColumns.push(column);
                 }
@@ -729,10 +745,12 @@ const GridBase = memo(({
         }
         if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push('__detail_panel_toggle__');
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
-    }, [columns, model, parent, permissions, forAssignment, dynamicColumns, translate, stateData?.dateTime, groupingModel, enableRowDetailPanel]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
+    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, actionConfig.length, disableRowGrouping, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate]);
 
     // Shallow-copy columns when lookups change so MUI DataGrid's GridFilterInputSingleSelect
     // sees new column object references and re-evaluates its memoized currentValueOptions.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- lookupKeys isn't read directly but its change must trigger new column references
     const gridColumns = useMemo(() => stableGridColumns.map(col => ({ ...col })), [stableGridColumns, lookupKeys]);
 
     // Stable slice of column properties that affect the API request only (what buildRequestData reads).
@@ -786,7 +804,7 @@ const GridBase = memo(({
             }));
         }
         hasInitializedRef.current = true;
-    }, [gridColumns]);
+    }, [gridColumns, filterModel.items]);
 
 
     // Logs which dep caused fetchData to be recreated. Enable with model.debug = true.
@@ -899,7 +917,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters, tTranslate, tOpts]);
+    }, [hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters, tTranslate, tOpts, apiRef]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -934,6 +952,7 @@ const GridBase = memo(({
             path += `?${currentParams.toString()}`;
         }
         navigate(path);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, relationName, addUrlParamKey, navigate, getRecord, buildUrl, snackbar]);
 
     const handleDownload = useCallback(({ documentLink }) => {
@@ -1036,11 +1055,11 @@ const GridBase = memo(({
     }, []);
 
     const processRowUpdate = useCallback((updatedRow) => {
-        if (typeof props.processRowUpdate === "function") {
-            props.processRowUpdate(updatedRow, data);
+        if (typeof processRowUpdateProp === "function") {
+            processRowUpdateProp(updatedRow, data);
         }
         return updatedRow;
-    }, [props.processRowUpdate, data]);
+    }, [processRowUpdateProp, data]);
 
     const onCellDoubleClick = useCallback((event) => {
         if (event.row.canEdit === false) {
@@ -1115,7 +1134,7 @@ const GridBase = memo(({
             });
             setShowAddConfirmation(false);
         }
-    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, model.selectionUpdateKeys, selectionApi, backendApi, model, fetchData, tTranslate, tOpts, buildUrl]);
+    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, selectionApi, backendApi, model, fetchData, tTranslate, tOpts, buildUrl]);
 
     const onAdd = useCallback(() => {
         if (selectionApi.length > 0) {
@@ -1131,7 +1150,7 @@ const GridBase = memo(({
         } else {
             openForm({ id: 0 });
         }
-    }, [selectionApi, snackbar, onAddOverride, openForm, rowSelectionModel.ids.size, tTranslate, tOpts]);
+    }, [selectionApi, snackbar, onAddOverride, openForm, rowSelectionModel.ids.size]);
 
     const clearFilters = useCallback(() => {
         if (!filterModel?.items?.length) return;
@@ -1160,8 +1179,8 @@ const GridBase = memo(({
             normalizedModel = { type: 'include', ids: new Set(selectedIds) };
         }
         setRowSelectionModel(normalizedModel);
-        props.onRowSelectionModelChange?.(normalizedModel);
-    }, [getSelectedRowIds, props.onRowSelectionModelChange]);
+        onRowSelectionModelChangeProp?.(normalizedModel);
+    }, [getSelectedRowIds, onRowSelectionModelChangeProp]);
     
 
     const updateAssignment = useCallback(({ unassign, assign }) => {
@@ -1258,7 +1277,7 @@ const GridBase = memo(({
             contentType,
             columns
         });
-    }, [hasStaticData, localSortAndFilter, data?.recordCount, apiRef, gridColumns, snackbar, fetchData, tTranslate, tOpts, recordCounts]);
+    }, [hasStaticData, localSortAndFilter, data?.recordCount, apiRef, gridColumns, snackbar, fetchData, tTranslate, tOpts]);
 
     useEffect(() => {
         fetchData();
@@ -1345,7 +1364,7 @@ const GridBase = memo(({
             });
         }
         return null;
-    }, [model.getDetailPanelContent, fetchData, tTranslate, tOpts]);
+    }, [model, fetchData, tTranslate, tOpts]);
 
     const localeText =
         useMemo(() => ({
@@ -1684,6 +1703,7 @@ const renderers = {
     number: function ({ precision = 2, ifNaN = '-', prefix = '', suffix = '' } = {}) {
         const key = `number.${precision}:${ifNaN}:${prefix}:${suffix}`;
         if (!renderersCache.has(key)) {
+            // react-doctor-disable-next-line js-hoist-intl -- already cached below, keyed on precision/prefix/suffix; can't hoist to module scope since those vary per column
             const numberFormat = new Intl.NumberFormat(undefined, { minimumFractionDigits: precision, maximumFractionDigits: precision });
             const formatter = function (value) {
                 if (value === null || value === undefined || value === '') {

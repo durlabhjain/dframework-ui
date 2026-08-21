@@ -58,7 +58,7 @@ const ChildGrid = memo(({ relation, parentFilters, extraParams, parent, where, m
   // keeps ChildModel's identity stable across re-renders instead of rebuilding it every time.
   // (The hook must run before any early return, so the missing-model check happens inside it.)
   const ChildModel = React.useMemo(() => {
-    if (!modelConfigOfChildGrid) return null;
+    if (!modelConfigOfChildGrid) return { config: null, ChildModel: null };
     const overrides = { hideBreadcrumb: true, ...(showHeaderFilters !== undefined && { showHeaderFilters }) };
 
     if (modelConfigOfChildGrid instanceof UiModel) {

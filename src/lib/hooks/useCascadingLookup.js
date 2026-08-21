@@ -30,7 +30,7 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
         return column.customLookup || (typeof column.lookup === 'string' ? lookups[column.lookup] : column.lookup);
     }, [column.customLookup, column.lookup, lookups, dependsOn]);
 
-    // fetchOptions({ search, start, limit, lookupId, append, isStale }): lookupId resolves one record, append merges a scroll-loaded chunk instead of replacing.
+    // fetchOptions({ search, start, limit, lookupId, append, isStale }): lookupId (single value or array) resolves record(s) by id, append merges a scroll-loaded chunk instead of replacing.
     // isStale, checked right after the request resolves, skips committing a response a newer request has since superseded.
     const fetchOptions = useCallback(async ({ search = '', start = 0, limit, lookupId, append = false, isStale } = {}) => {
         if (!column.lookup || !model || !api) return;
@@ -95,7 +95,7 @@ export default function useCascadingLookup({ column, formik, lookups, dependsOn 
         if (isAutoComplete || !userSelected.current) {
             setOptions(initialOptions || []);
         }
-    }, [lazy, dependsOn.length, fetchOptions, isAutoComplete, initialOptions]);
+    }, [lazy, dependsOn.length, fetchOptions, isAutoComplete, initialOptions, userSelected]);
 
     return { options, fetchOptions, isLoading, labelMap };
 }

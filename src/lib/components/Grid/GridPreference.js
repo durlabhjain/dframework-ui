@@ -237,7 +237,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
         mode: "onBlur"
     });
 
-    // Load preferences on mount
+    // Load preferences on mount; loadPreferences/applyPreference excluded since applyPreference's identity changes on every setPreferences(), which would loop this effect
     useEffect(() => {
         if (!preferenceKey) return;
         const loadAndApply = async () => {
@@ -247,6 +247,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
             }
         };
         loadAndApply();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [preferenceKey]);
 
     // Memoize locale text used by the DataGrid to avoid recreating the object on every render

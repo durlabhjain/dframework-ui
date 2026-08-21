@@ -122,6 +122,7 @@ const Form = ({
 
   const initialValues = useMemo(() => isNew
     ? { ...model.initialValues, ...data, ...baseSaveData }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- id kept as a dep so a route change forces recompute even though isNew already derives from it
     : { ...baseSaveData, ...model.initialValues, ...data }, [model.initialValues, data, id, baseSaveData, isNew]);
 
   const formApi = api || gridApi;
@@ -146,6 +147,7 @@ const Form = ({
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- errorOnLoad/setActiveRecord deliberately excluded: including them recreates loadRecord on every load (both depend transitively on `data`), retriggering the load effect and causing an infinite reload loop
   }, [formApi, model, idToLoad]);
   
   useEffect(() => {
@@ -154,6 +156,7 @@ const Form = ({
 
   const validationSchema = useMemo(
     () => model.getValidationSchema({ id, tTranslate, tOpts }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
     [id, model, translate, tOpts, tTranslate]
   );
 

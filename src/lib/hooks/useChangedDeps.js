@@ -31,7 +31,7 @@ export function useChangedDeps(label, namedDeps, enabled = false) {
             }
         }
         if (Object.keys(changed).length > 0) {
-            console.debug(`[Grid/${label}] deps changed:`, changed);
+            console.warn(`[Grid/${label}] deps changed:`, changed);
         }
         prevRef.current = deps;
     });

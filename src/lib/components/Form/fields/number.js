@@ -77,6 +77,7 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
         () => resolveValue({ value: max, state: formik.values }),
         [max, formik.values]
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 'field' and 'formik.values' intentionally excluded: see effect below
     const formikFieldValue = useMemo(() => formik.values[field] ?? null, [formik.values[field]]);
     const [inputValue, setInputValue] = useState(formikFieldValue);
     const debouncedValue = useDebounce(inputValue, 400);
@@ -85,8 +86,12 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
         if (debouncedValue !== formikFieldValue) {
             formik.setFieldValue(field, debouncedValue);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- 'formik'/'formikFieldValue' intentionally excluded: formik is a new object every render, so including it reruns this every render and desyncs formik.values from initialValues (formik.dirty goes true with no user edit)
     }, [debouncedValue]);
 
+    // Resync local state when formik changes externally. Can't be a plain derived value: `inputValue`
+    // is also directly user-edited via handleValueChange between debounced formik updates.
+    // react-doctor-disable-next-line no-derived-state-effect -- see rationale above
     useEffect(() => {
         setInputValue(formikFieldValue);
     }, [formikFieldValue]);
