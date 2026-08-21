@@ -54,7 +54,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
         }
         
         return value;
-    }, [formik.values[field], options, column.multiSelect, field]);
+    }, [formik, field, column.defaultValue, column.multiSelect, options]);
 
     const handleChange = useCallback((event) => {
         formik.handleChange(event);
@@ -62,7 +62,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
             column.onChange({ formik, value: event.target.value, options, event , t: tTranslate, tOpts});
         }
         userSelected.current = true;
-    }, [formik, column.onChange, options, tTranslate, tOpts]);
+    }, [formik, column, options, tTranslate, tOpts]);
 
     // Determine if the current value is valid and should show the clear button
     const hasValue = useMemo(() => {
@@ -81,7 +81,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
             column.onChange({ formik, value: newValue, options, event: e, t: tTranslate, tOpts });
         }
         userSelected.current = true;
-    }, [column.multiSelect, field, formik, column.onChange, options, tTranslate, tOpts]);
+    }, [column, formik, field, options, tTranslate, tOpts]);
 
     return (
         <FormControl

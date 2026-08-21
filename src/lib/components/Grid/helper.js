@@ -16,7 +16,7 @@ export const convertDefaultSort = (defaultSort, constants, sortRegex) => {
 };
 
 // Export menu item component (internal use only — used by CustomExportButton below)
-export const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, exportKey, icon }) => (
+const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, exportKey, icon }) => (
     <MenuItem
         onClick={handleExport}
         data-type={type}

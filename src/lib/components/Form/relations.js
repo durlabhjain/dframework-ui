@@ -40,10 +40,11 @@ function a11yProps(index) {
  */
 const ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOnly }) => {
   const modelConfigOfChildGrid = models.find(({ name }) => name === relation);
-  if (!modelConfigOfChildGrid) return null;
   // Memoize derived model/config so ChildModel.ChildGrid component identity stays stable
   // across re-renders (UiModel defines ChildGrid as an instance field).
   const { config, ChildModel } = React.useMemo(() => {
+    if (!modelConfigOfChildGrid) return { config: null, ChildModel: null };
+
     const baseConfig = modelConfigOfChildGrid instanceof UiModel
       ? Object.assign(Object.create(Object.getPrototypeOf(modelConfigOfChildGrid)), modelConfigOfChildGrid)
       : { ...modelConfigOfChildGrid };

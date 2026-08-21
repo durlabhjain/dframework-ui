@@ -24,6 +24,9 @@ const Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }
     const { t: translate, i18n } = useTranslation();
     const tOpts = { t: translate, i18n };
     const [pageNumber, setPageNumber] = useState(page + 1);
+    // Resync from apiRef's page when it changes externally (e.g. grid nav buttons). Can't be a plain
+    // derived value: `pageNumber` is also directly user-edited in the page-jump text field via handleChange.
+    // react-doctor-disable-next-line no-derived-state-effect -- see rationale above
     useEffect(() => {
         setPageNumber(page + 1);
     }, [page]);

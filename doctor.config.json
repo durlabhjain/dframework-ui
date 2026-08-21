@@ -12,6 +12,7 @@
     "react-doctor/no-reset-all-state-on-prop-change": "off",
     "react-doctor/prefer-useReducer": "off",
     "react-doctor/rendering-usetransition-loading": "off",
-    "react-doctor/rerender-state-only-in-handlers": "off"
+    "react-doctor/rerender-state-only-in-handlers": "off",
+    "deslop/circular-dependency": "off"
   }
 }

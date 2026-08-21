@@ -10,16 +10,20 @@ const EMPTY_FIELD_CONFIGS = {};
 
 const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS }) => {
     const theme = useTheme();
-    let inputValue = formik.values[field] || [];
-    if (!Array.isArray(inputValue)) {
-        inputValue = inputValue.split(',').map(item => item.trim());
-    }
+    const fieldValue = formik.values[field];
+    const inputValue = React.useMemo(() => {
+        const value = fieldValue || [];
+        return Array.isArray(value) ? value : value.split(',').map(item => item.trim());
+    }, [fieldValue]);
     const isDisabled = React.useMemo(() => {
         if (typeof fieldConfigs.disabled !== 'undefined') return fieldConfigs.disabled;
         if (typeof column.disabled === 'function') return column.disabled({ isAdd, formik });
         return Boolean(column.disabled);
-    }, [fieldConfigs.disabled, column.disabled, isAdd, formik]);
-    const fixedOptions = column.hasDefault && !isAdd ? [inputValue[0]] : [];
+    }, [fieldConfigs.disabled, column, isAdd, formik]);
+    const fixedOptions = React.useMemo(
+        () => (column.hasDefault && !isAdd ? [inputValue[0]] : []),
+        [column, isAdd, inputValue]
+    );
     const [inputText, setInputText] = React.useState('');
 
     const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
