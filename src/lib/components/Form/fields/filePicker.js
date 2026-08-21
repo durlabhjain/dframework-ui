@@ -24,6 +24,7 @@ function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key })
     const [hasCanvasPreview, setHasCanvasPreview] = useState(false);
     const [previewUnsupported, setPreviewUnsupported] = useState(false);
 
+    // react-doctor-disable-next-line no-derived-state-effect -- selectedName also needs to survive handleFileChange's own setSelectedName call (kept as state, not derived, so the picked name doesn't flicker off between setFieldValue and the next render)
     useEffect(() => {
         setSelectedName(isSelectedFile ? value.name : null);
     }, [isSelectedFile, value]);
@@ -37,19 +38,28 @@ function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key })
         typeof column.previewUrl === "function" && !isSelectedFile ? column.previewUrl({ formik, value }) : null;
 
     // Draws via createImageBitmap+canvas rather than a blob:/data: <img> URL, since a host app's CSP img-src can silently block those (blob: broke in production) but can't block a canvas draw.
+    // The two flags below can't be derived inline during render: createImageBitmap is async, so there's
+    // no synchronous value to compute them from — this effect's cancelled-flag pattern is the documented
+    // "fetching data" case, not the sync "adjust state on prop change" antipattern the linter assumes.
+    // react-doctor-disable-next-line no-cascading-set-state -- see note above; the resets below make sure the previous file's preview doesn't linger while the new one loads
     useEffect(() => {
         if (!isSelectedImage) {
+            // react-doctor-disable-next-line no-adjust-state-on-prop-change -- see rationale above the effect
             setHasCanvasPreview(false);
+            // react-doctor-disable-next-line no-adjust-state-on-prop-change -- see rationale above the effect
             setPreviewUnsupported(false);
             return;
         }
         let cancelled = false;
+        // react-doctor-disable-next-line no-adjust-state-on-prop-change -- see rationale above the effect
         setHasCanvasPreview(false);
+        // react-doctor-disable-next-line no-adjust-state-on-prop-change -- see rationale above the effect
         setPreviewUnsupported(false);
 
         if (typeof createImageBitmap !== "function") {
             // No blob:/data: <img> fallback here: that's the CSP img-src hazard this canvas approach
             // was built to avoid. Surface a message instead of a silently missing preview icon.
+            // react-doctor-disable-next-line no-adjust-state-on-prop-change -- see rationale above the effect
             setPreviewUnsupported(true);
             return () => {
                 cancelled = true;

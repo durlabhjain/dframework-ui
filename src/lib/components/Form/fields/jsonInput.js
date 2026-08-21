@@ -12,19 +12,22 @@ const parseJson = (raw) => {
 const Field = ({ field, formik }) => {
     const [state, setState] = React.useState(() => parseJson(formik.values[field]));
     const debouncedState = useDebounce(state, 300);
+    const fieldValue = formik.values[field];
 
     // Update formik when debounced state changes
     React.useEffect(() => {
         const nextValue = JSON.stringify(debouncedState);
-        if (formik.values[field] !== nextValue) {
+        if (fieldValue !== nextValue) {
             formik.setFieldValue(field, nextValue);
         }
-    }, [debouncedState, field, formik, formik.values[field]]);
+    }, [debouncedState, field, formik, fieldValue]);
 
-    // Resync local state when formik changes externally (e.g. form reinitialise)
+    // Resync local state when formik changes externally (e.g. form reinitialise). Can't be a plain
+    // derived value: `state` is also directly user-edited via handleChange between formik updates.
+    // react-doctor-disable-next-line no-derived-state-effect -- see rationale above
     React.useEffect(() => {
-        setState(parseJson(formik.values[field]));
-    }, [formik.values[field], field]);
+        setState(parseJson(fieldValue));
+    }, [fieldValue]);
 
     const handleChange = (key, value) => {
         const updatedState = { ...state, [key]: value };

@@ -9,9 +9,10 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
     const isDisabled = mode !== 'copy' && fieldConfigs.disabled;
     const { systemDateTimeFormat, stateData } = useStateContext(); //provider
     
+    const fieldValue = formik.values[field];
     const dateValue = useMemo(() => {
-        return formik.values[field] ? dayjs(formik.values[field]) : null;
-    }, [formik.values[field], field]);
+        return fieldValue ? dayjs(fieldValue) : null;
+    }, [fieldValue]);
 
     const minFieldValue = column.minField ? formik.values[column.minField] : undefined;
     const maxFieldValue = column.maxField ? formik.values[column.maxField] : undefined;

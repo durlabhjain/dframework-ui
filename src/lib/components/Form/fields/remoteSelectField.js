@@ -85,8 +85,12 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     }, [fetchOptions, searchTerm, chunkSize]);
 
     // Reloads on open/searchTerm change or when loadChunk's identity changes (e.g. fetchOptions becoming ready).
+    // The chain to the [options] effect below is unavoidable: MUI resets listbox scroll only after the
+    // options array reference actually changes post-commit, which loadChunk's async fetch can't resolve
+    // synchronously here.
     useEffect(() => {
         if (!open) return;
+        // react-doctor-disable-next-line no-chain-state-updates -- see rationale above
         setPendingScrollRestore(null);
         loadChunk({ start: 0, append: false });
     }, [open, loadChunk]);
@@ -112,19 +116,22 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
 
     // Resolve display labels for pre-selected values that aren't cached in labelMap yet.
     // Tracks ids already requested so a labelMap update (which recomputes selectedIds) doesn't re-fire the fetch.
+    // react-doctor-disable-next-line rerender-lazy-ref-init -- discarded empty Set alloc is negligible; not worth the added indirection of a lazy-init guard
     const requestedLookupIdsRef = useRef(new Set());
     const selectedIds = isMultiSelect ? currentValue : (currentValue !== '' ? [currentValue] : []);
     const selectedIdsKey = selectedIds.map(String).join(',');
     useEffect(() => {
-        selectedIds.forEach(id => {
+        const missingIds = selectedIds.filter(id => {
             const idKey = String(id);
-            if (!id || Number(id) === 0) return;
-            if (Object.prototype.hasOwnProperty.call(labelMap, idKey)) return;
-            if (requestedLookupIdsRef.current.has(idKey)) return;
-            requestedLookupIdsRef.current.add(idKey);
-            fetchOptions({ lookupId: id }).then(result => {
-                if (!result) requestedLookupIdsRef.current.delete(idKey);
-            });
+            if (!id || Number(id) === 0) return false;
+            if (Object.prototype.hasOwnProperty.call(labelMap, idKey)) return false;
+            return !requestedLookupIdsRef.current.has(idKey);
+        });
+        if (!missingIds.length) return;
+        missingIds.forEach(id => requestedLookupIdsRef.current.add(String(id)));
+        // Batched into a single request instead of one fetch per id.
+        fetchOptions({ lookupId: missingIds.length === 1 ? missingIds[0] : missingIds }).then(result => {
+            if (!result) missingIds.forEach(id => requestedLookupIdsRef.current.delete(String(id)));
         });
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedIdsKey, fetchOptions]);
@@ -163,6 +170,9 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     // Covers single-select too: picking a value closes the dropdown without clearing searchInput, so a stale search term would otherwise
     // survive (handleClose intentionally preserves it) and filter the list down on the next reopen.
     const selectionSignature = isMultiSelect ? currentValue.map(String).join(',') : String(currentValue);
+    // Can't be a plain derived value: searchInput is also directly user-typed via handleInputChange
+    // between selection changes, so it must stay independent state that only resets on a pick/unpick.
+    // react-doctor-disable-next-line no-derived-state-effect -- see rationale above
     useEffect(() => {
         setSearchInput('');
     }, [selectionSignature]);
@@ -220,6 +230,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                 paper: { sx: { pt: 1 } },
                 listbox: { ref: setListboxNode, onScroll: handleScroll, style: { maxHeight: 280, paddingTop: 0 } },
             }}
+            // react-doctor-disable-next-line no-render-prop-children -- renderTags/renderOption/renderInput are MUI Autocomplete's own prop API, not ours to swap for children
             renderTags={(tagValue, getTagProps) => {
                 const tagLimit = column.limitTags || 5;
                 // Collapsed (blurred): mirror MUI's own limitTags rule, no scroll box needed since the count is bounded.
