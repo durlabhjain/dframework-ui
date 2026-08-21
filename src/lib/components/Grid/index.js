@@ -691,7 +691,8 @@ const GridBase = memo(({
                     if (type === constants.dateTime) {
                         column.filterOperators = LocalizedDatePicker({ columnType: 'dateTime' });
                         column.valueFormatter = gridColumnTypes.dateTime.valueFormatter;
-                        column.localize = true;
+                        // Audit date columns localize by default; models can opt out via isAuditColumnLocalized: false
+                        column.localize = model.isAuditColumnLocalized ?? true;
                     }
                     finalColumns.push(column);
                 }
