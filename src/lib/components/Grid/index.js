@@ -91,7 +91,7 @@ const DEFAULT_FILTER_OPERATORS_BY_TYPE = {
     singleSelect: getGridSingleSelectOperators
 };
 
-// Fills and internally scrolls within a bounded-height flex ancestor; used when model.childGrids is set.
+// Fills and internally scrolls within a bounded-height flex ancestor; used when model.relations is set.
 const CHILD_GRIDS_FILL_STYLE = Object.freeze({ height: '100%', overflowY: 'auto' });
 // Default assumes an ~88px app header at the viewport top; override via the childGridsContainerHeight prop or model option.
 const CHILD_GRIDS_CONTAINER_HEIGHT = 'calc(100vh - 88px)';
@@ -255,10 +255,13 @@ const GridBase = memo(({
     const { translate, tOpts, tTranslate } = useModelTranslation(model);
     const [errorMessage, setErrorMessage] = useState('');
     const [sortModel, setSortModel] = useState(() => convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
+    // defaultFilters may be a function so relative-date filters (e.g. "last 7 days") are computed
+    // fresh on mount instead of once when the model module first loaded.
+    const resolvedDefaultFilters = typeof model.defaultFilters === 'function' ? model.defaultFilters() : model.defaultFilters;
     const initialFilterModel = { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' };
-    if (model.defaultFilters) {
+    if (resolvedDefaultFilters) {
         initialFilterModel.items = [];
-        model.defaultFilters.forEach((ele) => {
+        resolvedDefaultFilters.forEach((ele) => {
             initialFilterModel.items.push(ele);
         });
     }
@@ -274,17 +277,17 @@ const GridBase = memo(({
     const backendApi = api || model.api;
     const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
     const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
-    // A row click on a model with childGrids declared selects it as the active parent row for the child grids rendered below.
-    const hasChildGrids = !!model.childGrids?.length;
+    // A row click on a model with relations declared selects it as the active parent row for the child grids rendered below.
+    const hasChildGrids = !!model.relationItems?.length;
     const [selectedChildRow, setSelectedChildRow] = useState(null);
     const childRelationFilters = useMemo(() => {
         if (!hasChildGrids || !selectedChildRow) return {};
         const parentValue = selectedChildRow[idProperty];
-        return Object.fromEntries(model.childGrids.map(childModel => [
+        return Object.fromEntries(model.relationItems.map(childModel => [
             childModel.name,
             [{ field: childModel.joinColumn || idProperty, operator: '=', type: 'number', value: Number(parentValue) }]
         ]));
-    }, [hasChildGrids, selectedChildRow, model.childGrids, idProperty]);
+    }, [hasChildGrids, selectedChildRow, model.relationItems, idProperty]);
     const handleChildRowClick = useCallback((params, event, details) => {
         if (hasChildGrids) {
             setSelectedChildRow(params.row ?? null);
@@ -848,6 +851,7 @@ const GridBase = memo(({
         }
 
         const mergedExtraParams = {
+            ...model.relationsParam,
             ...extraParams,
             ...props.extraParams,
             ...joinParams,
@@ -1678,7 +1682,7 @@ const GridBase = memo(({
                             <Box sx={{ width: '100%', minWidth: 0 }}>
                                 <Box sx={{ borderBottom: 1, borderColor: 'divider', minWidth: 0 }}>
                                     <Tabs value={0} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
-                                        {model.childGrids.map(childModel => (
+                                        {model.relationItems.map(childModel => (
                                             <Tab key={childModel.name} label={tTranslate(childModel.listTitle || childModel.title, tOpts)} />
                                         ))}
                                     </Tabs>
