@@ -2,6 +2,7 @@ import GridBase from './index';
 import * as yup from 'yup';
 import { Divider } from '@mui/material';
 import Form from '../Form/Form';
+import Relations from '../Form/relations';
 import utils from '../utils';
 
 const regexConfig = {
@@ -109,6 +110,33 @@ class UiModel {
 		this._applyColumnDefaults();
 		this.columnVisibilityModel = this._getColumnVisibilityModel();
 		this.defaultValues = this._getDefaultValues(defaultValues);
+		this.relationItems = this._resolveRelationItems();
+	}
+
+	// `relations.items` lists the child grids shown as tabs below a selected row (Grid/index.js's
+	// ChildGrids). Each entry is either a bare model, or an override object `{ model, name, hideColumns,
+	// joinColumn, joinColumnAsParam, relationsParam }`.
+	_resolveRelationItems() {
+		const { relations } = this;
+		if (!relations || Array.isArray(relations) || !relations.items) return [];
+		const sharedHideColumns = relations.hideColumns || [];
+		return relations.items.map(item => this._resolveRelationItem(item, sharedHideColumns));
+	}
+
+	_resolveRelationItem(item, sharedHideColumns) {
+		const { model, name, hideColumns = [], joinColumn, joinColumnAsParam, relationsParam } = 'model' in item ? item : { model: item };
+		const hiddenFields = new Set([...sharedHideColumns, ...hideColumns]);
+
+		const overrides = {
+			...(name && { name }),
+			...(hiddenFields.size && { columns: model.columns.filter(col => !hiddenFields.has(col.field)) }),
+			...(joinColumn && { joinColumn }),
+			...(joinColumnAsParam !== undefined && { joinColumnAsParam }),
+			...(relationsParam && { relationsParam })
+		};
+
+		if (!Object.keys(overrides).length) return model;
+		return Object.assign(Object.create(Object.getPrototypeOf(model)), model, overrides);
 	}
 
 	_applyColumnDefaults() {
@@ -347,6 +375,13 @@ class UiModel {
 			<GridBase model={this} {...props} customStyle={customStyle} showRowsSelected={showRowsSelected} />
 			<Divider orientation='horizontal' sx={{ mt: 2 }} />
 		</>;
+	};
+
+	// Renders this model's declared relations.items (resolved into this.relationItems) as a Relations tab panel.
+	ChildGrids = (props) => {
+		if (!this.relationItems?.length) return null;
+		const relations = this.relationItems.map(childModel => childModel.name);
+		return <Relations relations={relations} models={this.relationItems} {...props} />;
 	};
 }
 

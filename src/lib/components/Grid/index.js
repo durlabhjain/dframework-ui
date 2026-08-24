@@ -21,7 +21,7 @@ import { DialogComponent } from '../Dialog/index';
 import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
 import { Footer } from './footer';
 import template from './template';
-import { Tooltip, Box } from "@mui/material";
+import { Tooltip, Box, Tabs, Tab } from "@mui/material";
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import PageTitle from '../PageTitle';
@@ -90,6 +90,11 @@ const DEFAULT_FILTER_OPERATORS_BY_TYPE = {
     boolean: getGridBooleanOperators,
     singleSelect: getGridSingleSelectOperators
 };
+
+// Fills and internally scrolls within a bounded-height flex ancestor; used when model.relations is set.
+const CHILD_GRIDS_FILL_STYLE = Object.freeze({ height: '100%', overflowY: 'auto' });
+// Default assumes an ~88px app header at the viewport top; override via the childGridsContainerHeight prop or model option.
+const CHILD_GRIDS_CONTAINER_HEIGHT = 'calc(100vh - 88px)';
 
 // Stable empty references used when localSortAndFilter is enabled to prevent
 // fetchData from being recreated (and re-triggering API calls) on sort/filter changes
@@ -214,8 +219,11 @@ const GridBase = memo(({
     customExportOptions,
     sx: propsSx,
     gridProps,
+    childGridsContainerHeight: propsChildGridsContainerHeight,
     ...props
 }) => {
+    // Overridable per-call or per-model since consumer chrome above the grid varies.
+    const childGridsContainerHeight = propsChildGridsContainerHeight ?? model.childGridsContainerHeight ?? CHILD_GRIDS_CONTAINER_HEIGHT;
     const { onDataLoaded, processRowUpdate: processRowUpdateProp, onRowSelectionModelChange: onRowSelectionModelChangeProp } = props;
     const staticDataSource = props.staticData ?? model.staticData;
     const hasStaticData = Array.isArray(staticDataSource) || Array.isArray(staticDataSource?.records);
@@ -247,10 +255,13 @@ const GridBase = memo(({
     const { translate, tOpts, tTranslate } = useModelTranslation(model);
     const [errorMessage, setErrorMessage] = useState('');
     const [sortModel, setSortModel] = useState(() => convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
+    // defaultFilters may be a function so relative-date filters (e.g. "last 7 days") are computed
+    // fresh on mount instead of once when the model module first loaded.
+    const resolvedDefaultFilters = typeof model.defaultFilters === 'function' ? model.defaultFilters() : model.defaultFilters;
     const initialFilterModel = { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' };
-    if (model.defaultFilters) {
+    if (resolvedDefaultFilters) {
         initialFilterModel.items = [];
-        model.defaultFilters.forEach((ele) => {
+        resolvedDefaultFilters.forEach((ele) => {
             initialFilterModel.items.push(ele);
         });
     }
@@ -266,6 +277,31 @@ const GridBase = memo(({
     const backendApi = api || model.api;
     const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
     const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
+    // A row click on a model with relations declared selects it as the active parent row for the child grids rendered below.
+    const hasChildGrids = !!model.relationItems?.length;
+    const [selectedChildRow, setSelectedChildRow] = useState(null);
+    const childRelationFilters = useMemo(() => {
+        if (!hasChildGrids || !selectedChildRow) return {};
+        const parentValue = selectedChildRow[idProperty];
+        return Object.fromEntries(model.relationItems.map(childModel => [
+            childModel.name,
+            [{ field: childModel.joinColumn || idProperty, operator: '=', type: 'number', value: Number(parentValue) }]
+        ]));
+    }, [hasChildGrids, selectedChildRow, model.relationItems, idProperty]);
+    const handleChildRowClick = useCallback((params, event, details) => {
+        if (hasChildGrids) {
+            setSelectedChildRow(params.row ?? null);
+            props.onChildRowSelected?.(params.row ?? null);
+        }
+        onRowClick(params, event, details);
+    }, [hasChildGrids, onRowClick, props.onChildRowSelected]);
+    const getRowClassNameWithChildSelection = useCallback((params) => {
+        const consumerClassName = props.getRowClassName ? props.getRowClassName(params) : '';
+        if (hasChildGrids && selectedChildRow && params.row[idProperty] === selectedChildRow[idProperty]) {
+            return `${consumerClassName} child-grid-selected-row`.trim();
+        }
+        return consumerClassName;
+    }, [props.getRowClassName, hasChildGrids, selectedChildRow, idProperty]);
     // When localSortAndFilter is true, sorting and filtering are handled client-side by MUI DataGrid
     // even if paginationMode is server. Sort/filter values are not sent to the API.
     const sortAndFilterMode = (hasStaticData || localSortAndFilter) ? constants.client : paginationMode;
@@ -793,12 +829,21 @@ const GridBase = memo(({
             items: filterValidItems(filterModelForFetch.items)
         };
 
-        const mergedBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
+        const joinFilterItems = [];
         if (model.joinColumn && id) {
-            mergedBaseFilters.push({ field: model.joinColumn, operator: "is", type: "number", value: Number(id) });
+            joinFilterItems.push({ field: model.joinColumn, operator: "is", type: "number", value: Number(id) });
         }
         if (Array.isArray(parentFilters)) {
-            mergedBaseFilters.push(...parentFilters);
+            joinFilterItems.push(...parentFilters);
+        }
+
+        const mergedBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
+        // joinColumnAsParam sends the join value(s) as flat request params instead of where-clause filters.
+        const joinParams = {};
+        if (model.joinColumnAsParam) {
+            joinFilterItems.forEach(({ field, value }) => { joinParams[field] = value; });
+        } else {
+            mergedBaseFilters.push(...joinFilterItems);
         }
 
         if (additionalFilters) {
@@ -806,8 +851,10 @@ const GridBase = memo(({
         }
 
         const mergedExtraParams = {
+            ...model.relationsParam,
             ...extraParams,
             ...props.extraParams,
+            ...joinParams,
         };
 
         if (assigned || available) {
@@ -1514,97 +1561,140 @@ const GridBase = memo(({
     }), []);
 
     const gridSxProps = useMemo(() => [
-        ...(Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : [])
-    ], [propsSx]);
+        ...(Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : []),
+        ...(hasChildGrids ? [{
+            '& .child-grid-selected-row': { backgroundColor: 'action.selected' },
+            '& .child-grid-selected-row:hover': { backgroundColor: 'action.selected' }
+        }] : [])
+    ], [propsSx, hasChildGrids]);
+    const outerBoxStyle = gridStyle || (hasChildGrids ? CHILD_GRIDS_FILL_STYLE : customStyle);
+
+    const mainGridElement = (
+        <Box style={outerBoxStyle}>
+            {/* height: '100%' only takes effect when outerBoxStyle gives this a definite-height parent (e.g. a flex:1, minHeight:0 wrapper); otherwise the 80vh cap behaves as before. */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '80vh' }}>
+                <DataGridPremium
+                    {...gridProps}
+                    sx={gridSxProps}
+                    headerFilters={showHeaderFilters}
+                    unstable_headerFilters={showHeaderFilters} //for older versions of mui
+                    checkboxSelection={forAssignment || !!model.checkboxSelection}
+                    loading={!data.records || isLoading}
+                    className="pagination-fix"
+                    onCellClick={onCellClickHandler}
+                    onCellDoubleClick={onCellDoubleClick}
+                    columns={gridColumns}
+                    paginationModel={paginationModel}
+                    pageSizeOptions={constants.pageSizeOptions}
+                    onPaginationModelChange={setPaginationModel}
+                    pagination={!disablePagination}
+                    rowCount={rowCount}
+                    rows={gridRows}
+                    sortModel={sortModel}
+                    paginationMode={paginationMode}
+                    sortingMode={sortAndFilterMode}
+                    filterMode={sortAndFilterMode}
+                    processRowUpdate={processRowUpdate}
+                    keepNonExistentRowsSelected
+                    onSortModelChange={updateSort}
+                    onFilterModelChange={updateFilters}
+                    rowSelectionModel={rowSelectionModel}
+                    onRowSelectionModelChange={handleRowSelectionModelChange}
+                    filterModel={filterModel}
+                    getRowId={getGridRowId}
+                    onRowClick={handleChildRowClick}
+                    slots={slots}
+                    slotProps={slotProps}
+                    hideFooterSelectedRowCount={rowsSelected}
+                    density="compact"
+                    disableDensitySelector={true}
+                    apiRef={apiRef}
+                    disableAggregation={gridProps?.disableAggregation ?? model?.disableAggregation ?? true}
+                    disableRowGrouping={disableRowGrouping}
+                    disableRowSelectionOnClick={disableRowSelectionOnClick}
+                    disablePivoting={disablePivoting}
+                    filterDebounceMs={debounceTimeOut}
+                    initialState={initialState}
+                    {...(enableRowDetailPanel && {
+                        getDetailPanelContent,
+                        detailPanelExpandedRowIds,
+                        onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded
+                    })}
+                    localeText={localeText}
+                    showToolbar={true}
+                    columnHeaderHeight={columnHeaderHeight}
+                    hideFooter={!showFooter}
+                    rowGroupingModel={groupingModel}
+                    onRowGroupingModelChange={setGroupingModel}
+                    getRowClassName={getRowClassNameWithChildSelection}
+                    columnGroupingModel={columnGroupingModel}
+                />
+            </Box>
+            {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
+            }
+            {isDeleting && !errorMessage && (
+                <DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title={tTranslate("Confirm Delete", tOpts)} okText={tTranslate("Ok", tOpts)} cancelText={tTranslate("Cancel", tOpts)}>
+                    <DeleteContentText>
+                        {tTranslate("Are you sure you want to delete", tOpts)} {record.name && <Tooltip style={{ display: "inline" }} title={record.name} arrow>
+                            {record.name.length > 30 ? `${record.name.slice(0, 30)}...` : record.name}
+                        </Tooltip>} ?
+                    </DeleteContentText>
+                </DialogComponent>)}
+            {showAddConfirmation && (
+                <DialogComponent
+                    open={showAddConfirmation}
+                    onConfirm={handleAddRecords}
+                    onCancel={() => setShowAddConfirmation(false)}
+                    title={tTranslate("Confirm Add", tOpts)}
+                    okText={tTranslate("Ok", tOpts)}
+                    cancelText={tTranslate("Cancel", tOpts)}
+                >
+                    <DeleteContentText>
+                        {tTranslate("Are you sure you want to add", tOpts)} {rowSelectionModel.ids.size} {tTranslate("records", { count: rowSelectionModel.ids.size, ...tOpts })}?
+                    </DeleteContentText>
+                </DialogComponent>
+            )}
+        </Box>
+    );
 
     return (
         <>
             {showPageTitle !== false && <PageTitle navigate={navigate} showBreadcrumbs={!hideBreadcrumb && !hideBreadcrumbInGrid}
                 breadcrumbs={breadCrumbs} enableBackButton={navigateBack} breadcrumbColor={breadcrumbColor} model={model} />}
-            <Box style={gridStyle || customStyle}>
-                <Box sx={{ display: 'flex', maxHeight: '80vh', flexDirection: 'column' }}>
-                    <DataGridPremium
-                        {...gridProps}
-                        sx={gridSxProps}
-                        headerFilters={showHeaderFilters}
-                        unstable_headerFilters={showHeaderFilters} //for older versions of mui
-                        checkboxSelection={forAssignment || !!model.checkboxSelection}
-                        loading={!data.records || isLoading}
-                        className="pagination-fix"
-                        onCellClick={onCellClickHandler}
-                        onCellDoubleClick={onCellDoubleClick}
-                        columns={gridColumns}
-                        paginationModel={paginationModel}
-                        pageSizeOptions={constants.pageSizeOptions}
-                        onPaginationModelChange={setPaginationModel}
-                        pagination={!disablePagination}
-                        rowCount={rowCount}
-                        rows={gridRows}
-                        sortModel={sortModel}
-                        paginationMode={paginationMode}
-                        sortingMode={sortAndFilterMode}
-                        filterMode={sortAndFilterMode}
-                        processRowUpdate={processRowUpdate}
-                        keepNonExistentRowsSelected
-                        onSortModelChange={updateSort}
-                        onFilterModelChange={updateFilters}
-                        rowSelectionModel={rowSelectionModel}
-                        onRowSelectionModelChange={handleRowSelectionModelChange}
-                        filterModel={filterModel}
-                        getRowId={getGridRowId}
-                        onRowClick={onRowClick}
-                        slots={slots}
-                        slotProps={slotProps}
-                        hideFooterSelectedRowCount={rowsSelected}
-                        density="compact"
-                        disableDensitySelector={true}
-                        apiRef={apiRef}
-                        disableAggregation={gridProps?.disableAggregation ?? model?.disableAggregation ?? true}
-                        disableRowGrouping={disableRowGrouping}
-                        disableRowSelectionOnClick={disableRowSelectionOnClick}
-                        disablePivoting={disablePivoting}
-                        filterDebounceMs={debounceTimeOut}
-                        initialState={initialState}
-                        {...(enableRowDetailPanel && {
-                            getDetailPanelContent,
-                            detailPanelExpandedRowIds,
-                            onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded
-                        })}
-                        localeText={localeText}
-                        showToolbar={true}
-                        columnHeaderHeight={columnHeaderHeight}
-                        hideFooter={!showFooter}
-                        rowGroupingModel={groupingModel}
-                        onRowGroupingModelChange={setGroupingModel}
-                        getRowClassName={props.getRowClassName}
-                        columnGroupingModel={columnGroupingModel}
-                    />
+            {hasChildGrids ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', height: childGridsContainerHeight, gap: 2 }}>
+                    <Box sx={{ flex: 3, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                        {mainGridElement}
+                    </Box>
+                    <Box sx={{ flex: 2, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'background.paper' }}>
+                        {selectedChildRow ? (
+                            <model.ChildGrids
+                                parent={selectedChildRow}
+                                relationFilters={childRelationFilters}
+                                childGridStyle={CHILD_GRIDS_FILL_STYLE}
+                                disableCellRedirect
+                                tTranslate={tTranslate}
+                                tOpts={tOpts}
+                                sx={propsSx}
+                                {...props.childGridProps}
+                            />
+                        ) : (
+                            <Box sx={{ width: '100%', minWidth: 0 }}>
+                                <Box sx={{ borderBottom: 1, borderColor: 'divider', minWidth: 0 }}>
+                                    <Tabs value={0} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
+                                        {model.relationItems.map(childModel => (
+                                            <Tab key={childModel.name} label={tTranslate(childModel.listTitle || childModel.title, tOpts)} />
+                                        ))}
+                                    </Tabs>
+                                </Box>
+                                <Box sx={{ p: 3 }}>
+                                    {tTranslate('Please select a record to see its details', tOpts)}
+                                </Box>
+                            </Box>
+                        )}
+                    </Box>
                 </Box>
-                {errorMessage && (<DialogComponent open={!!errorMessage} onConfirm={clearError} onCancel={clearError} title="Info" hideCancelButton={true} > {errorMessage}</DialogComponent>)
-                }
-                {isDeleting && !errorMessage && (
-                    <DialogComponent open={isDeleting} onConfirm={handleDelete} onCancel={() => setIsDeleting(false)} title={tTranslate("Confirm Delete", tOpts)} okText={tTranslate("Ok", tOpts)} cancelText={tTranslate("Cancel", tOpts)}>
-                        <DeleteContentText>
-                            {tTranslate("Are you sure you want to delete", tOpts)} {record.name && <Tooltip style={{ display: "inline" }} title={record.name} arrow>
-                                {record.name.length > 30 ? `${record.name.slice(0, 30)}...` : record.name}
-                            </Tooltip>} ?
-                        </DeleteContentText>
-                    </DialogComponent>)}
-                {showAddConfirmation && (
-                    <DialogComponent
-                        open={showAddConfirmation}
-                        onConfirm={handleAddRecords}
-                        onCancel={() => setShowAddConfirmation(false)}
-                        title={tTranslate("Confirm Add", tOpts)}
-                        okText={tTranslate("Ok", tOpts)}
-                        cancelText={tTranslate("Cancel", tOpts)}
-                    >
-                        <DeleteContentText>
-                            {tTranslate("Are you sure you want to add", tOpts)} {rowSelectionModel.ids.size} {tTranslate("records", { count: rowSelectionModel.ids.size, ...tOpts })}?
-                        </DeleteContentText>
-                    </DialogComponent>
-                )}
-            </Box >
+            ) : mainGridElement}
         </>
     );
 }, areEqual);

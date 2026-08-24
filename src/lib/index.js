@@ -3,6 +3,7 @@ import { SnackbarProvider, SnackbarContext, useSnackbar } from './components/Sna
 import { DialogComponent } from './components/Dialog';
 import GridBase, { renderers } from './components/Grid/index';
 import { UiModel } from './components/Grid/ui-models';
+import Relations from './components/Form/relations';
 import HelpModal from './components/HelpModal';
 import PageTitle from './components/PageTitle';
 import MuiTypography from './components/Typography';
@@ -28,6 +29,7 @@ export {
   DialogComponent,
   UiModel,
   GridBase,
+  Relations,
   renderers,
   RouterProvider,
   MuiTypography,
