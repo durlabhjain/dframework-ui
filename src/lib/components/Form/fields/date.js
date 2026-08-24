@@ -40,6 +40,7 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
     const handleChange = useCallback((value) => {
         if (value === null) {
             formik.setFieldValue(field, null);
+            if (column.maxField && column.maxRangeDays != null) formik.setFieldValue(column.maxField, null);
             return;
         }
         const adjustedDate = dayjs(value).hour(12);
