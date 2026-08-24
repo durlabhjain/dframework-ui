@@ -17,6 +17,13 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
     const minFieldValue = column.minField ? formik.values[column.minField] : undefined;
     const maxFieldValue = column.maxField ? formik.values[column.maxField] : undefined;
 
+    // Invalid maxRangeDays (non-numeric, NaN) is treated as "not configured" rather than
+    // producing invalid Dayjs calculations or auto-populating maxField with an invalid ISO string.
+    const maxRangeDays = useMemo(() => {
+        const n = Number(column.maxRangeDays);
+        return column.maxRangeDays != null && Number.isFinite(n) ? n : null;
+    }, [column.maxRangeDays]);
+
     const minDateValue = useMemo(() => {
         if (column.min) return dayjs(column.min);
         if (column.minField && minFieldValue) return dayjs(minFieldValue);
@@ -27,29 +34,29 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
         if (column.max) return dayjs(column.max);
         // When maxRangeDays drives this field (see handleChange), maxField holds a value
         // this field just auto-set, not an independent upper bound — don't clamp maxDate to it.
-        if (column.maxField && column.maxRangeDays == null && maxFieldValue) return dayjs(maxFieldValue);
+        if (column.maxField && maxRangeDays == null && maxFieldValue) return dayjs(maxFieldValue);
         return null;
-    }, [column.max, column.maxField, column.maxRangeDays, maxFieldValue]);
+    }, [column.max, column.maxField, maxRangeDays, maxFieldValue]);
 
     // minField + maxRangeDays: days past minField + maxRangeDays stay visible on the calendar but disabled, rather than bounding maxDate (which would also block navigating to those months).
     const rangeLimitDate = useMemo(() => {
-        if (column.minField && column.maxRangeDays != null && minFieldValue) return dayjs(minFieldValue).add(Number(column.maxRangeDays), 'day');
+        if (column.minField && maxRangeDays != null && minFieldValue) return dayjs(minFieldValue).add(maxRangeDays, 'day');
         return null;
-    }, [column.minField, column.maxRangeDays, minFieldValue]);
+    }, [column.minField, maxRangeDays, minFieldValue]);
 
     const shouldDisableDate = useCallback((day) => Boolean(rangeLimitDate) && day.isAfter(rangeLimitDate, 'day'), [rangeLimitDate]);
 
     const handleChange = useCallback((value) => {
         if (value === null) {
             formik.setFieldValue(field, null);
-            if (column.maxField && column.maxRangeDays != null) formik.setFieldValue(column.maxField, null);
+            if (column.maxField && maxRangeDays != null) formik.setFieldValue(column.maxField, null);
             return;
         }
         const adjustedDate = dayjs(value).hour(12);
         formik.setFieldValue(field, adjustedDate.toISOString());
 
-        if (column.maxField && column.maxRangeDays != null) formik.setFieldValue(column.maxField, adjustedDate.add(Number(column.maxRangeDays), 'day').toISOString());
-    }, [field, formik, column.maxField, column.maxRangeDays]);
+        if (column.maxField && maxRangeDays != null) formik.setFieldValue(column.maxField, adjustedDate.add(maxRangeDays, 'day').toISOString());
+    }, [field, formik, column.maxField, maxRangeDays]);
     
     return <DatePicker
         key={field}

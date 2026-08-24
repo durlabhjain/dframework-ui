@@ -73,6 +73,12 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
                Array.isArray(options) && options.some(o => String(o.value) === String(inputValue));
     }, [inputValue, column.multiSelect, options]);
 
+    const disabledOptionValues = useMemo(() => {
+        return Array.isArray(fieldConfigs.disabledOptions)
+            ? new Set(fieldConfigs.disabledOptions.map((v) => String(v)))
+            : null;
+    }, [fieldConfigs.disabledOptions]);
+
     const clearSelection = useCallback((e) => {
         e.stopPropagation();
         const newValue = column.multiSelect ? [] : '';
@@ -106,7 +112,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
                     }}
                 >
                     {Array.isArray(options) && options.map(option => (
-                        <MenuItem key={option.value} value={option.value} disabled={option.isDisabled || (Array.isArray(fieldConfigs.disabledOptions) && fieldConfigs.disabledOptions.some((v) => String(v) === String(option.value)))}>
+                        <MenuItem key={option.value} value={option.value} disabled={option.isDisabled || Boolean(disabledOptionValues?.has(String(option.value)))}>
                             {option.label}
                         </MenuItem>
                     ))}
