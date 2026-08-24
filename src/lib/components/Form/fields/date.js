@@ -25,9 +25,11 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
 
     const maxDateValue = useMemo(() => {
         if (column.max) return dayjs(column.max);
-        if (column.maxField && maxFieldValue) return dayjs(maxFieldValue);
+        // When maxRangeDays drives this field (see handleChange), maxField holds a value
+        // this field just auto-set, not an independent upper bound — don't clamp maxDate to it.
+        if (column.maxField && column.maxRangeDays == null && maxFieldValue) return dayjs(maxFieldValue);
         return null;
-    }, [column.max, column.maxField, maxFieldValue]);
+    }, [column.max, column.maxField, column.maxRangeDays, maxFieldValue]);
 
     // minField + maxRangeDays: days past minField + maxRangeDays stay visible on the calendar but disabled, rather than bounding maxDate (which would also block navigating to those months).
     const rangeLimitDate = useMemo(() => {
