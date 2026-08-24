@@ -1498,6 +1498,7 @@ const GridBase = memo(({
             currentPreference,
             isReadOnly,
             canAdd,
+            canDelete,
             forAssignment,
             showAddIcon,
             onAdd,
@@ -1545,7 +1546,7 @@ const GridBase = memo(({
                 'aria-label': tTranslate('Go to next page', tOpts),
             },
         }
-    }), [model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination]);
+    }), [model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination]);
 
     const initialState = useMemo(() => ({
         columns: {
