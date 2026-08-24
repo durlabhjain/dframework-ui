@@ -20,7 +20,7 @@ import dayjs from "dayjs";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import { Autocomplete, Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, CardContent, Checkbox, Chip, CircularProgress, Dialog as Dialog$1, DialogContent as DialogContent$1, DialogTitle as DialogTitle$1, Divider, FilledInput, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, Input, InputAdornment, InputLabel, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField as TextField$1, Tooltip, Typography as Typography$1, styled, useTheme } from "@mui/material";
+import { Autocomplete, Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, CardContent, Checkbox, Chip, CircularProgress, Dialog as Dialog$1, DialogContent as DialogContent$1, DialogTitle as DialogTitle$1, Divider, FilledInput, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, Input, InputAdornment, InputLabel, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, Tab, Tabs, TextField as TextField$1, Tooltip, Typography as Typography$1, styled, useTheme } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import HelpIcon from "@mui/icons-material/Help";
@@ -74,8 +74,8 @@ import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import PageviewIcon from "@mui/icons-material/PageviewOutlined";
 import Input$1 from "@mui/material/Input";
-import Tab from "@mui/material/Tab";
-import Tabs from "@mui/material/Tabs";
+import Tab$1 from "@mui/material/Tab";
+import Tabs$1 from "@mui/material/Tabs";
 //#region src/lib/errors.js
 /**
 * Centralized error code registry.
@@ -2739,7 +2739,7 @@ var GridToolBar = styled$1(Toolbar)({
 var hasNonEmptyValue = (value) => value !== null && value !== void 0 && value !== "" && !(Array.isArray(value) && value.length === 0);
 var filterValidItems$1 = (items = []) => items.filter((item) => ["isEmpty", "isNotEmpty"].includes(item.operator) || hasNonEmptyValue(item.value));
 var CustomToolbar = function(props) {
-	const { model, data, currentPreference, isReadOnly, canAdd, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, tTranslate, tOpts, filterModel, setFilterModel, onPreferenceChange, toolbarItems, gridColumns, customExportOptions, isStaticDataMode } = props;
+	const { model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, tTranslate, tOpts, filterModel, setFilterModel, onPreferenceChange, toolbarItems, gridColumns, customExportOptions, isStaticDataMode } = props;
 	const addText = model.customAddText || (model.title ? `Add ${model.title}` : "Add");
 	const activeFilterCount = filterValidItems$1(filterModel?.items || []).length || 0;
 	const toolbarFilterColumns = gridColumns?.filter((col) => col.toolbarFilter) || [];
@@ -2793,6 +2793,7 @@ var CustomToolbar = function(props) {
 				children: rowSelectionModel.ids.size === records.length ? tTranslate("Deselect All", tOpts) : tTranslate("Select All", tOpts)
 			}) : /* @__PURE__ */ jsx(Fragment, {}),
 			available && /* @__PURE__ */ jsx(ButtonWithMargin, {
+				disabled: !canAdd || isReadOnly,
 				startIcon: !showAddIcon ? null : /* @__PURE__ */ jsx(AddIcon, {}),
 				onClick: onAssign,
 				size: "medium",
@@ -2800,6 +2801,7 @@ var CustomToolbar = function(props) {
 				children: tTranslate("Assign", tOpts)
 			}),
 			assigned && /* @__PURE__ */ jsx(ButtonWithMargin, {
+				disabled: !canDelete || isReadOnly,
 				startIcon: !showAddIcon ? null : /* @__PURE__ */ jsx(RemoveIcon, {}),
 				onClick: onUnassign,
 				size: "medium",
@@ -2997,7 +2999,8 @@ function useCascadingLookup({ column, formik, lookups, dependsOn = [], isAutoCom
 		dependsOn.length,
 		fetchOptions,
 		isAutoComplete,
-		initialOptions
+		initialOptions,
+		userSelected
 	]);
 	return {
 		options,
@@ -3112,15 +3115,16 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 	const selectedIds = isMultiSelect ? currentValue : currentValue !== "" ? [currentValue] : [];
 	const selectedIdsKey = selectedIds.map(String).join(",");
 	useEffect(() => {
-		selectedIds.forEach((id) => {
+		const missingIds = selectedIds.filter((id) => {
 			const idKey = String(id);
-			if (!id || Number(id) === 0) return;
-			if (Object.prototype.hasOwnProperty.call(labelMap, idKey)) return;
-			if (requestedLookupIdsRef.current.has(idKey)) return;
-			requestedLookupIdsRef.current.add(idKey);
-			fetchOptions({ lookupId: id }).then((result) => {
-				if (!result) requestedLookupIdsRef.current.delete(idKey);
-			});
+			if (!id || Number(id) === 0) return false;
+			if (Object.prototype.hasOwnProperty.call(labelMap, idKey)) return false;
+			return !requestedLookupIdsRef.current.has(idKey);
+		});
+		if (!missingIds.length) return;
+		missingIds.forEach((id) => requestedLookupIdsRef.current.add(String(id)));
+		fetchOptions({ lookupId: missingIds.length === 1 ? missingIds[0] : missingIds }).then((result) => {
+			if (!result) missingIds.forEach((id) => requestedLookupIdsRef.current.delete(String(id)));
 		});
 	}, [selectedIdsKey, fetchOptions]);
 	const getLabel = useCallback((key) => labelMap[String(key)] ?? String(key), [labelMap]);
@@ -3327,7 +3331,7 @@ function useChangedDeps(label, namedDeps, enabled = false) {
 			from: prev[key],
 			to: deps[key]
 		};
-		if (Object.keys(changed).length > 0) console.debug(`[Grid/${label}] deps changed:`, changed);
+		if (Object.keys(changed).length > 0) console.warn(`[Grid/${label}] deps changed:`, changed);
 		prevRef.current = deps;
 	});
 }
@@ -3404,6 +3408,11 @@ var DEFAULT_FILTER_OPERATORS_BY_TYPE = {
 	boolean: getGridBooleanOperators,
 	singleSelect: getGridSingleSelectOperators
 };
+var CHILD_GRIDS_FILL_STYLE = Object.freeze({
+	height: "100%",
+	overflowY: "auto"
+});
+var CHILD_GRIDS_CONTAINER_HEIGHT = "calc(100vh - 88px)";
 var EMPTY_SORT_MODEL = Object.freeze([]);
 var EMPTY_FILTER_MODEL = Object.freeze({
 	items: [],
@@ -3482,7 +3491,9 @@ var CustomCheckBox = ({ params, handleSelectRow, idProperty }) => {
 		inputProps: { "aria-label": "checkbox" }
 	});
 };
-var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, relationName, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, ...props }) => {
+var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, relationName, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, childGridsContainerHeight: propsChildGridsContainerHeight, ...props }) => {
+	const childGridsContainerHeight = propsChildGridsContainerHeight ?? model.childGridsContainerHeight ?? CHILD_GRIDS_CONTAINER_HEIGHT;
+	const { onDataLoaded, processRowUpdate: processRowUpdateProp, onRowSelectionModelChange: onRowSelectionModelChangeProp } = props;
 	const staticDataSource = props.staticData ?? model.staticData;
 	const hasStaticData = Array.isArray(staticDataSource) || Array.isArray(staticDataSource?.records);
 	const normalizedStaticData = useMemo(() => hasStaticData ? normalizeStaticData(staticDataSource) : null, [hasStaticData, staticDataSource]);
@@ -3518,15 +3529,16 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const { translate, tOpts, tTranslate } = useModelTranslation(model);
 	const [errorMessage, setErrorMessage] = useState("");
 	const [sortModel, setSortModel] = useState(() => convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
+	const resolvedDefaultFilters = typeof model.defaultFilters === "function" ? model.defaultFilters() : model.defaultFilters;
 	const initialFilterModel = {
 		items: [],
 		logicOperator: "and",
 		quickFilterValues: Array(0),
 		quickFilterLogicOperator: "and"
 	};
-	if (model.defaultFilters) {
+	if (resolvedDefaultFilters) {
 		initialFilterModel.items = [];
-		model.defaultFilters.forEach((ele) => {
+		resolvedDefaultFilters.forEach((ele) => {
 			initialFilterModel.items.push(ele);
 		});
 	}
@@ -3542,9 +3554,54 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const backendApi = api || model.api;
 	const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
 	const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
+	const hasChildGrids = !!model.relationItems?.length;
+	const [selectedChildRow, setSelectedChildRow] = useState(null);
+	const childRelationFilters = useMemo(() => {
+		if (!hasChildGrids || !selectedChildRow) return {};
+		const parentValue = selectedChildRow[idProperty];
+		return Object.fromEntries(model.relationItems.map((childModel) => [childModel.name, [{
+			field: childModel.joinColumn || idProperty,
+			operator: "=",
+			type: "number",
+			value: Number(parentValue)
+		}]]));
+	}, [
+		hasChildGrids,
+		selectedChildRow,
+		model.relationItems,
+		idProperty
+	]);
+	const handleChildRowClick = useCallback((params, event, details) => {
+		if (hasChildGrids) {
+			setSelectedChildRow(params.row ?? null);
+			props.onChildRowSelected?.(params.row ?? null);
+		}
+		onRowClick(params, event, details);
+	}, [
+		hasChildGrids,
+		onRowClick,
+		props.onChildRowSelected
+	]);
+	const getRowClassNameWithChildSelection = useCallback((params) => {
+		const consumerClassName = props.getRowClassName ? props.getRowClassName(params) : "";
+		if (hasChildGrids && selectedChildRow && params.row[idProperty] === selectedChildRow[idProperty]) return `${consumerClassName} child-grid-selected-row`.trim();
+		return consumerClassName;
+	}, [
+		props.getRowClassName,
+		hasChildGrids,
+		selectedChildRow,
+		idProperty
+	]);
 	const sortAndFilterMode = hasStaticData || localSortAndFilter ? constants.client : paginationMode;
 	const sortModelForFetch = localSortAndFilter ? EMPTY_SORT_MODEL : sortModel;
-	const filterModelForFetch = localSortAndFilter ? EMPTY_FILTER_MODEL : filterModel;
+	const filterModelFetchKey = useMemo(() => JSON.stringify(filterValidItems(filterModel.items)), [filterModel.items]);
+	const filterModelForFetch = useMemo(() => localSortAndFilter ? EMPTY_FILTER_MODEL : filterModel, [
+		localSortAndFilter,
+		filterModelFetchKey,
+		filterModel.logicOperator,
+		filterModel.quickFilterValues,
+		filterModel.quickFilterLogicOperator
+	]);
 	const paginationModelForFetch = localSortAndFilter ? LOCAL_MODE_PAGINATION_MODEL : paginationModel;
 	const isReadOnly = model.readOnly === true || readOnly || isStaticDataWithoutBackendApi;
 	const isDoubleClicked = model.allowDoubleClick === false;
@@ -3662,7 +3719,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			});
 		}
 	})), [baseColumnList, model]);
-	const gridColumnTypes = {
+	const currencySymbol = userData?.userData?.CurrencySymbol;
+	const gridColumnTypes = useMemo(() => ({
 		"radio": {
 			"type": "singleSelect",
 			"valueOptions": "lookup"
@@ -3715,7 +3773,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			filterOperators: [...getGridNumericOperators()].filter((op) => !["!="].includes(op.value)),
 			"valueFormatter": ({ value }) => {
 				if (value == null) return "";
-				const symbol = userData?.userData?.CurrencySymbol || "";
+				const symbol = currencySymbol || "";
 				return symbol ? `${symbol}${value}` : String(value);
 			}
 		},
@@ -3723,11 +3781,18 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			"type": "singleSelect",
 			filterOperators: remoteLookupFilterOperators
 		}
-	};
+	}), [
+		stateData.dateTime,
+		currencySymbol,
+		handleSelectRow,
+		idProperty,
+		remoteLookupFilterOperators,
+		formatDate
+	]);
 	useEffect(() => {
 		dataRef.current = data;
-		if (typeof props.onDataLoaded === "function") props.onDataLoaded(data);
-	}, [data]);
+		if (typeof onDataLoaded === "function") onDataLoaded(data);
+	}, [data, onDataLoaded]);
 	if (hasStaticData !== prevHasStaticData || normalizedStaticData !== prevNormalizedStaticData) {
 		setPrevHasStaticData(hasStaticData);
 		setPrevNormalizedStaticData(normalizedStaticData);
@@ -3923,7 +3988,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				if (type === constants.dateTime) {
 					column.filterOperators = localizedDateFormat({ columnType: "dateTime" });
 					column.valueFormatter = gridColumnTypes.dateTime.valueFormatter;
-					column.localize = true;
+					column.localize = model.isAuditColumnLocalized ?? true;
 				}
 				finalColumns.push(column);
 			}
@@ -3949,13 +4014,17 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		columns,
 		model,
 		parent,
-		permissions,
-		forAssignment,
 		dynamicColumns,
 		translate,
-		stateData?.dateTime,
 		groupingModel,
-		enableRowDetailPanel
+		enableRowDetailPanel,
+		actionConfig.length,
+		disableRowGrouping,
+		getActions,
+		gridColumnTypes,
+		lookupOptions,
+		tOpts,
+		tTranslate
 	]);
 	const gridColumns = useMemo(() => stableGridColumns.map((col) => ({ ...col })), [stableGridColumns, lookupKeys]);
 	const fetchColumnsRef = useRef([]);
@@ -4000,7 +4069,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			items: [...prev.items, ...toolbarFilters]
 		}));
 		hasInitializedRef.current = true;
-	}, [gridColumns]);
+	}, [gridColumns, filterModel.items]);
 	useChangedDeps("fetchData", {
 		hasStaticData,
 		preferencesReady,
@@ -4029,18 +4098,26 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			...filterModelForFetch,
 			items: filterValidItems(filterModelForFetch.items)
 		};
-		const mergedBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
-		if (model.joinColumn && id) mergedBaseFilters.push({
+		const joinFilterItems = [];
+		if (model.joinColumn && id) joinFilterItems.push({
 			field: model.joinColumn,
 			operator: "is",
 			type: "number",
 			value: Number(id)
 		});
-		if (Array.isArray(parentFilters)) mergedBaseFilters.push(...parentFilters);
+		if (Array.isArray(parentFilters)) joinFilterItems.push(...parentFilters);
+		const mergedBaseFilters = Array.isArray(baseFilters) ? [...baseFilters] : [];
+		const joinParams = {};
+		if (model.joinColumnAsParam) joinFilterItems.forEach(({ field, value }) => {
+			joinParams[field] = value;
+		});
+		else mergedBaseFilters.push(...joinFilterItems);
 		if (additionalFilters) filters.items = [...filters.items || [], ...additionalFilters];
 		const mergedExtraParams = {
+			...model.relationsParam,
 			...extraParams,
-			...props.extraParams
+			...props.extraParams,
+			...joinParams
 		};
 		if (assigned || available) {
 			const selectedValue = Array.isArray(selected) ? selected.join(",") : selected || "";
@@ -4122,7 +4199,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		parentFilters,
 		additionalFilters,
 		tTranslate,
-		tOpts
+		tOpts,
+		apiRef
 	]);
 	const openForm = useCallback(async ({ id, record = {}, mode }) => {
 		if (setActiveRecord) {
@@ -4290,9 +4368,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		setIsDeleting(false);
 	}, []);
 	const processRowUpdate = useCallback((updatedRow) => {
-		if (typeof props.processRowUpdate === "function") props.processRowUpdate(updatedRow, data);
+		if (typeof processRowUpdateProp === "function") processRowUpdateProp(updatedRow, data);
 		return updatedRow;
-	}, [props.processRowUpdate, data]);
+	}, [processRowUpdateProp, data]);
 	const onCellDoubleClick = useCallback((event) => {
 		if (event.row.canEdit === false) return;
 		const { row: record } = event;
@@ -4369,7 +4447,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		data.records,
 		idProperty,
 		baseSaveData,
-		model.selectionUpdateKeys,
 		selectionApi,
 		backendApi,
 		model,
@@ -4394,9 +4471,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		snackbar,
 		onAddOverride,
 		openForm,
-		rowSelectionModel.ids.size,
-		tTranslate,
-		tOpts
+		rowSelectionModel.ids.size
 	]);
 	const clearFilters = useCallback(() => {
 		if (!filterModel?.items?.length) return;
@@ -4426,8 +4501,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			};
 		}
 		setRowSelectionModel(normalizedModel);
-		props.onRowSelectionModelChange?.(normalizedModel);
-	}, [getSelectedRowIds, props.onRowSelectionModelChange]);
+		onRowSelectionModelChangeProp?.(normalizedModel);
+	}, [getSelectedRowIds, onRowSelectionModelChangeProp]);
 	const updateAssignment = useCallback(({ unassign, assign }) => {
 		const assignedValues = Array.isArray(selected) ? selected : selected ? selected.split(",") : [];
 		const unassignSet = new Set((unassign || []).map((id) => parseInt(id)));
@@ -4521,8 +4596,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		snackbar,
 		fetchData,
 		tTranslate,
-		tOpts,
-		recordCounts
+		tOpts
 	]);
 	useEffect(() => {
 		fetchData();
@@ -4620,7 +4694,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		});
 		return null;
 	}, [
-		model.getDetailPanelContent,
+		model,
 		fetchData,
 		tTranslate,
 		tOpts
@@ -4751,6 +4825,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			currentPreference,
 			isReadOnly,
 			canAdd,
+			canDelete,
 			forAssignment,
 			showAddIcon,
 			onAdd,
@@ -4802,6 +4877,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		currentPreference,
 		isReadOnly,
 		canAdd,
+		canDelete,
 		forAssignment,
 		showAddIcon,
 		onAdd,
@@ -4840,22 +4916,19 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		toolbar: CustomToolbar,
 		footer: Footer
 	}), []);
-	const gridSxProps = useMemo(() => [...Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : []], [propsSx]);
-	return /* @__PURE__ */ jsxs(Fragment, { children: [showPageTitle !== false && /* @__PURE__ */ jsx(PageTitle_default, {
-		navigate,
-		showBreadcrumbs: !hideBreadcrumb && !hideBreadcrumbInGrid,
-		breadcrumbs: breadCrumbs,
-		enableBackButton: navigateBack,
-		breadcrumbColor,
-		model
-	}), /* @__PURE__ */ jsxs(Box$1, {
-		style: gridStyle || customStyle,
+	const gridSxProps = useMemo(() => [...Array.isArray(propsSx) ? propsSx : propsSx ? [propsSx] : [], ...hasChildGrids ? [{
+		"& .child-grid-selected-row": { backgroundColor: "action.selected" },
+		"& .child-grid-selected-row:hover": { backgroundColor: "action.selected" }
+	}] : []], [propsSx, hasChildGrids]);
+	const mainGridElement = /* @__PURE__ */ jsxs(Box$1, {
+		style: gridStyle || (hasChildGrids ? CHILD_GRIDS_FILL_STYLE : customStyle),
 		children: [
 			/* @__PURE__ */ jsx(Box$1, {
 				sx: {
 					display: "flex",
-					maxHeight: "80vh",
-					flexDirection: "column"
+					flexDirection: "column",
+					height: "100%",
+					maxHeight: "80vh"
 				},
 				children: /* @__PURE__ */ jsx(DataGridPremium, {
 					...gridProps,
@@ -4886,14 +4959,14 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					onRowSelectionModelChange: handleRowSelectionModelChange,
 					filterModel,
 					getRowId: getGridRowId,
-					onRowClick,
+					onRowClick: handleChildRowClick,
 					slots,
 					slotProps,
 					hideFooterSelectedRowCount: rowsSelected,
 					density: "compact",
 					disableDensitySelector: true,
 					apiRef,
-					disableAggregation: true,
+					disableAggregation: gridProps?.disableAggregation ?? model?.disableAggregation ?? true,
 					disableRowGrouping,
 					disableRowSelectionOnClick,
 					disablePivoting,
@@ -4910,7 +4983,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					hideFooter: !showFooter,
 					rowGroupingModel: groupingModel,
 					onRowGroupingModelChange: setGroupingModel,
-					getRowClassName: props.getRowClassName,
+					getRowClassName: getRowClassNameWithChildSelection,
 					columnGroupingModel
 				})
 			}),
@@ -4961,7 +5034,72 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				] })
 			})
 		]
-	})] });
+	});
+	return /* @__PURE__ */ jsxs(Fragment, { children: [showPageTitle !== false && /* @__PURE__ */ jsx(PageTitle_default, {
+		navigate,
+		showBreadcrumbs: !hideBreadcrumb && !hideBreadcrumbInGrid,
+		breadcrumbs: breadCrumbs,
+		enableBackButton: navigateBack,
+		breadcrumbColor,
+		model
+	}), hasChildGrids ? /* @__PURE__ */ jsxs(Box$1, {
+		sx: {
+			display: "flex",
+			flexDirection: "column",
+			height: childGridsContainerHeight,
+			gap: 2
+		},
+		children: [/* @__PURE__ */ jsx(Box$1, {
+			sx: {
+				flex: 3,
+				minHeight: 0,
+				display: "flex",
+				flexDirection: "column"
+			},
+			children: mainGridElement
+		}), /* @__PURE__ */ jsx(Box$1, {
+			sx: {
+				flex: 2,
+				minHeight: 0,
+				display: "flex",
+				flexDirection: "column",
+				overflow: "hidden",
+				bgcolor: "background.paper"
+			},
+			children: selectedChildRow ? /* @__PURE__ */ jsx(model.ChildGrids, {
+				parent: selectedChildRow,
+				relationFilters: childRelationFilters,
+				childGridStyle: CHILD_GRIDS_FILL_STYLE,
+				disableCellRedirect: true,
+				tTranslate,
+				tOpts,
+				sx: propsSx,
+				...props.childGridProps
+			}) : /* @__PURE__ */ jsxs(Box$1, {
+				sx: {
+					width: "100%",
+					minWidth: 0
+				},
+				children: [/* @__PURE__ */ jsx(Box$1, {
+					sx: {
+						borderBottom: 1,
+						borderColor: "divider",
+						minWidth: 0
+					},
+					children: /* @__PURE__ */ jsx(Tabs, {
+						value: 0,
+						variant: "scrollable",
+						scrollButtons: "auto",
+						allowScrollButtonsMobile: true,
+						children: model.relationItems.map((childModel) => /* @__PURE__ */ jsx(Tab, { label: tTranslate(childModel.listTitle || childModel.title, tOpts) }, childModel.name))
+					})
+				}), /* @__PURE__ */ jsx(Box$1, {
+					sx: { p: 3 },
+					children: tTranslate("Please select a record to see its details", tOpts)
+				})]
+			})
+		})]
+	}) : mainGridElement] });
 }, areEqual);
 var renderersCache = /* @__PURE__ */ new Map();
 var renderers = {
@@ -5000,11 +5138,8 @@ var Field$10 = ({ column, field, formik, otherProps }) => {
 	const handleChange = (event) => {
 		formik.setFieldValue(field, event.target.checked);
 	};
-	const checked = useMemo(() => formik.values[field] ?? !!column.defaultValue, [
-		formik.values[field],
-		field,
-		column.defaultValue
-	]);
+	const fieldValue = formik.values[field];
+	const checked = useMemo(() => fieldValue ?? !!column.defaultValue, [fieldValue, column.defaultValue]);
 	const isDisabled = typeof column.readOnly === "function" ? column.readOnly(formik) : column.readOnly;
 	return /* @__PURE__ */ jsxs("div", { children: [/* @__PURE__ */ jsx(FormControlLabel$1, { control: /* @__PURE__ */ jsx(Checkbox$1, {
 		...otherProps,
@@ -5207,11 +5342,16 @@ var EMPTY_FIELD_CONFIGS$4 = {};
 var Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$4, mode }) => {
 	const isDisabled = mode !== "copy" && fieldConfigs.disabled;
 	const { systemDateTimeFormat, stateData } = useStateContext();
+	const fieldValue = formik.values[field];
 	const dateValue = useMemo(() => {
-		return formik.values[field] ? dayjs(formik.values[field]) : null;
-	}, [formik.values[field], field]);
+		return fieldValue ? dayjs(fieldValue) : null;
+	}, [fieldValue]);
 	const minFieldValue = column.minField ? formik.values[column.minField] : void 0;
 	const maxFieldValue = column.maxField ? formik.values[column.maxField] : void 0;
+	const maxRangeDays = useMemo(() => {
+		const n = Number(column.maxRangeDays);
+		return column.maxRangeDays != null && Number.isFinite(n) ? n : null;
+	}, [column.maxRangeDays]);
 	const minDateValue = useMemo(() => {
 		if (column.min) return dayjs(column.min);
 		if (column.minField && minFieldValue) return dayjs(minFieldValue);
@@ -5223,21 +5363,38 @@ var Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
 	]);
 	const maxDateValue = useMemo(() => {
 		if (column.max) return dayjs(column.max);
-		if (column.maxField && maxFieldValue) return dayjs(maxFieldValue);
+		if (column.maxField && maxRangeDays == null && maxFieldValue) return dayjs(maxFieldValue);
 		return null;
 	}, [
 		column.max,
 		column.maxField,
+		maxRangeDays,
 		maxFieldValue
 	]);
+	const rangeLimitDate = useMemo(() => {
+		if (column.minField && maxRangeDays != null && minFieldValue) return dayjs(minFieldValue).add(maxRangeDays, "day");
+		return null;
+	}, [
+		column.minField,
+		maxRangeDays,
+		minFieldValue
+	]);
+	const shouldDisableDate = useCallback((day) => Boolean(rangeLimitDate) && day.isAfter(rangeLimitDate, "day"), [rangeLimitDate]);
 	const handleChange = useCallback((value) => {
 		if (value === null) {
 			formik.setFieldValue(field, null);
+			if (column.maxField && maxRangeDays != null) formik.setFieldValue(column.maxField, null);
 			return;
 		}
-		const isoString = dayjs(value).hour(12).toISOString();
-		formik.setFieldValue(field, isoString);
-	}, [field, formik]);
+		const adjustedDate = dayjs(value).hour(12);
+		formik.setFieldValue(field, adjustedDate.toISOString());
+		if (column.maxField && maxRangeDays != null) formik.setFieldValue(column.maxField, adjustedDate.add(maxRangeDays, "day").toISOString());
+	}, [
+		field,
+		formik,
+		column.maxField,
+		maxRangeDays
+	]);
 	return /* @__PURE__ */ jsx(DatePicker, {
 		...otherProps,
 		variant: "standard",
@@ -5251,6 +5408,7 @@ var Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
 		helperText: formik.touched[field] && formik.errors[field],
 		minDate: minDateValue,
 		maxDate: maxDateValue,
+		shouldDisableDate: rangeLimitDate ? shouldDisableDate : void 0,
 		disabled: isDisabled,
 		slotProps: { textField: {
 			fullWidth: true,
@@ -5265,11 +5423,11 @@ var EMPTY_FIELD_CONFIGS$3 = {};
 var Field$5 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$3 }) => {
 	const isReadOnly = column?.readOnly === true || Boolean(fieldConfigs.readOnly);
 	const { systemDateTimeFormat, stateData } = useStateContext();
+	const fieldValue = formik.values[field];
 	const dateTimeValue = useMemo(() => {
-		const val = formik.values[field];
-		if (!val) return null;
-		return dayjs(val);
-	}, [formik.values[field], field]);
+		if (!fieldValue) return null;
+		return dayjs(fieldValue);
+	}, [fieldValue]);
 	return /* @__PURE__ */ jsx(DateTimePicker, {
 		...otherProps,
 		variant: "standard",
@@ -5363,10 +5521,11 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 		}
 		return value;
 	}, [
-		formik.values[field],
-		options,
+		formik,
+		field,
+		column.defaultValue,
 		column.multiSelect,
-		field
+		options
 	]);
 	const handleChange = useCallback((event) => {
 		formik.handleChange(event);
@@ -5381,7 +5540,7 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 		userSelected.current = true;
 	}, [
 		formik,
-		column.onChange,
+		column,
 		options,
 		tTranslate,
 		tOpts
@@ -5394,6 +5553,9 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 		column.multiSelect,
 		options
 	]);
+	const disabledOptionValues = useMemo(() => {
+		return Array.isArray(fieldConfigs.disabledOptions) ? new Set(fieldConfigs.disabledOptions.map((v) => String(v))) : null;
+	}, [fieldConfigs.disabledOptions]);
 	const clearSelection = useCallback((e) => {
 		e.stopPropagation();
 		const newValue = column.multiSelect ? [] : "";
@@ -5408,10 +5570,9 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 		});
 		userSelected.current = true;
 	}, [
-		column.multiSelect,
-		field,
+		column,
 		formik,
-		column.onChange,
+		field,
 		options,
 		tTranslate,
 		tOpts
@@ -5439,7 +5600,7 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 					},
 					children: Array.isArray(options) && options.map((option) => /* @__PURE__ */ jsx(MenuItem$1, {
 						value: option.value,
-						disabled: option.isDisabled,
+						disabled: option.isDisabled || Boolean(disabledOptionValues?.has(String(option.value))),
 						children: option.label
 					}, option.value))
 				}), hasValue && !isReadOnly && /* @__PURE__ */ jsx(IconButton, {
@@ -5742,8 +5903,11 @@ var ActiveStepContext = createContext({
 var EMPTY_FIELD_CONFIGS = {};
 var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS }) => {
 	const theme = useTheme();
-	let inputValue = formik.values[field] || [];
-	if (!Array.isArray(inputValue)) inputValue = inputValue.split(",").map((item) => item.trim());
+	const fieldValue = formik.values[field];
+	const inputValue = React$1.useMemo(() => {
+		const value = fieldValue || [];
+		return Array.isArray(value) ? value : value.split(",").map((item) => item.trim());
+	}, [fieldValue]);
 	const isDisabled = React$1.useMemo(() => {
 		if (typeof fieldConfigs.disabled !== "undefined") return fieldConfigs.disabled;
 		if (typeof column.disabled === "function") return column.disabled({
@@ -5753,11 +5917,15 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
 		return Boolean(column.disabled);
 	}, [
 		fieldConfigs.disabled,
-		column.disabled,
+		column,
 		isAdd,
 		formik
 	]);
-	const fixedOptions = column.hasDefault && !isAdd ? [inputValue[0]] : [];
+	const fixedOptions = React$1.useMemo(() => column.hasDefault && !isAdd ? [inputValue[0]] : [], [
+		column,
+		isAdd,
+		inputValue
+	]);
 	const [inputText, setInputText] = React$1.useState("");
 	const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
 		const lastElement = newValue.pop()?.trim();
@@ -6266,18 +6434,19 @@ var parseJson = (raw) => {
 var Field = ({ field, formik }) => {
 	const [state, setState] = React$1.useState(() => parseJson(formik.values[field]));
 	const debouncedState = useDebounce(state, 300);
+	const fieldValue = formik.values[field];
 	React$1.useEffect(() => {
 		const nextValue = JSON.stringify(debouncedState);
-		if (formik.values[field] !== nextValue) formik.setFieldValue(field, nextValue);
+		if (fieldValue !== nextValue) formik.setFieldValue(field, nextValue);
 	}, [
 		debouncedState,
 		field,
 		formik,
-		formik.values[field]
+		fieldValue
 	]);
 	React$1.useEffect(() => {
-		setState(parseJson(formik.values[field]));
-	}, [formik.values[field], field]);
+		setState(parseJson(fieldValue));
+	}, [fieldValue]);
 	const handleChange = (key, value) => {
 		const updatedState = {
 			...state,
@@ -6640,15 +6809,27 @@ var FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayI
 //#endregion
 //#region src/lib/components/Form/relations.js
 function CustomTabPanel(props) {
-	const { children, value, index, ...other } = props;
+	const { children, value, index, fillHeight, ...other } = props;
+	const isActive = value === index;
 	return /* @__PURE__ */ jsx("div", {
 		role: "tabpanel",
-		hidden: value !== index,
+		hidden: !isActive,
 		id: `simple-tabpanel-${index}`,
 		"aria-labelledby": `simple-tab-${index}`,
+		style: fillHeight && isActive ? {
+			display: "flex",
+			flexDirection: "column",
+			flex: 1,
+			minHeight: 0
+		} : void 0,
 		...other,
-		children: value === index && /* @__PURE__ */ jsx(Box, {
-			sx: { p: 3 },
+		children: isActive && /* @__PURE__ */ jsx(Box, {
+			sx: fillHeight ? {
+				flex: 1,
+				minHeight: 0,
+				display: "flex",
+				flexDirection: "column"
+			} : { p: 3 },
 			children
 		})
 	});
@@ -6664,57 +6845,101 @@ function a11yProps(index) {
 * @param {Object} params - Parameters for rendering the child grid
 * @param {string} params.relation - Name of the related model
 * @param {Object} params.parentFilters - Filters to apply to the parent
+* @param {Object} [params.extraParams] - Extra request parameters merged into the child grid's list/export calls
 * @param {Object} params.parent - Parent data
 * @param {Object} params.where - Conditions for the grid
 * @param {Array} params.models - List of available models
+* @param {boolean} [params.readOnly] - Renders the child grid read-only
+* @param {boolean} [params.disableCellRedirect] - Disables the default row-click navigation
+* @param {Function} [params.onCellClick] - Cell click handler
+* @param {Object} [params.gridStyle] - Style applied to the child grid container (also toggles fill-height layout)
+* @param {boolean} [params.showHeaderFilters] - Overrides the model's showHeaderFilters setting for this child grid
+* @param {Object} [params.sx] - MUI sx prop forwarded to the child grid
 */
-var ChildGrid = memo(({ relation, parentFilters, parent, where, models, readOnly }) => {
+var ChildGrid = memo(({ relation, parentFilters, extraParams, parent, where, models, readOnly, disableCellRedirect, onCellClick, gridStyle, showHeaderFilters, sx }) => {
 	const modelConfigOfChildGrid = models.find(({ name }) => name === relation);
-	if (!modelConfigOfChildGrid) return null;
-	const { config, ChildModel } = React.useMemo(() => {
-		const baseConfig = modelConfigOfChildGrid instanceof UiModel ? Object.assign(Object.create(Object.getPrototypeOf(modelConfigOfChildGrid)), modelConfigOfChildGrid) : { ...modelConfigOfChildGrid };
-		baseConfig.hideBreadcrumb = true;
-		return {
-			config: baseConfig,
-			ChildModel: baseConfig instanceof UiModel ? baseConfig : new UiModel(baseConfig)
+	const ChildModel = React.useMemo(() => {
+		if (!modelConfigOfChildGrid) return null;
+		const overrides = {
+			hideBreadcrumb: true,
+			...showHeaderFilters !== void 0 && { showHeaderFilters }
 		};
-	}, [modelConfigOfChildGrid]);
+		if (modelConfigOfChildGrid instanceof UiModel) return Object.assign(Object.create(Object.getPrototypeOf(modelConfigOfChildGrid)), modelConfigOfChildGrid, overrides);
+		return new UiModel({
+			...modelConfigOfChildGrid,
+			...overrides
+		});
+	}, [modelConfigOfChildGrid, showHeaderFilters]);
 	if (!ChildModel) return null;
-	return /* @__PURE__ */ jsx(ChildModel.ChildGrid, {
+	return /* @__PURE__ */ jsx(ChildModel.Grid, {
+		model: ChildModel,
 		readOnly,
 		parentFilters,
 		parent,
 		relationName: relation,
-		model: config,
 		where,
-		isChildGrid: true
+		isChildGrid: true,
+		extraParams,
+		disableCellRedirect,
+		onCellClick,
+		gridStyle,
+		sx
 	});
 });
 var EMPTY_WHERE = [];
 /**
 * Relations component using MUI Tabs
 * Renders a tab for each relation, and a ChildGrid in each panel
+* @param {Object} props
+* @param {string[]} props.relations - Names of the related models to render as tabs
+* @param {Object} props.parent - Parent row data, passed through to each child grid
+* @param {Array} [props.where] - Conditions applied to every child grid
+* @param {Array} props.models - List of available models (matched against `relations` by name)
+* @param {Object} props.relationFilters - Per-relation filters, keyed by relation name (required - indexed directly without a fallback)
+* @param {boolean} [props.readOnly] - Renders every child grid read-only
+* @param {boolean} [props.disableCellRedirect] - Disables the default row-click navigation on every child grid
+* @param {Function} [props.onCellClick] - Cell click handler, forwarded to every child grid
+* @param {Object} [props.childGridStyle] - Style applied to every child grid container; also enables fill-height tab panels
+* @param {boolean} [props.showChildHeaderFilters] - Overrides showHeaderFilters on every child grid
+* @param {Object} [props.extraParams] - Extra request parameters merged into every child grid's list/export calls
+* @param {Object} [props.sx] - MUI sx prop forwarded to every child grid
+* @param {Function} [props.tTranslate] - Translation function used for tab labels
+* @param {Object} [props.tOpts] - Options passed to tTranslate
 */
-var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, relationFilters, readOnly, tTranslate = (key) => key, tOpts = {} }) => {
+var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, relationFilters, readOnly, disableCellRedirect, onCellClick, childGridStyle, showChildHeaderFilters, extraParams, sx, tTranslate = (key) => key, tOpts = {} }) => {
 	const [tabIndex, setTabIndex] = useState(0);
 	const handleChange = (_, newValue) => {
 		setTabIndex(newValue);
 	};
+	const fillHeight = !!childGridStyle;
 	return /* @__PURE__ */ jsxs(Box, {
-		sx: { width: "100%" },
+		sx: {
+			width: "100%",
+			minWidth: 0,
+			...fillHeight && {
+				display: "flex",
+				flexDirection: "column",
+				height: "100%",
+				minHeight: 0
+			}
+		},
 		children: [/* @__PURE__ */ jsx(Box, {
 			sx: {
 				borderBottom: 1,
-				borderColor: "divider"
+				borderColor: "divider",
+				minWidth: 0
 			},
-			children: /* @__PURE__ */ jsx(Tabs, {
+			children: /* @__PURE__ */ jsx(Tabs$1, {
 				value: tabIndex,
 				onChange: handleChange,
 				"aria-label": "relations tabs",
+				variant: "scrollable",
+				scrollButtons: "auto",
+				allowScrollButtonsMobile: true,
 				children: relations.map((relation, idx) => {
 					const modelConfigOfChildGrid = models.find(({ name }) => name === relation) || {};
 					const label = modelConfigOfChildGrid.listTitle || modelConfigOfChildGrid.title || relation;
-					return /* @__PURE__ */ jsx(Tab, {
+					return /* @__PURE__ */ jsx(Tab$1, {
 						label: tTranslate(label, tOpts),
 						...a11yProps(idx)
 					}, relation);
@@ -6723,13 +6948,20 @@ var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, re
 		}), relations.map((relation, idx) => /* @__PURE__ */ jsx(CustomTabPanel, {
 			value: tabIndex,
 			index: idx,
+			fillHeight,
 			children: /* @__PURE__ */ jsx(ChildGrid, {
 				readOnly,
 				relation,
 				models,
 				parentFilters: relationFilters[relation] || [],
 				parent,
-				where
+				where,
+				disableCellRedirect,
+				onCellClick,
+				gridStyle: childGridStyle,
+				showHeaderFilters: showChildHeaderFilters,
+				extraParams,
+				sx
 			}, relation)
 		}, relation))]
 	});
@@ -7146,7 +7378,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.144.0/helpers/esm/typeof.js
+//#region \0@oxc-project+runtime@0.146.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -7156,7 +7388,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.144.0/helpers/esm/toPrimitive.js
+//#region \0@oxc-project+runtime@0.146.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -7168,13 +7400,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.144.0/helpers/esm/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.146.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.144.0/helpers/esm/defineProperty.js
+//#region \0@oxc-project+runtime@0.146.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
@@ -7271,6 +7503,15 @@ var UiModel = class UiModel {
 				sx: { mt: 2 }
 			})] });
 		});
+		_defineProperty(this, "ChildGrids", (props) => {
+			if (!this.relationItems?.length) return null;
+			const relations = this.relationItems.map((childModel) => childModel.name);
+			return /* @__PURE__ */ jsx(Relations, {
+				relations,
+				models: this.relationItems,
+				...props
+			});
+		});
 		const { title = "" } = modelConfig;
 		let { api, idProperty = api + "Id" } = modelConfig;
 		const module = "module" in modelConfig ? modelConfig.module : title.replace(/[^\w\s]/gi, "");
@@ -7296,6 +7537,26 @@ var UiModel = class UiModel {
 		this._applyColumnDefaults();
 		this.columnVisibilityModel = this._getColumnVisibilityModel();
 		this.defaultValues = this._getDefaultValues(defaultValues);
+		this.relationItems = this._resolveRelationItems();
+	}
+	_resolveRelationItems() {
+		const { relations } = this;
+		if (!relations || Array.isArray(relations) || !relations.items) return [];
+		const sharedHideColumns = relations.hideColumns || [];
+		return relations.items.map((item) => this._resolveRelationItem(item, sharedHideColumns));
+	}
+	_resolveRelationItem(item, sharedHideColumns) {
+		const { model, name, hideColumns = [], joinColumn, joinColumnAsParam, relationsParam } = "model" in item ? item : { model: item };
+		const hiddenFields = /* @__PURE__ */ new Set([...sharedHideColumns, ...hideColumns]);
+		const overrides = {
+			...name && { name },
+			...hiddenFields.size && { columns: model.columns.filter((col) => !hiddenFields.has(col.field)) },
+			...joinColumn && { joinColumn },
+			...joinColumnAsParam !== void 0 && { joinColumnAsParam },
+			...relationsParam && { relationsParam }
+		};
+		if (!Object.keys(overrides).length) return model;
+		return Object.assign(Object.create(Object.getPrototypeOf(model)), model, overrides);
 	}
 	_applyColumnDefaults() {
 		for (const col of this.columns) if (!col.type) col.type = "string";
@@ -7476,6 +7737,6 @@ _defineProperty(UiModel, "defaultPermissions", {
 	delete: true
 });
 //#endregion
-export { AppError, DialogComponent, ERROR_CODES, ERROR_MESSAGES, GridBase, HelpModal, MuiTypography, PageTitle_default as PageTitle, RouterProvider, SnackbarContext, SnackbarProvider, StateProvider, UiModel, crudHelper, daDKGrid, deDEGrid, elGRGrid, esESGrid, frFRGrid, request as httpRequest, itITGrid, locales, ptPT_default as ptPT, renderers, resolveErrorMessage, trTRGrid, useMobile, useModelTranslation, useRouter, useSnackbar, useStateContext };
+export { AppError, DialogComponent, ERROR_CODES, ERROR_MESSAGES, GridBase, HelpModal, MuiTypography, PageTitle_default as PageTitle, Relations, RouterProvider, SnackbarContext, SnackbarProvider, StateProvider, UiModel, crudHelper, daDKGrid, deDEGrid, elGRGrid, esESGrid, frFRGrid, request as httpRequest, itITGrid, locales, ptPT_default as ptPT, renderers, resolveErrorMessage, trTRGrid, useMobile, useModelTranslation, useRouter, useSnackbar, useStateContext };
 
 //# sourceMappingURL=index.js.map
