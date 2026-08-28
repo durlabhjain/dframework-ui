@@ -19,6 +19,7 @@ import { useMemo, useEffect, memo, useRef, useState, useCallback } from 'react';
 import { useSnackbar } from '../SnackBar/index';
 import { DialogComponent } from '../Dialog/index';
 import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
+import { LIST_STATE_PARAM, currentSearchParams, generateId, readListState, writeListState } from './listState';
 import { Footer } from './footer';
 import template from './template';
 import { Tooltip, Box, Tabs, Tab } from "@mui/material";
@@ -108,6 +109,8 @@ const EMPTY_FILTER_MODEL = Object.freeze({
 // Stable pagination used when localSortAndFilter is enabled: always request page 0
 // with a large pageSize so the backend returns all rows in one call.
 const LOCAL_MODE_PAGINATION_MODEL = Object.freeze({ page: 0, pageSize: exportPageSize });
+// Stable empty default for model.customActions - a fresh [] every render would bust the gridColumns memo chain and reset MUI's column order on each re-render.
+const EMPTY_ACTIONS = Object.freeze([]);
 
 
 const normalizeStaticData = (staticData) => {
@@ -220,6 +223,7 @@ const GridBase = memo(({
     sx: propsSx,
     gridProps,
     childGridsContainerHeight: propsChildGridsContainerHeight,
+    preserveListState: preserveListStateProp,
     ...props
 }) => {
     // Overridable per-call or per-model since consumer chrome above the grid varies.
@@ -231,15 +235,25 @@ const GridBase = memo(({
         () => hasStaticData ? normalizeStaticData(staticDataSource) : null,
         [hasStaticData, staticDataSource]
     );
-    const [paginationModel, setPaginationModel] = useState({ pageSize: defaultPageSize, page: 0 });
+    // Route-scoped list state (filters/sort/page/grouping/selection) restored after a
+    // navigate-to-form-and-back round trip. Off unless the consumer opts in via the
+    // preserveListState prop, and never used in modal (setActiveRecord) mode since the
+    // grid there never unmounts.
+    const preserveListState = !!preserveListStateProp && !setActiveRecord;
+    const incomingListStateId = preserveListState ? currentSearchParams().get(LIST_STATE_PARAM) : null;
+    const [listStateSnapshot] = useState(() => readListState(incomingListStateId));
+    // Reused for every commit during this grid instance's lifetime (seeded from an incoming
+    // ?ls=, or minted lazily on first commit) so edits overwrite one sessionStorage entry
+    // instead of orphaning a new one per change.
+    const listStateIdRef = useRef(incomingListStateId);
+    const [paginationModel, setPaginationModel] = useState(() => listStateSnapshot?.paginationModel ?? { pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState(() => normalizedStaticData || { recordCount: 0, records: null, lookups: {} });
     const forAssignment = !!onAssignChange;
     const rowsSelected = showRowsSelected;
     // MUI v8: rowSelectionModel uses object format with type ('include'/'exclude') and ids (Set)
-    const [rowSelectionModel, setRowSelectionModel] = useState({
-        type: 'include',
-        ids: new Set()
-    });
+    const [rowSelectionModel, setRowSelectionModel] = useState(() => listStateSnapshot?.rowSelectionModel
+        ? { type: listStateSnapshot.rowSelectionModel.type, ids: new Set(listStateSnapshot.rowSelectionModel.ids) }
+        : { type: 'include', ids: new Set() });
     const [isDeleting, setIsDeleting] = useState(false);
     const [record, setRecord] = useState(null);
     const visibilityModel = useMemo(() => ({ CreatedOn: false, CreatedByUser: false, ...model.columnVisibilityModel }), [model.columnVisibilityModel]);
@@ -254,7 +268,7 @@ const GridBase = memo(({
     const paginationMode = (hasStaticData || model.localSortAndFilter) ? constants.client : (model.paginationMode === constants.client ? constants.client : constants.server);
     const { translate, tOpts, tTranslate } = useModelTranslation(model);
     const [errorMessage, setErrorMessage] = useState('');
-    const [sortModel, setSortModel] = useState(() => convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
+    const [sortModel, setSortModel] = useState(() => listStateSnapshot?.sortModel ?? convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
     // defaultFilters may be a function so relative-date filters (e.g. "last 7 days") are computed
     // fresh on mount instead of once when the model module first loaded.
     const resolvedDefaultFilters = typeof model.defaultFilters === 'function' ? model.defaultFilters() : model.defaultFilters;
@@ -265,7 +279,7 @@ const GridBase = memo(({
             initialFilterModel.items.push(ele);
         });
     }
-    const [filterModel, setFilterModel] = useState({ ...initialFilterModel });
+    const [filterModel, setFilterModel] = useState(() => listStateSnapshot?.filterModel ?? { ...initialFilterModel });
     const [prevCustomFilters, setPrevCustomFilters] = useState(() => ({}));
     const [prevHasStaticData, setPrevHasStaticData] = useState(hasStaticData);
     const [prevNormalizedStaticData, setPrevNormalizedStaticData] = useState(normalizedStaticData);
@@ -358,7 +372,7 @@ const GridBase = memo(({
     const gridRows = useMemo(() => data.records || [], [data.records]);
     const rowCount = data.recordCount;
     const [groupingModel, setGroupingModel] = useState(
-        () => Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []
+        () => listStateSnapshot?.groupingModel ?? (Array.isArray(props.rowGroupingField) ? props.rowGroupingField : [])
     );
     const [prevRowGroupingField, setPrevRowGroupingField] = useState(props.rowGroupingField);
     if (prevRowGroupingField !== props.rowGroupingField) {
@@ -566,7 +580,7 @@ const GridBase = memo(({
         // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
         [translate, tOpts, tTranslate]
     );
-    const { customActions = [] } = model;
+    const { customActions = EMPTY_ACTIONS } = model;
     const actionConfig = useMemo(() => {
         const actions = [];
 
@@ -950,14 +964,20 @@ const GridBase = memo(({
         } else {
             path += id;
         }
-        if (addUrlParamKey) {
-            const currentParams = new URLSearchParams(window.location.search);
-            currentParams.set(addUrlParamKey, record[addUrlParamKey]);
-            path += `?${currentParams.toString()}`;
+        if (addUrlParamKey || preserveListState) {
+            const currentParams = currentSearchParams();
+            if (addUrlParamKey) {
+                currentParams.set(addUrlParamKey, record[addUrlParamKey]);
+            }
+            // Carries the grid's committed ?ls= snapshot id forward so Form's default
+            // "navigate up one segment" can restore it when coming back to this list.
+            if (addUrlParamKey || currentParams.has(LIST_STATE_PARAM)) {
+                path += `?${currentParams.toString()}`;
+            }
         }
         navigate(path);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, relationName, addUrlParamKey, navigate, getRecord, buildUrl, snackbar]);
+    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, relationName, addUrlParamKey, preserveListState, navigate, getRecord, buildUrl, snackbar]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -1287,6 +1307,34 @@ const GridBase = memo(({
         fetchData();
     }, [fetchData]);
 
+    // Arms list-state committing one tick after preferences/columns finish loading (immediately
+    // if there's no preferenceKey to wait on), so the grid's own mount-time adjustments (toolbar
+    // filter defaults, customFilters/rowGroupingField prop sync) don't themselves get recorded
+    // as a "user action".
+    const listStateArmedRef = useRef(false);
+    useEffect(() => {
+        if (!preserveListState || !preferencesReady) return undefined;
+        const timer = setTimeout(() => { listStateArmedRef.current = true; }, 0);
+        return () => clearTimeout(timer);
+    }, [preserveListState, preferencesReady]);
+
+    // Replaces the URL in place rather than pushing a history entry per edit.
+    useEffect(() => {
+        if (!preserveListState || !listStateArmedRef.current) return;
+        const id = listStateIdRef.current ?? (listStateIdRef.current = generateId());
+        writeListState(id, {
+            paginationModel,
+            sortModel,
+            filterModel,
+            groupingModel,
+            rowSelectionModel: { type: rowSelectionModel.type, ids: Array.from(rowSelectionModel.ids) }
+        });
+        const nextParams = currentSearchParams();
+        nextParams.set(LIST_STATE_PARAM, id);
+        navigate(`${pathname}?${nextParams.toString()}`, { replace: true });
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- commits only on the tracked list-state values changing, not on navigate/pathname identity
+    }, [preserveListState, paginationModel, sortModel, filterModel, groupingModel, rowSelectionModel]);
+
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
             return;
@@ -1487,7 +1535,13 @@ const GridBase = memo(({
             footerRowSelected: (count) => {
                 const key = count === 1 ? 'item selected' : 'items selected';
                 return `${count.toLocaleString()} ${tTranslate(key, tOpts)}`;
-            }
+            },
+            aggregationFunctionLabelSum: tTranslate("Sum", tOpts),
+            aggregationFunctionLabelAvg: tTranslate("Avg", tOpts),
+            aggregationFunctionLabelMin: tTranslate("Min", tOpts),
+            aggregationFunctionLabelMax: tTranslate("Max", tOpts),
+            aggregationFunctionLabelSize: tTranslate("Size", tOpts),
+            aggregationMenuItemHeader: tTranslate("Aggregation", tOpts),
         }), [tTranslate, tOpts, model?.searchPlaceholder]);
 
     const slotProps = useMemo(() => ({

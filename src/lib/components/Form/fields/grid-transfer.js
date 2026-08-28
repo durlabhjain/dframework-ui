@@ -6,7 +6,7 @@ const DivSpacing = styled('div')({
     marginBottom: '10px',
     fontSize: '20px'
 });
-const TransferField = ({ component, name, formik, field, column }) => {
+const TransferField = ({ component, name, formik, field, column, tTranslate = (key) => key, tOpts }) => {
     const { value } = formik.getFieldProps(name || field);
     const { setFieldValue } = formik;
     const Component = component || column.relation;
@@ -15,9 +15,9 @@ const TransferField = ({ component, name, formik, field, column }) => {
     }, [setFieldValue, name, field]);
     return (
         <div>
-            <DivSpacing>{`${"Available"} ${column.label}`}</DivSpacing>
+            <DivSpacing>{`${tTranslate("Available", tOpts)} ${tTranslate(column.label, tOpts)}`}</DivSpacing>
             <Component selected={value} available={true} onAssignChange={onAssignChange} disableCellRedirect={column.disableCellRedirect} readOnly={column.readOnly} showPageTitle={false} />
-            <DivSpacing>{`${"Assigned"} ${column.label}`}</DivSpacing>
+            <DivSpacing>{`${tTranslate("Assigned", tOpts)} ${tTranslate(column.label, tOpts)}`}</DivSpacing>
             <Component selected={value} assigned={true} onAssignChange={onAssignChange} disableCellRedirect={column.disableCellRedirect} readOnly={column.readOnly} showPageTitle={false} />
         </div>
     );
