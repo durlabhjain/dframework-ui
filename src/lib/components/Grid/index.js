@@ -276,7 +276,7 @@ const GridBase = memo(({
     const apiRef = propsApiRef ?? internalRef;
     const backendApi = api || model.api;
     const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false, isServerGrouping = false, groupAggregations } = model;
     // A row click on a model with relations declared selects it as the active parent row for the child grids rendered below.
     const hasChildGrids = !!model.relationItems?.length;
     const [selectedChildRow, setSelectedChildRow] = useState(null);
@@ -305,10 +305,6 @@ const GridBase = memo(({
     // When localSortAndFilter is true, sorting and filtering are handled client-side by MUI DataGrid
     // even if paginationMode is server. Sort/filter values are not sent to the API.
     const sortAndFilterMode = (hasStaticData || localSortAndFilter) ? constants.client : paginationMode;
-    // Use stable empty references when localSortAndFilter is enabled so that fetchData's
-    // useCallback is not recreated (and the data-fetching useEffect not re-triggered)
-    // when the user changes sort/filter — the DataGrid handles those changes locally.
-    const sortModelForFetch = localSortAndFilter ? EMPTY_SORT_MODEL : sortModel;
     // Keyed on valid items only, so an operator change on a still-empty item doesn't change the key.
     const filterModelFetchKey = useMemo(
         () => JSON.stringify(filterValidItems(filterModel.items)),
@@ -355,8 +351,6 @@ const GridBase = memo(({
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
     const enableRowDetailPanel = typeof model.getDetailPanelContent === 'function';
-    const gridRows = useMemo(() => data.records || [], [data.records]);
-    const rowCount = data.recordCount;
     const [groupingModel, setGroupingModel] = useState(
         () => Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []
     );
@@ -365,6 +359,30 @@ const GridBase = memo(({
         setPrevRowGroupingField(props.rowGroupingField);
         setGroupingModel(Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []);
     }
+    // Server-side row grouping (single field): the list API returns a group-summary row (marked by
+    // childrenCount) ahead of that group's leaf rows, rendered as a tree via treeData/getTreeDataPath
+    // — MUI's own rowGroupingModel feature is reserved for the client-side grouping path below.
+    const serverGroupField = isServerGrouping ? groupingModel[0] : undefined;
+    const clientRowGroupingEnabled = !isServerGrouping && !disableRowGrouping;
+    const gridRows = useMemo(() => {
+        const records = data.records || [];
+        if (!serverGroupField) return records;
+        // Rows with no group value skip grouping entirely (shown as plain top-level rows) rather
+        // than being bucketed into a "non-grouped" group.
+        return records
+            .filter(row => row.childrenCount === undefined || row[serverGroupField] != null)
+            .map(row => (row.childrenCount === undefined ? row : {
+                ...row,
+                [idProperty]: `__group__${row[serverGroupField]}`,
+                __isGroupRow: true
+            }));
+    }, [data.records, serverGroupField, idProperty]);
+    const getTreeDataPath = useCallback((row) => {
+        const groupValue = row[serverGroupField];
+        if (groupValue == null) return [String(row[idProperty])];
+        return row.__isGroupRow ? [String(groupValue)] : [String(groupValue), String(row[idProperty])];
+    }, [serverGroupField, idProperty]);
+    const rowCount = data.recordCount;
 
     useEffect(() => {
         if (!apiRef.current) return;
@@ -699,7 +717,7 @@ const GridBase = memo(({
                 };
             }
 
-            if (!disableRowGrouping) {
+            if (clientRowGroupingEnabled) {
                 overrides.groupable = column.groupable ?? false;
             }
             const finalField = overrides.field ?? column.field;
@@ -749,18 +767,28 @@ const GridBase = memo(({
         if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push('__detail_panel_toggle__');
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
-    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, actionConfig.length, disableRowGrouping, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate]);
+    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, actionConfig.length, clientRowGroupingEnabled, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate]);
 
     // Shallow-copy columns when lookups change so MUI DataGrid's GridFilterInputSingleSelect
     // sees new column object references and re-evaluates its memoized currentValueOptions.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- lookupKeys isn't read directly but its change must trigger new column references
     const gridColumns = useMemo(() => stableGridColumns.map(col => ({ ...col })), [stableGridColumns, lookupKeys]);
+    // Shows the grouped column's own name (not MUI's default "Group") and blanks out leaf rows,
+    // which would otherwise fall back to showing their own id (their tree path's last segment).
+    const groupingColDef = useMemo(() => {
+        if (!serverGroupField) return undefined;
+        const groupedColumn = gridColumns.find(col => col.field === serverGroupField);
+        return {
+            headerName: groupedColumn?.headerName || serverGroupField,
+            valueGetter: (value, row) => (row.__isGroupRow ? row[serverGroupField] : '')
+        };
+    }, [serverGroupField, gridColumns]);
 
     // Stable slice of column properties that affect the API request only (what buildRequestData reads).
     // Isolates fetchData from render-only changes like headerName, renderCell, filterOperators, etc.
     const fetchColumnsRef = useRef([]);
     const fetchColumns = useMemo(() => {
-        const next = stableGridColumns.map(({ field, type, lookup, localize, dependsOn }) => ({ field, type, lookup, localize, dependsOn }));
+        const next = stableGridColumns.map(({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable }) => ({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable }));
         const prev = fetchColumnsRef.current;
         const isSame = Array.isArray(prev)
             && prev.length === next.length
@@ -769,6 +797,23 @@ const GridBase = memo(({
         fetchColumnsRef.current = next;
         return next;
     }, [stableGridColumns]);
+
+    // Sort by the grouping field(s) first (desc) so group rows land first, then the current/default sort.
+    const effectiveSortModel = useMemo(() => {
+        if (!groupingModel.length) return sortModel;
+        const groupSorts = groupingModel.map(field => {
+            const existing = sortModel.find(sort => sort.field === field);
+            if (existing) return existing;
+            const column = fetchColumns.find(col => col.field === field) || {};
+            const isKeywordField = isElasticScreen && column.isKeywordField;
+            const filterField = column.dataIndex || (isKeywordField ? `${field}.keyword` : field);
+            return { field, sort: 'desc', filterField };
+        });
+        const remainingSorts = sortModel.filter(sort => !groupingModel.includes(sort.field));
+        return [...groupSorts, ...remainingSorts];
+    }, [groupingModel, sortModel, fetchColumns, isElasticScreen]);
+    // Stable empty reference when localSortAndFilter is on, so fetchData's useCallback/effect don't re-trigger on local sort changes.
+    const sortModelForFetch = localSortAndFilter ? EMPTY_SORT_MODEL : effectiveSortModel;
 
     // Initialize toolbar filters with default values
     const hasInitializedRef = useRef(false);
@@ -871,6 +916,13 @@ const GridBase = memo(({
             }
         }
 
+        if (serverGroupField) {
+            mergedExtraParams.rowGroupField = serverGroupField;
+            if (groupAggregations && Object.keys(groupAggregations).length) {
+                mergedExtraParams.rowGroupAggregations = groupAggregations;
+            }
+        }
+
         const isValidFilters = !filters.items.length || filters.items.every(item => "value" in item && item.value !== undefined);
         if (!isValidFilters) return;
 
@@ -921,7 +973,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters, tTranslate, tOpts, apiRef]);
+    }, [hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters, tTranslate, tOpts, apiRef, serverGroupField, groupAggregations]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -1611,7 +1663,7 @@ const GridBase = memo(({
                     disableDensitySelector={true}
                     apiRef={apiRef}
                     disableAggregation={gridProps?.disableAggregation ?? model?.disableAggregation ?? true}
-                    disableRowGrouping={disableRowGrouping}
+                    disableRowGrouping={!clientRowGroupingEnabled}
                     disableRowSelectionOnClick={disableRowSelectionOnClick}
                     disablePivoting={disablePivoting}
                     filterDebounceMs={debounceTimeOut}
@@ -1625,8 +1677,14 @@ const GridBase = memo(({
                     showToolbar={true}
                     columnHeaderHeight={columnHeaderHeight}
                     hideFooter={!showFooter}
-                    rowGroupingModel={groupingModel}
-                    onRowGroupingModelChange={setGroupingModel}
+                    {...(serverGroupField ? {
+                        treeData: true,
+                        getTreeDataPath,
+                        groupingColDef
+                    } : {
+                        rowGroupingModel: groupingModel,
+                        onRowGroupingModelChange: setGroupingModel
+                    })}
                     getRowClassName={getRowClassNameWithChildSelection}
                     columnGroupingModel={columnGroupingModel}
                 />
