@@ -799,9 +799,17 @@ const GridBase = memo(({
     }, [stableGridColumns]);
 
     // Sort by the grouping field(s) first (desc) so group rows land first, then the current/default sort.
+    // groupingModel is seeded from the (possibly page-shared) rowGroupingField prop regardless of
+    // whether this grid supports grouping at all, or whether the selected field is even one of this
+    // grid's own columns - restricted to both so it never injects an ORDER BY for a field this grid's
+    // query doesn't have.
+    const activeGroupingFields = useMemo(
+        () => ((clientRowGroupingEnabled || serverGroupField) ? groupingModel.filter(field => fetchColumns.some(col => col.field === field)) : []),
+        [clientRowGroupingEnabled, serverGroupField, groupingModel, fetchColumns]
+    );
     const effectiveSortModel = useMemo(() => {
-        if (!groupingModel.length) return sortModel;
-        const groupSorts = groupingModel.map(field => {
+        if (!activeGroupingFields.length) return sortModel;
+        const groupSorts = activeGroupingFields.map(field => {
             const existing = sortModel.find(sort => sort.field === field);
             if (existing) return existing;
             const column = fetchColumns.find(col => col.field === field) || {};
@@ -809,9 +817,9 @@ const GridBase = memo(({
             const filterField = column.dataIndex || (isKeywordField ? `${field}.keyword` : field);
             return { field, sort: 'desc', filterField };
         });
-        const remainingSorts = sortModel.filter(sort => !groupingModel.includes(sort.field));
+        const remainingSorts = sortModel.filter(sort => !activeGroupingFields.includes(sort.field));
         return [...groupSorts, ...remainingSorts];
-    }, [groupingModel, sortModel, fetchColumns, isElasticScreen]);
+    }, [activeGroupingFields, sortModel, fetchColumns, isElasticScreen]);
     // Stable empty reference when localSortAndFilter is on, so fetchData's useCallback/effect don't re-trigger on local sort changes.
     const sortModelForFetch = localSortAndFilter ? EMPTY_SORT_MODEL : effectiveSortModel;
 
@@ -1682,7 +1690,7 @@ const GridBase = memo(({
                         getTreeDataPath,
                         groupingColDef
                     } : {
-                        rowGroupingModel: groupingModel,
+                        rowGroupingModel: activeGroupingFields,
                         onRowGroupingModelChange: setGroupingModel
                     })}
                     getRowClassName={getRowClassNameWithChildSelection}
