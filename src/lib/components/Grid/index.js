@@ -158,7 +158,7 @@ const booleanIconRenderer = (params) => {
     }
 };
 
-const gridGroupByColumnName = ['__row_group_by_columns_group__', '__detail_panel_toggle__'];
+const gridGroupByColumnName = ['__row_group_by_columns_group__', '__detail_panel_toggle__', TREE_DATA_GROUPING_FIELD];
 
 const DeleteContentText = styled('span')({
     width: '100%',
