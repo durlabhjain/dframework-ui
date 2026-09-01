@@ -14,6 +14,7 @@ import FormLayout from "./field-mapper";
 import { useSnackbar } from "../SnackBar";
 import { DialogComponent } from "../Dialog";
 import { useStateContext, useRouter } from "../useRouter/StateProvider";
+import { LIST_STATE_PARAM, currentSearchParams } from "../Grid/listState";
 import PageTitle from "../PageTitle";
 import utils, { getPermissions } from "../utils";
 import Relations from "./relations";
@@ -111,9 +112,16 @@ const Form = ({
       case consts.string:
         navigatePath = navigateBack;
         break;
-      default:
+      default: {
         navigatePath = pathname.substring(0, pathname.lastIndexOf("/"));
+        // Carries the list's ?ls= snapshot id back so the grid restores its filters/sort/
+        // page/grouping/selection instead of resetting - see Grid/listState.js.
+        const listStateId = currentSearchParams().get(LIST_STATE_PARAM);
+        if (listStateId) {
+          navigatePath += `?${LIST_STATE_PARAM}=${encodeURIComponent(listStateId)}`;
+        }
         break;
+      }
     }
     navigate(navigatePath);
   }, [navigateBack, navigate, params, data, pathname]);
