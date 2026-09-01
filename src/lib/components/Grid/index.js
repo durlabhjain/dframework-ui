@@ -16,6 +16,8 @@ import CopyIcon from '@mui/icons-material/FileCopy';
 import ArticleIcon from '@mui/icons-material/Article';
 import EditIcon from '@mui/icons-material/Edit';
 import { useMemo, useEffect, memo, useRef, useState, useCallback } from 'react';
+// MUI's fixed field id for the auto-generated treeData grouping column - not part of x-data-grid-premium's public named exports.
+const TREE_DATA_GROUPING_FIELD = '__tree_data_group__';
 import { useSnackbar } from '../SnackBar/index';
 import { DialogComponent } from '../Dialog/index';
 import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
@@ -134,6 +136,12 @@ const filterValidItems = (items) => {
         if (NO_VALUE_OPERATORS.includes(item.operator)) return true;
         return item.value !== null && item.value !== undefined && item.value !== '';
     });
+};
+
+// The request field a sort/filter on `field` should actually use: an explicit dataIndex, else the Elasticsearch `.keyword` sibling for text fields, else the field itself.
+const resolveRequestField = (field, column = {}, isElasticScreen) => {
+    if (column.dataIndex) return column.dataIndex;
+    return (isElasticScreen && column.isKeywordField) ? `${field}.keyword` : field;
 };
 
 const auditColumnMappings = [
@@ -784,6 +792,12 @@ const GridBase = memo(({
             valueGetter: (value, row) => (row.__isGroupRow ? row[serverGroupField] : '')
         };
     }, [serverGroupField, gridColumns]);
+    // Excludes the auto tree/group column from the "manage columns" panel entirely (not merely
+    // hidden-but-re-addable) while there's no active group field for it to show.
+    const getTogglableColumns = useCallback(
+        (cols) => cols.filter(col => col.field !== TREE_DATA_GROUPING_FIELD || Boolean(serverGroupField)).map(col => col.field),
+        [serverGroupField]
+    );
 
     // Stable slice of column properties that affect the API request only (what buildRequestData reads).
     // Isolates fetchData from render-only changes like headerName, renderCell, filterOperators, etc.
@@ -814,9 +828,7 @@ const GridBase = memo(({
             const existing = sortModel.find(sort => sort.field === field);
             if (existing) return existing;
             const column = fetchColumns.find(col => col.field === field) || {};
-            const isKeywordField = isElasticScreen && column.isKeywordField;
-            const filterField = column.dataIndex || (isKeywordField ? `${field}.keyword` : field);
-            return { field, sort: 'desc', filterField };
+            return { field, sort: 'desc', filterField: resolveRequestField(field, column, isElasticScreen) };
         });
         const remainingSorts = sortModel.filter(sort => !activeGroupingFields.includes(sort.field));
         return [...groupSorts, ...remainingSorts];
@@ -1395,13 +1407,8 @@ const GridBase = memo(({
             }
         }
         const sort = e.map((ele) => {
-            const field = gridColumns.filter(element => element.field === ele.field)[0] || {};
-            const isKeywordField = isElasticScreen && field.isKeywordField;
-            const obj = { ...ele, filterField: isKeywordField ? `${ele.field}.keyword` : ele.field };
-            if (field.dataIndex) {
-                obj.filterField = field.dataIndex;
-            }
-            return obj;
+            const column = gridColumns.find(element => element.field === ele.field) || {};
+            return { ...ele, filterField: resolveRequestField(ele.field, column, isElasticScreen) };
         });
         setSortModel(sort);
     }, [gridColumns, isElasticScreen, setSortModel, snackbar, tTranslate, tOpts]);
@@ -1606,15 +1613,26 @@ const GridBase = memo(({
                 title: tTranslate('Go to next page', tOpts),
                 'aria-label': tTranslate('Go to next page', tOpts),
             },
+        },
+        columnsManagement: {
+            getTogglableColumns
         }
-    }), [model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination]);
+    }), [model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination, getTogglableColumns]);
 
     const initialState = useMemo(() => ({
         columns: {
-            columnVisibilityModel: visibilityModel
+            columnVisibilityModel: isServerGrouping
+                ? { ...visibilityModel, [TREE_DATA_GROUPING_FIELD]: Boolean(serverGroupField) }
+                : visibilityModel
         },
         pinnedColumns: pinnedColumns
-    }), [visibilityModel, pinnedColumns]);
+    }), [visibilityModel, pinnedColumns, isServerGrouping, serverGroupField]);
+
+    // initialState only applies on mount - keep the auto tree/group column's visibility in sync with serverGroupField on later renders too.
+    useEffect(() => {
+        if (!apiRef.current || !isServerGrouping) return;
+        apiRef.current.setColumnVisibility(TREE_DATA_GROUPING_FIELD, Boolean(serverGroupField));
+    }, [apiRef, isServerGrouping, serverGroupField]);
 
     const slots = useMemo(() => ({
         headerFilterMenu: false,
@@ -1686,7 +1704,7 @@ const GridBase = memo(({
                     showToolbar={true}
                     columnHeaderHeight={columnHeaderHeight}
                     hideFooter={!showFooter}
-                    {...(serverGroupField ? {
+                    {...(isServerGrouping ? {
                         treeData: true,
                         getTreeDataPath,
                         groupingColDef
