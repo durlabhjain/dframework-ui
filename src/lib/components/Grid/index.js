@@ -366,7 +366,8 @@ const GridBase = memo(({
     const clientRowGroupingEnabled = !isServerGrouping && !disableRowGrouping;
     const gridRows = useMemo(() => {
         const records = data.records || [];
-        if (!serverGroupField) return records;
+        // data.records can lag a serverGroupField flip to undefined (stale grouped fetch), so strip any leftover summary rows instead of handing MUI a row with no id.
+        if (!serverGroupField) return records.filter(row => row.childrenCount === undefined);
         // Rows with no group value skip grouping entirely (shown as plain top-level rows) rather
         // than being bucketed into a "non-grouped" group.
         return records

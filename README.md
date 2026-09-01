@@ -198,6 +198,8 @@ export default function App() {
 | `relations`            | `array`             | Defines the relationship configurations for related grids. </br>[View Example](#relations-example)                                                                                                                                                                                                                                                                                                                                                                                 | -                 | No           |
 | `exportFormats`        | `object`            | The `exportFormats` object controls the visibility of different export formats in the UI. Each key in `exportFormats` represents a file format (CSV, Excel, XML, HTML, or JSON), and its value determines whether the corresponding export option is available. [View Example](#exportformats)                                                                                                                                                                                     | `{ excel: true,  csv: true, xml: true, html: true, json: true}`            | No           |
 | `customActions`        | `array`             | An array of custom action objects to add custom buttons to the grid's action column. Each object should have an `action` (string), `icon` (string, see note below), and `onClick` (function) handler. The `onClick` function receives an object with `{ row, navigate }`. | -                 | No           |
+| `isServerGrouping`     | `boolean`           | Enables server-side row grouping (tree view, backend computes group summaries). Mutually exclusive with client-side row grouping. See [Server-Side Row Grouping](#server-side-row-grouping). | `false`           | No           |
+| `groupAggregations`    | `object`            | Field → aggregate function map (`sum \| avg \| min \| max \| count`) sent to the backend alongside the group field when `isServerGrouping` is on. See [Server-Side Row Grouping](#server-side-row-grouping). | -                 | No           |
 
 ### Navigation Properties 
 | **Property**       | **Type**  | **Description**                                                                                                                                                                                                                                                | **Defaults to**                           |
@@ -889,6 +891,84 @@ This will add a custom action button with an Article icon to each row. When clic
 **Note:** The `icon` property in `customActions` should be a string that maps to a supported icon name. For example, `"article"` will use the Article icon. If an unknown icon is provided, a default icon will be used.
 
 ---
+
+# Server-Side Row Grouping
+
+Groups leaf rows under a single field as a tree (via MUI's `treeData`), with the group summary — child count and any aggregates — computed by the backend instead of by loading every row into the browser. Use this when a grid's total row count is too large for client-side (`disableRowGrouping={false}`) grouping to be practical.
+
+This is a single-field, one-level grouping only — there is no multi-level tree grouping. It's mutually exclusive with client-side row grouping: when `isServerGrouping` is `true`, the client-side grouping path is disabled regardless of `disableRowGrouping`.
+
+## Enabling it
+
+```js
+const marketPerformanceModel = new UiModel({
+  title: "Market Performance",
+  api: "MarketPerformance",
+  isServerGrouping: true,
+  groupAggregations: { ShareOfShelf: "avg", Revenue: "sum" },
+  columns: [
+    { field: "MarketName", type: "string", gridLabel: "Market" },
+    { field: "ShareOfShelf", type: "number", gridLabel: "Share of Shelf" },
+    { field: "Revenue", type: "number", gridLabel: "Revenue" }
+  ]
+});
+```
+
+`rowGroupingField` is a **Grid prop**, not a `UiModel` constructor property, since it's usually driven by a "Group By" filter control the user can change at runtime rather than something fixed at model-definition time:
+
+```jsx
+<marketPerformanceModel.Grid rowGroupingField={["MarketName"]} />
+```
+
+- Only `rowGroupingField[0]` is read — grouping is single-field.
+- Pass `[]` (or omit it) to show flat, ungrouped rows even when `isServerGrouping` is `true`.
+- Keep the array reference **stable** (e.g. from `useMemo`/`useState`, not a new `[...]` literal each render) — the Grid only re-syncs its internal grouping state when this reference changes.
+
+## What the Grid sends to the backend
+
+Whenever a group field is active, every `list()` request (initial load, page/sort/filter changes, refetch) gets two extra params merged into `extraParams`:
+
+| Param | Type | Sent when |
+|---|---|---|
+| `rowGroupField` | `string` | `rowGroupingField[0]` is set |
+| `rowGroupAggregations` | `object` (`{ field: 'sum'\|'avg'\|'min'\|'max'\|'count' }`) | `rowGroupField` is set **and** `groupAggregations` is non-empty |
+
+This is the entire request-side contract — a `list()` endpoint just needs to read these two extra params off the request the same way it reads `filter`/`sort`/`page`.
+
+## What the backend must return
+
+`records` (the normal paginated leaf rows) must have one **group-summary row** spliced in directly ahead of the first leaf row of each group value present on that page:
+
+- It carries `rowGroupField`'s own value (e.g. `{ MarketName: "Test KPI" }`).
+- It carries `childrenCount` — the group's **total** leaf count across every page, not just this page. This is also the signal the Grid uses to recognize a row as a group summary rather than a leaf row, so it must be present on every summary row and absent on every leaf row.
+- It carries one field per `rowGroupAggregations` entry, holding that aggregate over the group's full (filtered) row set — not just the rows on this page.
+- It does **not** need an `id`/`idProperty` field — the Grid assigns one.
+- A group with no leaf rows on the current page must be dropped entirely — pagination is defined in terms of leaf rows, so a group only appears once its own rows are on the page.
+
+Leaf rows are returned exactly as they always are (own `idProperty` value, no `childrenCount`).
+
+Example response shape for `rowGroupField: "MarketName"`, `rowGroupAggregations: { ShareOfShelf: "avg" }`:
+
+```json
+{
+  "records": [
+    { "MarketName": "Test KPI", "childrenCount": 2, "ShareOfShelf": 78.4 },
+    { "id": 101, "MarketName": "Test KPI", "ShareOfShelf": 82 },
+    { "id": 102, "MarketName": "Test KPI", "ShareOfShelf": 74.8 },
+    { "MarketName": "North Region", "childrenCount": 1, "ShareOfShelf": 55 },
+    { "id": 103, "MarketName": "North Region", "ShareOfShelf": 55 }
+  ],
+  "recordCount": 3
+}
+```
+
+`recordCount` stays a count of leaf rows (used for pagination) — it does not include the summary rows.
+
+## How the Grid renders it
+
+- A row is treated as a group summary purely by `row.childrenCount !== undefined` — never by any prop/state at render time. This matters because request-side state (`rowGroupingField`) can update before the corresponding response lands; keying off the row's own shape means a summary row is still recognized (or a stray one from a stale response is still filtered out) regardless of that timing.
+- Summary rows get a synthetic id (`` `__group__${groupValue}` ``) and `__isGroupRow: true` stamped on locally — never sent by the backend.
+- The grid runs in MUI DataGridPremium's `treeData` mode: `getTreeDataPath` returns `[groupValue]` for a summary row and `[groupValue, leafId]` for its leaf rows, and the grouped column's header/cell rendering is overridden (`groupingColDef`) so it shows the group's own field name and value instead of MUI's default "Group" column.
 
 # StateProvider (Framework & State Management)
 
