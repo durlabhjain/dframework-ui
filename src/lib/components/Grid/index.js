@@ -16,8 +16,6 @@ import CopyIcon from '@mui/icons-material/FileCopy';
 import ArticleIcon from '@mui/icons-material/Article';
 import EditIcon from '@mui/icons-material/Edit';
 import { useMemo, useEffect, memo, useRef, useState, useCallback } from 'react';
-// MUI's fixed field id for the auto-generated treeData grouping column - not part of x-data-grid-premium's public named exports.
-const TREE_DATA_GROUPING_FIELD = '__tree_data_group__';
 import { useSnackbar } from '../SnackBar/index';
 import { DialogComponent } from '../Dialog/index';
 import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
@@ -41,6 +39,8 @@ import { ERROR_CODES } from '../../errors';
 import RemoteSelectField from '../Form/fields/remoteSelectField.js';
 import { useChangedDeps } from '../../hooks/useChangedDeps';
 
+// MUI's fixed field id for the auto-generated treeData grouping column - not part of x-data-grid-premium's public named exports.
+const TREE_DATA_GROUPING_FIELD = '__tree_data_group__';
 const defaultPageSize = 50;
 const sortRegex = /(\w+)( ASC| DESC)?/i;
 const recordCounts = 60_000;
