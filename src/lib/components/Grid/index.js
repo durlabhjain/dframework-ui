@@ -1318,7 +1318,10 @@ const GridBase = memo(({
         return () => clearTimeout(timer);
     }, [preserveListState, preferencesReady]);
 
-    // Replaces the URL in place rather than pushing a history entry per edit.
+    // Replaces the URL in place rather than pushing a history entry per edit. Only commits once
+    // the user actually changes pagination/sort/filter/grouping/selection - arming alone must not
+    // trigger this effect, otherwise a snapshot would be written on initial load before any
+    // user action.
     useEffect(() => {
         if (!preserveListState || !listStateArmedRef.current) return;
         const id = listStateIdRef.current ?? (listStateIdRef.current = generateId());
@@ -1332,7 +1335,7 @@ const GridBase = memo(({
         const nextParams = currentSearchParams();
         nextParams.set(LIST_STATE_PARAM, id);
         navigate(`${pathname}?${nextParams.toString()}`, { replace: true });
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- commits only on the tracked list-state values changing, not on navigate/pathname identity
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- commits only on the tracked list-state values changing, not on arming/navigate/pathname identity
     }, [preserveListState, paginationModel, sortModel, filterModel, groupingModel, rowSelectionModel]);
 
     useEffect(() => {

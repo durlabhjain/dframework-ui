@@ -106,7 +106,7 @@ const Form = ({
     let navigatePath;
     switch (typeof navigateBack) {
       case consts.function:
-        navigatePath = navigateBack({ params, searchParams: new URLSearchParams(window.location.search), data });
+        navigatePath = navigateBack({ params, searchParams: currentSearchParams(), data });
         break;
       case consts.number:
       case consts.string:
