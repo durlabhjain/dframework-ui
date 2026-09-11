@@ -865,6 +865,63 @@ var crudHelper = {
 	getLookups
 };
 //#endregion
+//#region src/lib/components/Grid/listState.js
+var STORAGE_PREFIX = "grid-list-state:";
+function currentSearchParams() {
+	const hashQueryIndex = window.location.hash.indexOf("?");
+	const search = hashQueryIndex !== -1 ? window.location.hash.slice(hashQueryIndex) : window.location.search;
+	return new URLSearchParams(search);
+}
+function generateId() {
+	return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+function readListState(id) {
+	if (!id) return null;
+	try {
+		return JSON.parse(sessionStorage.getItem(STORAGE_PREFIX + id) ?? "null");
+	} catch {
+		return null;
+	}
+}
+function writeListState(id, snapshot) {
+	try {
+		sessionStorage.setItem(STORAGE_PREFIX + id, JSON.stringify(snapshot));
+	} catch {}
+}
+function stripListStateFromUrl() {
+	const hashQueryIndex = window.location.hash.indexOf("?");
+	const url = new URL(window.location.href);
+	if (hashQueryIndex !== -1) {
+		const params = new URLSearchParams(window.location.hash.slice(hashQueryIndex));
+		if (!params.has("ls")) return;
+		params.delete("ls");
+		const query = params.toString();
+		url.hash = `${window.location.hash.slice(0, hashQueryIndex)}${query ? `?${query}` : ""}`;
+	} else {
+		const params = new URLSearchParams(window.location.search);
+		if (!params.has("ls")) return;
+		params.delete("ls");
+		url.search = params.toString();
+	}
+	window.history.replaceState(window.history.state, "", url);
+}
+function clearAllListState() {
+	try {
+		Object.keys(sessionStorage).filter((key) => key.startsWith(STORAGE_PREFIX)).forEach((key) => sessionStorage.removeItem(key));
+	} catch {}
+}
+function isReload() {
+	try {
+		const [entry] = performance.getEntriesByType("navigation");
+		if (entry) return entry.type === "reload";
+	} catch {}
+	return typeof performance !== "undefined" && performance.navigation?.type === 1;
+}
+if (typeof window !== "undefined" && isReload()) {
+	clearAllListState();
+	stripListStateFromUrl();
+}
+//#endregion
 //#region src/lib/components/Grid/footer.js
 var handleKeyPress = (event) => {
 	const keyCode = event.which || event.keyCode;
@@ -3337,6 +3394,7 @@ function useChangedDeps(label, namedDeps, enabled = false) {
 }
 //#endregion
 //#region src/lib/components/Grid/index.js
+var TREE_DATA_GROUPING_FIELD = "__tree_data_group__";
 var defaultPageSize = 50;
 var sortRegex = /(\w+)( ASC| DESC)?/i;
 var recordCounts = 6e4;
@@ -3424,6 +3482,7 @@ var LOCAL_MODE_PAGINATION_MODEL = Object.freeze({
 	page: 0,
 	pageSize: exportPageSize
 });
+var EMPTY_ACTIONS = Object.freeze([]);
 var normalizeStaticData = (staticData) => {
 	const records = Array.isArray(staticData) ? staticData : Array.isArray(staticData?.records) ? staticData.records : [];
 	return {
@@ -3437,6 +3496,10 @@ var filterValidItems = (items) => {
 		if (NO_VALUE_OPERATORS.includes(item.operator)) return true;
 		return item.value !== null && item.value !== void 0 && item.value !== "";
 	});
+};
+var resolveRequestField = (field, column = {}, isElasticScreen) => {
+	if (column.dataIndex) return column.dataIndex;
+	return isElasticScreen && column.isKeywordField ? `${field}.keyword` : field;
 };
 var auditColumnMappings = [
 	{
@@ -3468,7 +3531,11 @@ var booleanIconRenderer = (params) => {
 	if (params.value) return /* @__PURE__ */ jsx(CheckIcon, { style: { color: "green" } });
 	else return /* @__PURE__ */ jsx(CloseIcon, { style: { color: "gray" } });
 };
-var gridGroupByColumnName = ["__row_group_by_columns_group__", "__detail_panel_toggle__"];
+var gridGroupByColumnName = [
+	"__row_group_by_columns_group__",
+	"__detail_panel_toggle__",
+	TREE_DATA_GROUPING_FIELD
+];
 var DeleteContentText = styled$1("span")({
 	width: "100%",
 	whiteSpace: "nowrap",
@@ -3491,13 +3558,17 @@ var CustomCheckBox = ({ params, handleSelectRow, idProperty }) => {
 		inputProps: { "aria-label": "checkbox" }
 	});
 };
-var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, relationName, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, childGridsContainerHeight: propsChildGridsContainerHeight, ...props }) => {
+var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, relationName, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, childGridsContainerHeight: propsChildGridsContainerHeight, preserveListState: preserveListStateProp, ...props }) => {
 	const childGridsContainerHeight = propsChildGridsContainerHeight ?? model.childGridsContainerHeight ?? CHILD_GRIDS_CONTAINER_HEIGHT;
 	const { onDataLoaded, processRowUpdate: processRowUpdateProp, onRowSelectionModelChange: onRowSelectionModelChangeProp } = props;
 	const staticDataSource = props.staticData ?? model.staticData;
 	const hasStaticData = Array.isArray(staticDataSource) || Array.isArray(staticDataSource?.records);
 	const normalizedStaticData = useMemo(() => hasStaticData ? normalizeStaticData(staticDataSource) : null, [hasStaticData, staticDataSource]);
-	const [paginationModel, setPaginationModel] = useState({
+	const preserveListState = !!preserveListStateProp && !setActiveRecord;
+	const incomingListStateId = preserveListState ? currentSearchParams().get("ls") : null;
+	const [listStateSnapshot] = useState(() => readListState(incomingListStateId));
+	const listStateIdRef = useRef(incomingListStateId);
+	const [paginationModel, setPaginationModel] = useState(() => listStateSnapshot?.paginationModel ?? {
 		pageSize: defaultPageSize,
 		page: 0
 	});
@@ -3508,17 +3579,16 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	});
 	const forAssignment = !!onAssignChange;
 	const rowsSelected = showRowsSelected;
-	const [rowSelectionModel, setRowSelectionModel] = useState({
+	const [rowSelectionModel, setRowSelectionModel] = useState(() => listStateSnapshot?.rowSelectionModel ? {
+		type: listStateSnapshot.rowSelectionModel.type,
+		ids: new Set(listStateSnapshot.rowSelectionModel.ids)
+	} : {
 		type: "include",
 		ids: /* @__PURE__ */ new Set()
 	});
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [record, setRecord] = useState(null);
-	const visibilityModel = useMemo(() => ({
-		CreatedOn: false,
-		CreatedByUser: false,
-		...model.columnVisibilityModel
-	}), [model.columnVisibilityModel]);
+	const visibilityModel = useMemo(() => ({ ...model.columnVisibilityModel }), [model.columnVisibilityModel]);
 	const [showAddConfirmation, setShowAddConfirmation] = useState(false);
 	const snackbar = useSnackbar();
 	const snackbarRef = useRef(snackbar);
@@ -3528,7 +3598,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const paginationMode = hasStaticData || model.localSortAndFilter ? constants.client : model.paginationMode === constants.client ? constants.client : constants.server;
 	const { translate, tOpts, tTranslate } = useModelTranslation(model);
 	const [errorMessage, setErrorMessage] = useState("");
-	const [sortModel, setSortModel] = useState(() => convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
+	const [sortModel, setSortModel] = useState(() => listStateSnapshot?.sortModel ?? convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
 	const resolvedDefaultFilters = typeof model.defaultFilters === "function" ? model.defaultFilters() : model.defaultFilters;
 	const initialFilterModel = {
 		items: [],
@@ -3542,7 +3612,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			initialFilterModel.items.push(ele);
 		});
 	}
-	const [filterModel, setFilterModel] = useState({ ...initialFilterModel });
+	const [filterModel, setFilterModel] = useState(() => listStateSnapshot?.filterModel ?? { ...initialFilterModel });
 	const [prevCustomFilters, setPrevCustomFilters] = useState(() => ({}));
 	const [prevHasStaticData, setPrevHasStaticData] = useState(hasStaticData);
 	const [prevNormalizedStaticData, setPrevNormalizedStaticData] = useState(normalizedStaticData);
@@ -3553,7 +3623,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const apiRef = propsApiRef ?? internalRef;
 	const backendApi = api || model.api;
 	const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
-	const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false } = model;
+	const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false, isServerGrouping = false, groupAggregations } = model;
 	const hasChildGrids = !!model.relationItems?.length;
 	const [selectedChildRow, setSelectedChildRow] = useState(null);
 	const childRelationFilters = useMemo(() => {
@@ -3593,7 +3663,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		idProperty
 	]);
 	const sortAndFilterMode = hasStaticData || localSortAndFilter ? constants.client : paginationMode;
-	const sortModelForFetch = localSortAndFilter ? EMPTY_SORT_MODEL : sortModel;
 	const filterModelFetchKey = useMemo(() => JSON.stringify(filterValidItems(filterModel.items)), [filterModel.items]);
 	const filterModelForFetch = useMemo(() => localSortAndFilter ? EMPTY_FILTER_MODEL : filterModel, [
 		localSortAndFilter,
@@ -3641,14 +3710,35 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const [rowPanelId, setRowPanelId] = useState(null);
 	const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
 	const enableRowDetailPanel = typeof model.getDetailPanelContent === "function";
-	const gridRows = useMemo(() => data.records || [], [data.records]);
-	const rowCount = data.recordCount;
-	const [groupingModel, setGroupingModel] = useState(() => Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []);
+	const [groupingModel, setGroupingModel] = useState(() => listStateSnapshot?.groupingModel ?? (Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []));
 	const [prevRowGroupingField, setPrevRowGroupingField] = useState(props.rowGroupingField);
 	if (prevRowGroupingField !== props.rowGroupingField) {
 		setPrevRowGroupingField(props.rowGroupingField);
 		setGroupingModel(Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []);
 	}
+	const serverGroupField = isServerGrouping ? groupingModel[0] : void 0;
+	const clientRowGroupingEnabled = !isServerGrouping && !disableRowGrouping;
+	const gridRows = useMemo(() => {
+		const records = data.records || [];
+		if (!isServerGrouping) return records;
+		if (!serverGroupField) return records.filter((row) => row.childrenCount === void 0);
+		return records.filter((row) => row.childrenCount === void 0 || row[serverGroupField] != null).map((row) => row.childrenCount === void 0 ? row : {
+			...row,
+			[idProperty]: `__group__${row[serverGroupField]}`,
+			__isGroupRow: true
+		});
+	}, [
+		data.records,
+		isServerGrouping,
+		serverGroupField,
+		idProperty
+	]);
+	const getTreeDataPath = useCallback((row) => {
+		const groupValue = row[serverGroupField];
+		if (groupValue == null) return [String(row[idProperty])];
+		return row.__isGroupRow ? [String(groupValue)] : [String(groupValue), String(row[idProperty])];
+	}, [serverGroupField, idProperty]);
+	const rowCount = data.recordCount;
 	useEffect(() => {
 		if (!apiRef.current) return;
 		apiRef.current.prefKey = preferenceKey;
@@ -3850,7 +3940,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		tOpts,
 		tTranslate
 	]);
-	const { customActions = [] } = model;
+	const { customActions = EMPTY_ACTIONS } = model;
 	const actionConfig = useMemo(() => {
 		const actions = [];
 		if (!forAssignment && !isReadOnly) actions.push({
@@ -3952,7 +4042,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					});
 				};
 			}
-			if (!disableRowGrouping) overrides.groupable = column.groupable ?? false;
+			if (clientRowGroupingEnabled) overrides.groupable = column.groupable ?? false;
 			const finalField = overrides.field ?? column.field;
 			overrides.filterable = column.filterable === false ? false : !groupingSet.has(finalField);
 			const headerName = tTranslate((typeof column.gridLabel === "function" ? column.gridLabel({
@@ -4019,7 +4109,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		groupingModel,
 		enableRowDetailPanel,
 		actionConfig.length,
-		disableRowGrouping,
+		clientRowGroupingEnabled,
 		getActions,
 		gridColumnTypes,
 		lookupOptions,
@@ -4027,20 +4117,57 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		tTranslate
 	]);
 	const gridColumns = useMemo(() => stableGridColumns.map((col) => ({ ...col })), [stableGridColumns, lookupKeys]);
+	const groupingColDef = useMemo(() => {
+		if (!serverGroupField) return void 0;
+		return {
+			headerName: gridColumns.find((col) => col.field === serverGroupField)?.headerName || serverGroupField,
+			valueGetter: (value, row) => row.__isGroupRow ? row[serverGroupField] : ""
+		};
+	}, [serverGroupField, gridColumns]);
+	const getTogglableColumns = useCallback((cols) => cols.filter((col) => col.field !== TREE_DATA_GROUPING_FIELD || Boolean(serverGroupField)).map((col) => col.field), [serverGroupField]);
 	const fetchColumnsRef = useRef([]);
 	const fetchColumns = useMemo(() => {
-		const next = stableGridColumns.map(({ field, type, lookup, localize, dependsOn }) => ({
+		const next = stableGridColumns.map(({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable }) => ({
 			field,
 			type,
 			lookup,
 			localize,
-			dependsOn
+			dependsOn,
+			dataIndex,
+			isKeywordField,
+			groupable
 		}));
 		const prev = fetchColumnsRef.current;
 		if (Array.isArray(prev) && prev.length === next.length && next.every((col, i) => areEqual(prev[i], col))) return prev;
 		fetchColumnsRef.current = next;
 		return next;
 	}, [stableGridColumns]);
+	const activeGroupingFields = useMemo(() => clientRowGroupingEnabled || serverGroupField ? groupingModel.filter((field) => fetchColumns.some((col) => col.field === field)) : [], [
+		clientRowGroupingEnabled,
+		serverGroupField,
+		groupingModel,
+		fetchColumns
+	]);
+	const effectiveSortModel = useMemo(() => {
+		if (!activeGroupingFields.length) return sortModel;
+		const groupSorts = activeGroupingFields.map((field) => {
+			const existing = sortModel.find((sort) => sort.field === field);
+			if (existing) return existing;
+			return {
+				field,
+				sort: "desc",
+				filterField: resolveRequestField(field, fetchColumns.find((col) => col.field === field) || {}, isElasticScreen)
+			};
+		});
+		const remainingSorts = sortModel.filter((sort) => !activeGroupingFields.includes(sort.field));
+		return [...groupSorts, ...remainingSorts];
+	}, [
+		activeGroupingFields,
+		sortModel,
+		fetchColumns,
+		isElasticScreen
+	]);
+	const sortModelForFetch = localSortAndFilter ? EMPTY_SORT_MODEL : effectiveSortModel;
 	const hasInitializedRef = useRef(false);
 	useEffect(() => {
 		if (hasInitializedRef.current) return;
@@ -4127,6 +4254,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			if (model.exportTemplate) mergedExtraParams.template = model.exportTemplate;
 			if (model.configFileName) mergedExtraParams.configFileName = model.configFileName;
 		}
+		if (serverGroupField) {
+			mergedExtraParams.rowGroupField = serverGroupField;
+			if (groupAggregations && Object.keys(groupAggregations).length) mergedExtraParams.rowGroupAggregations = groupAggregations;
+		}
 		if (!(!filters.items.length || filters.items.every((item) => "value" in item && item.value !== void 0))) return;
 		let signal = null;
 		let controller = null;
@@ -4200,7 +4331,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		additionalFilters,
 		tTranslate,
 		tOpts,
-		apiRef
+		apiRef,
+		serverGroupField,
+		groupAggregations
 	]);
 	const openForm = useCallback(async ({ id, record = {}, mode }) => {
 		if (setActiveRecord) {
@@ -4226,10 +4359,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		if (relationName) path += `${encodeURIComponent(String(relationName))}/`;
 		if (mode === "copy") path += "0-" + id;
 		else path += id;
-		if (addUrlParamKey) {
-			const currentParams = new URLSearchParams(window.location.search);
-			currentParams.set(addUrlParamKey, record[addUrlParamKey]);
-			path += `?${currentParams.toString()}`;
+		if (addUrlParamKey || preserveListState) {
+			const currentParams = currentSearchParams();
+			if (addUrlParamKey) currentParams.set(addUrlParamKey, record[addUrlParamKey]);
+			if (addUrlParamKey || currentParams.has("ls")) path += `?${currentParams.toString()}`;
 		}
 		navigate(path);
 	}, [
@@ -4242,6 +4375,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		pathname,
 		relationName,
 		addUrlParamKey,
+		preserveListState,
 		navigate,
 		getRecord,
 		buildUrl,
@@ -4601,6 +4735,38 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	useEffect(() => {
 		fetchData();
 	}, [fetchData]);
+	const listStateArmedRef = useRef(false);
+	useEffect(() => {
+		if (!preserveListState || !preferencesReady) return void 0;
+		const timer = setTimeout(() => {
+			listStateArmedRef.current = true;
+		}, 0);
+		return () => clearTimeout(timer);
+	}, [preserveListState, preferencesReady]);
+	useEffect(() => {
+		if (!preserveListState || !listStateArmedRef.current) return;
+		const id = listStateIdRef.current ?? (listStateIdRef.current = generateId());
+		writeListState(id, {
+			paginationModel,
+			sortModel,
+			filterModel,
+			groupingModel,
+			rowSelectionModel: {
+				type: rowSelectionModel.type,
+				ids: Array.from(rowSelectionModel.ids)
+			}
+		});
+		const nextParams = currentSearchParams();
+		nextParams.set("ls", id);
+		navigate(`${pathname}?${nextParams.toString()}`, { replace: true });
+	}, [
+		preserveListState,
+		paginationModel,
+		sortModel,
+		filterModel,
+		groupingModel,
+		rowSelectionModel
+	]);
 	useEffect(() => {
 		if (props.isChildGrid || forAssignment || !updatePageTitle) return;
 		setPageTitle({
@@ -4659,14 +4825,11 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			}
 		}
 		const sort = e.map((ele) => {
-			const field = gridColumns.filter((element) => element.field === ele.field)[0] || {};
-			const isKeywordField = isElasticScreen && field.isKeywordField;
-			const obj = {
+			const column = gridColumns.find((element) => element.field === ele.field) || {};
+			return {
 				...ele,
-				filterField: isKeywordField ? `${ele.field}.keyword` : ele.field
+				filterField: resolveRequestField(ele.field, column, isElasticScreen)
 			};
-			if (field.dataIndex) obj.filterField = field.dataIndex;
-			return obj;
 		});
 		setSortModel(sort);
 	}, [
@@ -4811,7 +4974,13 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		footerRowSelected: (count) => {
 			const key = count === 1 ? "item selected" : "items selected";
 			return `${count.toLocaleString()} ${tTranslate(key, tOpts)}`;
-		}
+		},
+		aggregationFunctionLabelSum: tTranslate("Sum", tOpts),
+		aggregationFunctionLabelAvg: tTranslate("Avg", tOpts),
+		aggregationFunctionLabelMin: tTranslate("Min", tOpts),
+		aggregationFunctionLabelMax: tTranslate("Max", tOpts),
+		aggregationFunctionLabelSize: tTranslate("Size", tOpts),
+		aggregationMenuItemHeader: tTranslate("Aggregation", tOpts)
 	}), [
 		tTranslate,
 		tOpts,
@@ -4870,7 +5039,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				title: tTranslate("Go to next page", tOpts),
 				"aria-label": tTranslate("Go to next page", tOpts)
 			}
-		}
+		},
+		columnsManagement: { getTogglableColumns }
 	}), [
 		model,
 		data,
@@ -4905,12 +5075,29 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		customExportOptions,
 		hasStaticData,
 		localSortAndFilter,
-		disablePagination
+		disablePagination,
+		getTogglableColumns
 	]);
 	const initialState = useMemo(() => ({
-		columns: { columnVisibilityModel: visibilityModel },
+		columns: { columnVisibilityModel: isServerGrouping ? {
+			...visibilityModel,
+			[TREE_DATA_GROUPING_FIELD]: Boolean(serverGroupField)
+		} : visibilityModel },
 		pinnedColumns
-	}), [visibilityModel, pinnedColumns]);
+	}), [
+		visibilityModel,
+		pinnedColumns,
+		isServerGrouping,
+		serverGroupField
+	]);
+	useEffect(() => {
+		if (!apiRef.current || !isServerGrouping) return;
+		apiRef.current.setColumnVisibility(TREE_DATA_GROUPING_FIELD, Boolean(serverGroupField));
+	}, [
+		apiRef,
+		isServerGrouping,
+		serverGroupField
+	]);
 	const slots = useMemo(() => ({
 		headerFilterMenu: false,
 		toolbar: CustomToolbar,
@@ -4967,7 +5154,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					disableDensitySelector: true,
 					apiRef,
 					disableAggregation: gridProps?.disableAggregation ?? model?.disableAggregation ?? true,
-					disableRowGrouping,
+					disableRowGrouping: !clientRowGroupingEnabled,
 					disableRowSelectionOnClick,
 					disablePivoting,
 					filterDebounceMs: debounceTimeOut,
@@ -4981,8 +5168,14 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					showToolbar: true,
 					columnHeaderHeight,
 					hideFooter: !showFooter,
-					rowGroupingModel: groupingModel,
-					onRowGroupingModelChange: setGroupingModel,
+					...isServerGrouping ? {
+						treeData: true,
+						getTreeDataPath,
+						groupingColDef
+					} : {
+						rowGroupingModel: activeGroupingFields,
+						onRowGroupingModelChange: setGroupingModel
+					},
 					getRowClassName: getRowClassNameWithChildSelection,
 					columnGroupingModel
 				})
@@ -5629,7 +5822,7 @@ var DivSpacing = styled$1("div")({
 	marginBottom: "10px",
 	fontSize: "20px"
 });
-var TransferField = ({ component, name, formik, field, column }) => {
+var TransferField = ({ component, name, formik, field, column, tTranslate = (key) => key, tOpts }) => {
 	const { value } = formik.getFieldProps(name || field);
 	const { setFieldValue } = formik;
 	const Component = component || column.relation;
@@ -5641,7 +5834,7 @@ var TransferField = ({ component, name, formik, field, column }) => {
 		field
 	]);
 	return /* @__PURE__ */ jsxs("div", { children: [
-		/* @__PURE__ */ jsx(DivSpacing, { children: `Available ${column.label}` }),
+		/* @__PURE__ */ jsx(DivSpacing, { children: `${tTranslate("Available", tOpts)} ${tTranslate(column.label, tOpts)}` }),
 		/* @__PURE__ */ jsx(Component, {
 			selected: value,
 			available: true,
@@ -5650,7 +5843,7 @@ var TransferField = ({ component, name, formik, field, column }) => {
 			readOnly: column.readOnly,
 			showPageTitle: false
 		}),
-		/* @__PURE__ */ jsx(DivSpacing, { children: `Assigned ${column.label}` }),
+		/* @__PURE__ */ jsx(DivSpacing, { children: `${tTranslate("Assigned", tOpts)} ${tTranslate(column.label, tOpts)}` }),
 		/* @__PURE__ */ jsx(Component, {
 			selected: value,
 			assigned: true,
@@ -7042,7 +7235,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 			case consts.function:
 				navigatePath = navigateBack({
 					params,
-					searchParams: new URLSearchParams(window.location.search),
+					searchParams: currentSearchParams(),
 					data
 				});
 				break;
@@ -7050,7 +7243,12 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 			case consts.string:
 				navigatePath = navigateBack;
 				break;
-			default: navigatePath = pathname.substring(0, pathname.lastIndexOf("/"));
+			default: {
+				navigatePath = pathname.substring(0, pathname.lastIndexOf("/"));
+				const listStateId = currentSearchParams().get("ls");
+				if (listStateId) navigatePath += `?ls=${encodeURIComponent(listStateId)}`;
+				break;
+			}
 		}
 		navigate(navigatePath);
 	}, [
@@ -7378,7 +7576,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.146.0/helpers/esm/typeof.js
+//#region \0@oxc-project+runtime@0.149.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -7388,7 +7586,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.146.0/helpers/esm/toPrimitive.js
+//#region \0@oxc-project+runtime@0.149.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -7400,13 +7598,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.146.0/helpers/esm/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.149.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.146.0/helpers/esm/defineProperty.js
+//#region \0@oxc-project+runtime@0.149.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
