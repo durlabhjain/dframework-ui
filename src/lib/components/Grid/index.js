@@ -250,7 +250,7 @@ const GridBase = memo(({
     });
     const [isDeleting, setIsDeleting] = useState(false);
     const [record, setRecord] = useState(null);
-    const visibilityModel = useMemo(() => ({ CreatedOn: false, CreatedByUser: false, ...model.columnVisibilityModel }), [model.columnVisibilityModel]);
+    const visibilityModel = useMemo(() => ({ ...model.columnVisibilityModel }), [model.columnVisibilityModel]);
     const [showAddConfirmation, setShowAddConfirmation] = useState(false);
     const snackbar = useSnackbar();
     const snackbarRef = useRef(snackbar);
