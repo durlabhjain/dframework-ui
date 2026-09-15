@@ -90,7 +90,11 @@ const EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze(['isEmpty', 'isNotEmpty',
 // MUI applies filterOperators[0] as the default operator for new filters, so startsWith must lead the list
 const getStringOperatorsStartsWithFirst = () => {
     const operators = getGridStringOperators();
-    const startsWith = operators.find(op => op.value === 'startsWith');
+    const startsWithIndex = operators.findIndex(op => op.value === 'startsWith');
+    if (startsWithIndex <= 0) {
+        return operators;
+    }
+    const startsWith = operators[startsWithIndex];
     return [startsWith, ...operators.filter(op => op.value !== 'startsWith')];
 };
 const DEFAULT_FILTER_OPERATORS_BY_TYPE = {
