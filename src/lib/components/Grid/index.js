@@ -1417,16 +1417,27 @@ const GridBase = memo(({
     }, [preserveListState, paginationModel, sortModel, filterModel, groupingModel, rowSelectionModel, currentPreference]);
 
     // Column order/width/visibility/pinning never touch React state, so catch them via apiRef events instead.
-    useEffect(() => {
-        if (!apiRef.current || !preserveListState) return undefined;
-        const unsubscribers = [
-            'columnVisibilityModelChange',
-            'columnOrderChange',
-            'columnWidthChange',
-            'pinnedColumnsChange'
-        ].map((eventName) => apiRef.current.subscribeEvent(eventName, () => commitListStateRef.current()));
-        return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
-    }, [apiRef, preserveListState]);
+useEffect(() => {
+    if (!apiRef.current || !preserveListState) return undefined;
+
+    let timer;
+    const scheduleCommit = () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => commitListStateRef.current(), 50);
+    };
+
+    const unsubscribers = [
+        'columnVisibilityModelChange',
+        'columnOrderChange',
+        'columnWidthChange',
+        'pinnedColumnsChange'
+    ].map((eventName) => apiRef.current.subscribeEvent(eventName, scheduleCommit));
+
+    return () => {
+        unsubscribers.forEach((unsubscribe) => unsubscribe());
+        clearTimeout(timer);
+    };
+}, [apiRef, preserveListState]);
 
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
