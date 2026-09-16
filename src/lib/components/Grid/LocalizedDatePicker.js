@@ -74,8 +74,9 @@ const LocalizedDatePicker = (props) => {
                 value={Dateformatvalue}
                 onChange={setPendingValue}
                 onAccept={commitValue}
+                onClose={() => setPendingValue(item?.value ?? null)}
                 {...(columnType === 'dateTime'
-                    ? { views: ['year', 'month', 'day', 'hours', 'minutes', 'seconds'], timeSteps: { hours: 1, minutes: 1, seconds: 1 }, closeOnSelect: true }
+                    ? { views: ['year', 'month', 'day', 'hours', 'minutes', 'seconds'], timeSteps: { hours: 1, minutes: 1, seconds: 1 } }
                     : {})}
                 slotProps={{
                     textField: {
