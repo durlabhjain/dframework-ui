@@ -8,6 +8,8 @@ import {
 import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
+import Divider from "@mui/material/Divider";
+import Tooltip from "@mui/material/Tooltip";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
 import FormLayout from "./field-mapper";
@@ -94,12 +96,14 @@ const Form = ({
     ...model.permissions,
     ...permissions
   };
-  const { canEdit } = getPermissions({
+  const { canEdit, canDelete } = getPermissions({
     userData,
     model,
     userDefinedPermissions
   });
-  const { hideBreadcrumb = false, navigateBack } = model;
+  const canCopy = Boolean({ ...model.permissions, ...permissions }.copy);
+  const { hideBreadcrumb = false, navigateBack, actions: actionsMode = 'grid' } = model;
+  const showFormActions = actionsMode === 'form' || actionsMode === 'both';
   const recordEditable = !("canEdit" in data) || data.canEdit;
 
   const handleNavigation = useCallback(() => {
@@ -288,6 +292,10 @@ const Form = ({
       setIsDeleting(false);
     }
   }, [id, api, model, snackbar, navigateBack, handleNavigation, tTranslate, tOpts]);
+  const handleCopy = useCallback(() => {
+    const basePath = pathname.substring(0, pathname.lastIndexOf("/") + 1);
+    navigate(`${basePath}0-${id}`);
+  }, [pathname, id, navigate]);
   const clearError = () => {
     setErrorMessage(null)
     setIsDeleting(false);
@@ -331,8 +339,11 @@ const Form = ({
   const showRelations = Number(id) !== 0 && Boolean(relations.length);
   const showSaveButton = searchParams.has("showRelation");
   const readOnlyRelations = !recordEditable || data.readOnlyRelations;
-  deletePromptText = deletePromptText || tTranslate("Are you sure you want to delete ?", tOpts);
+  const deleteRecordName = model.linkColumn ? data[model.linkColumn] : undefined;
   const { showPageTitle = true } = model;
+  const showCopyButton = showFormActions && canCopy && !isNew;
+  const showDeleteButton = showFormActions && canDelete && !isNew;
+  const hasFormHeaderActions = showCopyButton || showDeleteButton;
   return (
     <>
       {showPageTitle && (
@@ -357,8 +368,27 @@ const Form = ({
               direction="row"
               spacing={2}
               justifyContent="flex-end"
+              alignItems="center"
               mb={1}
             >
+              {showCopyButton && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleCopy}
+                >{tTranslate("Copy", tOpts)}</Button>
+              )}
+              {showDeleteButton && (
+                <Button
+                  variant="contained"
+                  color="error"
+                  sx={{ bgcolor: 'error.dark', '&:hover': { bgcolor: 'error.dark' } }}
+                  onClick={() => setIsDeleting(true)}
+                >{tTranslate("Delete", tOpts)}</Button>
+              )}
+              {showFormActions && hasFormHeaderActions && (
+                <Divider orientation="vertical" flexItem />
+              )}
               {canEdit && recordEditable && !showSaveButton && !readOnly && (
                 <Button
                   variant="contained"
@@ -373,13 +403,6 @@ const Form = ({
                 color="error"
                 onClick={handleFormCancel}
               >{tTranslate("Cancel", tOpts)}</Button>
-              {permissions.delete && (
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={() => setIsDeleting(true)}
-                >{tTranslate("Delete", tOpts)}</Button>
-              )}
             </Stack>
             <Layout
               model={model}
@@ -424,7 +447,17 @@ const Form = ({
               setDeleteError(null);
             }}
             title={deleteError ? tTranslate("Error Deleting Record", tOpts) : tTranslate("Confirm Delete", tOpts)}
-          >{deletePromptText}</DialogComponent>
+          >{deletePromptText ? deletePromptText : (
+            <>
+              {tTranslate("Are you sure you want to delete", tOpts)}{" "}
+              {deleteRecordName && (
+                <Tooltip title={deleteRecordName} arrow>
+                  <span>{String(deleteRecordName).length > 30 ? `${String(deleteRecordName).slice(0, 30)}...` : deleteRecordName}</span>
+                </Tooltip>
+              )}
+              ?
+            </>
+          )}</DialogComponent>
           {showRelations ? (
             <Relations
               readOnly={readOnlyRelations}

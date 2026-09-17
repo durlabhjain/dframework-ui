@@ -308,7 +308,7 @@ const GridBase = memo(({
     const apiRef = propsApiRef ?? internalRef;
     const backendApi = api || model.api;
     const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false, isServerGrouping = false, groupAggregations } = model;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false, isServerGrouping = false, groupAggregations, actions: actionsMode = 'grid' } = model;
     // A row click on a model with relations declared selects it as the active parent row for the child grids rendered below.
     const hasChildGrids = !!model.relationItems?.length;
     const [selectedChildRow, setSelectedChildRow] = useState(null);
@@ -673,9 +673,19 @@ const GridBase = memo(({
         customActions
     ]);
 
+    // When actions live in the Form header ('form' mode), Copy/Delete move there and the Edit action is
+    // often less necessary (editing is still accessible via double-click / linkColumn navigation) - but
+    // History, Download and custom actions have no Form-header equivalent, so they stay in the grid column.
+    const gridActionConfig = useMemo(
+        () => actionsMode === 'form'
+            ? actionConfig.filter(({ key }) => key !== actionTypes.Copy && key !== actionTypes.Delete && key !== actionTypes.Edit)
+            : actionConfig,
+        [actionConfig, actionsMode]
+    );
+
     const getActions = useCallback(
         ({ row }) =>
-            actionConfig
+            gridActionConfig
                 .map(({ key, title, icon, color, disabled, action, ...otherProps }) =>
                     createAction({
                         key,
@@ -686,7 +696,7 @@ const GridBase = memo(({
                         otherProps
                     })
                 ),
-        [actionConfig, createAction]
+        [gridActionConfig, createAction]
     );
     // Derive a stable string from the loaded lookup names. Recomputes whenever the
     // set of lookup keys changes (e.g. after the first data fetch or when new lookups
@@ -788,11 +798,11 @@ const GridBase = memo(({
                 }
             });
         }
-        if (actionConfig.length) {
+        if (gridActionConfig.length) {
             finalColumns.push({
                 field: 'actions',
                 type: 'actions',
-                width: (model.actionWidth ?? constants.defaultActionWidth) * actionConfig.length,
+                width: (model.actionWidth ?? constants.defaultActionWidth) * gridActionConfig.length,
                 hidable: false,
                 getActions,
                 headerName: tTranslate('Actions', tOpts),
@@ -803,7 +813,7 @@ const GridBase = memo(({
         if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push('__detail_panel_toggle__');
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
-    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, actionConfig.length, clientRowGroupingEnabled, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate]);
+    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, gridActionConfig.length, clientRowGroupingEnabled, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate]);
 
     // Shallow-copy columns when lookups change so MUI DataGrid's GridFilterInputSingleSelect
     // sees new column object references and re-evaluates its memoized currentValueOptions.
