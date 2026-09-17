@@ -298,7 +298,7 @@ const GridBase = memo(({
     const apiRef = propsApiRef ?? internalRef;
     const backendApi = api || model.api;
     const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
-    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false, isServerGrouping = false, groupAggregations, showActionsInFormHeader = false } = model;
+    const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false, isServerGrouping = false, groupAggregations, actions: actionsMode = 'grid' } = model;
     // A row click on a model with relations declared selects it as the active parent row for the child grids rendered below.
     const hasChildGrids = !!model.relationItems?.length;
     const [selectedChildRow, setSelectedChildRow] = useState(null);
@@ -776,7 +776,7 @@ const GridBase = memo(({
                 }
             });
         }
-        if (actionConfig.length && !showActionsInFormHeader) {
+        if (actionConfig.length && actionsMode !== 'form') {
             finalColumns.push({
                 field: 'actions',
                 type: 'actions',
@@ -791,7 +791,7 @@ const GridBase = memo(({
         if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push('__detail_panel_toggle__');
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
-    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, actionConfig.length, clientRowGroupingEnabled, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate, showActionsInFormHeader]);
+    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, actionConfig.length, clientRowGroupingEnabled, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate, actionsMode]);
 
     // Shallow-copy columns when lookups change so MUI DataGrid's GridFilterInputSingleSelect
     // sees new column object references and re-evaluates its memoized currentValueOptions.

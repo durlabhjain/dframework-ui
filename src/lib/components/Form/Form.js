@@ -102,7 +102,8 @@ const Form = ({
     userDefinedPermissions
   });
   const canCopy = Boolean({ ...model.permissions, ...permissions }.copy);
-  const { hideBreadcrumb = false, navigateBack, showActionsInFormHeader = false } = model;
+  const { hideBreadcrumb = false, navigateBack, actions: actionsMode = 'grid' } = model;
+  const showFormActions = actionsMode === 'form' || actionsMode === 'both';
   const recordEditable = !("canEdit" in data) || data.canEdit;
 
   const handleNavigation = useCallback(() => {
@@ -340,7 +341,7 @@ const Form = ({
   const readOnlyRelations = !recordEditable || data.readOnlyRelations;
   const deleteRecordName = model.linkColumn ? data[model.linkColumn] : undefined;
   const { showPageTitle = true } = model;
-  const showCopyButton = showActionsInFormHeader && canCopy && !isNew;
+  const showCopyButton = showFormActions && canCopy && !isNew;
   const showDeleteButton = canDelete && !isNew;
   const hasFormHeaderActions = showCopyButton || showDeleteButton;
   return (
@@ -370,23 +371,6 @@ const Form = ({
               alignItems="center"
               mb={1}
             >
-              {canEdit && recordEditable && !showSaveButton && !readOnly && (
-                <Button
-                  variant="contained"
-                  type="submit"
-                  color="success"
-                  onClick={handleSubmit}
-                >{tTranslate("Save", tOpts)}</Button>
-              )}
-              <Button
-                variant="contained"
-                type="cancel"
-                color="error"
-                onClick={handleFormCancel}
-              >{tTranslate("Cancel", tOpts)}</Button>
-              {showActionsInFormHeader && hasFormHeaderActions && (
-                <Divider orientation="vertical" flexItem />
-              )}
               {showCopyButton && (
                 <Button
                   variant="contained"
@@ -402,6 +386,23 @@ const Form = ({
                   onClick={() => setIsDeleting(true)}
                 >{tTranslate("Delete", tOpts)}</Button>
               )}
+              {showFormActions && hasFormHeaderActions && (
+                <Divider orientation="vertical" flexItem />
+              )}
+              {canEdit && recordEditable && !showSaveButton && !readOnly && (
+                <Button
+                  variant="contained"
+                  type="submit"
+                  color="success"
+                  onClick={handleSubmit}
+                >{tTranslate("Save", tOpts)}</Button>
+              )}
+              <Button
+                variant="contained"
+                type="cancel"
+                color="error"
+                onClick={handleFormCancel}
+              >{tTranslate("Cancel", tOpts)}</Button>
             </Stack>
             <Layout
               model={model}
