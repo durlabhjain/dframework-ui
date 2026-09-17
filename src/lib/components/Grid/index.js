@@ -87,7 +87,7 @@ const constants = {
 // Operators that do not require a value
 const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
 const EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze(['isEmpty', 'isNotEmpty', 'isAnyOf']);
-// MUI applies filterOperators[0] as the default operator for new filters, so startsWith must lead the list
+// MUI applies filterOperators[0] as the default operator for new filters, so move startsWith to the front when it's present; otherwise the list is returned unchanged
 const getStringOperatorsStartsWithFirst = () => {
     const operators = getGridStringOperators();
     const startsWithIndex = operators.findIndex(op => op.value === 'startsWith');
@@ -719,7 +719,7 @@ const GridBase = memo(({
             }
             if (column.filterOperators) {
                 overrides.filterOperators = column.filterOperators;
-            } else if ((overrides.type ?? column.type ?? 'string') === 'string') {
+            } else if (!overrides.filterOperators && (overrides.type ?? column.type ?? 'string') === 'string') {
                 overrides.filterOperators = getStringOperatorsStartsWithFirst();
             }
             if (column.allowEmpty === false) {
