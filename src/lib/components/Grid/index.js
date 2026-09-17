@@ -663,9 +663,19 @@ const GridBase = memo(({
         customActions
     ]);
 
+    // When actions live in the Form header ('form' mode), Copy/Delete move there and Edit is
+    // redundant with the row's own click-to-edit - but History, Download and custom actions have
+    // no Form-header equivalent, so they stay in the grid column.
+    const gridActionConfig = useMemo(
+        () => actionsMode === 'form'
+            ? actionConfig.filter(({ key }) => key !== actionTypes.Copy && key !== actionTypes.Delete && key !== actionTypes.Edit)
+            : actionConfig,
+        [actionConfig, actionsMode]
+    );
+
     const getActions = useCallback(
         ({ row }) =>
-            actionConfig
+            gridActionConfig
                 .map(({ key, title, icon, color, disabled, action, ...otherProps }) =>
                     createAction({
                         key,
@@ -676,7 +686,7 @@ const GridBase = memo(({
                         otherProps
                     })
                 ),
-        [actionConfig, createAction]
+        [gridActionConfig, createAction]
     );
     // Derive a stable string from the loaded lookup names. Recomputes whenever the
     // set of lookup keys changes (e.g. after the first data fetch or when new lookups
@@ -776,11 +786,11 @@ const GridBase = memo(({
                 }
             });
         }
-        if (actionConfig.length && actionsMode !== 'form') {
+        if (gridActionConfig.length) {
             finalColumns.push({
                 field: 'actions',
                 type: 'actions',
-                width: (model.actionWidth ?? constants.defaultActionWidth) * actionConfig.length,
+                width: (model.actionWidth ?? constants.defaultActionWidth) * gridActionConfig.length,
                 hidable: false,
                 getActions,
                 headerName: tTranslate('Actions', tOpts),
@@ -791,7 +801,7 @@ const GridBase = memo(({
         if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push('__detail_panel_toggle__');
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
-    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, actionConfig.length, clientRowGroupingEnabled, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate, actionsMode]);
+    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, gridActionConfig.length, clientRowGroupingEnabled, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate]);
 
     // Shallow-copy columns when lookups change so MUI DataGrid's GridFilterInputSingleSelect
     // sees new column object references and re-evaluates its memoized currentValueOptions.
