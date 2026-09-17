@@ -663,9 +663,9 @@ const GridBase = memo(({
         customActions
     ]);
 
-// When actions live in the Form header ('form' mode), Copy/Delete move there and the Edit action is
-// often less necessary (editing is still accessible via double-click / linkColumn navigation) - but
-// History, Download and custom actions have no Form-header equivalent, so they stay in the grid column.
+    // When actions live in the Form header ('form' mode), Copy/Delete move there and the Edit action is
+    // often less necessary (editing is still accessible via double-click / linkColumn navigation) - but
+    // History, Download and custom actions have no Form-header equivalent, so they stay in the grid column.
     const gridActionConfig = useMemo(
         () => actionsMode === 'form'
             ? actionConfig.filter(({ key }) => key !== actionTypes.Copy && key !== actionTypes.Delete && key !== actionTypes.Edit)
