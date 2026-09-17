@@ -342,7 +342,7 @@ const Form = ({
   const deleteRecordName = model.linkColumn ? data[model.linkColumn] : undefined;
   const { showPageTitle = true } = model;
   const showCopyButton = showFormActions && canCopy && !isNew;
-  const showDeleteButton = canDelete && !isNew;
+  const showDeleteButton = showFormActions && canDelete && !isNew;
   const hasFormHeaderActions = showCopyButton || showDeleteButton;
   return (
     <>
