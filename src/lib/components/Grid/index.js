@@ -264,7 +264,7 @@ const GridBase = memo(({
     // ?ls=, or minted lazily on first commit) so edits overwrite one sessionStorage entry
     // instead of orphaning a new one per change.
     const listStateIdRef = useRef(incomingListStateId);
-    const [paginationModel, setPaginationModel] = useState(() => listStateSnapshot?.paginationModel ?? { pageSize: defaultPageSize, page: 0 });
+    const [paginationModel, setPaginationModel] = useState(() => listStateSnapshot?.gridState?.pagination?.paginationModel ?? { pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState(() => normalizedStaticData || { recordCount: 0, records: null, lookups: {} });
     const forAssignment = !!onAssignChange;
     const rowsSelected = showRowsSelected;
@@ -286,7 +286,7 @@ const GridBase = memo(({
     const paginationMode = (hasStaticData || model.localSortAndFilter) ? constants.client : (model.paginationMode === constants.client ? constants.client : constants.server);
     const { translate, tOpts, tTranslate } = useModelTranslation(model);
     const [errorMessage, setErrorMessage] = useState('');
-    const [sortModel, setSortModel] = useState(() => listStateSnapshot?.sortModel ?? convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
+    const [sortModel, setSortModel] = useState(() => listStateSnapshot?.gridState?.sorting?.sortModel ?? convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
     // defaultFilters may be a function so relative-date filters (e.g. "last 7 days") are computed
     // fresh on mount instead of once when the model module first loaded.
     const resolvedDefaultFilters = typeof model.defaultFilters === 'function' ? model.defaultFilters() : model.defaultFilters;
@@ -297,7 +297,7 @@ const GridBase = memo(({
             initialFilterModel.items.push(ele);
         });
     }
-    const [filterModel, setFilterModel] = useState(() => listStateSnapshot?.filterModel ?? { ...initialFilterModel });
+    const [filterModel, setFilterModel] = useState(() => listStateSnapshot?.gridState?.filter?.filterModel ?? { ...initialFilterModel });
     const [prevCustomFilters, setPrevCustomFilters] = useState(() => ({}));
     const [prevHasStaticData, setPrevHasStaticData] = useState(hasStaticData);
     const [prevNormalizedStaticData, setPrevNormalizedStaticData] = useState(normalizedStaticData);
@@ -377,14 +377,14 @@ const GridBase = memo(({
     const gridTitle = model.gridTitle || model.title;
     const preferenceKey = getApiEndpoint("GridPreferenceManager") ? (model.preferenceId || model.module?.preferenceId) : null;
     const searchParams = new URLSearchParams(window.location.search);
-    const [currentPreference, setCurrentPreference] = useState(null);
+    const [currentPreference, setCurrentPreference] = useState(() => listStateSnapshot?.currentPreference ?? null);
     const [preferencesReady, setPreferencesReady] = useState(!preferenceKey);
     // State for single expanded detail panel row
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
     const enableRowDetailPanel = typeof model.getDetailPanelContent === 'function';
     const [groupingModel, setGroupingModel] = useState(
-        () => listStateSnapshot?.groupingModel ?? (Array.isArray(props.rowGroupingField) ? props.rowGroupingField : [])
+        () => listStateSnapshot?.gridState?.rowGrouping?.model ?? (Array.isArray(props.rowGroupingField) ? props.rowGroupingField : [])
     );
     const [prevRowGroupingField, setPrevRowGroupingField] = useState(props.rowGroupingField);
     if (prevRowGroupingField !== props.rowGroupingField) {
@@ -1404,25 +1404,52 @@ const GridBase = memo(({
         return () => clearTimeout(timer);
     }, [preserveListState, preferencesReady]);
 
-    // Replaces the URL in place rather than pushing a history entry per edit. Only commits once
-    // the user actually changes pagination/sort/filter/grouping/selection - arming alone must not
-    // trigger this effect, otherwise a snapshot would be written on initial load before any
-    // user action.
-    useEffect(() => {
-        if (!preserveListState || !listStateArmedRef.current) return;
+    // Snapshots apiRef.exportState() wholesale so column order/width/pinning ride along automatically; rowSelectionModel and currentPreference aren't in exportState() so they're stapled on separately.
+    const commitListState = useCallback(() => {
+        if (!preserveListState || !listStateArmedRef.current || !apiRef.current) return;
         const id = listStateIdRef.current ?? (listStateIdRef.current = generateId());
         writeListState(id, {
-            paginationModel,
-            sortModel,
-            filterModel,
-            groupingModel,
+            gridState: apiRef.current.exportState(),
+            currentPreference,
             rowSelectionModel: { type: rowSelectionModel.type, ids: Array.from(rowSelectionModel.ids) }
         });
         const nextParams = currentSearchParams();
         nextParams.set(LIST_STATE_PARAM, id);
         navigate(`${pathname}?${nextParams.toString()}`, { replace: true });
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- commits only on the tracked list-state values changing, not on arming/navigate/pathname identity
-    }, [preserveListState, paginationModel, sortModel, filterModel, groupingModel, rowSelectionModel]);
+    }, [preserveListState, apiRef, currentPreference, rowSelectionModel, navigate, pathname]);
+
+    // Kept fresh every render so the event subscriptions below always call the latest closure.
+    const commitListStateRef = useRef(commitListState);
+    commitListStateRef.current = commitListState;
+
+    // Only commits once the user actually changes pagination/sort/filter/grouping/selection/preference - arming alone must not trigger this.
+    useEffect(() => {
+        commitListState();
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- commits only on the tracked list-state values changing, not on arming/commitListState identity
+    }, [preserveListState, paginationModel, sortModel, filterModel, groupingModel, rowSelectionModel, currentPreference]);
+
+    // Column order/width/visibility/pinning never touch React state, so catch them via apiRef events instead.
+useEffect(() => {
+    if (!apiRef.current || !preserveListState) return undefined;
+
+    let timer;
+    const scheduleCommit = () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => commitListStateRef.current(), 50);
+    };
+
+    const unsubscribers = [
+        'columnVisibilityModelChange',
+        'columnOrderChange',
+        'columnWidthChange',
+        'pinnedColumnsChange'
+    ].map((eventName) => apiRef.current.subscribeEvent(eventName, scheduleCommit));
+
+    return () => {
+        unsubscribers.forEach((unsubscribe) => unsubscribe());
+        clearTimeout(timer);
+    };
+}, [apiRef, preserveListState]);
 
     useEffect(() => {
         if (props.isChildGrid || forAssignment || !updatePageTitle) {
@@ -1689,14 +1716,21 @@ const GridBase = memo(({
         }
     }), [model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination, getTogglableColumns]);
 
-    const initialState = useMemo(() => ({
-        columns: {
-            columnVisibilityModel: isServerGrouping
-                ? { ...visibilityModel, [TREE_DATA_GROUPING_FIELD]: Boolean(serverGroupField) }
-                : visibilityModel
-        },
-        pinnedColumns: pinnedColumns
-    }), [visibilityModel, pinnedColumns, isServerGrouping, serverGroupField]);
+    // Column order/width/visibility/pinning are uncontrolled (apiRef-owned, seeded once here) so a restored snapshot must merge in through initialState rather than a controlled prop.
+    const initialState = useMemo(() => {
+        const restoredColumns = listStateSnapshot?.gridState?.columns;
+        return {
+            columns: {
+                columnVisibilityModel: restoredColumns?.columnVisibilityModel
+                    ?? (isServerGrouping
+                        ? { ...visibilityModel, [TREE_DATA_GROUPING_FIELD]: Boolean(serverGroupField) }
+                        : visibilityModel),
+                ...(restoredColumns?.orderedFields && { orderedFields: restoredColumns.orderedFields }),
+                ...(restoredColumns?.dimensions && { dimensions: restoredColumns.dimensions })
+            },
+            pinnedColumns: listStateSnapshot?.gridState?.pinnedColumns ?? pinnedColumns
+        };
+    }, [visibilityModel, pinnedColumns, isServerGrouping, serverGroupField, listStateSnapshot]);
 
     // initialState only applies on mount - keep the auto tree/group column's visibility in sync with serverGroupField on later renders too.
     useEffect(() => {

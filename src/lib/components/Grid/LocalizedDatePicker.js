@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { getGridDateOperators } from '@mui/x-data-grid-premium';
@@ -21,14 +22,19 @@ const isValidDate = (date) => {
 
 const LocalizedDatePicker = (props) => {
     const { fixedFilterFormat } = utils;
-    const { item, applyValue, convert, colDef } = props;
+    const { item, applyValue, convert, colDef, columnType: explicitColumnType } = props;
     const { systemDateTimeFormat, stateData } = useStateContext();
-    const columnType = colDef?.type || 'date';
+    const columnType = explicitColumnType || colDef?.type || 'date';
     const filterFormat = fixedFilterFormat[columnType];
     const localize = colDef?.localize ?? props.localize ?? false;
     const format = systemDateTimeFormat(columnType !== "dateTime", false, stateData.dateTime);
 
-    const handleFilterChange = (newValue) => {
+    const [pendingValue, setPendingValue] = useState(item?.value ?? null);
+    useEffect(() => {
+        setPendingValue(item?.value ?? null);
+    }, [item?.value]);
+
+    const commitValue = (newValue) => {
         if (columnType !== "date" && columnType !== "dateTime") return;
         const isPartialDate = (value) => {
             if (typeof value !== 'string') return false;
@@ -59,14 +65,19 @@ const LocalizedDatePicker = (props) => {
         }
     };
     const ComponentToRender = componentMap[columnType];
-    const Dateformatvalue = item?.value ? dayjs(item.value) : null;
+    const Dateformatvalue = pendingValue ? dayjs(pendingValue) : null;
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <ComponentToRender
                 fullWidth
                 format={format}
                 value={Dateformatvalue}
-                onChange={handleFilterChange}
+                onChange={setPendingValue}
+                onAccept={commitValue}
+                onClose={() => setPendingValue(item?.value ?? null)}
+                {...(columnType === 'dateTime'
+                    ? { views: ['year', 'month', 'day', 'hours', 'minutes', 'seconds'], timeSteps: { hours: 1, minutes: 1, seconds: 1 } }
+                    : {})}
                 slotProps={{
                     textField: {
                         variant: "standard",
@@ -86,7 +97,7 @@ const LocalizedDatePicker = (props) => {
     );
 };
 
-const localizedDateFormat = (colProps) => getGridDateOperators().map((operator) => ({
+const localizedDateFormat = (colProps) => getGridDateOperators(colProps?.columnType === 'dateTime').map((operator) => ({
     ...operator,
     InputComponent: operator.InputComponent
         ? (props) => <LocalizedDatePicker {...props} {...colProps} />

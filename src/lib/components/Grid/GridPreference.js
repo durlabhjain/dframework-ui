@@ -37,7 +37,7 @@ const paginationModel = { pageSize: 50, page: 0 };
 
 const pageSizeOptions = [5, 10, 20, 50, 100];
 
-const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts }) => {
+const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, initialPreferenceName, t, tOpts }) => {
     const { getApiEndpoint } = useStateContext();
     const preferenceApi = getApiEndpoint("GridPreferenceManager");
     const apiRef = useGridApiRef();
@@ -47,7 +47,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
     const [openPreferenceExistsModal, setOpenPreferenceExistsModal] = useState(false);
     const [openConfirmDeleteDialog, setOpenConfirmDeleteDialog] = useState({});
     const [preferences, setPreferences] = useState(null);
-    const [currentPreference, setCurrentPreference] = useState(null);
+    const [currentPreference, setCurrentPreference] = useState(() => initialPreferenceName ?? null);
 
     // Filter out the default preference (prefId === 0) for the management grid
     const nonDefaultPreferences = useMemo(() =>
@@ -241,6 +241,15 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts 
     useEffect(() => {
         if (!preferenceKey) return;
         const loadAndApply = async () => {
+            // A restored list-state snapshot already has this preference's grid state applied via initialState, so skip re-applying the default over it - just sync the name/ready flag.
+            if (initialPreferenceName) {
+                if (!gridRef.current?.initialGridState && gridRef.current?.exportState) {
+                    gridRef.current.initialGridState = gridRef.current.exportState();
+                }
+                await loadPreferences({ applyDefault: false });
+                if (onPreferenceChange) onPreferenceChange(initialPreferenceName);
+                return;
+            }
             const result = await loadPreferences({ applyDefault: true });
             if (result?.defaultPrefId && result?.preferences) {
                 await applyPreference(result.defaultPrefId, result.preferences);

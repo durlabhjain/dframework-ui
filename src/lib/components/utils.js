@@ -11,7 +11,7 @@ const utils = {
     },
     fixedFilterFormat: {
         date: "YYYY-MM-DD",
-        dateTime: "YYYY-MM-DD hh:mm:ss a",
+        dateTime: "YYYY-MM-DD HH:mm:ss",
         OverrideDateFormat: "DD-MMM-YYYY"
     },
     errorMapping: {
