@@ -51,6 +51,8 @@ import Checkbox$1 from "@mui/material/Checkbox";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import Paper from "@mui/material/Paper";
 import Stack$1 from "@mui/material/Stack";
+import Divider$1 from "@mui/material/Divider";
+import Tooltip$1 from "@mui/material/Tooltip";
 import CircularProgress$1 from "@mui/material/CircularProgress";
 import FormControlLabel$1 from "@mui/material/FormControlLabel";
 import { NumberField } from "@base-ui/react/number-field";
@@ -1761,7 +1763,7 @@ var utils = {
 	},
 	fixedFilterFormat: {
 		date: "YYYY-MM-DD",
-		dateTime: "YYYY-MM-DD hh:mm:ss a",
+		dateTime: "YYYY-MM-DD HH:mm:ss",
 		OverrideDateFormat: "DD-MMM-YYYY"
 	},
 	errorMapping: { 413: "Upload failed: The file exceeds the 30 MB size limit. Please select a smaller file." },
@@ -1843,13 +1845,17 @@ var isValidDate = (date) => {
 };
 var LocalizedDatePicker = (props) => {
 	const { fixedFilterFormat } = utils;
-	const { item, applyValue, convert, colDef } = props;
+	const { item, applyValue, convert, colDef, columnType: explicitColumnType } = props;
 	const { systemDateTimeFormat, stateData } = useStateContext();
-	const columnType = colDef?.type || "date";
+	const columnType = explicitColumnType || colDef?.type || "date";
 	const filterFormat = fixedFilterFormat[columnType];
 	const localize = colDef?.localize ?? props.localize ?? false;
 	const format = systemDateTimeFormat(columnType !== "dateTime", false, stateData.dateTime);
-	const handleFilterChange = (newValue) => {
+	const [pendingValue, setPendingValue] = useState(item?.value ?? null);
+	useEffect(() => {
+		setPendingValue(item?.value ?? null);
+	}, [item?.value]);
+	const commitValue = (newValue) => {
 		if (columnType !== "date" && columnType !== "dateTime") return;
 		const isPartialDate = (value) => {
 			if (typeof value !== "string") return false;
@@ -1890,14 +1896,31 @@ var LocalizedDatePicker = (props) => {
 		}
 	};
 	const ComponentToRender = componentMap[columnType];
-	const Dateformatvalue = item?.value ? dayjs(item.value) : null;
+	const Dateformatvalue = pendingValue ? dayjs(pendingValue) : null;
 	return /* @__PURE__ */ jsx(LocalizationProvider, {
 		dateAdapter: AdapterDayjs,
 		children: /* @__PURE__ */ jsx(ComponentToRender, {
 			fullWidth: true,
 			format,
 			value: Dateformatvalue,
-			onChange: handleFilterChange,
+			onChange: setPendingValue,
+			onAccept: commitValue,
+			onClose: () => setPendingValue(item?.value ?? null),
+			...columnType === "dateTime" ? {
+				views: [
+					"year",
+					"month",
+					"day",
+					"hours",
+					"minutes",
+					"seconds"
+				],
+				timeSteps: {
+					hours: 1,
+					minutes: 1,
+					seconds: 1
+				}
+			} : {},
 			slotProps: { textField: {
 				variant: "standard",
 				inputProps: { "aria-label": "date-input" }
@@ -1908,7 +1931,7 @@ var LocalizedDatePicker = (props) => {
 		})
 	});
 };
-var localizedDateFormat = (colProps) => getGridDateOperators().map((operator) => ({
+var localizedDateFormat = (colProps) => getGridDateOperators(colProps?.columnType === "dateTime").map((operator) => ({
 	...operator,
 	InputComponent: operator.InputComponent ? (props) => /* @__PURE__ */ jsx(LocalizedDatePicker, {
 		...props,
@@ -1943,7 +1966,7 @@ var pageSizeOptions = [
 	50,
 	100
 ];
-var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts }) => {
+var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, initialPreferenceName, t, tOpts }) => {
 	const { getApiEndpoint } = useStateContext();
 	const preferenceApi = getApiEndpoint("GridPreferenceManager");
 	const apiRef = useGridApiRef();
@@ -1953,7 +1976,7 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts })
 	const [openPreferenceExistsModal, setOpenPreferenceExistsModal] = useState(false);
 	const [openConfirmDeleteDialog, setOpenConfirmDeleteDialog] = useState({});
 	const [preferences, setPreferences] = useState(null);
-	const [currentPreference, setCurrentPreference] = useState(null);
+	const [currentPreference, setCurrentPreference] = useState(() => initialPreferenceName ?? null);
 	const nonDefaultPreferences = useMemo(() => preferences == null ? [] : preferences.filter((pref) => pref.prefId !== 0), [preferences]);
 	const gridColumns = useMemo(() => [
 		{
@@ -2175,6 +2198,12 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, t, tOpts })
 	useEffect(() => {
 		if (!preferenceKey) return;
 		const loadAndApply = async () => {
+			if (initialPreferenceName) {
+				if (!gridRef.current?.initialGridState && gridRef.current?.exportState) gridRef.current.initialGridState = gridRef.current.exportState();
+				await loadPreferences({ applyDefault: false });
+				if (onPreferenceChange) onPreferenceChange(initialPreferenceName);
+				return;
+			}
 			const result = await loadPreferences({ applyDefault: true });
 			if (result?.defaultPrefId && result?.preferences) await applyPreference(result.defaultPrefId, result.preferences);
 		};
@@ -2905,6 +2934,7 @@ var CustomToolbar = function(props) {
 					gridRef: apiRef,
 					preferenceKey,
 					onPreferenceChange,
+					initialPreferenceName: currentPreference,
 					t: tTranslate,
 					tOpts
 				})
@@ -3460,8 +3490,14 @@ var EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze([
 	"isNotEmpty",
 	"isAnyOf"
 ]);
+var getStringOperatorsStartsWithFirst = () => {
+	const operators = getGridStringOperators();
+	const startsWithIndex = operators.findIndex((op) => op.value === "startsWith");
+	if (startsWithIndex <= 0) return operators;
+	return [operators[startsWithIndex], ...operators.filter((op) => op.value !== "startsWith")];
+};
 var DEFAULT_FILTER_OPERATORS_BY_TYPE = {
-	string: getGridStringOperators,
+	string: getStringOperatorsStartsWithFirst,
 	number: getGridNumericOperators,
 	boolean: getGridBooleanOperators,
 	singleSelect: getGridSingleSelectOperators
@@ -3568,7 +3604,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const incomingListStateId = preserveListState ? currentSearchParams().get("ls") : null;
 	const [listStateSnapshot] = useState(() => readListState(incomingListStateId));
 	const listStateIdRef = useRef(incomingListStateId);
-	const [paginationModel, setPaginationModel] = useState(() => listStateSnapshot?.paginationModel ?? {
+	const [paginationModel, setPaginationModel] = useState(() => listStateSnapshot?.gridState?.pagination?.paginationModel ?? {
 		pageSize: defaultPageSize,
 		page: 0
 	});
@@ -3598,7 +3634,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const paginationMode = hasStaticData || model.localSortAndFilter ? constants.client : model.paginationMode === constants.client ? constants.client : constants.server;
 	const { translate, tOpts, tTranslate } = useModelTranslation(model);
 	const [errorMessage, setErrorMessage] = useState("");
-	const [sortModel, setSortModel] = useState(() => listStateSnapshot?.sortModel ?? convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
+	const [sortModel, setSortModel] = useState(() => listStateSnapshot?.gridState?.sorting?.sortModel ?? convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
 	const resolvedDefaultFilters = typeof model.defaultFilters === "function" ? model.defaultFilters() : model.defaultFilters;
 	const initialFilterModel = {
 		items: [],
@@ -3612,7 +3648,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			initialFilterModel.items.push(ele);
 		});
 	}
-	const [filterModel, setFilterModel] = useState(() => listStateSnapshot?.filterModel ?? { ...initialFilterModel });
+	const [filterModel, setFilterModel] = useState(() => listStateSnapshot?.gridState?.filter?.filterModel ?? { ...initialFilterModel });
 	const [prevCustomFilters, setPrevCustomFilters] = useState(() => ({}));
 	const [prevHasStaticData, setPrevHasStaticData] = useState(hasStaticData);
 	const [prevNormalizedStaticData, setPrevNormalizedStaticData] = useState(normalizedStaticData);
@@ -3623,7 +3659,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const apiRef = propsApiRef ?? internalRef;
 	const backendApi = api || model.api;
 	const isStaticDataWithoutBackendApi = hasStaticData && !backendApi;
-	const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false, isServerGrouping = false, groupAggregations } = model;
+	const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false, isServerGrouping = false, groupAggregations, actions: actionsMode = "grid" } = model;
 	const hasChildGrids = !!model.relationItems?.length;
 	const [selectedChildRow, setSelectedChildRow] = useState(null);
 	const childRelationFilters = useMemo(() => {
@@ -3705,12 +3741,12 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const gridTitle = model.gridTitle || model.title;
 	const preferenceKey = getApiEndpoint("GridPreferenceManager") ? model.preferenceId || model.module?.preferenceId : null;
 	const searchParams = new URLSearchParams(window.location.search);
-	const [currentPreference, setCurrentPreference] = useState(null);
+	const [currentPreference, setCurrentPreference] = useState(() => listStateSnapshot?.currentPreference ?? null);
 	const [preferencesReady, setPreferencesReady] = useState(!preferenceKey);
 	const [rowPanelId, setRowPanelId] = useState(null);
 	const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
 	const enableRowDetailPanel = typeof model.getDetailPanelContent === "function";
-	const [groupingModel, setGroupingModel] = useState(() => listStateSnapshot?.groupingModel ?? (Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []));
+	const [groupingModel, setGroupingModel] = useState(() => listStateSnapshot?.gridState?.rowGrouping?.model ?? (Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []));
 	const [prevRowGroupingField, setPrevRowGroupingField] = useState(props.rowGroupingField);
 	if (prevRowGroupingField !== props.rowGroupingField) {
 		setPrevRowGroupingField(props.rowGroupingField);
@@ -3983,14 +4019,15 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		documentField.length,
 		customActions
 	]);
-	const getActions = useCallback(({ row }) => actionConfig.map(({ key, title, icon, color, disabled, action, ...otherProps }) => createAction({
+	const gridActionConfig = useMemo(() => actionsMode === "form" ? actionConfig.filter(({ key }) => key !== actionTypes.Copy && key !== actionTypes.Delete && key !== actionTypes.Edit) : actionConfig, [actionConfig, actionsMode]);
+	const getActions = useCallback(({ row }) => gridActionConfig.map(({ key, title, icon, color, disabled, action, ...otherProps }) => createAction({
 		key,
 		title: title || action,
 		icon,
 		color,
 		disabled: disabled?.(row),
 		otherProps
-	})), [actionConfig, createAction]);
+	})), [gridActionConfig, createAction]);
 	const lookupKeys = useMemo(() => {
 		const lookups = data?.lookups || {};
 		return Object.keys(lookups).sort().join(",");
@@ -4017,6 +4054,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			}
 			if (updatedColumnType[column.type]) Object.assign(overrides, updatedColumnType[column.type]);
 			if (column.filterOperators) overrides.filterOperators = column.filterOperators;
+			else if (!overrides.filterOperators && (overrides.type ?? column.type ?? "string") === "string") overrides.filterOperators = getStringOperatorsStartsWithFirst();
 			if (column.allowEmpty === false) {
 				const finalType = overrides.type ?? column.type ?? "string";
 				overrides.filterOperators = (overrides.filterOperators ?? DEFAULT_FILTER_OPERATORS_BY_TYPE[finalType]?.() ?? getGridStringOperators()).filter((op) => !NO_VALUE_OPERATORS.includes(op.value));
@@ -4083,11 +4121,11 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				finalColumns.push(column);
 			}
 		});
-		if (actionConfig.length) {
+		if (gridActionConfig.length) {
 			finalColumns.push({
 				field: "actions",
 				type: "actions",
-				width: (model.actionWidth ?? constants.defaultActionWidth) * actionConfig.length,
+				width: (model.actionWidth ?? constants.defaultActionWidth) * gridActionConfig.length,
 				hidable: false,
 				getActions,
 				headerName: tTranslate("Actions", tOpts)
@@ -4108,7 +4146,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		translate,
 		groupingModel,
 		enableRowDetailPanel,
-		actionConfig.length,
+		gridActionConfig.length,
 		clientRowGroupingEnabled,
 		getActions,
 		gridColumnTypes,
@@ -4743,14 +4781,12 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		}, 0);
 		return () => clearTimeout(timer);
 	}, [preserveListState, preferencesReady]);
-	useEffect(() => {
-		if (!preserveListState || !listStateArmedRef.current) return;
+	const commitListState = useCallback(() => {
+		if (!preserveListState || !listStateArmedRef.current || !apiRef.current) return;
 		const id = listStateIdRef.current ?? (listStateIdRef.current = generateId());
 		writeListState(id, {
-			paginationModel,
-			sortModel,
-			filterModel,
-			groupingModel,
+			gridState: apiRef.current.exportState(),
+			currentPreference,
 			rowSelectionModel: {
 				type: rowSelectionModel.type,
 				ids: Array.from(rowSelectionModel.ids)
@@ -4761,12 +4797,43 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		navigate(`${pathname}?${nextParams.toString()}`, { replace: true });
 	}, [
 		preserveListState,
+		apiRef,
+		currentPreference,
+		rowSelectionModel,
+		navigate,
+		pathname
+	]);
+	const commitListStateRef = useRef(commitListState);
+	commitListStateRef.current = commitListState;
+	useEffect(() => {
+		commitListState();
+	}, [
+		preserveListState,
 		paginationModel,
 		sortModel,
 		filterModel,
 		groupingModel,
-		rowSelectionModel
+		rowSelectionModel,
+		currentPreference
 	]);
+	useEffect(() => {
+		if (!apiRef.current || !preserveListState) return void 0;
+		let timer;
+		const scheduleCommit = () => {
+			clearTimeout(timer);
+			timer = setTimeout(() => commitListStateRef.current(), 50);
+		};
+		const unsubscribers = [
+			"columnVisibilityModelChange",
+			"columnOrderChange",
+			"columnWidthChange",
+			"pinnedColumnsChange"
+		].map((eventName) => apiRef.current.subscribeEvent(eventName, scheduleCommit));
+		return () => {
+			unsubscribers.forEach((unsubscribe) => unsubscribe());
+			clearTimeout(timer);
+		};
+	}, [apiRef, preserveListState]);
 	useEffect(() => {
 		if (props.isChildGrid || forAssignment || !updatePageTitle) return;
 		setPageTitle({
@@ -5078,17 +5145,25 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		disablePagination,
 		getTogglableColumns
 	]);
-	const initialState = useMemo(() => ({
-		columns: { columnVisibilityModel: isServerGrouping ? {
-			...visibilityModel,
-			[TREE_DATA_GROUPING_FIELD]: Boolean(serverGroupField)
-		} : visibilityModel },
-		pinnedColumns
-	}), [
+	const initialState = useMemo(() => {
+		const restoredColumns = listStateSnapshot?.gridState?.columns;
+		return {
+			columns: {
+				columnVisibilityModel: restoredColumns?.columnVisibilityModel ?? (isServerGrouping ? {
+					...visibilityModel,
+					[TREE_DATA_GROUPING_FIELD]: Boolean(serverGroupField)
+				} : visibilityModel),
+				...restoredColumns?.orderedFields && { orderedFields: restoredColumns.orderedFields },
+				...restoredColumns?.dimensions && { dimensions: restoredColumns.dimensions }
+			},
+			pinnedColumns: listStateSnapshot?.gridState?.pinnedColumns ?? pinnedColumns
+		};
+	}, [
 		visibilityModel,
 		pinnedColumns,
 		isServerGrouping,
-		serverGroupField
+		serverGroupField,
+		listStateSnapshot
 	]);
 	useEffect(() => {
 		if (!apiRef.current || !isServerGrouping) return;
@@ -7216,7 +7291,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	}) : defaultFieldConfigs;
 	const gridApi = buildUrl(model.api);
 	const mode = idWithOptions.includes("-") && idWithOptions.split("-")[0] === "0" ? "copy" : "";
-	const { canEdit } = getPermissions({
+	const { canEdit, canDelete } = getPermissions({
 		userData,
 		model,
 		userDefinedPermissions: {
@@ -7227,7 +7302,12 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 			...permissions
 		}
 	});
-	const { hideBreadcrumb = false, navigateBack } = model;
+	const canCopy = Boolean({
+		...model.permissions,
+		...permissions
+	}.copy);
+	const { hideBreadcrumb = false, navigateBack, actions: actionsMode = "grid" } = model;
+	const showFormActions = actionsMode === "form" || actionsMode === "both";
 	const recordEditable = !("canEdit" in data) || data.canEdit;
 	const handleNavigation = useCallback(() => {
 		let navigatePath;
@@ -7434,6 +7514,14 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 		tTranslate,
 		tOpts
 	]);
+	const handleCopy = useCallback(() => {
+		const basePath = pathname.substring(0, pathname.lastIndexOf("/") + 1);
+		navigate(`${basePath}0-${id}`);
+	}, [
+		pathname,
+		id,
+		navigate
+	]);
 	const clearError = () => {
 		setErrorMessage(null);
 		setIsDeleting(false);
@@ -7473,8 +7561,11 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	const showRelations = Number(id) !== 0 && Boolean(relations.length);
 	const showSaveButton = searchParams.has("showRelation");
 	const readOnlyRelations = !recordEditable || data.readOnlyRelations;
-	deletePromptText = deletePromptText || tTranslate("Are you sure you want to delete ?", tOpts);
+	const deleteRecordName = model.linkColumn ? data[model.linkColumn] : void 0;
 	const { showPageTitle = true } = model;
+	const showCopyButton = showFormActions && canCopy && !isNew;
+	const showDeleteButton = showFormActions && canDelete && !isNew;
+	const hasFormHeaderActions = showCopyButton || showDeleteButton;
 	return /* @__PURE__ */ jsxs(Fragment, { children: [showPageTitle && /* @__PURE__ */ jsx(PageTitle_default, {
 		navigate,
 		title: formTitle,
@@ -7501,8 +7592,29 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 					direction: "row",
 					spacing: 2,
 					justifyContent: "flex-end",
+					alignItems: "center",
 					mb: 1,
 					children: [
+						showCopyButton && /* @__PURE__ */ jsx(Button, {
+							variant: "contained",
+							color: "primary",
+							onClick: handleCopy,
+							children: tTranslate("Copy", tOpts)
+						}),
+						showDeleteButton && /* @__PURE__ */ jsx(Button, {
+							variant: "contained",
+							color: "error",
+							sx: {
+								bgcolor: "error.dark",
+								"&:hover": { bgcolor: "error.dark" }
+							},
+							onClick: () => setIsDeleting(true),
+							children: tTranslate("Delete", tOpts)
+						}),
+						showFormActions && hasFormHeaderActions && /* @__PURE__ */ jsx(Divider$1, {
+							orientation: "vertical",
+							flexItem: true
+						}),
 						canEdit && recordEditable && !showSaveButton && !readOnly && /* @__PURE__ */ jsx(Button, {
 							variant: "contained",
 							type: "submit",
@@ -7516,12 +7628,6 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 							color: "error",
 							onClick: handleFormCancel,
 							children: tTranslate("Cancel", tOpts)
-						}),
-						permissions.delete && /* @__PURE__ */ jsx(Button, {
-							variant: "contained",
-							color: "error",
-							onClick: () => setIsDeleting(true),
-							children: tTranslate("Delete", tOpts)
 						})
 					]
 				}), /* @__PURE__ */ jsx(Layout, {
@@ -7560,7 +7666,16 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 						setDeleteError(null);
 					},
 					title: deleteError ? tTranslate("Error Deleting Record", tOpts) : tTranslate("Confirm Delete", tOpts),
-					children: deletePromptText
+					children: deletePromptText ? deletePromptText : /* @__PURE__ */ jsxs(Fragment, { children: [
+						tTranslate("Are you sure you want to delete", tOpts),
+						" ",
+						deleteRecordName && /* @__PURE__ */ jsx(Tooltip$1, {
+							title: deleteRecordName,
+							arrow: true,
+							children: /* @__PURE__ */ jsx("span", { children: String(deleteRecordName).length > 30 ? `${String(deleteRecordName).slice(0, 30)}...` : deleteRecordName })
+						}),
+						"?"
+					] })
 				}),
 				showRelations ? /* @__PURE__ */ jsx(Relations, {
 					readOnly: readOnlyRelations,
@@ -7576,7 +7691,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.149.0/helpers/esm/typeof.js
+//#region \0@oxc-project+runtime@0.150.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -7586,7 +7701,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.149.0/helpers/esm/toPrimitive.js
+//#region \0@oxc-project+runtime@0.150.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -7598,13 +7713,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.149.0/helpers/esm/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.150.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.149.0/helpers/esm/defineProperty.js
+//#region \0@oxc-project+runtime@0.150.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
