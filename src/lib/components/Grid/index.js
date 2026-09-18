@@ -1065,8 +1065,11 @@ const GridBase = memo(({
             if (addUrlParamKey) {
                 currentParams.set(addUrlParamKey, record[addUrlParamKey]);
             }
-            // Carries the grid's committed ?ls= snapshot id forward so Form's default
-            // "navigate up one segment" can restore it when coming back to this list.
+            // Carries the grid's committed ?ls= snapshot id forward; read from the ref, not just
+            // the URL, since a just-triggered commitListState navigate may not have landed yet.
+            if (preserveListState && listStateIdRef.current) {
+                currentParams.set(LIST_STATE_PARAM, listStateIdRef.current);
+            }
             if (addUrlParamKey || currentParams.has(LIST_STATE_PARAM)) {
                 path += `?${currentParams.toString()}`;
             }
