@@ -290,7 +290,6 @@ const GridBase = memo(({
     // defaultFilters may be a function so relative-date filters (e.g. "last 7 days") are computed
     // fresh on mount instead of once when the model module first loaded.
     const resolvedDefaultFilters = typeof model.defaultFilters === 'function' ? model.defaultFilters() : model.defaultFilters;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally rebuilt every render (defaultFilters may be a function), onResetToDefault only reads it inside the reset callback body, not for render output
     const initialFilterModel = { items: [], logicOperator: 'and', quickFilterValues: Array(0), quickFilterLogicOperator: 'and' };
     if (resolvedDefaultFilters) {
         initialFilterModel.items = [];
