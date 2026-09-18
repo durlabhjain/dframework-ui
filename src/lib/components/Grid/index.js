@@ -1095,6 +1095,10 @@ const GridBase = memo(({
             // the URL, since a just-triggered commitListState navigate may not have landed yet.
             if (preserveListState && listStateIdRef.current) {
                 currentParams.set(LIST_STATE_PARAM, listStateIdRef.current);
+            } else if (preserveListState) {
+                // Reset-to-default clears the ref; drop any stale ?ls= left in the URL so
+                // navigation doesn't resurrect an already-cleared snapshot id.
+                currentParams.delete(LIST_STATE_PARAM);
             }
             if (addUrlParamKey || currentParams.has(LIST_STATE_PARAM)) {
                 path += `?${currentParams.toString()}`;
