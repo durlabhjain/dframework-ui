@@ -69,6 +69,7 @@ const CustomToolbar = function (props) {
         filterModel,
         setFilterModel,
         onPreferenceChange,
+        onResetToDefault,
         toolbarItems,
         gridColumns,
         customExportOptions,
@@ -155,6 +156,7 @@ const CustomToolbar = function (props) {
                             gridRef={apiRef}
                             preferenceKey={preferenceKey}
                             onPreferenceChange={onPreferenceChange}
+                            onResetToDefault={onResetToDefault}
                             initialPreferenceName={currentPreference}
                             t={tTranslate}
                             tOpts={tOpts}
