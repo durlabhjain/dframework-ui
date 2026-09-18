@@ -907,9 +907,17 @@ function stripListStateFromUrl() {
 	}
 	window.history.replaceState(window.history.state, "", url);
 }
+function clearListState(id) {
+	if (!id) return;
+	try {
+		sessionStorage.removeItem(STORAGE_PREFIX + id);
+	} catch {}
+}
 function clearAllListState() {
 	try {
-		Object.keys(sessionStorage).filter((key) => key.startsWith(STORAGE_PREFIX)).forEach((key) => sessionStorage.removeItem(key));
+		Object.keys(sessionStorage).forEach((key) => {
+			if (key.startsWith(STORAGE_PREFIX)) sessionStorage.removeItem(key);
+		});
 	} catch {}
 }
 function isReload() {
@@ -1966,7 +1974,7 @@ var pageSizeOptions = [
 	50,
 	100
 ];
-var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, initialPreferenceName, t, tOpts }) => {
+var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDefault, initialPreferenceName, t, tOpts }) => {
 	const { getApiEndpoint } = useStateContext();
 	const preferenceApi = getApiEndpoint("GridPreferenceManager");
 	const apiRef = useGridApiRef();
@@ -2051,9 +2059,14 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, initialPref
 			gridRef.current.restoreState(gridRef.current.initialGridState);
 			setCurrentPreference(null);
 			if (onPreferenceChange) onPreferenceChange(null);
+			if (onResetToDefault) onResetToDefault();
 			setMenuAnchorEl(null);
 		}
-	}, [gridRef, onPreferenceChange]);
+	}, [
+		gridRef,
+		onPreferenceChange,
+		onResetToDefault
+	]);
 	const loadPreferences = useCallback(async ({ applyDefault = false }) => {
 		const response = await request({
 			url: preferenceApi,
@@ -2825,7 +2838,7 @@ var GridToolBar = styled$1(Toolbar)({
 var hasNonEmptyValue = (value) => value !== null && value !== void 0 && value !== "" && !(Array.isArray(value) && value.length === 0);
 var filterValidItems$1 = (items = []) => items.filter((item) => ["isEmpty", "isNotEmpty"].includes(item.operator) || hasNonEmptyValue(item.value));
 var CustomToolbar = function(props) {
-	const { model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, tTranslate, tOpts, filterModel, setFilterModel, onPreferenceChange, toolbarItems, gridColumns, customExportOptions, isStaticDataMode } = props;
+	const { model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, tTranslate, tOpts, filterModel, setFilterModel, onPreferenceChange, onResetToDefault, toolbarItems, gridColumns, customExportOptions, isStaticDataMode } = props;
 	const addText = model.customAddText || (model.title ? `Add ${model.title}` : "Add");
 	const activeFilterCount = filterValidItems$1(filterModel?.items || []).length || 0;
 	const toolbarFilterColumns = gridColumns?.filter((col) => col.toolbarFilter) || [];
@@ -2934,6 +2947,7 @@ var CustomToolbar = function(props) {
 					gridRef: apiRef,
 					preferenceKey,
 					onPreferenceChange,
+					onResetToDefault,
 					initialPreferenceName: currentPreference,
 					t: tTranslate,
 					tOpts
@@ -3783,6 +3797,38 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		setCurrentPreference(preferenceName);
 		setPreferencesReady(true);
 	}, []);
+	const onResetToDefault = useCallback(() => {
+		setPaginationModel({
+			pageSize: defaultPageSize,
+			page: 0
+		});
+		setSortModel(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
+		setFilterModel({ ...initialFilterModel });
+		setGroupingModel(Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []);
+		const clearedSelection = {
+			type: "include",
+			ids: /* @__PURE__ */ new Set()
+		};
+		setRowSelectionModel(clearedSelection);
+		onRowSelectionModelChangeProp?.(clearedSelection);
+		if (!preserveListState) return;
+		listStateArmedRef.current = false;
+		if (listStateIdRef.current) {
+			clearListState(listStateIdRef.current);
+			listStateIdRef.current = null;
+		}
+		stripListStateFromUrl();
+		setTimeout(() => {
+			listStateArmedRef.current = true;
+		}, 0);
+	}, [
+		preserveListState,
+		defaultSort,
+		model.defaultSort,
+		initialFilterModel,
+		props.rowGroupingField,
+		onRowSelectionModelChangeProp
+	]);
 	const columnGroupingModel = useMemo(() => {
 		if (!model.columnGroupingModel) return [];
 		return model.columnGroupingModel.map((group) => ({
@@ -3989,7 +4035,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			key: actionTypes.Copy,
 			title: "Copy",
 			icon: "copy",
-			show: !!effectivePermissions.copy
+			show: !!canAdd && !!effectivePermissions.copy
 		}, {
 			key: actionTypes.Delete,
 			title: "Delete",
@@ -4012,6 +4058,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	}, [
 		forAssignment,
 		isReadOnly,
+		canAdd,
 		canEdit,
 		canDelete,
 		showHistory,
@@ -4162,7 +4209,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			valueGetter: (value, row) => row.__isGroupRow ? row[serverGroupField] : ""
 		};
 	}, [serverGroupField, gridColumns]);
-	const getTogglableColumns = useCallback((cols) => cols.filter((col) => col.field !== TREE_DATA_GROUPING_FIELD || Boolean(serverGroupField)).map((col) => col.field), [serverGroupField]);
+	const getTogglableColumns = useCallback((cols) => cols.reduce((fields, col) => {
+		if (col.field !== TREE_DATA_GROUPING_FIELD || Boolean(serverGroupField)) fields.push(col.field);
+		return fields;
+	}, []), [serverGroupField]);
 	const fetchColumnsRef = useRef([]);
 	const fetchColumns = useMemo(() => {
 		const next = stableGridColumns.map(({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable }) => ({
@@ -4400,6 +4450,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		if (addUrlParamKey || preserveListState) {
 			const currentParams = currentSearchParams();
 			if (addUrlParamKey) currentParams.set(addUrlParamKey, record[addUrlParamKey]);
+			if (preserveListState && listStateIdRef.current) currentParams.set("ls", listStateIdRef.current);
+			else if (preserveListState) currentParams.delete("ls");
 			if (addUrlParamKey || currentParams.has("ls")) path += `?${currentParams.toString()}`;
 		}
 		navigate(path);
@@ -5084,6 +5136,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			filterModel,
 			setFilterModel,
 			onPreferenceChange,
+			onResetToDefault,
 			toolbarItems,
 			headerActions: props.headerActions,
 			customExportOptions,
@@ -5137,6 +5190,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		filterModel,
 		setFilterModel,
 		onPreferenceChange,
+		onResetToDefault,
 		toolbarItems,
 		props.headerActions,
 		customExportOptions,
@@ -7291,7 +7345,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	}) : defaultFieldConfigs;
 	const gridApi = buildUrl(model.api);
 	const mode = idWithOptions.includes("-") && idWithOptions.split("-")[0] === "0" ? "copy" : "";
-	const { canEdit, canDelete } = getPermissions({
+	const { canAdd, canEdit, canDelete } = getPermissions({
 		userData,
 		model,
 		userDefinedPermissions: {
@@ -7302,7 +7356,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 			...permissions
 		}
 	});
-	const canCopy = Boolean({
+	const canCopy = canAdd && Boolean({
 		...model.permissions,
 		...permissions
 	}.copy);
@@ -7381,7 +7435,8 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	}, [
 		formApi,
 		model,
-		idToLoad
+		idToLoad,
+		idWithOptions
 	]);
 	useEffect(() => {
 		loadRecord();
