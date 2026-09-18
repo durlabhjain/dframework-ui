@@ -19,7 +19,7 @@ import { useMemo, useEffect, memo, useRef, useState, useCallback } from 'react';
 import { useSnackbar } from '../SnackBar/index';
 import { DialogComponent } from '../Dialog/index';
 import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
-import { LIST_STATE_PARAM, currentSearchParams, generateId, readListState, writeListState } from './listState';
+import { LIST_STATE_PARAM, currentSearchParams, generateId, readListState, writeListState, clearListState, stripListStateFromUrl } from './listState';
 import { Footer } from './footer';
 import template from './template';
 import { Tooltip, Box, Tabs, Tab } from "@mui/material";
@@ -326,6 +326,7 @@ const GridBase = memo(({
             props.onChildRowSelected?.(params.row ?? null);
         }
         onRowClick(params, event, details);
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- props.onChildRowSelected is already tracked below; the plugin can't narrow past the optional-chaining call and asks for the whole props object
     }, [hasChildGrids, onRowClick, props.onChildRowSelected]);
     const getRowClassNameWithChildSelection = useCallback((params) => {
         const consumerClassName = props.getRowClassName ? props.getRowClassName(params) : '';
@@ -333,6 +334,7 @@ const GridBase = memo(({
             return `${consumerClassName} child-grid-selected-row`.trim();
         }
         return consumerClassName;
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- props.getRowClassName is already tracked below; the plugin can't narrow past the conditional call and asks for the whole props object
     }, [props.getRowClassName, hasChildGrids, selectedChildRow, idProperty]);
     // When localSortAndFilter is true, sorting and filtering are handled client-side by MUI DataGrid
     // even if paginationMode is server. Sort/filter values are not sent to the API.
@@ -430,6 +432,26 @@ const GridBase = memo(({
         setPreferencesReady(true);
     }, []);
 
+    // restoreState() only updates the grid's internal store, not the pagination/sort/filter/grouping/selection React state that actually drives fetchData and the preserved list-state snapshot, so reset it all back to fresh-mount defaults here and wipe the snapshot too.
+    const onResetToDefault = useCallback(() => {
+        setPaginationModel({ pageSize: defaultPageSize, page: 0 });
+        setSortModel(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
+        setFilterModel({ ...initialFilterModel });
+        setGroupingModel(Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []);
+        const clearedSelection = { type: 'include', ids: new Set() };
+        setRowSelectionModel(clearedSelection);
+        onRowSelectionModelChangeProp?.(clearedSelection);
+
+        if (!preserveListState) return;
+        listStateArmedRef.current = false; // disarm so the currentPreference-triggered commitListState effect below doesn't immediately re-persist and re-add ?ls=
+        if (listStateIdRef.current) {
+            clearListState(listStateIdRef.current);
+            listStateIdRef.current = null;
+        }
+        stripListStateFromUrl();
+        setTimeout(() => { listStateArmedRef.current = true; }, 0);
+        // react-doctor-disable-next-line no-effect-with-fresh-deps -- initialFilterModel is intentionally rebuilt every render (defaultFilters may be a function needing fresh relative dates); onResetToDefault is only invoked from user-triggered handlers, not render output, so the identity churn is harmless
+    }, [preserveListState, defaultSort, model.defaultSort, initialFilterModel, props.rowGroupingField, onRowSelectionModelChangeProp]);
 
     // Extract column grouping props from model to override
     const columnGroupingModel = useMemo(() => {
@@ -832,7 +854,10 @@ const GridBase = memo(({
     // Excludes the auto tree/group column from the "manage columns" panel entirely (not merely
     // hidden-but-re-addable) while there's no active group field for it to show.
     const getTogglableColumns = useCallback(
-        (cols) => cols.filter(col => col.field !== TREE_DATA_GROUPING_FIELD || Boolean(serverGroupField)).map(col => col.field),
+        (cols) => cols.reduce((fields, col) => {
+            if (col.field !== TREE_DATA_GROUPING_FIELD || Boolean(serverGroupField)) fields.push(col.field);
+            return fields;
+        }, []),
         [serverGroupField]
     );
 
@@ -1065,8 +1090,15 @@ const GridBase = memo(({
             if (addUrlParamKey) {
                 currentParams.set(addUrlParamKey, record[addUrlParamKey]);
             }
-            // Carries the grid's committed ?ls= snapshot id forward so Form's default
-            // "navigate up one segment" can restore it when coming back to this list.
+            // Carries the grid's committed ?ls= snapshot id forward; read from the ref, not just
+            // the URL, since a just-triggered commitListState navigate may not have landed yet.
+            if (preserveListState && listStateIdRef.current) {
+                currentParams.set(LIST_STATE_PARAM, listStateIdRef.current);
+            } else if (preserveListState) {
+                // Reset-to-default clears the ref; drop any stale ?ls= left in the URL so
+                // navigation doesn't resurrect an already-cleared snapshot id.
+                currentParams.delete(LIST_STATE_PARAM);
+            }
             if (addUrlParamKey || currentParams.has(LIST_STATE_PARAM)) {
                 path += `?${currentParams.toString()}`;
             }
@@ -1696,6 +1728,7 @@ useEffect(() => {
             filterModel,
             setFilterModel,
             onPreferenceChange,
+            onResetToDefault,
             toolbarItems,
             headerActions: props.headerActions,
             customExportOptions,
@@ -1724,7 +1757,7 @@ useEffect(() => {
         columnsManagement: {
             getTogglableColumns
         }
-    }), [model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination, getTogglableColumns]);
+    }), [model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, onResetToDefault, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination, getTogglableColumns]);
 
     // Column order/width/visibility/pinning are uncontrolled (apiRef-owned, seeded once here) so a restored snapshot must merge in through initialState rather than a controlled prop.
     const initialState = useMemo(() => {

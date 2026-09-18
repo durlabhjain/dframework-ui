@@ -59,13 +59,23 @@ function stripListStateFromUrl() {
     window.history.replaceState(window.history.state, '', url);
 }
 
+// Drops one grid instance's stashed snapshot, e.g. on an explicit "Reset to Default".
+function clearListState(id) {
+    if (!id) return;
+    try {
+        sessionStorage.removeItem(STORAGE_PREFIX + id);
+    } catch {
+        // sessionStorage unavailable - nothing to clear
+    }
+}
+
 // Every list-state snapshot this tab has stashed in sessionStorage, regardless of which grid
 // or id it belongs to.
 function clearAllListState() {
     try {
-        Object.keys(sessionStorage)
-            .filter((key) => key.startsWith(STORAGE_PREFIX))
-            .forEach((key) => sessionStorage.removeItem(key));
+        Object.keys(sessionStorage).forEach((key) => {
+            if (key.startsWith(STORAGE_PREFIX)) sessionStorage.removeItem(key);
+        });
     } catch {
         // sessionStorage unavailable - nothing to clear
     }
@@ -93,4 +103,4 @@ if (typeof window !== 'undefined' && isReload()) {
     stripListStateFromUrl();
 }
 
-export { LIST_STATE_PARAM, currentSearchParams, generateId, readListState, writeListState };
+export { LIST_STATE_PARAM, currentSearchParams, generateId, readListState, writeListState, clearListState, stripListStateFromUrl };

@@ -37,7 +37,7 @@ const paginationModel = { pageSize: 50, page: 0 };
 
 const pageSizeOptions = [5, 10, 20, 50, 100];
 
-const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, initialPreferenceName, t, tOpts }) => {
+const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDefault, initialPreferenceName, t, tOpts }) => {
     const { getApiEndpoint } = useStateContext();
     const preferenceApi = getApiEndpoint("GridPreferenceManager");
     const apiRef = useGridApiRef();
@@ -81,9 +81,10 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, initialPr
             gridRef.current.restoreState(gridRef.current.initialGridState);
             setCurrentPreference(null);
             if (onPreferenceChange) onPreferenceChange(null);
+            if (onResetToDefault) onResetToDefault();
             setMenuAnchorEl(null);
         }
-    }, [gridRef, onPreferenceChange]);
+    }, [gridRef, onPreferenceChange, onResetToDefault]);
 
     // Only memoize functions used in useEffect dependencies
     const loadPreferences = useCallback(async ({ applyDefault = false }) => {
