@@ -96,12 +96,12 @@ const Form = ({
     ...model.permissions,
     ...permissions
   };
-  const { canEdit, canDelete } = getPermissions({
+  const { canAdd, canEdit, canDelete } = getPermissions({
     userData,
     model,
     userDefinedPermissions
   });
-  const canCopy = Boolean({ ...model.permissions, ...permissions }.copy);
+  const canCopy = canAdd && Boolean({ ...model.permissions, ...permissions }.copy);
   const { hideBreadcrumb = false, navigateBack, actions: actionsMode = 'grid' } = model;
   const showFormActions = actionsMode === 'form' || actionsMode === 'both';
   const recordEditable = !("canEdit" in data) || data.canEdit;
@@ -159,8 +159,8 @@ const Form = ({
     } finally {
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- errorOnLoad/setActiveRecord deliberately excluded: including them recreates loadRecord on every load (both depend transitively on `data`), retriggering the load effect and causing an infinite reload loop
-  }, [formApi, model, idToLoad]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- errorOnLoad/setActiveRecord deliberately excluded: including them recreates loadRecord on every load (both depend transitively on `data`), retriggering the load effect and causing an infinite reload loop. idWithOptions is included on top of idToLoad so switching between edit and copy of the same record (idToLoad stays the same, only the "0-" prefix changes) still rebuilds the closure that isCopy is computed from.
+  }, [formApi, model, idToLoad, idWithOptions]);
   
   useEffect(() => {
     loadRecord();

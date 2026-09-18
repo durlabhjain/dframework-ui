@@ -657,7 +657,7 @@ const GridBase = memo(({
                     key: actionTypes.Copy,
                     title: "Copy",
                     icon: 'copy',
-                    show: !!effectivePermissions.copy,
+                    show: !!canAdd && !!effectivePermissions.copy,
                 },
                 {
                     key: actionTypes.Delete,
@@ -687,6 +687,7 @@ const GridBase = memo(({
     }, [
         forAssignment,
         isReadOnly,
+        canAdd,
         canEdit,
         canDelete,
         showHistory,
