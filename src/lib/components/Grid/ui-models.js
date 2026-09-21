@@ -124,7 +124,7 @@ class UiModel {
 	}
 
 	_resolveRelationItem(item, sharedHideColumns) {
-		const { model, name, hideColumns = [], joinColumn, joinColumnAsParam, relationsParam, disableRelations = false, readOnly = false } = 'model' in item ? item : { model: item };
+		const { model, name, hideColumns = [], joinColumn, joinColumnAsParam, relationsParam, disableRelations = true, readOnly = true } = 'model' in item ? item : { model: item };
 		const hiddenFields = new Set([...sharedHideColumns, ...hideColumns]);
 		const needsColumnOverride = hiddenFields.size > 0 || readOnly;
 
