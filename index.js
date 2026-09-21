@@ -7914,14 +7914,24 @@ var UiModel = class UiModel {
 		return relations.items.map((item) => this._resolveRelationItem(item, sharedHideColumns));
 	}
 	_resolveRelationItem(item, sharedHideColumns) {
-		const { model, name, hideColumns = [], joinColumn, joinColumnAsParam, relationsParam } = "model" in item ? item : { model: item };
+		const { model, name, hideColumns = [], joinColumn, joinColumnAsParam, relationsParam, disableRelations = true, readOnly = true } = "model" in item ? item : { model: item };
 		const hiddenFields = /* @__PURE__ */ new Set([...sharedHideColumns, ...hideColumns]);
+		const needsColumnOverride = hiddenFields.size > 0 || readOnly;
 		const overrides = {
 			...name && { name },
-			...hiddenFields.size && { columns: model.columns.filter((col) => !hiddenFields.has(col.field)) },
+			...needsColumnOverride && { columns: model.columns.filter((col) => !hiddenFields.has(col.field)).map((col) => readOnly && col.link === true ? {
+				...col,
+				link: false
+			} : col) },
 			...joinColumn && { joinColumn },
 			...joinColumnAsParam !== void 0 && { joinColumnAsParam },
-			...relationsParam && { relationsParam }
+			...relationsParam && { relationsParam },
+			...disableRelations && { relationItems: [] },
+			...readOnly && {
+				readOnly: true,
+				linkColumn: void 0,
+				showHeaderFilters: false
+			}
 		};
 		if (!Object.keys(overrides).length) return model;
 		return Object.assign(Object.create(Object.getPrototypeOf(model)), model, overrides);
