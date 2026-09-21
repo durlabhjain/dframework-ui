@@ -115,7 +115,7 @@ class UiModel {
 
 	// `relations.items` lists the child grids shown as tabs below a selected row (Grid/index.js's
 	// ChildGrids). Each entry is either a bare model, or an override object `{ model, name, hideColumns,
-	// joinColumn, joinColumnAsParam, relationsParam }`.
+	// joinColumn, joinColumnAsParam, relationsParam, disableRelations, readOnly }`.
 	_resolveRelationItems() {
 		const { relations } = this;
 		if (!relations || Array.isArray(relations) || !relations.items) return [];
@@ -124,15 +124,32 @@ class UiModel {
 	}
 
 	_resolveRelationItem(item, sharedHideColumns) {
-		const { model, name, hideColumns = [], joinColumn, joinColumnAsParam, relationsParam } = 'model' in item ? item : { model: item };
+		const { model, name, hideColumns = [], joinColumn, joinColumnAsParam, relationsParam, disableRelations = true, readOnly = true } = 'model' in item ? item : { model: item };
 		const hiddenFields = new Set([...sharedHideColumns, ...hideColumns]);
+		const needsColumnOverride = hiddenFields.size > 0 || readOnly;
 
 		const overrides = {
 			...(name && { name }),
-			...(hiddenFields.size && { columns: model.columns.filter(col => !hiddenFields.has(col.field)) }),
+			// readOnly also turns off columns flagged link: true - with Add/Edit/Delete disabled below,
+			// such a column would still render as a dead edit-navigation link.
+			...(needsColumnOverride && {
+				columns: model.columns
+					.filter(col => !hiddenFields.has(col.field))
+					.map(col => (readOnly && col.link === true) ? { ...col, link: false } : col)
+			}),
 			...(joinColumn && { joinColumn }),
 			...(joinColumnAsParam !== undefined && { joinColumnAsParam }),
-			...(relationsParam && { relationsParam })
+			...(relationsParam && { relationsParam }),
+			// A relation model (e.g. Asset) may itself declare relations.items for its own use as a
+			// top-level grid. disableRelations stops those from being carried into this parent's tab,
+			// where they'd render as an unwanted extra level of nested child grids.
+			...(disableRelations && { relationItems: [] }),
+			// readOnly makes this relation's child grid fully read-only (GridBase's isReadOnly already
+			// hides the whole actions column - Edit/Copy/Delete/History/customActions - once
+			// model.readOnly is true), drops linkColumn so its name column no longer acts as an
+			// edit-navigation link, and hides header filters since there's nothing to edit into a
+			// filtered view.
+			...(readOnly && { readOnly: true, linkColumn: undefined, showHeaderFilters: false })
 		};
 
 		if (!Object.keys(overrides).length) return model;
