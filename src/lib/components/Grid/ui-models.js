@@ -145,9 +145,10 @@ class UiModel {
 			// where they'd render as an unwanted extra level of nested child grids.
 			...(disableRelations && { relationItems: [] }),
 			// readOnly makes this relation's child grid fully read-only (GridBase's isReadOnly already
-			// hides Add/Edit/Copy/Delete once model.readOnly is true), drops linkColumn so its name
-			// column no longer acts as an edit-navigation link, and hides header filters since there's
-			// nothing to edit into a filtered view.
+			// hides the whole actions column - Edit/Copy/Delete/History/customActions - once
+			// model.readOnly is true), drops linkColumn so its name column no longer acts as an
+			// edit-navigation link, and hides header filters since there's nothing to edit into a
+			// filtered view.
 			...(readOnly && { readOnly: true, linkColumn: undefined, showHeaderFilters: false })
 		};
 
