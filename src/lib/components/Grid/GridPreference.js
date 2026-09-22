@@ -242,13 +242,15 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
     useEffect(() => {
         if (!preferenceKey) return;
         const loadAndApply = async () => {
-            // A restored list-state snapshot already has this preference's grid state applied via initialState, so skip re-applying the default over it - just sync the name/ready flag.
+            // initialPreferenceName only remembers which preference was active before a list-state round trip (e.g. navigating to a form and back) - the grid itself always mounts with plain defaults, so it's re-applied the normal way here rather than assumed already in place.
             if (initialPreferenceName) {
-                if (!gridRef.current?.initialGridState && gridRef.current?.exportState) {
-                    gridRef.current.initialGridState = gridRef.current.exportState();
+                const result = await loadPreferences({ applyDefault: false });
+                const preference = result?.preferences?.find(ele => ele.prefName === initialPreferenceName);
+                if (preference) {
+                    await applyPreference(preference.prefId, result.preferences);
+                } else if (onPreferenceChange) {
+                    onPreferenceChange(null);
                 }
-                await loadPreferences({ applyDefault: false });
-                if (onPreferenceChange) onPreferenceChange(initialPreferenceName);
                 return;
             }
             const result = await loadPreferences({ applyDefault: true });
@@ -297,6 +299,8 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                 onClick={handleOpen}
                 title={t('Preference', tOpts)}
                 startIcon={<SettingsIcon />}
+                size="small"
+                variant="text"
             >
                 {t('Preferences', tOpts)} {currentPreference && `(${currentPreference})`}
             </Button>
