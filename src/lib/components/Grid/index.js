@@ -9,7 +9,8 @@ import {
     getGridNumericOperators,
     getGridSingleSelectOperators,
     getGridStringOperators,
-    getGridBooleanOperators
+    getGridBooleanOperators,
+    GridFilterInputMultipleValue
 } from '@mui/x-data-grid-premium';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIcon from '@mui/icons-material/FileCopy';
@@ -87,9 +88,56 @@ const constants = {
 // Operators that do not require a value
 const NO_VALUE_OPERATORS = ['isEmpty', 'isNotEmpty'];
 const EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze(['isEmpty', 'isNotEmpty', 'isAnyOf']);
+// Paste separators per spec: ",", CR, LF, CRLF - no space, so multi-word values like "New York" survive a paste intact
+const PASTE_VALUE_SEPARATOR_REGEX = /\r\n|\r|\n|,/;
+// Typing separators: a single-line input can't contain \r/\n, so only what's actually typeable applies here - no space, so multi-word values like "New York" survive intact
+const TYPE_VALUE_SEPARATOR_REGEX = /,/;
+// Reuses GridFilterInputMultipleValue (chips, styling, locale text) and adds onPaste (reads the clipboard directly, unaffected by the input's own newline-stripping) plus a controlled inputValue/onInputChange for typed separators
+const MultiValueTagInput = (props) => {
+    const { item, applyValue, slotProps, ...other } = props;
+    const [inputValue, setInputValue] = useState('');
+    const commitValues = (newValues) => {
+        const existingValues = Array.isArray(item.value) ? item.value.map(String) : [];
+        applyValue({ ...item, value: [...existingValues, ...newValues] });
+    };
+    const rootSlotProps = slotProps?.root;
+    const handlePaste = (event) => {
+        rootSlotProps?.onPaste?.(event);
+        if (event.defaultPrevented) return;
+        const pastedValues = event.clipboardData.getData('text').split(PASTE_VALUE_SEPARATOR_REGEX).map(value => value.trim()).filter(value => value !== '');
+        if (pastedValues.length === 0) return;
+        event.preventDefault();
+        commitValues(pastedValues);
+        setInputValue('');
+    };
+    const handleInputChange = (event, newInputValue, reason) => {
+        if (reason !== 'input') {
+            setInputValue(newInputValue);
+            return;
+        }
+        const segments = newInputValue.split(TYPE_VALUE_SEPARATOR_REGEX);
+        const completedValues = segments.slice(0, -1).map(value => value.trim()).filter(value => value !== '');
+        if (completedValues.length > 0) {
+            commitValues(completedValues);
+        }
+        setInputValue(segments[segments.length - 1]);
+    };
+    return (
+        <GridFilterInputMultipleValue
+            {...other}
+            item={item}
+            applyValue={applyValue}
+            inputValue={inputValue}
+            onInputChange={handleInputChange}
+            slotProps={{ ...slotProps, root: { ...rootSlotProps, onPaste: handlePaste } }}
+        />
+    );
+};
+// Replaces the isAnyOf operator's InputComponent with MultiValueTagInput on any GridFilterOperator array (string, or a custom string-like column type)
+const withMultiValueTagInput = (operators) => operators.map(op => (op.value === 'isAnyOf' ? { ...op, InputComponent: MultiValueTagInput } : op));
 // MUI applies filterOperators[0] as the default operator for new filters, so move startsWith to the front when it's present; otherwise the list is returned unchanged
 const getStringOperatorsStartsWithFirst = () => {
-    const operators = getGridStringOperators();
+    const operators = withMultiValueTagInput(getGridStringOperators());
     const startsWithIndex = operators.findIndex(op => op.value === 'startsWith');
     if (startsWithIndex <= 0) {
         return operators;
@@ -759,7 +807,7 @@ const GridBase = memo(({
                 const finalType = overrides.type ?? column.type ?? 'string';
                 const baseOperators = overrides.filterOperators
                     ?? DEFAULT_FILTER_OPERATORS_BY_TYPE[finalType]?.()
-                    ?? getGridStringOperators();
+                    ?? getStringOperatorsStartsWithFirst();
                 // react-doctor-disable-next-line js-set-map-lookups -- NO_VALUE_OPERATORS is a fixed 2-item constant, not a growing collection; a Set adds hashing overhead for no real gain here
                 overrides.filterOperators = baseOperators.filter(op => !NO_VALUE_OPERATORS.includes(op.value));
             }
@@ -1972,4 +2020,4 @@ const renderers = {
     }
 }
 
-export { renderers };
+export { renderers, withMultiValueTagInput };
