@@ -248,8 +248,9 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                 const preference = result?.preferences?.find(ele => ele.prefName === initialPreferenceName);
                 if (preference) {
                     await applyPreference(preference.prefId, result.preferences);
-                } else if (onPreferenceChange) {
-                    onPreferenceChange(null);
+                } else {
+                    setCurrentPreference(null);
+                    if (onPreferenceChange) onPreferenceChange(null);
                 }
                 return;
             }
