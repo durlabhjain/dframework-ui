@@ -98,13 +98,15 @@ const MultiValueTagInput = (props) => {
     const [inputValue, setInputValue] = useState('');
     const commitValues = (newValues) => {
         const existingValues = Array.isArray(item.value) ? item.value.map(String) : [];
-        applyValue({ ...item, value: [...existingValues, ...newValues] });
+        const mergedValues = [...existingValues, ...newValues].filter((value, index, array) => array.indexOf(value) === index);
+        applyValue({ ...item, value: mergedValues });
     };
     const rootSlotProps = slotProps?.root;
     const handlePaste = (event) => {
         rootSlotProps?.onPaste?.(event);
         if (event.defaultPrevented) return;
-        const pastedValues = event.clipboardData.getData('text').split(PASTE_VALUE_SEPARATOR_REGEX).map(value => value.trim()).filter(value => value !== '');
+        const pastedText = event.clipboardData?.getData?.('text') ?? '';
+        const pastedValues = pastedText.split(PASTE_VALUE_SEPARATOR_REGEX).map(value => value.trim()).filter(value => value !== '');
         if (pastedValues.length === 0) return;
         event.preventDefault();
         commitValues(pastedValues);
@@ -120,7 +122,7 @@ const MultiValueTagInput = (props) => {
         if (completedValues.length > 0) {
             commitValues(completedValues);
         }
-        setInputValue(segments[segments.length - 1]);
+        setInputValue(segments[segments.length - 1].replace(/^\s+/, ''));
     };
     return (
         <GridFilterInputMultipleValue
