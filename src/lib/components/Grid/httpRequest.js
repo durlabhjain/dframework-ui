@@ -94,8 +94,11 @@ const transport = async (config) => {
  */
 const getErrorMessage = (response) => {
     if (typeof response === 'string') return response;
-    const candidate = response?.message || response?.info || response?.error || response?.err;
-    return typeof candidate === 'string' ? candidate : undefined;
+
+    const candidate = [response?.message, response?.info, response?.error, response?.err]
+        .find((value) => typeof value === 'string');
+
+    return candidate;
 };
 
 /**
