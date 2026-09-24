@@ -1810,21 +1810,15 @@ useEffect(() => {
         }
     }), [model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, onResetToDefault, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination, getTogglableColumns]);
 
-    // Column order/width/visibility/pinning are uncontrolled (apiRef-owned, seeded once here) so a restored snapshot must merge in through initialState rather than a controlled prop.
-    const initialState = useMemo(() => {
-        const restoredColumns = listStateSnapshot?.gridState?.columns;
-        return {
-            columns: {
-                columnVisibilityModel: restoredColumns?.columnVisibilityModel
-                    ?? (isServerGrouping
-                        ? { ...visibilityModel, [TREE_DATA_GROUPING_FIELD]: Boolean(serverGroupField) }
-                        : visibilityModel),
-                ...(restoredColumns?.orderedFields && { orderedFields: restoredColumns.orderedFields }),
-                ...(restoredColumns?.dimensions && { dimensions: restoredColumns.dimensions })
-            },
-            pinnedColumns: listStateSnapshot?.gridState?.pinnedColumns ?? pinnedColumns
-        };
-    }, [visibilityModel, pinnedColumns, isServerGrouping, serverGroupField, listStateSnapshot]);
+    // Column order/width/visibility/pinning are uncontrolled (apiRef-owned) and always seeded from plain model defaults here, same as before list-state existed - list-state never restores columns directly. GridPreferences owns re-applying the remembered preference's columns itself (via its normal applyPreference -> apiRef.restoreState flow, keyed off initialPreferenceName below), so it always captures a genuinely pristine baseline before doing so and "Reset to Default" restores that baseline correctly.
+    const initialState = useMemo(() => ({
+        columns: {
+            columnVisibilityModel: isServerGrouping
+                ? { ...visibilityModel, [TREE_DATA_GROUPING_FIELD]: Boolean(serverGroupField) }
+                : visibilityModel
+        },
+        pinnedColumns
+    }), [visibilityModel, pinnedColumns, isServerGrouping, serverGroupField]);
 
     // initialState only applies on mount - keep the auto tree/group column's visibility in sync with serverGroupField on later renders too.
     useEffect(() => {
