@@ -90,8 +90,12 @@ const transport = async (config) => {
 /**
  * Extract error message from response
  * Utility to normalize error messages across different response formats
+ * Only returns string values; non-string fields (e.g. error: true) are ignored so callers' `|| default` fallback applies.
  */
-const getErrorMessage = (response) => response?.message || response?.info || response?.error || response?.err;
+const getErrorMessage = (response) => {
+    const candidate = response?.message || response?.info || response?.error || response?.err;
+    return typeof candidate === 'string' ? candidate : undefined;
+};
 
 /**
  * Default data parsers for different response types
