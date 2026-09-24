@@ -246,11 +246,11 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
             if (initialPreferenceName) {
                 const result = await loadPreferences({ applyDefault: false });
                 const preference = result?.preferences?.find(ele => ele.prefName === initialPreferenceName);
+                // Mark resolved up front so a bail-out inside applyPreference (missing/corrupt prefValue) can't leave preferencesReady stuck false forever.
+                setCurrentPreference(null);
+                if (onPreferenceChange) onPreferenceChange(null);
                 if (preference) {
                     await applyPreference(preference.prefId, result.preferences);
-                } else {
-                    setCurrentPreference(null);
-                    if (onPreferenceChange) onPreferenceChange(null);
                 }
                 return;
             }
