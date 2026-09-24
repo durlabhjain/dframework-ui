@@ -11,7 +11,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import * as locales$1 from "@mui/x-data-grid-premium";
-import { ColumnsPanelTrigger, DataGridPremium, FilterPanelTrigger, GRID_CHECKBOX_SELECTION_COL_DEF, GridActionsCellItem, GridFooter, GridFooterContainer, GridToolbarExportContainer, Toolbar, getGridBooleanOperators, getGridDateOperators, getGridNumericOperators, getGridSingleSelectOperators, getGridStringOperators, gridRowSelectionStateSelector, useGridApiContext, useGridApiRef, useGridSelector } from "@mui/x-data-grid-premium";
+import { ColumnsPanelTrigger, DataGridPremium, FilterPanelTrigger, GRID_CHECKBOX_SELECTION_COL_DEF, GridActionsCellItem, GridFilterInputMultipleValue, GridFooter, GridFooterContainer, GridToolbarExportContainer, Toolbar, getGridBooleanOperators, getGridDateOperators, getGridNumericOperators, getGridSingleSelectOperators, getGridStringOperators, gridRowSelectionStateSelector, useGridApiContext, useGridApiRef, useGridSelector } from "@mui/x-data-grid-premium";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CopyIcon from "@mui/icons-material/FileCopy";
 import ArticleIcon from "@mui/icons-material/Article";
@@ -364,8 +364,17 @@ var transport = async (config) => {
 /**
 * Extract error message from response
 * Utility to normalize error messages across different response formats
+* Only returns string values; non-string fields (e.g. error: true) are ignored so callers' `|| default` fallback applies.
 */
-var getErrorMessage = (response) => response?.message || response?.info || response?.error || response?.err;
+var getErrorMessage = (response) => {
+	if (typeof response === "string") return response;
+	return [
+		response?.message,
+		response?.info,
+		response?.error,
+		response?.err
+	].find((value) => typeof value === "string");
+};
 /**
 * Default data parsers for different response types
 * Use these to normalize API responses to a consistent type
@@ -450,11 +459,11 @@ var request = async ({ url, params = {}, history, jsonPayload = false, method = 
 		}
 		if (response.status === HTTP_STATUS_CODES.FORBIDDEN) return {
 			error: true,
-			message: data.message || "Access Denied!"
+			message: getErrorMessage(data) || "Access Denied!"
 		};
 		if (response.status !== HTTP_STATUS_CODES.OK) return {
 			error: true,
-			message: data.message || "An error occurred"
+			message: getErrorMessage(data) || "An error occurred"
 		};
 		try {
 			data = dataParser(data);
@@ -2212,9 +2221,11 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 		if (!preferenceKey) return;
 		const loadAndApply = async () => {
 			if (initialPreferenceName) {
-				if (!gridRef.current?.initialGridState && gridRef.current?.exportState) gridRef.current.initialGridState = gridRef.current.exportState();
-				await loadPreferences({ applyDefault: false });
-				if (onPreferenceChange) onPreferenceChange(initialPreferenceName);
+				const result = await loadPreferences({ applyDefault: false });
+				const preference = result?.preferences?.find((ele) => ele.prefName === initialPreferenceName);
+				setCurrentPreference(null);
+				if (onPreferenceChange) onPreferenceChange(null);
+				if (preference) await applyPreference(preference.prefId, result.preferences);
 				return;
 			}
 			const result = await loadPreferences({ applyDefault: true });
@@ -2255,6 +2266,8 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 			onClick: handleOpen,
 			title: t("Preference", tOpts),
 			startIcon: /* @__PURE__ */ jsx(SettingsIcon, {}),
+			size: "small",
+			variant: "text",
 			children: [
 				t("Preferences", tOpts),
 				" ",
@@ -3504,8 +3517,59 @@ var EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze([
 	"isNotEmpty",
 	"isAnyOf"
 ]);
+var PASTE_VALUE_SEPARATOR_REGEX = /\r\n|\r|\n|,/;
+var TYPE_VALUE_SEPARATOR_REGEX = /,/;
+var MultiValueTagInput = (props) => {
+	const { item, applyValue, slotProps, ...other } = props;
+	const [inputValue, setInputValue] = useState("");
+	const commitValues = (newValues) => {
+		const mergedValues = [...Array.isArray(item.value) ? item.value.map(String) : [], ...newValues].filter((value, index, array) => array.indexOf(value) === index);
+		applyValue({
+			...item,
+			value: mergedValues
+		});
+	};
+	const rootSlotProps = slotProps?.root;
+	const handlePaste = (event) => {
+		rootSlotProps?.onPaste?.(event);
+		if (event.defaultPrevented) return;
+		const pastedValues = (event.clipboardData?.getData?.("text") ?? "").split(PASTE_VALUE_SEPARATOR_REGEX).map((value) => value.trim()).filter((value) => value !== "");
+		if (pastedValues.length === 0) return;
+		event.preventDefault();
+		commitValues(pastedValues);
+		setInputValue("");
+	};
+	const handleInputChange = (event, newInputValue, reason) => {
+		if (reason !== "input") {
+			setInputValue(newInputValue);
+			return;
+		}
+		const segments = newInputValue.split(TYPE_VALUE_SEPARATOR_REGEX);
+		const completedValues = segments.slice(0, -1).map((value) => value.trim()).filter((value) => value !== "");
+		if (completedValues.length > 0) commitValues(completedValues);
+		setInputValue(segments[segments.length - 1].replace(/^\s+/, ""));
+	};
+	return /* @__PURE__ */ jsx(GridFilterInputMultipleValue, {
+		...other,
+		item,
+		applyValue,
+		inputValue,
+		onInputChange: handleInputChange,
+		slotProps: {
+			...slotProps,
+			root: {
+				...rootSlotProps,
+				onPaste: handlePaste
+			}
+		}
+	});
+};
+var withMultiValueTagInput = (operators) => operators.map((op) => op.value === "isAnyOf" ? {
+	...op,
+	InputComponent: MultiValueTagInput
+} : op);
 var getStringOperatorsStartsWithFirst = () => {
-	const operators = getGridStringOperators();
+	const operators = withMultiValueTagInput(getGridStringOperators());
 	const startsWithIndex = operators.findIndex((op) => op.value === "startsWith");
 	if (startsWithIndex <= 0) return operators;
 	return [operators[startsWithIndex], ...operators.filter((op) => op.value !== "startsWith")];
@@ -4104,7 +4168,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			else if (!overrides.filterOperators && (overrides.type ?? column.type ?? "string") === "string") overrides.filterOperators = getStringOperatorsStartsWithFirst();
 			if (column.allowEmpty === false) {
 				const finalType = overrides.type ?? column.type ?? "string";
-				overrides.filterOperators = (overrides.filterOperators ?? DEFAULT_FILTER_OPERATORS_BY_TYPE[finalType]?.() ?? getGridStringOperators()).filter((op) => !NO_VALUE_OPERATORS.includes(op.value));
+				overrides.filterOperators = (overrides.filterOperators ?? DEFAULT_FILTER_OPERATORS_BY_TYPE[finalType]?.() ?? getStringOperatorsStartsWithFirst()).filter((op) => !NO_VALUE_OPERATORS.includes(op.value));
 			}
 			if (overrides.valueOptions === constants.lookup) overrides.valueOptions = (params) => lookupOptions({
 				...params,
@@ -5199,25 +5263,17 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		disablePagination,
 		getTogglableColumns
 	]);
-	const initialState = useMemo(() => {
-		const restoredColumns = listStateSnapshot?.gridState?.columns;
-		return {
-			columns: {
-				columnVisibilityModel: restoredColumns?.columnVisibilityModel ?? (isServerGrouping ? {
-					...visibilityModel,
-					[TREE_DATA_GROUPING_FIELD]: Boolean(serverGroupField)
-				} : visibilityModel),
-				...restoredColumns?.orderedFields && { orderedFields: restoredColumns.orderedFields },
-				...restoredColumns?.dimensions && { dimensions: restoredColumns.dimensions }
-			},
-			pinnedColumns: listStateSnapshot?.gridState?.pinnedColumns ?? pinnedColumns
-		};
-	}, [
+	const initialState = useMemo(() => ({
+		columns: { columnVisibilityModel: isServerGrouping ? {
+			...visibilityModel,
+			[TREE_DATA_GROUPING_FIELD]: Boolean(serverGroupField)
+		} : visibilityModel },
+		pinnedColumns
+	}), [
 		visibilityModel,
 		pinnedColumns,
 		isServerGrouping,
-		serverGroupField,
-		listStateSnapshot
+		serverGroupField
 	]);
 	useEffect(() => {
 		if (!apiRef.current || !isServerGrouping) return;
@@ -7746,7 +7802,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.150.0/helpers/esm/typeof.js
+//#region \0@oxc-project+runtime@0.151.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -7756,7 +7812,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.150.0/helpers/esm/toPrimitive.js
+//#region \0@oxc-project+runtime@0.151.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -7768,13 +7824,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.150.0/helpers/esm/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.151.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.150.0/helpers/esm/defineProperty.js
+//#region \0@oxc-project+runtime@0.151.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
@@ -8115,6 +8171,6 @@ _defineProperty(UiModel, "defaultPermissions", {
 	delete: true
 });
 //#endregion
-export { AppError, DialogComponent, ERROR_CODES, ERROR_MESSAGES, GridBase, HelpModal, MuiTypography, PageTitle_default as PageTitle, Relations, RouterProvider, SnackbarContext, SnackbarProvider, StateProvider, UiModel, crudHelper, daDKGrid, deDEGrid, elGRGrid, esESGrid, frFRGrid, request as httpRequest, itITGrid, locales, ptPT_default as ptPT, renderers, resolveErrorMessage, trTRGrid, useMobile, useModelTranslation, useRouter, useSnackbar, useStateContext };
+export { AppError, DialogComponent, ERROR_CODES, ERROR_MESSAGES, GridBase, HelpModal, MuiTypography, PageTitle_default as PageTitle, Relations, RouterProvider, SnackbarContext, SnackbarProvider, StateProvider, UiModel, crudHelper, daDKGrid, deDEGrid, elGRGrid, esESGrid, frFRGrid, request as httpRequest, itITGrid, locales, ptPT_default as ptPT, renderers, resolveErrorMessage, trTRGrid, useMobile, useModelTranslation, useRouter, useSnackbar, useStateContext, withMultiValueTagInput };
 
 //# sourceMappingURL=index.js.map
