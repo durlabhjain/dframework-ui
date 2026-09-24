@@ -90,8 +90,16 @@ const transport = async (config) => {
 /**
  * Extract error message from response
  * Utility to normalize error messages across different response formats
+ * Only returns string values; non-string fields (e.g. error: true) are ignored so callers' `|| default` fallback applies.
  */
-const getErrorMessage = (response) => response?.message || response?.info || response?.error || response?.err;
+const getErrorMessage = (response) => {
+    if (typeof response === 'string') return response;
+
+    const candidate = [response?.message, response?.info, response?.error, response?.err]
+        .find((value) => typeof value === 'string');
+
+    return candidate;
+};
 
 /**
  * Default data parsers for different response types
@@ -198,12 +206,12 @@ const request = async ({
         }
 
         if (response.status === HTTP_STATUS_CODES.FORBIDDEN) {
-            return { error: true, message: data.message || 'Access Denied!' };
+            return { error: true, message: getErrorMessage(data) || 'Access Denied!' };
         }
 
         if (response.status !== HTTP_STATUS_CODES.OK) {
             // You can return the error object or handle as needed
-            return { error: true, message: data.message || 'An error occurred' };
+            return { error: true, message: getErrorMessage(data) || 'An error occurred' };
         }
 
         // Apply data parser to normalize response
