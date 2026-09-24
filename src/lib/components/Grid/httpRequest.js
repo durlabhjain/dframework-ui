@@ -198,12 +198,12 @@ const request = async ({
         }
 
         if (response.status === HTTP_STATUS_CODES.FORBIDDEN) {
-            return { error: true, message: data.message || 'Access Denied!' };
+            return { error: true, message: getErrorMessage(data) || 'Access Denied!' };
         }
 
         if (response.status !== HTTP_STATUS_CODES.OK) {
             // You can return the error object or handle as needed
-            return { error: true, message: data.message || 'An error occurred' };
+            return { error: true, message: getErrorMessage(data) || 'An error occurred' };
         }
 
         // Apply data parser to normalize response
