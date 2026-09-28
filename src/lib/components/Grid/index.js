@@ -314,6 +314,8 @@ const GridBase = memo(({
     // ?ls=, or minted lazily on first commit) so edits overwrite one sessionStorage entry
     // instead of orphaning a new one per change.
     const listStateIdRef = useRef(incomingListStateId);
+    // A restored snapshot already holds the exact layout the user left behind - the applied preference's columns plus any manual hide/pin/resize/reorder done on top of it - so on this mount the snapshot, not the preference, is the thing re-applied (see the restore effect below; GridPreferences only re-identifies the remembered preference by name in this case).
+    const restoresLayoutFromListState = preserveListState && !!listStateSnapshot?.gridState;
     const [paginationModel, setPaginationModel] = useState(() => listStateSnapshot?.gridState?.pagination?.paginationModel ?? { pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState(() => normalizedStaticData || { recordCount: 0, records: null, lookups: {} });
     const forAssignment = !!onAssignChange;
@@ -1486,16 +1488,21 @@ const GridBase = memo(({
         fetchData();
     }, [fetchData]);
 
-    // Arms list-state committing one tick after preferences/columns finish loading (immediately
-    // if there's no preferenceKey to wait on), so the grid's own mount-time adjustments (toolbar
-    // filter defaults, customFilters/rowGroupingField prop sync) don't themselves get recorded
-    // as a "user action".
+    // Both halves of "the grid is now settled enough to own its list state", in the order they have to happen: re-apply the snapshot's column layout, then arm committing.
+    // Restoring first matters because column order/width/visibility/pinning are apiRef-owned and can only come back through restoreState (filter/sort/page/grouping/selection are already seeded into React state from the snapshot). Only the column keys are restored, so MUI's controlled-model callbacks aren't fired with the snapshot's filter/sort/page and can't trigger a redundant refetch.
+    // Arming is deferred a tick so the grid's own mount-time adjustments (toolbar filter defaults, customFilters/rowGroupingField prop sync) aren't recorded as a "user action", and waits on preferencesReady so GridPreferences has captured its pristine "Reset to Default" baseline (plain model defaults) before the snapshot is layered on top.
     const listStateArmedRef = useRef(false);
+    const listStateLayoutRestoredRef = useRef(false);
     useEffect(() => {
         if (!preserveListState || !preferencesReady) return undefined;
+        if (restoresLayoutFromListState && !listStateLayoutRestoredRef.current && apiRef.current) {
+            listStateLayoutRestoredRef.current = true;
+            const { columns, pinnedColumns } = listStateSnapshot.gridState;
+            apiRef.current.restoreState({ columns, pinnedColumns });
+        }
         const timer = setTimeout(() => { listStateArmedRef.current = true; }, 0);
         return () => clearTimeout(timer);
-    }, [preserveListState, preferencesReady]);
+    }, [preserveListState, preferencesReady, restoresLayoutFromListState, listStateSnapshot, apiRef]);
 
     // Snapshots apiRef.exportState() wholesale so column order/width/pinning ride along automatically; rowSelectionModel and currentPreference aren't in exportState() so they're stapled on separately.
     const commitListState = useCallback(() => {
@@ -1810,7 +1817,7 @@ useEffect(() => {
         }
     }), [model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, onResetToDefault, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination, getTogglableColumns]);
 
-    // Column order/width/visibility/pinning are uncontrolled (apiRef-owned) and always seeded from plain model defaults here, same as before list-state existed - list-state never restores columns directly. GridPreferences owns re-applying the remembered preference's columns itself (via its normal applyPreference -> apiRef.restoreState flow, keyed off initialPreferenceName below), so it always captures a genuinely pristine baseline before doing so and "Reset to Default" restores that baseline correctly.
+    // Column order/width/visibility/pinning are uncontrolled (apiRef-owned) and always seeded from plain model defaults here, same as before list-state existed, so GridPreferences' "Reset to Default" baseline is captured from a genuinely pristine layout; a restored list-state snapshot is layered on top afterwards by the restore effect above.
     const initialState = useMemo(() => ({
         columns: {
             columnVisibilityModel: isServerGrouping

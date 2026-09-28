@@ -113,11 +113,15 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         return { preferences };
     }, [preferenceApi, preferenceKey, snackbar, t, tOpts, onPreferenceChange]);
 
-    const applyPreference = useCallback(async (prefId, preferencesArray = null) => {
-        // Store initial state before applying first preference
+    // The "Reset to Default" baseline: the grid's pristine model-default layout, captured before anything is restored over it.
+    const captureInitialGridState = useCallback(() => {
         if (!gridRef.current?.initialGridState && gridRef.current?.exportState) {
             gridRef.current.initialGridState = gridRef.current.exportState();
         }
+    }, [gridRef]);
+
+    const applyPreference = useCallback(async (prefId, preferencesArray = null) => {
+        captureInitialGridState();
 
         if (prefId === 0) {
             resetToDefault();
@@ -149,7 +153,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         setCurrentPreference(preference.prefName);
         if (onPreferenceChange) onPreferenceChange(preference.prefName);
         handleClose();
-    }, [gridRef, resetToDefault, preferences, onPreferenceChange, snackbar, t, tOpts]);
+    }, [gridRef, captureInitialGridState, resetToDefault, preferences, onPreferenceChange, snackbar, t, tOpts]);
 
     const savePreference = async (values) => {
         const prefName = values.prefName.trim();
@@ -242,16 +246,15 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
     useEffect(() => {
         if (!preferenceKey) return;
         const loadAndApply = async () => {
-            // initialPreferenceName only remembers which preference was active before a list-state round trip (e.g. navigating to a form and back) - the grid itself always mounts with plain defaults, so it's re-applied the normal way here rather than assumed already in place.
+            // initialPreferenceName is only set when the grid restored a list-state snapshot (e.g. navigating to a form and back), and that snapshot already carries this preference's layout plus whatever the user changed on top of it. So the preference is only re-identified by name here, never re-applied: restoring its saved state would throw away the filters, sort and page the user had when they left. The grid itself re-applies the snapshot's column layout once this reports ready.
             if (initialPreferenceName) {
                 const result = await loadPreferences({ applyDefault: false });
+                captureInitialGridState();
                 const preference = result?.preferences?.find(ele => ele.prefName === initialPreferenceName);
-                // Mark resolved up front so a bail-out inside applyPreference (missing/corrupt prefValue) can't leave preferencesReady stuck false forever.
-                setCurrentPreference(null);
-                if (onPreferenceChange) onPreferenceChange(null);
-                if (preference) {
-                    await applyPreference(preference.prefId, result.preferences);
-                }
+                // Falls back to null when the remembered preference no longer exists, so the label doesn't claim a preference that's gone.
+                const restoredPreferenceName = preference ? preference.prefName : null;
+                setCurrentPreference(restoredPreferenceName);
+                if (onPreferenceChange) onPreferenceChange(restoredPreferenceName);
                 return;
             }
             const result = await loadPreferences({ applyDefault: true });
