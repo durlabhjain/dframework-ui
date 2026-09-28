@@ -427,7 +427,10 @@ const GridBase = memo(({
     const documentField = model.columns.find(ele => ele.type === 'fileUpload')?.field || "";
     const userDefinedPermissions = { add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete };
     const { canAdd, canEdit, canDelete } = getPermissions({ userData, model, userDefinedPermissions });
-    const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false } = model;
+    // showToolbar: opt out for grids whose toolbar would render empty - a static-data panel with no
+    // add/filter/export/preference actions still reserves the toolbar's height as blank space above
+    // the column headers.
+    const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false, showToolbar = true } = model;
     const gridTitle = model.gridTitle || model.title;
     const preferenceKey = getApiEndpoint("GridPreferenceManager") ? (model.preferenceId || model.module?.preferenceId) : null;
     const searchParams = new URLSearchParams(window.location.search);
@@ -1900,7 +1903,7 @@ useEffect(() => {
                         onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded
                     })}
                     localeText={localeText}
-                    showToolbar={true}
+                    showToolbar={showToolbar}
                     columnHeaderHeight={columnHeaderHeight}
                     hideFooter={!showFooter}
                     {...(isServerGrouping ? {
