@@ -77,8 +77,12 @@ const Field = ({ column, otherProps, formik, field, ...props }) => {
         () => resolveValue({ value: max, state: formik.values }),
         [max, formik.values]
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- 'field' and 'formik.values' intentionally excluded: see effect below
-    const formikFieldValue = useMemo(() => formik.values[field] ?? null, [formik.values[field]]);
+    // '' is normalized to null because a number column with no defaultValue falls back to the model's generic '' default, and Base UI only renders null/undefined as empty - '' reaches Intl.NumberFormat, which formats it as a literal 0.
+    const formikFieldValue = useMemo(() => {
+        const value = formik.values[field];
+        return value === '' || value == null ? null : value;
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- 'field' and 'formik.values' intentionally excluded: see effect below
+    }, [formik.values[field]]);
     const [inputValue, setInputValue] = useState(formikFieldValue);
     const debouncedValue = useDebounce(inputValue, 400);
 
