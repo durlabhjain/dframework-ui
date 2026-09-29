@@ -432,7 +432,8 @@ const GridBase = memo(({
     const preferenceKey = getApiEndpoint("GridPreferenceManager") ? (model.preferenceId || model.module?.preferenceId) : null;
     const searchParams = new URLSearchParams(window.location.search);
     const [currentPreference, setCurrentPreference] = useState(() => listStateSnapshot?.currentPreference ?? null);
-    const [preferencesReady, setPreferencesReady] = useState(!preferenceKey);
+    // GridPreferences only mounts in the toolbar, so a hidden toolbar would never fire onPreferenceChange.
+    const [preferencesReady, setPreferencesReady] = useState(!preferenceKey || !showToolbar);
     // State for single expanded detail panel row
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
