@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Avatar, FormControl, FormControlLabel, FormHelperText, Radio, RadioGroup, styled, useTheme } from '@mui/material';
 import {  grey } from '@mui/material/colors';
 import { brandBackgroundColor } from './CustomRenderCell';
@@ -44,13 +44,14 @@ const DaySelection = ({ name, field, formik, expired }) => {
     const isWeekdays = '0111110';
     const defaultVal = "0".repeat(7);
 
-    const [selectedDays, setSelectedDays] = useState(value || defaultVal);
-    const [radioValue, setRadioValue] = useState(() => {
+    // Derived from the formik value rather than held in state: on an edit form the record arrives after this field first renders, and state seeded at mount would keep showing the empty selection.
+    const selectedDays = value || defaultVal;
+    const radioValue = useMemo(() => {
         if (!value) return '';
         if (value === isWeekend) return isWeekend;
         if (value === isWeekdays) return isWeekdays;
         return 'Custom';
-    });
+    }, [value]);
     const [presetSelected, setPresetSelected] = useState(false);
     const onAssignChange = useCallback((newValue) => {
         if (Array.isArray(newValue)) {
@@ -58,15 +59,12 @@ const DaySelection = ({ name, field, formik, expired }) => {
             for (const val of newValue) {
                 finalValue = finalValue.substring(0, val) + "1" + finalValue.substring(val + 1);
             }
-            setSelectedDays(finalValue);
             setFieldValue(name || field, finalValue);
             setPresetSelected(true);
         } else {
             const baseValue = presetSelected ? defaultVal : selectedDays;
             const finalValue = baseValue.slice(0, newValue) + (baseValue[newValue] === "1" ? "0" : "1") + baseValue.slice(newValue + 1);
-            setSelectedDays(finalValue);
             setFieldValue(name || field, finalValue);
-            setRadioValue('Custom');
             setPresetSelected(false);
         }
     }, [presetSelected, defaultVal, selectedDays, name, field, setFieldValue]);
@@ -81,13 +79,10 @@ const DaySelection = ({ name, field, formik, expired }) => {
                     value={radioValue}
                     onChange={event => {
                         const val = event.target.value;
-                        setRadioValue(val);
                         if (val !== 'Custom') {
-                            setSelectedDays(val);
                             setFieldValue(name || field, val);
                             setPresetSelected(true);
                         } else {
-                            setSelectedDays(defaultVal);
                             setFieldValue(name || field, defaultVal);
                             setPresetSelected(false);
                         }
