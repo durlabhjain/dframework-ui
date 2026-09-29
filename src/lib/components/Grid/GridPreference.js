@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useEffectEvent, useMemo, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -37,7 +37,18 @@ const paginationModel = { pageSize: 50, page: 0 };
 
 const pageSizeOptions = [5, 10, 20, 50, 100];
 
-const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDefault, initialPreferenceName, t, tOpts }) => {
+const fetchPreferences = async (url, preferenceKey, signal) => {
+    const response = await request({
+        url,
+        params: { action: 'list', id: preferenceKey },
+        dataParser: DATA_PARSERS.json,
+        signal
+    });
+    if (!Array.isArray(response?.preferences)) throw new Error('Failed to load preferences.');
+    return response.preferences.filter(pref => pref.prefName?.trim() && pref.prefId !== 0);
+};
+
+const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDefault, currentPreference, hasRestoredListState, t, tOpts }) => {
     const { getApiEndpoint } = useStateContext();
     const preferenceApi = getApiEndpoint("GridPreferenceManager");
     const apiRef = useGridApiRef();
@@ -47,13 +58,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
     const [openPreferenceExistsModal, setOpenPreferenceExistsModal] = useState(false);
     const [openConfirmDeleteDialog, setOpenConfirmDeleteDialog] = useState({});
     const [preferences, setPreferences] = useState(null);
-    const [currentPreference, setCurrentPreference] = useState(() => initialPreferenceName ?? null);
-
-    // Filter out the default preference (prefId === 0) for the management grid
-    const nonDefaultPreferences = useMemo(() =>
-        preferences == null ? [] : preferences.filter(pref => pref.prefId !== 0),
-        [preferences]
-    );
 
     const gridColumns = useMemo(() => [
         { field: "prefName", type: 'string', width: 300, headerName: t("Preference Name", tOpts), sortable: false, filterable: false },
@@ -76,84 +80,39 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         handleClose();
     };
 
-    const resetToDefault = useCallback(() => {
-        if (gridRef.current?.initialGridState) {
-            gridRef.current.restoreState(gridRef.current.initialGridState);
-            setCurrentPreference(null);
-            if (onPreferenceChange) onPreferenceChange(null);
-            if (onResetToDefault) onResetToDefault();
-            setMenuAnchorEl(null);
-        }
-    }, [gridRef, onPreferenceChange, onResetToDefault]);
+    const resetToDefault = () => {
+        onResetToDefault();
+        onPreferenceChange(null);
+        handleClose();
+    };
 
-    // Only memoize functions used in useEffect dependencies
-    const loadPreferences = useCallback(async ({ applyDefault = false }) => {
-        const response = await request({
-            url: preferenceApi,
-            params: { action: 'list', id: preferenceKey },
-            dataParser: DATA_PARSERS.json
-        });
-        if (!response?.preferences) {
+    const loadPreferences = async () => {
+        try {
+            setPreferences(await fetchPreferences(preferenceApi, preferenceKey));
+        } catch {
             snackbar.showMessage(t('Failed to load preferences.', tOpts));
-            if (onPreferenceChange) onPreferenceChange(null);
-            return;
         }
+    };
 
-        const preferences = response.preferences.filter(pref => pref.prefName.trim() !== '');
-        setPreferences(preferences);
-        if (applyDefault) {
-            const defaultPref = preferences.find(pref => pref.isDefault);
-            if (defaultPref) {
-                return { defaultPrefId: defaultPref.prefId, preferences };
-            } else {
-                if (onPreferenceChange) onPreferenceChange(null);
-            }
-        }
-        
-        return { preferences };
-    }, [preferenceApi, preferenceKey, snackbar, t, tOpts, onPreferenceChange]);
-
-    // The "Reset to Default" baseline: the grid's pristine model-default layout, captured before anything is restored over it.
-    const captureInitialGridState = useCallback(() => {
-        if (!gridRef.current?.initialGridState && gridRef.current?.exportState) {
-            gridRef.current.initialGridState = gridRef.current.exportState();
-        }
-    }, [gridRef]);
-
-    const applyPreference = useCallback(async (prefId, preferencesArray = null) => {
-        captureInitialGridState();
-
-        if (prefId === 0) {
-            resetToDefault();
-            return;
-        }
-
-        // Use provided preferences array or fall back to state
-        const prefsToSearch = preferencesArray || preferences;
-        if (!prefsToSearch) {
-            snackbar.showMessage(t('Preferences not loaded yet.', tOpts));
-            return;
-        }
-
-        const preference = prefsToSearch.find(ele => ele.prefId === prefId);
+    const applyPreference = (preference) => {
         if (!preference?.prefValue) {
             snackbar.showMessage(t('Failed to load preference.', tOpts));
-            return;
+            return false;
         }
 
         let gridState;
         try {
             gridState = typeof preference.prefValue === 'string' ? JSON.parse(preference.prefValue) : preference.prefValue;
+            if (!gridState || typeof gridState !== 'object' || Array.isArray(gridState)) throw new Error('Invalid grid state');
+            onPreferenceChange(preference.prefName, gridState);
         } catch {
             snackbar.showMessage(t('Failed to parse preference data.', tOpts));
-            return;
+            return false;
         }
 
-        gridRef.current.restoreState(gridState);
-        setCurrentPreference(preference.prefName);
-        if (onPreferenceChange) onPreferenceChange(preference.prefName);
         handleClose();
-    }, [gridRef, captureInitialGridState, resetToDefault, preferences, onPreferenceChange, snackbar, t, tOpts]);
+        return true;
+    };
 
     const savePreference = async (values) => {
         const prefName = values.prefName.trim();
@@ -181,7 +140,10 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         if (response === true || response?.success === true) {
             snackbar.showMessage(t(`Preference ${dialogState === DIALOG_TYPES.ADD ? "added" : "saved"} successfully.`, tOpts));
             handleDialogClose();
-            await loadPreferences({ applyDefault: false });
+            if (dialogState === DIALOG_TYPES.EDIT && preferences.find(pref => pref.prefId === values.prefId)?.prefName === currentPreference) {
+                onPreferenceChange(prefName);
+            }
+            await loadPreferences();
             return;
         }
 
@@ -201,7 +163,8 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
 
         if (response === true || response?.success === true) {
             snackbar.showMessage(t('Preference deleted successfully.', tOpts));
-            await loadPreferences({ applyDefault: false });
+            if (openConfirmDeleteDialog.preferenceName === currentPreference) onPreferenceChange(null);
+            await loadPreferences();
             setOpenConfirmDeleteDialog({});
             return;
         }
@@ -221,7 +184,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         }
         if (action === actionTypes.Delete) {
             setOpenConfirmDeleteDialog({
-                prefId: cellParams.id,
+                prefId: cellParams.row.prefId,
                 preferenceName: cellParams.row.prefName
             });
         }
@@ -242,29 +205,32 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         mode: "onBlur"
     });
 
-    // Load preferences on mount; loadPreferences/applyPreference excluded since applyPreference's identity changes on every setPreferences(), which would loop this effect
+    // A snapshot owns the current layout, even when no named preference was active.
+    const initializePreferences = useEffectEvent((loadedPreferences) => {
+        setPreferences(loadedPreferences ?? []);
+        if (!loadedPreferences) {
+            snackbar.showMessage(t('Failed to load preferences.', tOpts));
+            onPreferenceChange(null);
+            return;
+        }
+        if (hasRestoredListState) {
+            onPreferenceChange(loadedPreferences.find(pref => pref.prefName === currentPreference)?.prefName ?? null);
+            return;
+        }
+        const defaultPreference = loadedPreferences.find(pref => pref.isDefault);
+        // Resolve readiness on every path, including missing or corrupt default data.
+        if (!defaultPreference || !applyPreference(defaultPreference)) onPreferenceChange(null);
+    });
+
     useEffect(() => {
         if (!preferenceKey) return;
-        const loadAndApply = async () => {
-            // initialPreferenceName is only set when the grid restored a list-state snapshot (e.g. navigating to a form and back), and that snapshot already carries this preference's layout plus whatever the user changed on top of it. So the preference is only re-identified by name here, never re-applied: restoring its saved state would throw away the filters, sort and page the user had when they left. The grid itself re-applies the snapshot's column layout once this reports ready.
-            if (initialPreferenceName) {
-                const result = await loadPreferences({ applyDefault: false });
-                captureInitialGridState();
-                const preference = result?.preferences?.find(ele => ele.prefName === initialPreferenceName);
-                // Falls back to null when the remembered preference no longer exists, so the label doesn't claim a preference that's gone.
-                const restoredPreferenceName = preference ? preference.prefName : null;
-                setCurrentPreference(restoredPreferenceName);
-                if (onPreferenceChange) onPreferenceChange(restoredPreferenceName);
-                return;
-            }
-            const result = await loadPreferences({ applyDefault: true });
-            if (result?.defaultPrefId && result?.preferences) {
-                await applyPreference(result.defaultPrefId, result.preferences);
-            }
-        };
-        loadAndApply();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [preferenceKey]);
+        const controller = new AbortController();
+        fetchPreferences(preferenceApi, preferenceKey, controller.signal).then(
+            loaded => { if (!controller.signal.aborted) initializePreferences(loaded); },
+            () => { if (!controller.signal.aborted) initializePreferences(null); }
+        );
+        return () => controller.abort();
+    }, [preferenceApi, preferenceKey]);
 
     // Memoize locale text used by the DataGrid to avoid recreating the object on every render
     const localeText = useMemo(() => ({
@@ -301,6 +267,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                 aria-haspopup="true"
                 aria-expanded={menuAnchorEl ? 'true' : undefined}
                 onClick={handleOpen}
+                disabled={preferences === null}
                 title={t('Preference', tOpts)}
                 startIcon={<SettingsIcon />}
                 size="small"
@@ -343,20 +310,18 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                     </ListItemIcon>
                     {t('Manage Preferences', tOpts)}
                 </MenuItem>
-                {gridRef.current?.initialGridState && (
-                    <MenuItem component={ListItemButton} dense divider={preferences?.length > 0} onClick={() => applyPreference(0)}>
-                        <ListItemIcon>
-                            <RefreshIcon />
-                        </ListItemIcon>
-                        {t('Reset to Default', tOpts)}
-                    </MenuItem>
-                )}
+                <MenuItem component={ListItemButton} dense divider={preferences?.length > 0} onClick={resetToDefault}>
+                    <ListItemIcon>
+                        <RefreshIcon />
+                    </ListItemIcon>
+                    {t('Reset to Default', tOpts)}
+                </MenuItem>
 
                 {preferences?.length > 0 && preferences?.map((ele) => {
                     const { prefName, prefDesc, prefId } = ele;
                     return (
                         <MenuItem
-                            onClick={() => applyPreference(prefId)}
+                            onClick={() => applyPreference(ele)}
                             component={ListItem}
                             selected={currentPreference === prefName}
                             key={`pref-item-${prefId}`}
@@ -372,7 +337,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                 open={dialogState !== DIALOG_TYPES.NONE}
                 disableRestoreFocus
                 title={
-                    <Typography variant="h5">
+                    <Typography variant="h5" component="span">
                         {dialogState} {t(isManageDialog ? 'Preferences' : 'Preference', tOpts)}
                     </Typography>
                 }
@@ -489,9 +454,9 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                                 columns={gridColumns}
                                 pageSizeOptions={pageSizeOptions}
                                 pagination
-                                rowCount={nonDefaultPreferences.length}
-                                rows={nonDefaultPreferences}
-                                getRowId={(row) => row['GridPreferenceId']}
+                                rowCount={preferences.length}
+                                rows={preferences}
+                                getRowId={(row) => row.prefId}
                                 slots={{
                                     headerFilterMenu: false
                                 }}
