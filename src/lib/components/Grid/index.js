@@ -315,6 +315,8 @@ const GridBase = memo(({
     // instead of orphaning a new one per change.
     const listStateIdRef = useRef(incomingListStateId);
     const hasRestoredListState = !!listStateSnapshot?.gridState;
+    // The preference that was active when the snapshot was taken, read straight from the snapshot rather than from the currentPreference state below: GridPreferences re-identifies it by name on mount, and that lookup must not depend on a value GridPreferences itself drives (an interim onPreferenceChange(null) - a failed/aborted preference load, a toolbar remount - would otherwise erase the name for good while the restored layout stays applied).
+    const restoredPreferenceName = hasRestoredListState ? (listStateSnapshot.currentPreference ?? null) : null;
     const [paginationModel, setPaginationModel] = useState(() => listStateSnapshot?.gridState?.pagination?.paginationModel ?? { pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState(() => normalizedStaticData || { recordCount: 0, records: null, lookups: {} });
     const forAssignment = !!onAssignChange;
@@ -430,7 +432,7 @@ const GridBase = memo(({
     const gridTitle = model.gridTitle || model.title;
     const preferenceKey = getApiEndpoint("GridPreferenceManager") ? (model.preferenceId || model.module?.preferenceId) : null;
     const searchParams = new URLSearchParams(window.location.search);
-    const [currentPreference, setCurrentPreference] = useState(() => listStateSnapshot?.currentPreference ?? null);
+    const [currentPreference, setCurrentPreference] = useState(restoredPreferenceName);
     // GridPreferences only mounts in the toolbar, so a hidden toolbar would never fire onPreferenceChange.
     const [preferencesReady, setPreferencesReady] = useState(!preferenceKey || !showToolbar);
     // State for single expanded detail panel row
@@ -1780,6 +1782,7 @@ const GridBase = memo(({
             data,
             currentPreference,
             hasRestoredListState,
+            restoredPreferenceName,
             isReadOnly,
             canAdd,
             canDelete,
@@ -1834,7 +1837,7 @@ const GridBase = memo(({
         columnsManagement: {
             getTogglableColumns
         }
-    }), [model, data, currentPreference, hasRestoredListState, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, onResetToDefault, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination, getTogglableColumns]);
+    }), [model, data, currentPreference, hasRestoredListState, restoredPreferenceName, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, onResetToDefault, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination, getTogglableColumns]);
 
     // Mount with model defaults so the reset baseline is independent of saved layouts.
     const initialState = useMemo(() => ({

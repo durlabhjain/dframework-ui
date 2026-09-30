@@ -48,7 +48,7 @@ const fetchPreferences = async (url, preferenceKey, signal) => {
     return response.preferences.filter(pref => pref.prefName?.trim() && pref.prefId !== 0);
 };
 
-const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDefault, currentPreference, hasRestoredListState, t, tOpts }) => {
+const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDefault, currentPreference, hasRestoredListState, restoredPreferenceName, t, tOpts }) => {
     const { getApiEndpoint } = useStateContext();
     const preferenceApi = getApiEndpoint("GridPreferenceManager");
     const apiRef = useGridApiRef();
@@ -210,11 +210,13 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         setPreferences(loadedPreferences ?? []);
         if (!loadedPreferences) {
             snackbar.showMessage(t('Failed to load preferences.', tOpts));
-            onPreferenceChange(null);
+            // The restored layout is still the one on screen, so keep its name rather than mislabelling it as unsaved just because this load failed.
+            onPreferenceChange(restoredPreferenceName);
             return;
         }
         if (hasRestoredListState) {
-            onPreferenceChange(loadedPreferences.find(pref => pref.prefName === currentPreference)?.prefName ?? null);
+            // Matched against the snapshot's name, not the live currentPreference, so this stays correct no matter how often the component re-initializes; falls back to null only when the preference has genuinely been deleted.
+            onPreferenceChange(loadedPreferences.find(pref => pref.prefName === restoredPreferenceName)?.prefName ?? null);
             return;
         }
         const defaultPreference = loadedPreferences.find(pref => pref.isDefault);
@@ -258,6 +260,8 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
 
     const isManageDialog = dialogState === DIALOG_TYPES.MANAGE;
     const isFormDialog = dialogState === DIALOG_TYPES.ADD || dialogState === DIALOG_TYPES.EDIT;
+    // There is nothing to reset on a plain first load - the grid is already showing model defaults - so the entry only appears once a preference is applied or a restored snapshot is in effect.
+    const canResetToDefault = !!currentPreference || hasRestoredListState;
 
     return (
         <Box>
@@ -304,18 +308,20 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                     </ListItemIcon>
                     {t('Add Preference', tOpts)}
                 </MenuItem>
-                <MenuItem component={ListItemButton} dense onClick={() => openDialog(DIALOG_TYPES.MANAGE)}>
+                <MenuItem component={ListItemButton} dense divider={!canResetToDefault && preferences?.length > 0} onClick={() => openDialog(DIALOG_TYPES.MANAGE)}>
                     <ListItemIcon>
                         <SettingsIcon />
                     </ListItemIcon>
                     {t('Manage Preferences', tOpts)}
                 </MenuItem>
-                <MenuItem component={ListItemButton} dense divider={preferences?.length > 0} onClick={resetToDefault}>
-                    <ListItemIcon>
-                        <RefreshIcon />
-                    </ListItemIcon>
-                    {t('Reset to Default', tOpts)}
-                </MenuItem>
+                {canResetToDefault && (
+                    <MenuItem component={ListItemButton} dense divider={preferences?.length > 0} onClick={resetToDefault}>
+                        <ListItemIcon>
+                            <RefreshIcon />
+                        </ListItemIcon>
+                        {t('Reset to Default', tOpts)}
+                    </MenuItem>
+                )}
 
                 {preferences?.length > 0 && preferences?.map((ele) => {
                     const { prefName, prefDesc, prefId } = ele;

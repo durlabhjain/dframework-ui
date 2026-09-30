@@ -112,6 +112,28 @@ it.each(['Saved', null, 'Deleted preference'])('preserves the full snapshot when
     expect(screen.getByRole('button', { name: /^Preferences/ }).textContent).toBe(currentPreference === 'Saved' ? 'Preferences (Saved)' : 'Preferences ');
 });
 
+it('keeps the restored preference label when the preference list fails to load', async () => {
+    mocks.request.mockRejectedValue(new Error('offline'));
+    mount({ saved: snapshot });
+    await ready();
+    expect(screen.getByRole('button', { name: /^Preferences/ }).textContent).toBe('Preferences (Saved)');
+});
+
+it('re-identifies the restored preference from the snapshot, not from the live label', async () => {
+    const onPreferenceChange = vi.fn();
+    render(<GridPreferences
+        gridRef={{ current: {} }}
+        preferenceKey="items"
+        onPreferenceChange={onPreferenceChange}
+        onResetToDefault={vi.fn()}
+        hasRestoredListState
+        restoredPreferenceName="Saved"
+        currentPreference={null}
+        t={text => text}
+    />);
+    await waitFor(() => expect(onPreferenceChange).toHaveBeenCalledWith('Saved'));
+});
+
 it.each([undefined, '{bad json', 'null', '[]'])('loads data even when the default preference is invalid (%s)', async (prefValue) => {
     mocks.request.mockResolvedValue({ preferences: [{ ...preference, prefValue }] });
     mount();
@@ -158,9 +180,17 @@ it('keeps a pristine reset baseline across Strict Mode effects and snapshot rest
     expect(sessionStorage.getItem('grid-list-state:saved')).toBeNull();
 });
 
-it('offers reset without a saved preference and restores implicit column widths', async () => {
+it('does not offer reset on a first load with nothing applied', async () => {
     mocks.request.mockResolvedValue({ preferences: [] });
-    const { apiRef } = mount();
+    mount();
+    await ready();
+    openPreferences();
+    expect(screen.queryByText('Reset to Default')).toBeNull();
+});
+
+it('offers reset for a restored snapshot without a saved preference and restores implicit column widths', async () => {
+    mocks.request.mockResolvedValue({ preferences: [] });
+    const { apiRef } = mount({ saved: snapshot });
     await ready();
     const originalWidth = apiRef.current.getColumn('id').width;
     act(() => apiRef.current.setColumnWidth('id', 250));
