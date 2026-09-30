@@ -22,8 +22,10 @@ const isValidDate = (date) => {
 
 const LocalizedDatePicker = (props) => {
     const { fixedFilterFormat } = utils;
-    const { item, applyValue, convert, colDef, columnType: explicitColumnType } = props;
+    const { item, applyValue, convert, colDef: colDefProp, columnType: explicitColumnType, apiRef } = props;
     const { systemDateTimeFormat, stateData } = useStateContext();
+    // The filter panel passes apiRef and item but never colDef, so column flags come from the lookup
+    const colDef = colDefProp ?? (item?.field ? apiRef?.current?.getColumn?.(item.field) : null);
     const columnType = explicitColumnType || colDef?.type || 'date';
     const filterFormat = fixedFilterFormat[columnType];
     const localize = colDef?.localize ?? props.localize ?? false;
@@ -43,7 +45,7 @@ const LocalizedDatePicker = (props) => {
         if (isPartialDate(newValue)) {
             return;
         }
-        if (convert || localize) {
+        if (convert) {
             if (!newValue) {
                 applyValue({ ...item, value: null });
                 return;
@@ -56,6 +58,11 @@ const LocalizedDatePicker = (props) => {
             applyValue({ ...item, value: null });
             return;
         }
+        // A localized column is displayed in the viewer's timezone, so the picked wall clock has to go back as UTC to match what the column stores
+        if (localize && columnType === 'dateTime') {
+            applyValue({ ...item, value: dayjs(newValue).utc().format(filterFormat) });
+            return;
+        }
         applyValue({ ...item, value: newValue.format(filterFormat) });
     };
     const getMonthAbbreviation = (format) => {
@@ -65,7 +72,12 @@ const LocalizedDatePicker = (props) => {
         }
     };
     const ComponentToRender = componentMap[columnType];
-    const Dateformatvalue = pendingValue ? dayjs(pendingValue) : null;
+    // A committed localized value is UTC, so it is read back through UTC to show the viewer's own time again
+    const readsBackAsUtc = localize && columnType === 'dateTime' && typeof pendingValue === 'string';
+    let Dateformatvalue = null;
+    if (pendingValue) {
+        Dateformatvalue = readsBackAsUtc ? dayjs.utc(pendingValue).local() : dayjs(pendingValue);
+    }
     return (
         <LocalizationProvider dateAdapter={AdapterDayjs}>
             <ComponentToRender
