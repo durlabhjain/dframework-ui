@@ -1,5 +1,5 @@
 import * as React$1 from "react";
-import React, { createContext, memo, use, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import React, { createContext, memo, use, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 import { useTranslation, withTranslation } from "react-i18next";
@@ -1862,8 +1862,9 @@ var isValidDate = (date) => {
 };
 var LocalizedDatePicker = (props) => {
 	const { fixedFilterFormat } = utils;
-	const { item, applyValue, convert, colDef, columnType: explicitColumnType } = props;
+	const { item, applyValue, convert, colDef: colDefProp, columnType: explicitColumnType, apiRef } = props;
 	const { systemDateTimeFormat, stateData } = useStateContext();
+	const colDef = colDefProp ?? (item?.field ? apiRef?.current?.getColumn?.(item.field) : null);
 	const columnType = explicitColumnType || colDef?.type || "date";
 	const filterFormat = fixedFilterFormat[columnType];
 	const localize = colDef?.localize ?? props.localize ?? false;
@@ -1879,7 +1880,7 @@ var LocalizedDatePicker = (props) => {
 			return !dayjs(value, format, true).isValid();
 		};
 		if (isPartialDate(newValue)) return;
-		if (convert || localize) {
+		if (convert) {
 			if (!newValue) {
 				applyValue({
 					...item,
@@ -1901,6 +1902,13 @@ var LocalizedDatePicker = (props) => {
 			});
 			return;
 		}
+		if (localize && columnType === "dateTime") {
+			applyValue({
+				...item,
+				value: dayjs(newValue).utc().format(filterFormat)
+			});
+			return;
+		}
 		applyValue({
 			...item,
 			value: newValue.format(filterFormat)
@@ -1913,7 +1921,9 @@ var LocalizedDatePicker = (props) => {
 		}
 	};
 	const ComponentToRender = componentMap[columnType];
-	const Dateformatvalue = pendingValue ? dayjs(pendingValue) : null;
+	const readsBackAsUtc = localize && columnType === "dateTime" && typeof pendingValue === "string";
+	let Dateformatvalue = null;
+	if (pendingValue) Dateformatvalue = readsBackAsUtc ? dayjs.utc(pendingValue).local() : dayjs(pendingValue);
 	return /* @__PURE__ */ jsx(LocalizationProvider, {
 		dateAdapter: AdapterDayjs,
 		children: /* @__PURE__ */ jsx(ComponentToRender, {
@@ -1956,6 +1966,68 @@ var localizedDateFormat = (colProps) => getGridDateOperators(colProps?.columnTyp
 	}) : void 0
 }));
 //#endregion
+//#region src/lib/components/Grid/useGridPreferences.js
+function parsePreferenceState(value) {
+	const state = typeof value === "string" ? JSON.parse(value) : value;
+	if (!state || typeof state !== "object" || Array.isArray(state)) throw new Error("Invalid grid state");
+	return state;
+}
+function useGridPreferences({ url, preferenceKey, onInitialize, onError }) {
+	const [result, setResult] = useState(null);
+	const controllerRef = useRef(null);
+	const initialize = useEffectEvent((loaded) => {
+		setResult({
+			url,
+			preferenceKey,
+			preferences: loaded ?? []
+		});
+		if (!loaded) onError();
+		onInitialize(loaded);
+	});
+	const fetchPreferences = useCallback(async (signal) => {
+		const response = await request({
+			url,
+			params: {
+				action: "list",
+				id: preferenceKey
+			},
+			dataParser: DATA_PARSERS.json,
+			signal
+		});
+		if (!Array.isArray(response?.preferences)) throw new Error("Failed to load preferences.");
+		return response.preferences.filter((pref) => typeof pref?.prefName === "string" && pref.prefName.trim() && pref.prefId !== 0);
+	}, [url, preferenceKey]);
+	useEffect(() => {
+		if (!preferenceKey) return;
+		const controller = new AbortController();
+		controllerRef.current = controller;
+		fetchPreferences(controller.signal).then((loaded) => {
+			if (!controller.signal.aborted) initialize(loaded);
+		}, () => {
+			if (!controller.signal.aborted) initialize(null);
+		});
+		return () => controller.abort();
+	}, [preferenceKey, fetchPreferences]);
+	const reloadPreferences = async () => {
+		const controller = controllerRef.current;
+		if (!controller || controller.signal.aborted) return;
+		try {
+			const loaded = await fetchPreferences(controller.signal);
+			if (!controller.signal.aborted) setResult({
+				url,
+				preferenceKey,
+				preferences: loaded
+			});
+		} catch {
+			if (!controller.signal.aborted) onError();
+		}
+	};
+	return {
+		preferences: result?.url === url && result.preferenceKey === preferenceKey ? result.preferences : null,
+		reloadPreferences
+	};
+}
+//#endregion
 //#region src/lib/components/Grid/GridPreference.js
 var actionTypes$1 = {
 	Edit: "Edit",
@@ -1983,7 +2055,7 @@ var pageSizeOptions = [
 	50,
 	100
 ];
-var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDefault, initialPreferenceName, t, tOpts }) => {
+var GridPreferences = ({ gridRef, preferenceKey, preferences, reloadPreferences, onPreferenceChange, onResetToDefault, currentPreference, hasRestoredListState, t, tOpts }) => {
 	const { getApiEndpoint } = useStateContext();
 	const preferenceApi = getApiEndpoint("GridPreferenceManager");
 	const apiRef = useGridApiRef();
@@ -1992,9 +2064,6 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 	const [menuAnchorEl, setMenuAnchorEl] = useState(null);
 	const [openPreferenceExistsModal, setOpenPreferenceExistsModal] = useState(false);
 	const [openConfirmDeleteDialog, setOpenConfirmDeleteDialog] = useState({});
-	const [preferences, setPreferences] = useState(null);
-	const [currentPreference, setCurrentPreference] = useState(() => initialPreferenceName ?? null);
-	const nonDefaultPreferences = useMemo(() => preferences == null ? [] : preferences.filter((pref) => pref.prefId !== 0), [preferences]);
 	const gridColumns = useMemo(() => [
 		{
 			field: "prefName",
@@ -2063,88 +2132,24 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 		setDialogState(DIALOG_TYPES.NONE);
 		handleClose();
 	};
-	const resetToDefault = useCallback(() => {
-		if (gridRef.current?.initialGridState) {
-			gridRef.current.restoreState(gridRef.current.initialGridState);
-			setCurrentPreference(null);
-			if (onPreferenceChange) onPreferenceChange(null);
-			if (onResetToDefault) onResetToDefault();
-			setMenuAnchorEl(null);
-		}
-	}, [
-		gridRef,
-		onPreferenceChange,
-		onResetToDefault
-	]);
-	const loadPreferences = useCallback(async ({ applyDefault = false }) => {
-		const response = await request({
-			url: preferenceApi,
-			params: {
-				action: "list",
-				id: preferenceKey
-			},
-			dataParser: DATA_PARSERS.json
-		});
-		if (!response?.preferences) {
-			snackbar.showMessage(t("Failed to load preferences.", tOpts));
-			if (onPreferenceChange) onPreferenceChange(null);
-			return;
-		}
-		const preferences = response.preferences.filter((pref) => pref.prefName.trim() !== "");
-		setPreferences(preferences);
-		if (applyDefault) {
-			const defaultPref = preferences.find((pref) => pref.isDefault);
-			if (defaultPref) return {
-				defaultPrefId: defaultPref.prefId,
-				preferences
-			};
-			else if (onPreferenceChange) onPreferenceChange(null);
-		}
-		return { preferences };
-	}, [
-		preferenceApi,
-		preferenceKey,
-		snackbar,
-		t,
-		tOpts,
-		onPreferenceChange
-	]);
-	const applyPreference = useCallback(async (prefId, preferencesArray = null) => {
-		if (!gridRef.current?.initialGridState && gridRef.current?.exportState) gridRef.current.initialGridState = gridRef.current.exportState();
-		if (prefId === 0) {
-			resetToDefault();
-			return;
-		}
-		const prefsToSearch = preferencesArray || preferences;
-		if (!prefsToSearch) {
-			snackbar.showMessage(t("Preferences not loaded yet.", tOpts));
-			return;
-		}
-		const preference = prefsToSearch.find((ele) => ele.prefId === prefId);
+	const resetToDefault = () => {
+		onResetToDefault();
+		handleClose();
+	};
+	const applyPreference = (preference) => {
 		if (!preference?.prefValue) {
 			snackbar.showMessage(t("Failed to load preference.", tOpts));
-			return;
+			return false;
 		}
-		let gridState;
 		try {
-			gridState = typeof preference.prefValue === "string" ? JSON.parse(preference.prefValue) : preference.prefValue;
+			onPreferenceChange(preference.prefName, parsePreferenceState(preference.prefValue));
 		} catch {
 			snackbar.showMessage(t("Failed to parse preference data.", tOpts));
-			return;
+			return false;
 		}
-		gridRef.current.restoreState(gridState);
-		setCurrentPreference(preference.prefName);
-		if (onPreferenceChange) onPreferenceChange(preference.prefName);
 		handleClose();
-	}, [
-		gridRef,
-		resetToDefault,
-		preferences,
-		onPreferenceChange,
-		snackbar,
-		t,
-		tOpts
-	]);
+		return true;
+	};
 	const savePreference = async (values) => {
 		const prefName = values.prefName.trim();
 		const caseInsensitivePrefName = prefName.toLocaleLowerCase();
@@ -2168,7 +2173,8 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 		if (response === true || response?.success === true) {
 			snackbar.showMessage(t(`Preference ${dialogState === DIALOG_TYPES.ADD ? "added" : "saved"} successfully.`, tOpts));
 			handleDialogClose();
-			await loadPreferences({ applyDefault: false });
+			if (dialogState === DIALOG_TYPES.EDIT && preferences.find((pref) => pref.prefId === values.prefId)?.prefName === currentPreference) onPreferenceChange(prefName);
+			await reloadPreferences();
 			return;
 		}
 		snackbar.showMessage(t("Error saving preference: ", tOpts) + (response?.message || t("Unknown error", tOpts)));
@@ -2185,7 +2191,8 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 		});
 		if (response === true || response?.success === true) {
 			snackbar.showMessage(t("Preference deleted successfully.", tOpts));
-			await loadPreferences({ applyDefault: false });
+			if (openConfirmDeleteDialog.preferenceName === currentPreference) onPreferenceChange(null);
+			await reloadPreferences();
 			setOpenConfirmDeleteDialog({});
 			return;
 		}
@@ -2202,7 +2209,7 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 			formik.setValues(cellParams?.row);
 		}
 		if (action === actionTypes$1.Delete) setOpenConfirmDeleteDialog({
-			prefId: cellParams.id,
+			prefId: cellParams.row.prefId,
 			preferenceName: cellParams.row.prefName
 		});
 	};
@@ -2217,22 +2224,6 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 		onSubmit: savePreference,
 		mode: "onBlur"
 	});
-	useEffect(() => {
-		if (!preferenceKey) return;
-		const loadAndApply = async () => {
-			if (initialPreferenceName) {
-				const result = await loadPreferences({ applyDefault: false });
-				const preference = result?.preferences?.find((ele) => ele.prefName === initialPreferenceName);
-				setCurrentPreference(null);
-				if (onPreferenceChange) onPreferenceChange(null);
-				if (preference) await applyPreference(preference.prefId, result.preferences);
-				return;
-			}
-			const result = await loadPreferences({ applyDefault: true });
-			if (result?.defaultPrefId && result?.preferences) await applyPreference(result.defaultPrefId, result.preferences);
-		};
-		loadAndApply();
-	}, [preferenceKey]);
 	const localeText = useMemo(() => ({
 		noRowsLabel: t("No rows", tOpts),
 		columnMenuManageColumns: t("Manage columns", tOpts),
@@ -2257,6 +2248,7 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 	}), [t, tOpts]);
 	const isManageDialog = dialogState === DIALOG_TYPES.MANAGE;
 	const isFormDialog = dialogState === DIALOG_TYPES.ADD || dialogState === DIALOG_TYPES.EDIT;
+	const canResetToDefault = !!currentPreference || hasRestoredListState;
 	return /* @__PURE__ */ jsxs(Box$1, { children: [
 		/* @__PURE__ */ jsxs(Button$1, {
 			id: "grid-preferences-btn",
@@ -2264,6 +2256,7 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 			"aria-haspopup": "true",
 			"aria-expanded": menuAnchorEl ? "true" : void 0,
 			onClick: handleOpen,
+			disabled: preferences === null,
 			title: t("Preference", tOpts),
 			startIcon: /* @__PURE__ */ jsx(SettingsIcon, {}),
 			size: "small",
@@ -2303,20 +2296,21 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 				/* @__PURE__ */ jsxs(MenuItem, {
 					component: ListItemButton,
 					dense: true,
+					divider: !canResetToDefault && preferences?.length > 0,
 					onClick: () => openDialog(DIALOG_TYPES.MANAGE),
 					children: [/* @__PURE__ */ jsx(ListItemIcon, { children: /* @__PURE__ */ jsx(SettingsIcon, {}) }), t("Manage Preferences", tOpts)]
 				}),
-				gridRef.current?.initialGridState && /* @__PURE__ */ jsxs(MenuItem, {
+				canResetToDefault && /* @__PURE__ */ jsxs(MenuItem, {
 					component: ListItemButton,
 					dense: true,
 					divider: preferences?.length > 0,
-					onClick: () => applyPreference(0),
+					onClick: resetToDefault,
 					children: [/* @__PURE__ */ jsx(ListItemIcon, { children: /* @__PURE__ */ jsx(RefreshIcon, {}) }), t("Reset to Default", tOpts)]
 				}),
 				preferences?.length > 0 && preferences?.map((ele) => {
 					const { prefName, prefDesc, prefId } = ele;
 					return /* @__PURE__ */ jsx(MenuItem, {
-						onClick: () => applyPreference(prefId),
+						onClick: () => applyPreference(ele),
 						component: ListItem,
 						selected: currentPreference === prefName,
 						title: t(prefDesc, tOpts),
@@ -2331,6 +2325,7 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 			disableRestoreFocus: true,
 			title: /* @__PURE__ */ jsxs(Typography$1, {
 				variant: "h5",
+				component: "span",
 				children: [
 					dialogState,
 					" ",
@@ -2445,9 +2440,9 @@ var GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDe
 						columns: gridColumns,
 						pageSizeOptions,
 						pagination: true,
-						rowCount: nonDefaultPreferences.length,
-						rows: nonDefaultPreferences,
-						getRowId: (row) => row["GridPreferenceId"],
+						rowCount: preferences.length,
+						rows: preferences,
+						getRowId: (row) => row.prefId,
 						slots: { headerFilterMenu: false },
 						density: "compact",
 						disableDensitySelector: true,
@@ -2851,7 +2846,7 @@ var GridToolBar = styled$1(Toolbar)({
 var hasNonEmptyValue = (value) => value !== null && value !== void 0 && value !== "" && !(Array.isArray(value) && value.length === 0);
 var filterValidItems$1 = (items = []) => items.filter((item) => ["isEmpty", "isNotEmpty"].includes(item.operator) || hasNonEmptyValue(item.value));
 var CustomToolbar = function(props) {
-	const { model, data, currentPreference, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, tTranslate, tOpts, filterModel, setFilterModel, onPreferenceChange, onResetToDefault, toolbarItems, gridColumns, customExportOptions, isStaticDataMode } = props;
+	const { model, data, currentPreference, hasRestoredListState, preferences, reloadPreferences, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, tTranslate, tOpts, filterModel, setFilterModel, onPreferenceChange, onResetToDefault, toolbarItems, gridColumns, customExportOptions, isStaticDataMode } = props;
 	const addText = model.customAddText || (model.title ? `Add ${model.title}` : "Add");
 	const activeFilterCount = filterValidItems$1(filterModel?.items || []).length || 0;
 	const toolbarFilterColumns = gridColumns?.filter((col) => col.toolbarFilter) || [];
@@ -2920,53 +2915,53 @@ var CustomToolbar = function(props) {
 				variant: "contained",
 				children: tTranslate("Remove", tOpts)
 			})
-		] }), /* @__PURE__ */ jsxs(GridToolBar, {
-			...props,
-			children: [
-				effectivePermissions.showColumnsOrder && /* @__PURE__ */ jsx(ColumnsPanelTrigger, { render: (triggerProps) => /* @__PURE__ */ jsx(Button, {
-					...triggerProps,
-					startIcon: /* @__PURE__ */ jsx(ViewColumnIcon, {}),
-					size: "small",
-					variant: "text",
-					children: tTranslate("COLUMNS", tOpts)
-				}) }),
-				effectivePermissions.filter && /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(FilterPanelTrigger, { render: (triggerProps) => /* @__PURE__ */ jsx(Button, {
-					...triggerProps,
-					startIcon: /* @__PURE__ */ jsx(Badge, {
-						badgeContent: activeFilterCount,
-						color: "primary",
-						children: /* @__PURE__ */ jsx(FilterListIcon, {})
-					}),
-					size: "small",
-					variant: "text",
-					children: tTranslate("FILTERS", tOpts)
-				}) }), /* @__PURE__ */ jsx(Button, {
-					startIcon: /* @__PURE__ */ jsx(FilterListOffIcon, {}),
-					onClick: clearFilters,
-					size: "small",
-					children: tTranslate("CLEAR FILTER", tOpts)
-				})] }),
-				effectivePermissions.export && /* @__PURE__ */ jsx(CustomExportButton, {
-					handleExport,
-					showPivotExportBtn: model.pivotApi,
-					exportFormats: model.exportFormats || {},
-					customExportOptions,
-					tTranslate,
-					tOpts,
-					isStaticDataMode
+		] }), /* @__PURE__ */ jsxs(GridToolBar, { children: [
+			effectivePermissions.showColumnsOrder && /* @__PURE__ */ jsx(ColumnsPanelTrigger, { render: (triggerProps) => /* @__PURE__ */ jsx(Button, {
+				...triggerProps,
+				startIcon: /* @__PURE__ */ jsx(ViewColumnIcon, {}),
+				size: "small",
+				variant: "text",
+				children: tTranslate("COLUMNS", tOpts)
+			}) }),
+			effectivePermissions.filter && /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(FilterPanelTrigger, { render: (triggerProps) => /* @__PURE__ */ jsx(Button, {
+				...triggerProps,
+				startIcon: /* @__PURE__ */ jsx(Badge, {
+					badgeContent: activeFilterCount,
+					color: "primary",
+					children: /* @__PURE__ */ jsx(FilterListIcon, {})
 				}),
-				toolbarItems,
-				preferenceKey && /* @__PURE__ */ jsx(GridPreferences, {
-					gridRef: apiRef,
-					preferenceKey,
-					onPreferenceChange,
-					onResetToDefault,
-					initialPreferenceName: currentPreference,
-					t: tTranslate,
-					tOpts
-				})
-			]
-		})]
+				size: "small",
+				variant: "text",
+				children: tTranslate("FILTERS", tOpts)
+			}) }), /* @__PURE__ */ jsx(Button, {
+				startIcon: /* @__PURE__ */ jsx(FilterListOffIcon, {}),
+				onClick: clearFilters,
+				size: "small",
+				children: tTranslate("CLEAR FILTER", tOpts)
+			})] }),
+			effectivePermissions.export && /* @__PURE__ */ jsx(CustomExportButton, {
+				handleExport,
+				showPivotExportBtn: model.pivotApi,
+				exportFormats: model.exportFormats || {},
+				customExportOptions,
+				tTranslate,
+				tOpts,
+				isStaticDataMode
+			}),
+			toolbarItems,
+			preferenceKey && /* @__PURE__ */ jsx(GridPreferences, {
+				gridRef: apiRef,
+				preferenceKey,
+				onPreferenceChange,
+				onResetToDefault,
+				currentPreference,
+				hasRestoredListState,
+				preferences,
+				reloadPreferences,
+				t: tTranslate,
+				tOpts
+			}, preferenceKey)
+		] })]
 	}), /* @__PURE__ */ jsx(Box$1, {
 		sx: {
 			display: "flex",
@@ -3682,6 +3677,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const incomingListStateId = preserveListState ? currentSearchParams().get("ls") : null;
 	const [listStateSnapshot] = useState(() => readListState(incomingListStateId));
 	const listStateIdRef = useRef(incomingListStateId);
+	const hasRestoredListState = !!listStateSnapshot?.gridState;
 	const [paginationModel, setPaginationModel] = useState(() => listStateSnapshot?.gridState?.pagination?.paginationModel ?? {
 		pageSize: defaultPageSize,
 		page: 0
@@ -3727,7 +3723,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		});
 	}
 	const [filterModel, setFilterModel] = useState(() => listStateSnapshot?.gridState?.filter?.filterModel ?? { ...initialFilterModel });
-	const [prevCustomFilters, setPrevCustomFilters] = useState(() => ({}));
+	const [prevCustomFilters, setPrevCustomFilters] = useState(() => hasRestoredListState ? customFilters : {});
 	const [prevHasStaticData, setPrevHasStaticData] = useState(hasStaticData);
 	const [prevNormalizedStaticData, setPrevNormalizedStaticData] = useState(normalizedStaticData);
 	const { navigate, getParams, useParams, pathname } = useRouter();
@@ -3815,12 +3811,12 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			delete: effectivePermissions.delete
 		}
 	});
-	const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false } = model;
+	const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false, showToolbar = true } = model;
 	const gridTitle = model.gridTitle || model.title;
-	const preferenceKey = getApiEndpoint("GridPreferenceManager") ? model.preferenceId || model.module?.preferenceId : null;
+	const preferenceApi = getApiEndpoint("GridPreferenceManager");
+	const preferenceKey = preferenceApi ? model.preferenceId || model.module?.preferenceId : null;
 	const searchParams = new URLSearchParams(window.location.search);
-	const [currentPreference, setCurrentPreference] = useState(() => listStateSnapshot?.currentPreference ?? null);
-	const [preferencesReady, setPreferencesReady] = useState(!preferenceKey);
+	const [currentPreference, setCurrentPreference] = useState(() => hasRestoredListState ? listStateSnapshot.currentPreference ?? null : null);
 	const [rowPanelId, setRowPanelId] = useState(null);
 	const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
 	const enableRowDetailPanel = typeof model.getDetailPanelContent === "function";
@@ -3853,15 +3849,91 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		return row.__isGroupRow ? [String(groupValue)] : [String(groupValue), String(row[idProperty])];
 	}, [serverGroupField, idProperty]);
 	const rowCount = data.recordCount;
+	const defaultGridStateRef = useRef(null);
+	const pendingLayoutRef = useRef(null);
 	useEffect(() => {
-		if (!apiRef.current) return;
-		apiRef.current.prefKey = preferenceKey;
-	}, [apiRef, preferenceKey]);
-	const onPreferenceChange = useCallback((preferenceName) => {
+		if (defaultGridStateRef.current) return;
+		const { columns, sorting: _sorting, filter: _filter, pagination: _pagination, rowGrouping: _rowGrouping, ...uncontrolledState } = apiRef.current.exportState();
+		const dimensions = Object.fromEntries(apiRef.current.getAllColumns().map(({ field, width, minWidth, maxWidth, flex }) => [field, {
+			width,
+			minWidth,
+			maxWidth,
+			flex: flex ?? 0
+		}]));
+		defaultGridStateRef.current = {
+			...uncontrolledState,
+			aggregation: uncontrolledState.aggregation ?? { model: {} },
+			columns: {
+				...columns,
+				dimensions
+			},
+			sorting: { sortModel: convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex) },
+			filter: { filterModel: { ...initialFilterModel } },
+			pagination: { paginationModel: {
+				pageSize: defaultPageSize,
+				page: 0
+			} },
+			rowGrouping: { model: Array.isArray(props.rowGroupingField) ? props.rowGroupingField : [] }
+		};
+		if (listStateSnapshot?.gridState) {
+			const { sorting: _sorting, filter: _filter, pagination: _pagination, rowGrouping: _rowGrouping, ...layout } = listStateSnapshot.gridState;
+			apiRef.current.restoreState(layout);
+		}
+	}, [apiRef, listStateSnapshot]);
+	const onPreferenceChange = useCallback((preferenceName, gridState) => {
+		if (gridState) {
+			const defaults = defaultGridStateRef.current;
+			const restoredState = {
+				...defaults,
+				...gridState,
+				columns: {
+					...defaults.columns,
+					...gridState.columns,
+					dimensions: {
+						...defaults.columns.dimensions,
+						...gridState.columns?.dimensions
+					}
+				}
+			};
+			if (!areEqual(groupingModel, restoredState.rowGrouping.model)) pendingLayoutRef.current = {
+				columns: restoredState.columns,
+				pinnedColumns: restoredState.pinnedColumns
+			};
+			setGroupingModel((previous) => areEqual(previous, restoredState.rowGrouping.model) ? previous : restoredState.rowGrouping.model);
+			apiRef.current.restoreState(restoredState);
+		}
 		setCurrentPreference(preferenceName);
-		setPreferencesReady(true);
-	}, []);
+	}, [apiRef, groupingModel]);
+	const { preferences, reloadPreferences } = useGridPreferences({
+		url: preferenceApi,
+		preferenceKey,
+		onError: () => snackbar.showMessage(tTranslate("Failed to load preferences.", tOpts)),
+		onInitialize: (loaded) => {
+			if (hasRestoredListState || !loaded) {
+				if (loaded) setCurrentPreference(loaded.find((pref) => pref.prefName === currentPreference)?.prefName ?? null);
+				return;
+			}
+			const preference = loaded.find((pref) => pref.isDefault);
+			if (!preference) return;
+			try {
+				if (!preference.prefValue) throw new Error("Missing grid state");
+				onPreferenceChange(preference.prefName, parsePreferenceState(preference.prefValue));
+			} catch {
+				snackbar.showMessage(tTranslate(preference.prefValue ? "Failed to parse preference data." : "Failed to load preference.", tOpts));
+			}
+		}
+	});
+	const preferencesReady = !preferenceKey || preferences !== null;
 	const onResetToDefault = useCallback(() => {
+		listStateArmedRef.current = false;
+		clearTimeout(listStateCommitTimerRef.current);
+		const { columns, pinnedColumns } = defaultGridStateRef.current;
+		pendingLayoutRef.current = {
+			columns,
+			pinnedColumns
+		};
+		apiRef.current.restoreState(defaultGridStateRef.current);
+		setCurrentPreference(null);
 		setPaginationModel({
 			pageSize: defaultPageSize,
 			page: 0
@@ -3876,7 +3948,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		setRowSelectionModel(clearedSelection);
 		onRowSelectionModelChangeProp?.(clearedSelection);
 		if (!preserveListState) return;
-		listStateArmedRef.current = false;
 		if (listStateIdRef.current) {
 			clearListState(listStateIdRef.current);
 			listStateIdRef.current = null;
@@ -3886,6 +3957,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			listStateArmedRef.current = true;
 		}, 0);
 	}, [
+		apiRef,
 		preserveListState,
 		defaultSort,
 		model.defaultSort,
@@ -4266,6 +4338,12 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		tTranslate
 	]);
 	const gridColumns = useMemo(() => stableGridColumns.map((col) => ({ ...col })), [stableGridColumns, lookupKeys]);
+	useEffect(() => {
+		if (!pendingLayoutRef.current) return;
+		const state = pendingLayoutRef.current;
+		pendingLayoutRef.current = null;
+		apiRef.current.restoreState(state);
+	}, [apiRef, gridColumns]);
 	const groupingColDef = useMemo(() => {
 		if (!serverGroupField) return void 0;
 		return {
@@ -4322,7 +4400,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const sortModelForFetch = localSortAndFilter ? EMPTY_SORT_MODEL : effectiveSortModel;
 	const hasInitializedRef = useRef(false);
 	useEffect(() => {
-		if (hasInitializedRef.current) return;
+		if (hasInitializedRef.current || hasRestoredListState) return;
 		const toolbarFilterColumns = gridColumns?.filter((col) => col.toolbarFilter?.defaultFilterValue !== void 0) || [];
 		if (toolbarFilterColumns.length === 0) return;
 		if (filterModel.items.some((item) => toolbarFilterColumns.some((col) => col.field === item.field))) {
@@ -4348,7 +4426,11 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			items: [...prev.items, ...toolbarFilters]
 		}));
 		hasInitializedRef.current = true;
-	}, [gridColumns, filterModel.items]);
+	}, [
+		gridColumns,
+		filterModel.items,
+		hasRestoredListState
+	]);
 	useChangedDeps("fetchData", {
 		hasStaticData,
 		preferencesReady,
@@ -4890,6 +4972,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		fetchData();
 	}, [fetchData]);
 	const listStateArmedRef = useRef(false);
+	const listStateCommitTimerRef = useRef(null);
 	useEffect(() => {
 		if (!preserveListState || !preferencesReady) return void 0;
 		const timer = setTimeout(() => {
@@ -4934,10 +5017,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	]);
 	useEffect(() => {
 		if (!apiRef.current || !preserveListState) return void 0;
-		let timer;
 		const scheduleCommit = () => {
-			clearTimeout(timer);
-			timer = setTimeout(() => commitListStateRef.current(), 50);
+			clearTimeout(listStateCommitTimerRef.current);
+			if (!listStateArmedRef.current) return;
+			listStateCommitTimerRef.current = setTimeout(() => commitListStateRef.current(), 50);
 		};
 		const unsubscribers = [
 			"columnVisibilityModelChange",
@@ -4947,7 +5030,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		].map((eventName) => apiRef.current.subscribeEvent(eventName, scheduleCommit));
 		return () => {
 			unsubscribers.forEach((unsubscribe) => unsubscribe());
-			clearTimeout(timer);
+			clearTimeout(listStateCommitTimerRef.current);
 		};
 	}, [apiRef, preserveListState]);
 	useEffect(() => {
@@ -5175,6 +5258,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			model,
 			data,
 			currentPreference,
+			hasRestoredListState,
+			preferences,
+			reloadPreferences,
 			isReadOnly,
 			canAdd,
 			canDelete,
@@ -5229,6 +5315,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		model,
 		data,
 		currentPreference,
+		hasRestoredListState,
+		preferences,
+		reloadPreferences,
 		isReadOnly,
 		canAdd,
 		canDelete,
@@ -5350,7 +5439,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 						onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded
 					},
 					localeText,
-					showToolbar: true,
+					showToolbar,
 					columnHeaderHeight,
 					hideFooter: !showFooter,
 					...isServerGrouping ? {
@@ -5617,7 +5706,10 @@ var Field$8 = ({ column, otherProps, formik, field, ...props }) => {
 		value: max,
 		state: formik.values
 	}), [max, formik.values]);
-	const formikFieldValue = useMemo(() => formik.values[field] ?? null, [formik.values[field]]);
+	const formikFieldValue = useMemo(() => {
+		const value = formik.values[field];
+		return value === "" || value == null ? null : value;
+	}, [formik.values[field]]);
 	const [inputValue, setInputValue] = useState(formikFieldValue);
 	const debouncedValue = useDebounce(inputValue, 400);
 	useEffect(() => {
@@ -6180,27 +6272,24 @@ var DaySelection = ({ name, field, formik, expired }) => {
 	const isWeekend = "1000001";
 	const isWeekdays = "0111110";
 	const defaultVal = "0".repeat(7);
-	const [selectedDays, setSelectedDays] = useState(value || defaultVal);
-	const [radioValue, setRadioValue] = useState(() => {
+	const selectedDays = value || defaultVal;
+	const radioValue = useMemo(() => {
 		if (!value) return "";
 		if (value === isWeekend) return isWeekend;
 		if (value === isWeekdays) return isWeekdays;
 		return "Custom";
-	});
+	}, [value]);
 	const [presetSelected, setPresetSelected] = useState(false);
 	const onAssignChange = useCallback((newValue) => {
 		if (Array.isArray(newValue)) {
 			let finalValue = defaultVal;
 			for (const val of newValue) finalValue = finalValue.substring(0, val) + "1" + finalValue.substring(val + 1);
-			setSelectedDays(finalValue);
 			setFieldValue(name || field, finalValue);
 			setPresetSelected(true);
 		} else {
 			const baseValue = presetSelected ? defaultVal : selectedDays;
 			const finalValue = baseValue.slice(0, newValue) + (baseValue[newValue] === "1" ? "0" : "1") + baseValue.slice(newValue + 1);
-			setSelectedDays(finalValue);
 			setFieldValue(name || field, finalValue);
-			setRadioValue("Custom");
 			setPresetSelected(false);
 		}
 	}, [
@@ -6222,13 +6311,10 @@ var DaySelection = ({ name, field, formik, expired }) => {
 			value: radioValue,
 			onChange: (event) => {
 				const val = event.target.value;
-				setRadioValue(val);
 				if (val !== "Custom") {
-					setSelectedDays(val);
 					setFieldValue(name || field, val);
 					setPresetSelected(true);
 				} else {
-					setSelectedDays(defaultVal);
 					setFieldValue(name || field, defaultVal);
 					setPresetSelected(false);
 				}
@@ -7802,7 +7888,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	})] });
 };
 //#endregion
-//#region \0@oxc-project+runtime@0.151.0/helpers/esm/typeof.js
+//#region \0@oxc-project+runtime@0.152.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -7812,7 +7898,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.151.0/helpers/esm/toPrimitive.js
+//#region \0@oxc-project+runtime@0.152.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -7824,13 +7910,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.151.0/helpers/esm/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.152.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.151.0/helpers/esm/defineProperty.js
+//#region \0@oxc-project+runtime@0.152.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
