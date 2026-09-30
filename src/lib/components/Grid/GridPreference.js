@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -12,6 +12,7 @@ import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useSnackbar } from '../SnackBar';
 import request, { DATA_PARSERS } from './httpRequest';
+import { parsePreferenceState } from './useGridPreferences';
 import { useStateContext } from '../useRouter/StateProvider';
 import { DialogComponent } from '../Dialog';
 
@@ -37,18 +38,7 @@ const paginationModel = { pageSize: 50, page: 0 };
 
 const pageSizeOptions = [5, 10, 20, 50, 100];
 
-const fetchPreferences = async (url, preferenceKey, signal) => {
-    const response = await request({
-        url,
-        params: { action: 'list', id: preferenceKey },
-        dataParser: DATA_PARSERS.json,
-        signal
-    });
-    if (!Array.isArray(response?.preferences)) throw new Error('Failed to load preferences.');
-    return response.preferences.filter(pref => pref.prefName?.trim() && pref.prefId !== 0);
-};
-
-const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDefault, currentPreference, hasRestoredListState, restoredPreferenceName, t, tOpts }) => {
+const GridPreferences = ({ gridRef, preferenceKey, preferences, reloadPreferences, onPreferenceChange, onResetToDefault, currentPreference, hasRestoredListState, t, tOpts }) => {
     const { getApiEndpoint } = useStateContext();
     const preferenceApi = getApiEndpoint("GridPreferenceManager");
     const apiRef = useGridApiRef();
@@ -57,7 +47,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
     const [menuAnchorEl, setMenuAnchorEl] = useState(null);
     const [openPreferenceExistsModal, setOpenPreferenceExistsModal] = useState(false);
     const [openConfirmDeleteDialog, setOpenConfirmDeleteDialog] = useState({});
-    const [preferences, setPreferences] = useState(null);
 
     const gridColumns = useMemo(() => [
         { field: "prefName", type: 'string', width: 300, headerName: t("Preference Name", tOpts), sortable: false, filterable: false },
@@ -82,16 +71,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
 
     const resetToDefault = () => {
         onResetToDefault();
-        onPreferenceChange(null);
         handleClose();
-    };
-
-    const loadPreferences = async () => {
-        try {
-            setPreferences(await fetchPreferences(preferenceApi, preferenceKey));
-        } catch {
-            snackbar.showMessage(t('Failed to load preferences.', tOpts));
-        }
     };
 
     const applyPreference = (preference) => {
@@ -100,11 +80,8 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
             return false;
         }
 
-        let gridState;
         try {
-            gridState = typeof preference.prefValue === 'string' ? JSON.parse(preference.prefValue) : preference.prefValue;
-            if (!gridState || typeof gridState !== 'object' || Array.isArray(gridState)) throw new Error('Invalid grid state');
-            onPreferenceChange(preference.prefName, gridState);
+            onPreferenceChange(preference.prefName, parsePreferenceState(preference.prefValue));
         } catch {
             snackbar.showMessage(t('Failed to parse preference data.', tOpts));
             return false;
@@ -143,7 +120,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
             if (dialogState === DIALOG_TYPES.EDIT && preferences.find(pref => pref.prefId === values.prefId)?.prefName === currentPreference) {
                 onPreferenceChange(prefName);
             }
-            await loadPreferences();
+            await reloadPreferences();
             return;
         }
 
@@ -164,7 +141,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         if (response === true || response?.success === true) {
             snackbar.showMessage(t('Preference deleted successfully.', tOpts));
             if (openConfirmDeleteDialog.preferenceName === currentPreference) onPreferenceChange(null);
-            await loadPreferences();
+            await reloadPreferences();
             setOpenConfirmDeleteDialog({});
             return;
         }
@@ -204,35 +181,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         onSubmit: savePreference,
         mode: "onBlur"
     });
-
-    // A snapshot owns the current layout, even when no named preference was active.
-    const initializePreferences = useEffectEvent((loadedPreferences) => {
-        setPreferences(loadedPreferences ?? []);
-        if (!loadedPreferences) {
-            snackbar.showMessage(t('Failed to load preferences.', tOpts));
-            // The restored layout is still the one on screen, so keep its name rather than mislabelling it as unsaved just because this load failed.
-            onPreferenceChange(restoredPreferenceName);
-            return;
-        }
-        if (hasRestoredListState) {
-            // Matched against the snapshot's name, not the live currentPreference, so this stays correct no matter how often the component re-initializes; falls back to null only when the preference has genuinely been deleted.
-            onPreferenceChange(loadedPreferences.find(pref => pref.prefName === restoredPreferenceName)?.prefName ?? null);
-            return;
-        }
-        const defaultPreference = loadedPreferences.find(pref => pref.isDefault);
-        // Resolve readiness on every path, including missing or corrupt default data.
-        if (!defaultPreference || !applyPreference(defaultPreference)) onPreferenceChange(null);
-    });
-
-    useEffect(() => {
-        if (!preferenceKey) return;
-        const controller = new AbortController();
-        fetchPreferences(preferenceApi, preferenceKey, controller.signal).then(
-            loaded => { if (!controller.signal.aborted) initializePreferences(loaded); },
-            () => { if (!controller.signal.aborted) initializePreferences(null); }
-        );
-        return () => controller.abort();
-    }, [preferenceApi, preferenceKey]);
 
     // Memoize locale text used by the DataGrid to avoid recreating the object on every render
     const localeText = useMemo(() => ({

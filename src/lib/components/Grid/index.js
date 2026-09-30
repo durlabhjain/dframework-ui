@@ -30,6 +30,7 @@ import PageTitle from '../PageTitle';
 import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
 import CustomToolbar from './CustomToolbar';
+import useGridPreferences, { parsePreferenceState } from './useGridPreferences';
 import utils, { getPermissions } from '../utils';
 import HistoryIcon from '@mui/icons-material/History';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
@@ -315,8 +316,6 @@ const GridBase = memo(({
     // instead of orphaning a new one per change.
     const listStateIdRef = useRef(incomingListStateId);
     const hasRestoredListState = !!listStateSnapshot?.gridState;
-    // The preference that was active when the snapshot was taken, read straight from the snapshot rather than from the currentPreference state below: GridPreferences re-identifies it by name on mount, and that lookup must not depend on a value GridPreferences itself drives (an interim onPreferenceChange(null) - a failed/aborted preference load, a toolbar remount - would otherwise erase the name for good while the restored layout stays applied).
-    const restoredPreferenceName = hasRestoredListState ? (listStateSnapshot.currentPreference ?? null) : null;
     const [paginationModel, setPaginationModel] = useState(() => listStateSnapshot?.gridState?.pagination?.paginationModel ?? { pageSize: defaultPageSize, page: 0 });
     const [data, setData] = useState(() => normalizedStaticData || { recordCount: 0, records: null, lookups: {} });
     const forAssignment = !!onAssignChange;
@@ -430,11 +429,10 @@ const GridBase = memo(({
     const { canAdd, canEdit, canDelete } = getPermissions({ userData, model, userDefinedPermissions });
     const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false, showToolbar = true } = model;
     const gridTitle = model.gridTitle || model.title;
-    const preferenceKey = getApiEndpoint("GridPreferenceManager") ? (model.preferenceId || model.module?.preferenceId) : null;
+    const preferenceApi = getApiEndpoint("GridPreferenceManager");
+    const preferenceKey = preferenceApi ? (model.preferenceId || model.module?.preferenceId) : null;
     const searchParams = new URLSearchParams(window.location.search);
-    const [currentPreference, setCurrentPreference] = useState(restoredPreferenceName);
-    // GridPreferences only mounts in the toolbar, so a hidden toolbar would never fire onPreferenceChange.
-    const [preferencesReady, setPreferencesReady] = useState(!preferenceKey || !showToolbar);
+    const [currentPreference, setCurrentPreference] = useState(() => hasRestoredListState ? listStateSnapshot.currentPreference ?? null : null);
     // State for single expanded detail panel row
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
@@ -475,6 +473,7 @@ const GridBase = memo(({
     const rowCount = data.recordCount;
 
     const defaultGridStateRef = useRef(null);
+    const pendingLayoutRef = useRef(null);
     useEffect(() => {
         if (defaultGridStateRef.current) return;
         // Capture the model layout before restoring user changes. Controlled models
@@ -484,18 +483,28 @@ const GridBase = memo(({
         const dimensions = Object.fromEntries(apiRef.current.getAllColumns().map(({ field, width, minWidth, maxWidth, flex }) =>
             [field, { width, minWidth, maxWidth, flex: flex ?? 0 }]
         ));
-        defaultGridStateRef.current = { ...uncontrolledState, columns: { ...columns, dimensions } };
+        defaultGridStateRef.current = {
+            ...uncontrolledState,
+            aggregation: uncontrolledState.aggregation ?? { model: {} },
+            columns: { ...columns, dimensions },
+            sorting: { sortModel: convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex) },
+            filter: { filterModel: { ...initialFilterModel } },
+            pagination: { paginationModel: { pageSize: defaultPageSize, page: 0 } },
+            rowGrouping: { model: Array.isArray(props.rowGroupingField) ? props.rowGroupingField : [] }
+        };
         if (listStateSnapshot?.gridState) {
-            const { columns, pinnedColumns } = listStateSnapshot.gridState;
-            apiRef.current.restoreState({ columns, pinnedColumns });
+            const { sorting: _sorting, filter: _filter, pagination: _pagination, rowGrouping: _rowGrouping, ...layout } = listStateSnapshot.gridState;
+            apiRef.current.restoreState(layout);
         }
+        // Baseline capture and snapshot restoration run once per grid mount.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [apiRef, listStateSnapshot]);
 
     // Callback when preferences are loaded or changed
     const onPreferenceChange = useCallback((preferenceName, gridState) => {
         if (gridState) {
             const defaults = defaultGridStateRef.current;
-            apiRef.current.restoreState({
+            const restoredState = {
                 ...defaults,
                 ...gridState,
                 columns: {
@@ -503,17 +512,48 @@ const GridBase = memo(({
                     ...gridState.columns,
                     dimensions: { ...defaults.columns.dimensions, ...gridState.columns?.dimensions }
                 }
-            });
+            };
+            // Grouping rebuilds column definitions; restore the layout again after they settle.
+            if (!areEqual(groupingModel, restoredState.rowGrouping.model)) {
+                pendingLayoutRef.current = { columns: restoredState.columns, pinnedColumns: restoredState.pinnedColumns };
+            }
+            // Server grouping has no MUI rowGroupingModel callback.
+            setGroupingModel(previous => areEqual(previous, restoredState.rowGrouping.model) ? previous : restoredState.rowGrouping.model);
+            apiRef.current.restoreState(restoredState);
         }
         setCurrentPreference(preferenceName);
-        setPreferencesReady(true);
-    }, [apiRef]);
+    }, [apiRef, groupingModel]);
+
+    const { preferences, reloadPreferences } = useGridPreferences({
+        url: preferenceApi,
+        preferenceKey,
+        onError: () => snackbar.showMessage(tTranslate('Failed to load preferences.', tOpts)),
+        onInitialize: (loaded) => {
+            // The snapshot owns the layout; named preferences only supply its label.
+            if (hasRestoredListState || !loaded) {
+                if (loaded) setCurrentPreference(loaded.find(pref => pref.prefName === currentPreference)?.prefName ?? null);
+                return;
+            }
+            const preference = loaded.find(pref => pref.isDefault);
+            if (!preference) return;
+            try {
+                if (!preference.prefValue) throw new Error('Missing grid state');
+                onPreferenceChange(preference.prefName, parsePreferenceState(preference.prefValue));
+            } catch {
+                snackbar.showMessage(tTranslate(preference.prefValue ? 'Failed to parse preference data.' : 'Failed to load preference.', tOpts));
+            }
+        }
+    });
+    const preferencesReady = !preferenceKey || preferences !== null;
 
     // Reset both the API-owned layout and React-owned models to model defaults.
     const onResetToDefault = useCallback(() => {
         listStateArmedRef.current = false;
         clearTimeout(listStateCommitTimerRef.current);
+        const { columns, pinnedColumns } = defaultGridStateRef.current;
+        pendingLayoutRef.current = { columns, pinnedColumns };
         apiRef.current.restoreState(defaultGridStateRef.current);
+        setCurrentPreference(null);
         setPaginationModel({ pageSize: defaultPageSize, page: 0 });
         setSortModel(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
         setFilterModel({ ...initialFilterModel });
@@ -921,6 +961,14 @@ const GridBase = memo(({
     // sees new column object references and re-evaluates its memoized currentValueOptions.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- lookupKeys isn't read directly but its change must trigger new column references
     const gridColumns = useMemo(() => stableGridColumns.map(col => ({ ...col })), [stableGridColumns, lookupKeys]);
+
+    useEffect(() => {
+        if (!pendingLayoutRef.current) return;
+        const state = pendingLayoutRef.current;
+        pendingLayoutRef.current = null;
+        apiRef.current.restoreState(state);
+    }, [apiRef, gridColumns]);
+
     // Shows the grouped column's own name (not MUI's default "Group") and blanks out leaf rows,
     // which would otherwise fall back to showing their own id (their tree path's last segment).
     const groupingColDef = useMemo(() => {
@@ -1782,7 +1830,8 @@ const GridBase = memo(({
             data,
             currentPreference,
             hasRestoredListState,
-            restoredPreferenceName,
+            preferences,
+            reloadPreferences,
             isReadOnly,
             canAdd,
             canDelete,
@@ -1837,7 +1886,7 @@ const GridBase = memo(({
         columnsManagement: {
             getTogglableColumns
         }
-    }), [model, data, currentPreference, hasRestoredListState, restoredPreferenceName, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, onResetToDefault, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination, getTogglableColumns]);
+    }), [model, data, currentPreference, hasRestoredListState, preferences, reloadPreferences, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, gridColumns, tTranslate, tOpts, idProperty, filterModel, setFilterModel, onPreferenceChange, onResetToDefault, toolbarItems, props.headerActions, customExportOptions, hasStaticData, localSortAndFilter, disablePagination, getTogglableColumns]);
 
     // Mount with model defaults so the reset baseline is independent of saved layouts.
     const initialState = useMemo(() => ({

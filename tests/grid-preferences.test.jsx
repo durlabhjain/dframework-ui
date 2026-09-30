@@ -2,7 +2,6 @@ import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import Grid from '../src/lib/components/Grid/index.js';
-import GridPreferences from '../src/lib/components/Grid/GridPreference.js';
 
 const mocks = vi.hoisted(() => ({
     request: vi.fn(),
@@ -119,19 +118,11 @@ it('keeps the restored preference label when the preference list fails to load',
     expect(screen.getByRole('button', { name: /^Preferences/ }).textContent).toBe('Preferences (Saved)');
 });
 
-it('re-identifies the restored preference from the snapshot, not from the live label', async () => {
-    const onPreferenceChange = vi.fn();
-    render(<GridPreferences
-        gridRef={{ current: {} }}
-        preferenceKey="items"
-        onPreferenceChange={onPreferenceChange}
-        onResetToDefault={vi.fn()}
-        hasRestoredListState
-        restoredPreferenceName="Saved"
-        currentPreference={null}
-        t={text => text}
-    />);
-    await waitFor(() => expect(onPreferenceChange).toHaveBeenCalledWith('Saved'));
+it('applies default preferences even when the toolbar is hidden', async () => {
+    const { apiRef } = mount({ overrides: { showToolbar: false } });
+    await ready();
+    expect(apiRef.current.exportState().columns.columnVisibilityModel.name).toBe(false);
+    expect(screen.queryByRole('button', { name: /^Preferences/ })).toBeNull();
 });
 
 it.each([undefined, '{bad json', 'null', '[]'])('loads data even when the default preference is invalid (%s)', async (prefValue) => {
@@ -152,7 +143,50 @@ it('restores snapshots and loads data with a hidden toolbar', async () => {
     const { apiRef } = mount({ saved: snapshot, overrides: { showToolbar: false } });
     await ready();
     expect(apiRef.current.getColumn('name').width).toBe(240);
-    expect(mocks.request).not.toHaveBeenCalled();
+    expect(mocks.request).toHaveBeenCalledTimes(1);
+});
+
+it('keeps user edits when the toolbar is hidden and shown again', async () => {
+    const { apiRef, rerender } = mount();
+    await ready();
+    act(() => apiRef.current.setColumnVisibility('name', true));
+    rerender(<Grid model={{ ...model, showToolbar: false }} apiRef={apiRef} preserveListState />);
+    rerender(<Grid model={model} apiRef={apiRef} preserveListState />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Preferences/ }).disabled).toBe(false));
+    expect(apiRef.current.exportState().columns.columnVisibilityModel.name).toBe(true);
+    expect(mocks.request).toHaveBeenCalledTimes(1);
+});
+
+it('does not revive a restored preference label after reset and a toolbar remount', async () => {
+    const { apiRef, rerender } = mount({ saved: snapshot });
+    await ready();
+    openPreferences();
+    fireEvent.click(screen.getByText('Reset to Default'));
+    rerender(<Grid model={{ ...model, showToolbar: false }} apiRef={apiRef} preserveListState />);
+    rerender(<Grid model={model} apiRef={apiRef} preserveListState />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Preferences/ }).disabled).toBe(false));
+    expect(screen.getByRole('button', { name: /^Preferences/ }).textContent).toBe('Preferences ');
+});
+
+it('restores API-owned snapshot state beyond columns and pinning', async () => {
+    const aggregation = { model: { id: 'sum' } };
+    const { apiRef } = mount({
+        saved: { ...snapshot, gridState: { ...snapshot.gridState, aggregation } },
+        overrides: { disableAggregation: false }
+    });
+    await ready();
+    expect(apiRef.current.exportState().aggregation).toEqual(aggregation);
+});
+
+it('applying a partial preference resets controlled models omitted from it', async () => {
+    const other = { prefId: 2, prefName: 'Other', prefValue: { columns: { columnVisibilityModel: {} } } };
+    mocks.request.mockResolvedValue({ preferences: [preference, other] });
+    const { apiRef } = mount();
+    await ready();
+    openPreferences();
+    fireEvent.click(screen.getByText('Other'));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Preferences (Other)' })).toBeTruthy());
+    expect(apiRef.current.getSortModel()).toEqual([]);
 });
 
 it('ignores an in-flight response after unmount', async () => {
@@ -225,15 +259,15 @@ it('does not reinsert toolbar or custom filters into a snapshot where they were 
 it('ignores the old request when the preference key changes', async () => {
     let resolveOld;
     mocks.request.mockReturnValueOnce(new Promise(resolve => { resolveOld = resolve; }));
-    const onPreferenceChange = vi.fn();
-    const props = { gridRef: { current: {} }, onPreferenceChange, onResetToDefault: vi.fn(), t: text => text };
-    const { rerender } = render(<GridPreferences {...props} preferenceKey="old" />);
+    const { rerender, apiRef } = mount({ overrides: { preferenceId: 'old' } });
     const signal = mocks.request.mock.calls[0][0].signal;
-    rerender(<GridPreferences {...props} preferenceKey="new" />);
-    await waitFor(() => expect(onPreferenceChange).toHaveBeenCalledWith('Saved', JSON.parse(preference.prefValue)));
+    rerender(<Grid model={{ ...model, preferenceId: 'new' }} apiRef={apiRef} preserveListState />);
+    await ready();
+    expect(screen.getByRole('button', { name: 'Preferences (Saved)' })).toBeTruthy();
     expect(signal.aborted).toBe(true);
     await act(async () => resolveOld({ preferences: [{ ...preference, prefName: 'Old' }] }));
-    expect(onPreferenceChange).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: 'Preferences (Saved)' })).toBeTruthy();
+    expect(apiRef.current.exportState().columns.columnVisibilityModel.name).toBe(false);
 });
 
 it('saving a new default refreshes the menu without applying it', async () => {
@@ -282,4 +316,49 @@ it('deleting the active preference uses prefId and clears its label without chan
     expect(apiRef.current.exportState().columns.columnVisibilityModel.name).toBe(false);
     fireEvent.click(await screen.findByRole('button', { name: 'Close' }));
     await waitFor(() => expect(screen.getByRole('button', { name: 'Preferences' })).toBeTruthy());
+});
+
+it('preserves column widths while applying a grouping preference', async () => {
+    mocks.request.mockResolvedValue({ preferences: [{ ...preference, prefValue: {
+        columns: { dimensions: { id: { width: 260 } } },
+        rowGrouping: { model: ['name'] }
+    } }] });
+    const { apiRef } = mount({ overrides: { disableRowGrouping: false } });
+    await ready();
+    expect(apiRef.current.exportState().rowGrouping.model).toEqual(['name']);
+    expect(apiRef.current.getColumn('id').width).toBe(260);
+});
+
+it('resets restored aggregation to the empty model baseline', async () => {
+    const { apiRef } = mount({
+        saved: { ...snapshot, gridState: { ...snapshot.gridState, aggregation: { model: { id: 'sum' } } } },
+        overrides: { disableAggregation: false }
+    });
+    await ready();
+    openPreferences();
+    fireEvent.click(screen.getByText('Reset to Default'));
+    await waitFor(() => expect(apiRef.current.exportState().aggregation).toBeUndefined());
+});
+
+it('waits for preferences when switching from an already initialized preference key', async () => {
+    const { rerender, apiRef } = mount();
+    await ready();
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 10)); });
+    mocks.getList.mockClear();
+    let resolveNew;
+    mocks.request.mockReturnValueOnce(new Promise(resolve => { resolveNew = resolve; }));
+    rerender(<Grid model={{ ...model, preferenceId: 'new' }} apiRef={apiRef} preserveListState />);
+    expect(mocks.getList).not.toHaveBeenCalled();
+    await act(async () => resolveNew({ preferences: [{ ...preference, prefName: 'New' }] }));
+    await ready();
+    expect(screen.getByRole('button', { name: 'Preferences (New)' })).toBeTruthy();
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 80)); });
+    expect(window.location.search).toBe('');
+});
+
+it('still fetches records when no preference key is configured', async () => {
+    const { apiRef } = mount({ overrides: { preferenceId: undefined } });
+    await ready();
+    expect(mocks.request).not.toHaveBeenCalled();
+    expect(apiRef.current.getSortModel()).toEqual([]);
 });

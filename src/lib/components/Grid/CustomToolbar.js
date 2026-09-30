@@ -47,7 +47,8 @@ const CustomToolbar = function (props) {
         data,
         currentPreference,
         hasRestoredListState,
-        restoredPreferenceName,
+        preferences,
+        reloadPreferences,
         isReadOnly,
         canAdd,
         canDelete,
@@ -162,7 +163,8 @@ const CustomToolbar = function (props) {
                             onResetToDefault={onResetToDefault}
                             currentPreference={currentPreference}
                             hasRestoredListState={hasRestoredListState}
-                            restoredPreferenceName={restoredPreferenceName}
+                            preferences={preferences}
+                            reloadPreferences={reloadPreferences}
                             t={tTranslate}
                             tOpts={tOpts}
                         />
