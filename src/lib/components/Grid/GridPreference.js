@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -12,6 +12,7 @@ import { useFormik } from 'formik';
 import * as yup from 'yup';
 import { useSnackbar } from '../SnackBar';
 import request, { DATA_PARSERS } from './httpRequest';
+import { parsePreferenceState } from './useGridPreferences';
 import { useStateContext } from '../useRouter/StateProvider';
 import { DialogComponent } from '../Dialog';
 
@@ -37,7 +38,7 @@ const paginationModel = { pageSize: 50, page: 0 };
 
 const pageSizeOptions = [5, 10, 20, 50, 100];
 
-const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetToDefault, initialPreferenceName, t, tOpts }) => {
+const GridPreferences = ({ gridRef, preferenceKey, preferences, reloadPreferences, onPreferenceChange, onResetToDefault, currentPreference, hasRestoredListState, t, tOpts }) => {
     const { getApiEndpoint } = useStateContext();
     const preferenceApi = getApiEndpoint("GridPreferenceManager");
     const apiRef = useGridApiRef();
@@ -46,14 +47,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
     const [menuAnchorEl, setMenuAnchorEl] = useState(null);
     const [openPreferenceExistsModal, setOpenPreferenceExistsModal] = useState(false);
     const [openConfirmDeleteDialog, setOpenConfirmDeleteDialog] = useState({});
-    const [preferences, setPreferences] = useState(null);
-    const [currentPreference, setCurrentPreference] = useState(() => initialPreferenceName ?? null);
-
-    // Filter out the default preference (prefId === 0) for the management grid
-    const nonDefaultPreferences = useMemo(() =>
-        preferences == null ? [] : preferences.filter(pref => pref.prefId !== 0),
-        [preferences]
-    );
 
     const gridColumns = useMemo(() => [
         { field: "prefName", type: 'string', width: 300, headerName: t("Preference Name", tOpts), sortable: false, filterable: false },
@@ -76,80 +69,27 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         handleClose();
     };
 
-    const resetToDefault = useCallback(() => {
-        if (gridRef.current?.initialGridState) {
-            gridRef.current.restoreState(gridRef.current.initialGridState);
-            setCurrentPreference(null);
-            if (onPreferenceChange) onPreferenceChange(null);
-            if (onResetToDefault) onResetToDefault();
-            setMenuAnchorEl(null);
-        }
-    }, [gridRef, onPreferenceChange, onResetToDefault]);
+    const resetToDefault = () => {
+        onResetToDefault();
+        handleClose();
+    };
 
-    // Only memoize functions used in useEffect dependencies
-    const loadPreferences = useCallback(async ({ applyDefault = false }) => {
-        const response = await request({
-            url: preferenceApi,
-            params: { action: 'list', id: preferenceKey },
-            dataParser: DATA_PARSERS.json
-        });
-        if (!response?.preferences) {
-            snackbar.showMessage(t('Failed to load preferences.', tOpts));
-            if (onPreferenceChange) onPreferenceChange(null);
-            return;
-        }
-
-        const preferences = response.preferences.filter(pref => pref.prefName.trim() !== '');
-        setPreferences(preferences);
-        if (applyDefault) {
-            const defaultPref = preferences.find(pref => pref.isDefault);
-            if (defaultPref) {
-                return { defaultPrefId: defaultPref.prefId, preferences };
-            } else {
-                if (onPreferenceChange) onPreferenceChange(null);
-            }
-        }
-        
-        return { preferences };
-    }, [preferenceApi, preferenceKey, snackbar, t, tOpts, onPreferenceChange]);
-
-    const applyPreference = useCallback(async (prefId, preferencesArray = null) => {
-        // Store initial state before applying first preference
-        if (!gridRef.current?.initialGridState && gridRef.current?.exportState) {
-            gridRef.current.initialGridState = gridRef.current.exportState();
-        }
-
-        if (prefId === 0) {
-            resetToDefault();
-            return;
-        }
-
-        // Use provided preferences array or fall back to state
-        const prefsToSearch = preferencesArray || preferences;
-        if (!prefsToSearch) {
-            snackbar.showMessage(t('Preferences not loaded yet.', tOpts));
-            return;
-        }
-
-        const preference = prefsToSearch.find(ele => ele.prefId === prefId);
+    const applyPreference = (preference) => {
         if (!preference?.prefValue) {
             snackbar.showMessage(t('Failed to load preference.', tOpts));
-            return;
+            return false;
         }
 
-        let gridState;
         try {
-            gridState = typeof preference.prefValue === 'string' ? JSON.parse(preference.prefValue) : preference.prefValue;
+            onPreferenceChange(preference.prefName, parsePreferenceState(preference.prefValue));
         } catch {
             snackbar.showMessage(t('Failed to parse preference data.', tOpts));
-            return;
+            return false;
         }
 
-        gridRef.current.restoreState(gridState);
-        setCurrentPreference(preference.prefName);
-        if (onPreferenceChange) onPreferenceChange(preference.prefName);
         handleClose();
-    }, [gridRef, resetToDefault, preferences, onPreferenceChange, snackbar, t, tOpts]);
+        return true;
+    };
 
     const savePreference = async (values) => {
         const prefName = values.prefName.trim();
@@ -177,7 +117,10 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         if (response === true || response?.success === true) {
             snackbar.showMessage(t(`Preference ${dialogState === DIALOG_TYPES.ADD ? "added" : "saved"} successfully.`, tOpts));
             handleDialogClose();
-            await loadPreferences({ applyDefault: false });
+            if (dialogState === DIALOG_TYPES.EDIT && preferences.find(pref => pref.prefId === values.prefId)?.prefName === currentPreference) {
+                onPreferenceChange(prefName);
+            }
+            await reloadPreferences();
             return;
         }
 
@@ -197,7 +140,8 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
 
         if (response === true || response?.success === true) {
             snackbar.showMessage(t('Preference deleted successfully.', tOpts));
-            await loadPreferences({ applyDefault: false });
+            if (openConfirmDeleteDialog.preferenceName === currentPreference) onPreferenceChange(null);
+            await reloadPreferences();
             setOpenConfirmDeleteDialog({});
             return;
         }
@@ -217,7 +161,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         }
         if (action === actionTypes.Delete) {
             setOpenConfirmDeleteDialog({
-                prefId: cellParams.id,
+                prefId: cellParams.row.prefId,
                 preferenceName: cellParams.row.prefName
             });
         }
@@ -237,31 +181,6 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
         onSubmit: savePreference,
         mode: "onBlur"
     });
-
-    // Load preferences on mount; loadPreferences/applyPreference excluded since applyPreference's identity changes on every setPreferences(), which would loop this effect
-    useEffect(() => {
-        if (!preferenceKey) return;
-        const loadAndApply = async () => {
-            // initialPreferenceName only remembers which preference was active before a list-state round trip (e.g. navigating to a form and back) - the grid itself always mounts with plain defaults, so it's re-applied the normal way here rather than assumed already in place.
-            if (initialPreferenceName) {
-                const result = await loadPreferences({ applyDefault: false });
-                const preference = result?.preferences?.find(ele => ele.prefName === initialPreferenceName);
-                // Mark resolved up front so a bail-out inside applyPreference (missing/corrupt prefValue) can't leave preferencesReady stuck false forever.
-                setCurrentPreference(null);
-                if (onPreferenceChange) onPreferenceChange(null);
-                if (preference) {
-                    await applyPreference(preference.prefId, result.preferences);
-                }
-                return;
-            }
-            const result = await loadPreferences({ applyDefault: true });
-            if (result?.defaultPrefId && result?.preferences) {
-                await applyPreference(result.defaultPrefId, result.preferences);
-            }
-        };
-        loadAndApply();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [preferenceKey]);
 
     // Memoize locale text used by the DataGrid to avoid recreating the object on every render
     const localeText = useMemo(() => ({
@@ -289,6 +208,8 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
 
     const isManageDialog = dialogState === DIALOG_TYPES.MANAGE;
     const isFormDialog = dialogState === DIALOG_TYPES.ADD || dialogState === DIALOG_TYPES.EDIT;
+    // There is nothing to reset on a plain first load - the grid is already showing model defaults - so the entry only appears once a preference is applied or a restored snapshot is in effect.
+    const canResetToDefault = !!currentPreference || hasRestoredListState;
 
     return (
         <Box>
@@ -298,6 +219,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                 aria-haspopup="true"
                 aria-expanded={menuAnchorEl ? 'true' : undefined}
                 onClick={handleOpen}
+                disabled={preferences === null}
                 title={t('Preference', tOpts)}
                 startIcon={<SettingsIcon />}
                 size="small"
@@ -334,14 +256,14 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                     </ListItemIcon>
                     {t('Add Preference', tOpts)}
                 </MenuItem>
-                <MenuItem component={ListItemButton} dense onClick={() => openDialog(DIALOG_TYPES.MANAGE)}>
+                <MenuItem component={ListItemButton} dense divider={!canResetToDefault && preferences?.length > 0} onClick={() => openDialog(DIALOG_TYPES.MANAGE)}>
                     <ListItemIcon>
                         <SettingsIcon />
                     </ListItemIcon>
                     {t('Manage Preferences', tOpts)}
                 </MenuItem>
-                {gridRef.current?.initialGridState && (
-                    <MenuItem component={ListItemButton} dense divider={preferences?.length > 0} onClick={() => applyPreference(0)}>
+                {canResetToDefault && (
+                    <MenuItem component={ListItemButton} dense divider={preferences?.length > 0} onClick={resetToDefault}>
                         <ListItemIcon>
                             <RefreshIcon />
                         </ListItemIcon>
@@ -353,7 +275,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                     const { prefName, prefDesc, prefId } = ele;
                     return (
                         <MenuItem
-                            onClick={() => applyPreference(prefId)}
+                            onClick={() => applyPreference(ele)}
                             component={ListItem}
                             selected={currentPreference === prefName}
                             key={`pref-item-${prefId}`}
@@ -369,7 +291,7 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                 open={dialogState !== DIALOG_TYPES.NONE}
                 disableRestoreFocus
                 title={
-                    <Typography variant="h5">
+                    <Typography variant="h5" component="span">
                         {dialogState} {t(isManageDialog ? 'Preferences' : 'Preference', tOpts)}
                     </Typography>
                 }
@@ -486,9 +408,9 @@ const GridPreferences = ({ gridRef, preferenceKey, onPreferenceChange, onResetTo
                                 columns={gridColumns}
                                 pageSizeOptions={pageSizeOptions}
                                 pagination
-                                rowCount={nonDefaultPreferences.length}
-                                rows={nonDefaultPreferences}
-                                getRowId={(row) => row['GridPreferenceId']}
+                                rowCount={preferences.length}
+                                rows={preferences}
+                                getRowId={(row) => row.prefId}
                                 slots={{
                                     headerFilterMenu: false
                                 }}

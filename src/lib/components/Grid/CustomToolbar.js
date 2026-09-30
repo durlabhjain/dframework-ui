@@ -46,6 +46,9 @@ const CustomToolbar = function (props) {
         model,
         data,
         currentPreference,
+        hasRestoredListState,
+        preferences,
+        reloadPreferences,
         isReadOnly,
         canAdd,
         canDelete,
@@ -112,7 +115,7 @@ const CustomToolbar = function (props) {
                     {available && <ButtonWithMargin disabled={!canAdd || isReadOnly} startIcon={!showAddIcon ? null : <AddIcon />} onClick={onAssign} size="medium" variant="contained"  >{tTranslate("Assign", tOpts)}</ButtonWithMargin>}
                     {assigned && <ButtonWithMargin disabled={!canDelete || isReadOnly} startIcon={!showAddIcon ? null : <RemoveIcon />} onClick={onUnassign} size="medium" variant="contained"  >{tTranslate("Remove", tOpts)}</ButtonWithMargin>}
                 </div>
-                <GridToolBar {...props}>
+                <GridToolBar>
                     {effectivePermissions.showColumnsOrder && (
                         <ColumnsPanelTrigger
                             render={(triggerProps) => (
@@ -153,11 +156,15 @@ const CustomToolbar = function (props) {
                     {toolbarItems}
                     {preferenceKey &&
                         <GridPreferences
+                            key={preferenceKey}
                             gridRef={apiRef}
                             preferenceKey={preferenceKey}
                             onPreferenceChange={onPreferenceChange}
                             onResetToDefault={onResetToDefault}
-                            initialPreferenceName={currentPreference}
+                            currentPreference={currentPreference}
+                            hasRestoredListState={hasRestoredListState}
+                            preferences={preferences}
+                            reloadPreferences={reloadPreferences}
                             t={tTranslate}
                             tOpts={tOpts}
                         />
