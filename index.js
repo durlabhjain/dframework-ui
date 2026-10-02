@@ -20,7 +20,7 @@ import dayjs from "dayjs";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import { Autocomplete, Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, CardContent, Checkbox, Chip, CircularProgress, Dialog as Dialog$1, DialogContent as DialogContent$1, DialogTitle as DialogTitle$1, Divider, FilledInput, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, Input, InputAdornment, InputLabel, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, Tab, Tabs, TextField as TextField$1, Tooltip, Typography as Typography$1, styled, useTheme } from "@mui/material";
+import { Autocomplete, Avatar, Badge, Box as Box$1, Breadcrumbs, Button as Button$1, Card, CardContent, Checkbox, Chip, CircularProgress, Dialog as Dialog$1, DialogContent as DialogContent$1, DialogTitle as DialogTitle$1, Divider, FilledInput, FormControl, FormControlLabel, FormHelperText, Grid, IconButton, Input, InputAdornment, InputLabel, Link, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Menu, MenuItem, OutlinedInput, Radio, RadioGroup, Select, Stack, TextField as TextField$1, Tooltip, Typography as Typography$1, styled, useTheme } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import HelpIcon from "@mui/icons-material/Help";
@@ -76,8 +76,8 @@ import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
 import { TreeItem } from "@mui/x-tree-view/TreeItem";
 import PageviewIcon from "@mui/icons-material/PageviewOutlined";
 import Input$1 from "@mui/material/Input";
-import Tab$1 from "@mui/material/Tab";
-import Tabs$1 from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import Tabs from "@mui/material/Tabs";
 //#region src/lib/errors.js
 /**
 * Centralized error code registry.
@@ -307,6 +307,15 @@ var HTTP_STATUS_CODES = {
 	NOT_FOUND: 404,
 	INTERNAL_SERVER_ERROR: 500
 };
+var HTTP_ERROR_MESSAGES = {
+	401: "You are unauthorized to access this resource. Please log in with appropriate credentials.",
+	403: "You don't have permission to access this page.",
+	404: "The requested page was not found.",
+	408: "The server is taking too long to respond. Please try again later.",
+	500: "Something went wrong on our server. Please try again later.",
+	503: "Something went wrong on our server. Please try again later.",
+	504: "The server is taking too long to respond. Please try again later."
+};
 var dateFormatterForForm = new Intl.DateTimeFormat("en-CA", {
 	year: "numeric",
 	month: "2-digit",
@@ -361,19 +370,28 @@ var transport = async (config) => {
 		headers: Object.fromEntries(response.headers.entries())
 	};
 };
+var MAX_ERROR_MESSAGE_LENGTH = 300;
+var MARKUP_PATTERN = /<\s*(!doctype|\/?(?:html|head|body|div|span|p|h[1-6]|style|script|table|pre|title|meta|link))\b/i;
+var toDisplayableMessage = (value) => {
+	if (typeof value !== "string") return void 0;
+	const text = value.trim();
+	if (!text || text.length > MAX_ERROR_MESSAGE_LENGTH || MARKUP_PATTERN.test(text)) return void 0;
+	return text;
+};
 /**
 * Extract error message from response
 * Utility to normalize error messages across different response formats
-* Only returns string values; non-string fields (e.g. error: true) are ignored so callers' `|| default` fallback applies.
+* Only returns short plain-text values; non-string fields (e.g. error: true) and server-rendered
+* HTML error pages are ignored so callers' `|| default` fallback applies.
 */
 var getErrorMessage = (response) => {
-	if (typeof response === "string") return response;
+	if (typeof response === "string") return toDisplayableMessage(response);
 	return [
 		response?.message,
 		response?.info,
 		response?.error,
 		response?.err
-	].find((value) => typeof value === "string");
+	].map(toDisplayableMessage).find(Boolean);
 };
 /**
 * Default data parsers for different response types
@@ -457,13 +475,10 @@ var request = async ({ url, params = {}, history, jsonPayload = false, method = 
 			history("/login");
 			return;
 		}
-		if (response.status === HTTP_STATUS_CODES.FORBIDDEN) return {
-			error: true,
-			message: getErrorMessage(data) || "Access Denied!"
-		};
 		if (response.status !== HTTP_STATUS_CODES.OK) return {
 			error: true,
-			message: getErrorMessage(data) || "An error occurred"
+			status: response.status,
+			message: getErrorMessage(data) || HTTP_ERROR_MESSAGES[response.status] || ERROR_MESSAGES[ERROR_CODES.AN_ERROR_OCCURRED]
 		};
 		try {
 			data = dataParser(data);
@@ -2610,6 +2625,18 @@ var areEqual = (prevProps = {}, nextProps = {}) => {
 	for (const o in nextProps) if (!(o in prevProps)) equal = false;
 	return equal;
 };
+/**
+* Height for a split panel being dragged, clamped so neither side can be dragged out of existence.
+* `delta` is the pixels the handle has moved since the drag started - negative is upwards, which
+* grows the panel, so it subtracts.
+*
+* The parent's floor wins when the container is too short to honour both: the panel gets squeezed to
+* its own minimum rather than the clamp inverting and jumping the handle.
+*/
+var clampSplitHeight = ({ startHeight, delta, containerHeight, minPanelHeight, minSiblingHeight }) => {
+	const maxHeight = Math.max(containerHeight - minSiblingHeight, minPanelHeight);
+	return Math.min(Math.max(startHeight - delta, minPanelHeight), maxHeight);
+};
 //#endregion
 //#region src/lib/components/Grid/ToolbarFilter.js
 dayjs.extend(utcPlugin);
@@ -2986,6 +3013,91 @@ var CustomToolbar = function(props) {
 		})
 	})] });
 };
+//#endregion
+//#region src/lib/components/Grid/SplitResizer.js
+var RESIZER_BAR_HEIGHT = 10;
+var RESIZER_MARGIN = 4;
+var SplitResizer = React.memo(({ onResizeStart, onResize, onResizeEnd, keyboardStep = 24, label = "Resize child grids" }) => {
+	const startYRef = useRef(0);
+	const draggingRef = useRef(false);
+	const setDragging = useCallback((isDragging) => {
+		draggingRef.current = isDragging;
+		document.body.style.userSelect = isDragging ? "none" : "";
+		document.body.style.cursor = isDragging ? "ns-resize" : "";
+	}, []);
+	useEffect(() => () => setDragging(false), [setDragging]);
+	const handlePointerDown = useCallback((event) => {
+		if (event.pointerType === "mouse" && event.button !== 0) return;
+		event.preventDefault();
+		startYRef.current = event.clientY;
+		event.currentTarget.setPointerCapture?.(event.pointerId);
+		setDragging(true);
+		onResizeStart();
+	}, [onResizeStart, setDragging]);
+	const handlePointerMove = useCallback((event) => {
+		if (!draggingRef.current) return;
+		onResize(event.clientY - startYRef.current);
+	}, [onResize]);
+	const handlePointerUp = useCallback((event) => {
+		if (!draggingRef.current) return;
+		if (event.currentTarget.hasPointerCapture?.(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+		setDragging(false);
+		onResizeEnd?.();
+	}, [onResizeEnd, setDragging]);
+	const handleKeyDown = useCallback((event) => {
+		const step = event.key === "ArrowUp" ? -keyboardStep : event.key === "ArrowDown" ? keyboardStep : null;
+		if (step === null) return;
+		event.preventDefault();
+		onResizeStart();
+		onResize(step);
+		onResizeEnd?.();
+	}, [
+		keyboardStep,
+		onResize,
+		onResizeEnd,
+		onResizeStart
+	]);
+	return /* @__PURE__ */ jsx(Box, {
+		role: "separator",
+		"aria-orientation": "horizontal",
+		"aria-label": label,
+		tabIndex: 0,
+		onPointerDown: handlePointerDown,
+		onPointerMove: handlePointerMove,
+		onPointerUp: handlePointerUp,
+		onPointerCancel: handlePointerUp,
+		onKeyDown: handleKeyDown,
+		sx: {
+			flex: "0 0 auto",
+			height: `${RESIZER_BAR_HEIGHT}px`,
+			marginTop: `${RESIZER_MARGIN}px`,
+			marginBottom: `${RESIZER_MARGIN}px`,
+			display: "flex",
+			alignItems: "center",
+			justifyContent: "center",
+			cursor: "ns-resize",
+			touchAction: "none",
+			userSelect: "none",
+			borderRadius: 1,
+			"&:hover .split-resizer-grip, &:focus-visible .split-resizer-grip": { bgcolor: "primary.main" },
+			"&:focus-visible": {
+				outline: "2px solid",
+				outlineColor: "primary.main",
+				outlineOffset: 2
+			}
+		},
+		children: /* @__PURE__ */ jsx(Box, {
+			className: "split-resizer-grip",
+			sx: {
+				width: 48,
+				height: 4,
+				borderRadius: 2,
+				bgcolor: "divider",
+				transition: "background-color 150ms"
+			}
+		})
+	});
+});
 //#endregion
 //#region src/lib/hooks/useModelTranslation.js
 /**
@@ -3580,6 +3692,10 @@ var CHILD_GRIDS_FILL_STYLE = Object.freeze({
 	overflowY: "auto"
 });
 var CHILD_GRIDS_CONTAINER_HEIGHT = "calc(100vh - 88px)";
+var CHILD_GRIDS_MIN_HEIGHT = 48;
+var PARENT_GRID_MIN_HEIGHT = 120;
+var CHILD_GRIDS_RESERVED_HEIGHT = PARENT_GRID_MIN_HEIGHT + 18;
+var CHILD_GRIDS_DEFAULT_HEIGHT = "40%";
 var EMPTY_SORT_MODEL = Object.freeze([]);
 var EMPTY_FILTER_MODEL = Object.freeze({
 	items: [],
@@ -3736,6 +3852,27 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const { idProperty = "id", showHeaderFilters = true, disableRowSelectionOnClick = true, updatePageTitle = true, isElasticScreen = false, navigateBack = false, selectionApi = {}, debounceTimeOut = 300, showFooter = true, disableRowGrouping = true, localSortAndFilter = false, isServerGrouping = false, groupAggregations, actions: actionsMode = "grid" } = model;
 	const hasChildGrids = !!model.relationItems?.length;
 	const [selectedChildRow, setSelectedChildRow] = useState(null);
+	const splitContainerRef = useRef(null);
+	const childPanelRef = useRef(null);
+	const dragStartHeightRef = useRef(0);
+	const [childPanelHeight, setChildPanelHeight] = useState(null);
+	const [isResizingSplit, setIsResizingSplit] = useState(false);
+	const handleSplitResizeStart = useCallback(() => {
+		dragStartHeightRef.current = childPanelRef.current?.getBoundingClientRect().height ?? 0;
+		setIsResizingSplit(true);
+	}, []);
+	const handleSplitResize = useCallback((delta) => {
+		setChildPanelHeight(clampSplitHeight({
+			startHeight: dragStartHeightRef.current,
+			delta,
+			containerHeight: splitContainerRef.current?.getBoundingClientRect().height ?? 0,
+			minPanelHeight: CHILD_GRIDS_MIN_HEIGHT,
+			minSiblingHeight: CHILD_GRIDS_RESERVED_HEIGHT
+		}));
+	}, []);
+	const handleSplitResizeEnd = useCallback(() => setIsResizingSplit(false), []);
+	const expandChildGrids = useCallback(() => setChildPanelHeight(null), []);
+	const childGridsCollapsed = childPanelHeight !== null && childPanelHeight <= CHILD_GRIDS_MIN_HEIGHT;
 	const childRelationFilters = useMemo(() => {
 		if (!hasChildGrids || !selectedChildRow) return {};
 		const parentValue = selectedChildRow[idProperty];
@@ -4536,7 +4673,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			}
 		} catch (error) {
 			if (error?.aborted || error?.name === "AbortError" || controller?.signal?.aborted) return;
-			snackbarRef.current.showErrorCode(ERROR_CODES.DATA_LOAD_FAILED, error?.message);
+			snackbarRef.current.showErrorCode(ERROR_CODES.DATA_LOAD_FAILED, tTranslate(error?.message, tOpts));
 			if (!isExportRequest) setData((prevData) => ({
 				...prevData,
 				records: [],
@@ -4584,7 +4721,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					where
 				}));
 			} catch (error) {
-				snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, error?.message);
+				snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, tTranslate(error?.message, tOpts));
 			}
 			return;
 		}
@@ -4615,7 +4752,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		navigate,
 		getRecord,
 		buildUrl,
-		snackbar
+		snackbar,
+		tTranslate,
+		tOpts
 	]);
 	const handleDownload = useCallback(({ documentLink }) => {
 		if (!documentLink) return;
@@ -4718,7 +4857,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			snackbar.showMessage(tTranslate("Record Deleted Successfully.", tOpts));
 			fetchData();
 		} catch (error) {
-			snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, error?.message);
+			snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, tTranslate(error?.message, tOpts));
 		} finally {
 			setIsDeleting(false);
 		}
@@ -5389,7 +5528,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 					display: "flex",
 					flexDirection: "column",
 					height: "100%",
-					maxHeight: "80vh"
+					maxHeight: hasChildGrids ? "none" : "80vh"
 				},
 				children: /* @__PURE__ */ jsx(DataGridPremium, {
 					...gridProps,
@@ -5510,62 +5649,57 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		breadcrumbColor,
 		model
 	}), hasChildGrids ? /* @__PURE__ */ jsxs(Box$1, {
+		ref: splitContainerRef,
 		sx: {
 			display: "flex",
 			flexDirection: "column",
 			height: childGridsContainerHeight,
-			gap: 2
+			overflow: "hidden",
+			...isResizingSplit && { userSelect: "none" }
 		},
-		children: [/* @__PURE__ */ jsx(Box$1, {
-			sx: {
-				flex: 3,
-				minHeight: 0,
-				display: "flex",
-				flexDirection: "column"
-			},
-			children: mainGridElement
-		}), /* @__PURE__ */ jsx(Box$1, {
-			sx: {
-				flex: 2,
-				minHeight: 0,
-				display: "flex",
-				flexDirection: "column",
-				overflow: "hidden",
-				bgcolor: "background.paper"
-			},
-			children: selectedChildRow ? /* @__PURE__ */ jsx(model.ChildGrids, {
-				parent: selectedChildRow,
-				relationFilters: childRelationFilters,
-				childGridStyle: CHILD_GRIDS_FILL_STYLE,
-				disableCellRedirect: true,
-				tTranslate,
-				tOpts,
-				sx: propsSx,
-				...props.childGridProps
-			}) : /* @__PURE__ */ jsxs(Box$1, {
+		children: [
+			/* @__PURE__ */ jsx(Box$1, {
 				sx: {
-					width: "100%",
-					minWidth: 0
+					flex: 1,
+					minHeight: PARENT_GRID_MIN_HEIGHT,
+					display: "flex",
+					flexDirection: "column"
 				},
-				children: [/* @__PURE__ */ jsx(Box$1, {
-					sx: {
-						borderBottom: 1,
-						borderColor: "divider",
-						minWidth: 0
-					},
-					children: /* @__PURE__ */ jsx(Tabs, {
-						value: 0,
-						variant: "scrollable",
-						scrollButtons: "auto",
-						allowScrollButtonsMobile: true,
-						children: model.relationItems.map((childModel) => /* @__PURE__ */ jsx(Tab, { label: tTranslate(childModel.listTitle || childModel.title, tOpts) }, childModel.name))
-					})
-				}), /* @__PURE__ */ jsx(Box$1, {
-					sx: { p: 3 },
-					children: tTranslate("Please select a record to see its details", tOpts)
-				})]
+				children: mainGridElement
+			}),
+			/* @__PURE__ */ jsx(SplitResizer, {
+				onResizeStart: handleSplitResizeStart,
+				onResize: handleSplitResize,
+				onResizeEnd: handleSplitResizeEnd,
+				label: tTranslate("Resize child grids", tOpts)
+			}),
+			/* @__PURE__ */ jsx(Box$1, {
+				ref: childPanelRef,
+				sx: {
+					flex: "0 0 auto",
+					height: childPanelHeight ?? CHILD_GRIDS_DEFAULT_HEIGHT,
+					minHeight: CHILD_GRIDS_MIN_HEIGHT,
+					maxHeight: `calc(100% - ${CHILD_GRIDS_RESERVED_HEIGHT}px)`,
+					display: "flex",
+					flexDirection: "column",
+					overflow: "hidden",
+					bgcolor: "background.paper"
+				},
+				children: /* @__PURE__ */ jsx(model.ChildGrids, {
+					parent: selectedChildRow,
+					relationFilters: childRelationFilters,
+					childGridStyle: CHILD_GRIDS_FILL_STYLE,
+					disableCellRedirect: true,
+					collapsed: childGridsCollapsed,
+					onExpandRequest: expandChildGrids,
+					emptyMessage: tTranslate("Please select a record to see its details", tOpts),
+					tTranslate,
+					tOpts,
+					sx: propsSx,
+					...props.childGridProps
+				})
 			})
-		})]
+		]
 	}) : mainGridElement] });
 }, areEqual);
 var renderersCache = /* @__PURE__ */ new Map();
@@ -7350,7 +7484,7 @@ var ChildGrid = memo(({ relation, parentFilters, extraParams, parent, where, mod
 		sx
 	});
 });
-var EMPTY_WHERE = [];
+var EMPTY_WHERE$1 = [];
 /**
 * Relations component using MUI Tabs
 * Renders a tab for each relation, and a ChildGrid in each panel
@@ -7370,7 +7504,7 @@ var EMPTY_WHERE = [];
 * @param {Function} [props.tTranslate] - Translation function used for tab labels
 * @param {Object} [props.tOpts] - Options passed to tTranslate
 */
-var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, relationFilters, readOnly, disableCellRedirect, onCellClick, childGridStyle, showChildHeaderFilters, extraParams, sx, tTranslate = (key) => key, tOpts = {} }) => {
+var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE$1, models, relationFilters, readOnly, disableCellRedirect, onCellClick, childGridStyle, showChildHeaderFilters, extraParams, sx, tTranslate = (key) => key, tOpts = {} }) => {
 	const [tabIndex, setTabIndex] = useState(0);
 	const handleChange = (_, newValue) => {
 		setTabIndex(newValue);
@@ -7393,7 +7527,7 @@ var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, re
 				borderColor: "divider",
 				minWidth: 0
 			},
-			children: /* @__PURE__ */ jsx(Tabs$1, {
+			children: /* @__PURE__ */ jsx(Tabs, {
 				value: tabIndex,
 				onChange: handleChange,
 				"aria-label": "relations tabs",
@@ -7403,7 +7537,7 @@ var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, re
 				children: relations.map((relation, idx) => {
 					const modelConfigOfChildGrid = models.find(({ name }) => name === relation) || {};
 					const label = modelConfigOfChildGrid.listTitle || modelConfigOfChildGrid.title || relation;
-					return /* @__PURE__ */ jsx(Tab$1, {
+					return /* @__PURE__ */ jsx(Tab, {
 						label: tTranslate(label, tOpts),
 						...a11yProps(idx)
 					}, relation);
@@ -7629,7 +7763,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 				navigateBack !== false && handleNavigation();
 				resetForm({ values: formik.values });
 			}).catch((err) => {
-				snackbar.showErrorCode(ERROR_CODES.AN_ERROR_OCCURRED, err?.message);
+				snackbar.showErrorCode(ERROR_CODES.AN_ERROR_OCCURRED, tTranslate(err?.message, tOpts));
 				if (model.reloadOnSave) resetForm();
 			}).finally(() => {
 				setIsLoading(false);
@@ -7649,9 +7783,14 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	]);
 	const errorOnLoad = useCallback((error) => {
 		setIsLoading(false);
-		snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, error?.message);
+		snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, tTranslate(error?.message, tOpts));
 		handleNavigation();
-	}, [snackbar, handleNavigation]);
+	}, [
+		snackbar,
+		handleNavigation,
+		tTranslate,
+		tOpts
+	]);
 	const setActiveRecord = function({ id, record, lookups }) {
 		const isCopy = idWithOptions.indexOf("-") > -1;
 		const isNew = !id || id === "0";
@@ -7697,7 +7836,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 				navigateBack !== false && handleNavigation();
 			}
 		} catch (error) {
-			snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, error?.message);
+			snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, tTranslate(error?.message, tOpts));
 		} finally {
 			setIsDeleting(false);
 		}
@@ -7888,6 +8027,111 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	})] });
 };
 //#endregion
+//#region src/lib/components/Grid/ChildGridTabs.js
+var EMPTY_WHERE = [];
+/**
+* Child grid tabs for a parent *grid* - the `relations: { items: [...] }` form, resolved into
+* model.relationItems and rendered below the parent grid once a row is selected (see GridBase).
+*
+* Kept separate from Form/relations' Relations, which serves the legacy `relations: ['Name']` array
+* form on a form page. The two look alike but their `parent` differs - a selected row here, the
+* parent model's name there - so this one can branch on it and that one can't.
+*
+* The tab strip always renders: which relations exist stays visible even with no row selected, or
+* with the panel dragged all the way shut, so the available tabs are always discoverable.
+*
+* @param {Object} props
+* @param {string[]} props.relations - Names of the related models to render as tabs
+* @param {Object} props.models - Resolved relation models (matched against `relations` by name)
+* @param {Object|null} props.parent - The selected parent row; null renders `emptyMessage` in place of the grids
+* @param {Object} props.relationFilters - Per-relation filters, keyed by relation name
+* @param {Array} [props.where] - Conditions applied to every child grid
+* @param {boolean} [props.readOnly] - Renders every child grid read-only
+* @param {boolean} [props.disableCellRedirect] - Disables the default row-click navigation
+* @param {Function} [props.onCellClick] - Cell click handler, forwarded to every child grid
+* @param {Object} [props.childGridStyle] - Style applied to every child grid container; also enables fill-height tab panels
+* @param {boolean} [props.showChildHeaderFilters] - Overrides showHeaderFilters on every child grid
+* @param {Object} [props.extraParams] - Extra request parameters merged into every child grid's list/export calls
+* @param {Object} [props.sx] - MUI sx prop forwarded to every child grid
+* @param {boolean} [props.collapsed] - Set by GridBase once the splitter is dragged down to the tab strip; drops the panels
+* @param {Function} [props.onExpandRequest] - Called when a tab is picked while collapsed, so the caller can reopen the panel
+* @param {React.ReactNode} [props.emptyMessage] - Shown in place of the child grids when no row is selected
+* @param {Function} [props.tTranslate] - Translation function used for tab labels
+* @param {Object} [props.tOpts] - Options passed to tTranslate
+*/
+var ChildGridTabs = React.memo(({ relations, models, parent, relationFilters, where = EMPTY_WHERE, readOnly, disableCellRedirect, onCellClick, childGridStyle, showChildHeaderFilters, extraParams, sx, collapsed = false, onExpandRequest, emptyMessage, tTranslate = (key) => key, tOpts = {} }) => {
+	const [tabIndex, setTabIndex] = useState(0);
+	const handleChange = (_, newValue) => {
+		setTabIndex(newValue);
+		if (collapsed) onExpandRequest?.();
+	};
+	const showPanels = !collapsed && !!parent;
+	const fillHeight = !!childGridStyle && showPanels;
+	return /* @__PURE__ */ jsxs(Box, {
+		sx: {
+			width: "100%",
+			minWidth: 0,
+			...fillHeight && {
+				display: "flex",
+				flexDirection: "column",
+				height: "100%",
+				minHeight: 0
+			}
+		},
+		children: [/* @__PURE__ */ jsx(Box, {
+			sx: {
+				borderBottom: 1,
+				borderColor: "divider",
+				minWidth: 0,
+				display: "flex",
+				alignItems: "center",
+				flexShrink: 0
+			},
+			children: /* @__PURE__ */ jsx(Tabs, {
+				value: tabIndex,
+				onChange: handleChange,
+				"aria-label": "child grid tabs",
+				variant: "scrollable",
+				scrollButtons: "auto",
+				allowScrollButtonsMobile: true,
+				sx: {
+					flex: 1,
+					minWidth: 0
+				},
+				children: relations.map((relation, idx) => {
+					const childModel = models.find(({ name }) => name === relation) || {};
+					const label = childModel.listTitle || childModel.title || relation;
+					return /* @__PURE__ */ jsx(Tab, {
+						label: tTranslate(label, tOpts),
+						...a11yProps(idx)
+					}, relation);
+				})
+			})
+		}), showPanels ? relations.map((relation, idx) => /* @__PURE__ */ jsx(CustomTabPanel, {
+			value: tabIndex,
+			index: idx,
+			fillHeight,
+			children: /* @__PURE__ */ jsx(ChildGrid, {
+				relation,
+				models,
+				parent,
+				parentFilters: relationFilters?.[relation] || [],
+				where,
+				readOnly,
+				disableCellRedirect,
+				onCellClick,
+				gridStyle: childGridStyle,
+				showHeaderFilters: showChildHeaderFilters,
+				extraParams,
+				sx
+			})
+		}, relation)) : !collapsed && /* @__PURE__ */ jsx(Box, {
+			sx: { p: 3 },
+			children: emptyMessage
+		})]
+	});
+});
+//#endregion
 //#region \0@oxc-project+runtime@0.152.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
@@ -8016,7 +8260,7 @@ var UiModel = class UiModel {
 		_defineProperty(this, "ChildGrids", (props) => {
 			if (!this.relationItems?.length) return null;
 			const relations = this.relationItems.map((childModel) => childModel.name);
-			return /* @__PURE__ */ jsx(Relations, {
+			return /* @__PURE__ */ jsx(ChildGridTabs, {
 				relations,
 				models: this.relationItems,
 				...props
