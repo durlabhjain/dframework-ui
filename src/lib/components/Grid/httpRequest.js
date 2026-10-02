@@ -237,7 +237,7 @@ const request = async ({
                 status: response.status,
                 message: getErrorMessage(data)
                     || HTTP_ERROR_MESSAGES[response.status]
-                    || ERROR_MESSAGES[ERROR_CODES.NETWORK_FAILURE]
+                    || ERROR_MESSAGES[ERROR_CODES.AN_ERROR_OCCURRED]
             };
         }
 
