@@ -2,7 +2,7 @@ import GridBase from './index';
 import * as yup from 'yup';
 import { Divider } from '@mui/material';
 import Form from '../Form/Form';
-import Relations from '../Form/relations';
+import ChildGridTabs from './ChildGridTabs';
 import utils from '../utils';
 
 const regexConfig = {
@@ -394,11 +394,12 @@ class UiModel {
 		</>;
 	};
 
-	// Renders this model's declared relations.items (resolved into this.relationItems) as a Relations tab panel.
+	// Renders this model's declared relations.items (resolved into this.relationItems) as the child
+	// grid tabs shown below the parent grid. Form pages use Form/relations' Relations instead.
 	ChildGrids = (props) => {
 		if (!this.relationItems?.length) return null;
 		const relations = this.relationItems.map(childModel => childModel.name);
-		return <Relations relations={relations} models={this.relationItems} {...props} />;
+		return <ChildGridTabs relations={relations} models={this.relationItems} {...props} />;
 	};
 }
 
