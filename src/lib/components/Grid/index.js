@@ -1177,7 +1177,7 @@ const GridBase = memo(({
             }
         } catch (error) {
             if (error?.aborted || error?.name === 'AbortError' || controller?.signal?.aborted) return;
-            snackbarRef.current.showErrorCode(ERROR_CODES.DATA_LOAD_FAILED, error?.message);
+            snackbarRef.current.showErrorCode(ERROR_CODES.DATA_LOAD_FAILED, tTranslate(error?.message, tOpts));
             if (!isExportRequest) {
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
             }
@@ -1197,7 +1197,7 @@ const GridBase = memo(({
                 const data = await getRecord({ id, api: baseUrl, model, parentFilters, where });
                 setActiveRecord(data);
             } catch (error) {
-                snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, error?.message);
+                snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, tTranslate(error?.message, tOpts));
             }
             return;
         }
@@ -1233,7 +1233,7 @@ const GridBase = memo(({
         }
         navigate(path);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, relationName, addUrlParamKey, preserveListState, navigate, getRecord, buildUrl, snackbar]);
+    }, [setActiveRecord, isStaticDataWithoutBackendApi, backendApi, model, parentFilters, where, pathname, relationName, addUrlParamKey, preserveListState, navigate, getRecord, buildUrl, snackbar, tTranslate, tOpts]);
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
@@ -1323,7 +1323,7 @@ const GridBase = memo(({
             snackbar.showMessage(tTranslate('Record Deleted Successfully.', tOpts));
             fetchData();
         } catch (error) {
-            snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, error?.message);
+            snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, tTranslate(error?.message, tOpts));
         } finally {
             setIsDeleting(false);
         }
