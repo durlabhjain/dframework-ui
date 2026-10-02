@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { ERROR_CODES, ERROR_MESSAGES } from '../../errors';
 
 const HTTP_STATUS_CODES = {
     OK: 200,
@@ -6,6 +7,19 @@ const HTTP_STATUS_CODES = {
     FORBIDDEN: 403,
     NOT_FOUND: 404,
     INTERNAL_SERVER_ERROR: 500
+};
+
+// Shown when the server sends no usable message of its own for a failed request.
+// Wording is kept identical to the consuming app's own status messages so existing
+// translation entries keyed by these strings keep working.
+const HTTP_ERROR_MESSAGES = {
+    401: 'You are unauthorized to access this resource. Please log in with appropriate credentials.',
+    403: 'You don\'t have permission to access this page.',
+    404: 'The requested page was not found.',
+    408: 'The server is taking too long to respond. Please try again later.',
+    500: 'Something went wrong on our server. Please try again later.',
+    503: 'Something went wrong on our server. Please try again later.',
+    504: 'The server is taking too long to respond. Please try again later.'
 };
 
 const dateFormatterForForm = new Intl.DateTimeFormat('en-CA', {
@@ -87,18 +101,30 @@ const transport = async (config) => {
     return responseObj;
 };
 
+// IIS/nginx answer a non-200 with a full HTML error page, and a stack trace or a wall of
+// text is no better in a snackbar - only short plain text counts as a usable message.
+const MAX_ERROR_MESSAGE_LENGTH = 300;
+const MARKUP_PATTERN = /<\s*(!doctype|\/?(?:html|head|body|div|span|p|h[1-6]|style|script|table|pre|title|meta|link))\b/i;
+
+const toDisplayableMessage = (value) => {
+    if (typeof value !== 'string') return undefined;
+    const text = value.trim();
+    if (!text || text.length > MAX_ERROR_MESSAGE_LENGTH || MARKUP_PATTERN.test(text)) return undefined;
+    return text;
+};
+
 /**
  * Extract error message from response
  * Utility to normalize error messages across different response formats
- * Only returns string values; non-string fields (e.g. error: true) are ignored so callers' `|| default` fallback applies.
+ * Only returns short plain-text values; non-string fields (e.g. error: true) and server-rendered
+ * HTML error pages are ignored so callers' `|| default` fallback applies.
  */
 const getErrorMessage = (response) => {
-    if (typeof response === 'string') return response;
+    if (typeof response === 'string') return toDisplayableMessage(response);
 
-    const candidate = [response?.message, response?.info, response?.error, response?.err]
-        .find((value) => typeof value === 'string');
-
-    return candidate;
+    return [response?.message, response?.info, response?.error, response?.err]
+        .map(toDisplayableMessage)
+        .find(Boolean);
 };
 
 /**
@@ -205,13 +231,14 @@ const request = async ({
             return;
         }
 
-        if (response.status === HTTP_STATUS_CODES.FORBIDDEN) {
-            return { error: true, message: getErrorMessage(data) || 'Access Denied!' };
-        }
-
         if (response.status !== HTTP_STATUS_CODES.OK) {
-            // You can return the error object or handle as needed
-            return { error: true, message: getErrorMessage(data) || 'An error occurred' };
+            return {
+                error: true,
+                status: response.status,
+                message: getErrorMessage(data)
+                    || HTTP_ERROR_MESSAGES[response.status]
+                    || ERROR_MESSAGES[ERROR_CODES.AN_ERROR_OCCURRED]
+            };
         }
 
         // Apply data parser to normalize response
@@ -243,7 +270,8 @@ const request = async ({
 export {
     transport,
     DATA_PARSERS,
-    getErrorMessage
+    getErrorMessage,
+    HTTP_ERROR_MESSAGES
 };
 
 export default request;

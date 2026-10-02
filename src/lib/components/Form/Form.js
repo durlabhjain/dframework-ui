@@ -211,7 +211,7 @@ const Form = ({
         .catch((err) => {
           snackbar.showErrorCode(
             ERROR_CODES.AN_ERROR_OCCURRED,
-            err?.message
+            tTranslate(err?.message, tOpts)
           );
           if (model.reloadOnSave) {
             resetForm();
@@ -234,9 +234,9 @@ const Form = ({
 
   const errorOnLoad = useCallback((error) => {
     setIsLoading(false);
-    snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, error?.message);
+    snackbar.showErrorCode(ERROR_CODES.LOAD_FAILED, tTranslate(error?.message, tOpts));
     handleNavigation();
-  }, [snackbar, handleNavigation]);
+  }, [snackbar, handleNavigation, tTranslate, tOpts]);
 
   const setActiveRecord = function ({ id, record, lookups }) {
     const isCopy = idWithOptions.indexOf("-") > -1;
@@ -287,7 +287,7 @@ const Form = ({
         navigateBack !== false && handleNavigation();
       }
     } catch (error) {
-      snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, error?.message);
+      snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, tTranslate(error?.message, tOpts));
     } finally {
       setIsDeleting(false);
     }
