@@ -161,3 +161,7 @@ const Relations = React.memo(({ relations, parent, where = EMPTY_WHERE, models, 
 });
 
 export default Relations;
+
+// Named exports so the grid's own child-grid tabs (Grid/ChildGridTabs) can reuse these without
+// duplicating them. Relations itself stays the form's component - nothing here changes for it.
+export { ChildGrid, CustomTabPanel, a11yProps };

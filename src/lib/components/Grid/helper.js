@@ -96,3 +96,16 @@ export const areEqual = (prevProps = {}, nextProps = {}) => {
     }
     return equal;
 };
+
+/**
+ * Height for a split panel being dragged, clamped so neither side can be dragged out of existence.
+ * `delta` is the pixels the handle has moved since the drag started - negative is upwards, which
+ * grows the panel, so it subtracts.
+ *
+ * The parent's floor wins when the container is too short to honour both: the panel gets squeezed to
+ * its own minimum rather than the clamp inverting and jumping the handle.
+ */
+export const clampSplitHeight = ({ startHeight, delta, containerHeight, minPanelHeight, minSiblingHeight }) => {
+    const maxHeight = Math.max(containerHeight - minSiblingHeight, minPanelHeight);
+    return Math.min(Math.max(startHeight - delta, minPanelHeight), maxHeight);
+};

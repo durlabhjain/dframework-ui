@@ -23,20 +23,21 @@ import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
 import { LIST_STATE_PARAM, currentSearchParams, generateId, readListState, writeListState, clearListState, stripListStateFromUrl } from './listState';
 import { Footer } from './footer';
 import template from './template';
-import { Tooltip, Box, Tabs, Tab } from "@mui/material";
+import { Tooltip, Box } from "@mui/material";
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import PageTitle from '../PageTitle';
 import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
 import CustomToolbar from './CustomToolbar';
+import SplitResizer, { SPLIT_RESIZER_HEIGHT } from './SplitResizer';
 import useGridPreferences, { parsePreferenceState } from './useGridPreferences';
 import utils, { getPermissions } from '../utils';
 import HistoryIcon from '@mui/icons-material/History';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Checkbox from '@mui/material/Checkbox';
 import { useModelTranslation } from '../../hooks/useModelTranslation';
-import { convertDefaultSort, areEqual, getDefaultOperator } from './helper';
+import { convertDefaultSort, areEqual, getDefaultOperator, clampSplitHeight } from './helper';
 import { styled } from '@mui/material/styles';
 import { ERROR_CODES } from '../../errors';
 import RemoteSelectField from '../Form/fields/remoteSelectField.js';
@@ -159,6 +160,15 @@ const DEFAULT_FILTER_OPERATORS_BY_TYPE = {
 const CHILD_GRIDS_FILL_STYLE = Object.freeze({ height: '100%', overflowY: 'auto' });
 // Default assumes an ~88px app header at the viewport top; override via the childGridsContainerHeight prop or model option.
 const CHILD_GRIDS_CONTAINER_HEIGHT = 'calc(100vh - 88px)';
+// Floor for the child panel when the splitter is dragged all the way down: one MUI tab strip, so the
+// relation tabs stay visible (and draggable back open) at every position.
+const CHILD_GRIDS_MIN_HEIGHT = 48;
+// Floor for the parent grid when the splitter is dragged all the way up - toolbar plus column headers.
+const PARENT_GRID_MIN_HEIGHT = 120;
+// What the child panel has to leave behind: the parent grid's floor plus the handle itself.
+const CHILD_GRIDS_RESERVED_HEIGHT = PARENT_GRID_MIN_HEIGHT + SPLIT_RESIZER_HEIGHT;
+// Starting split, equivalent to the 3:2 flex ratio this layout used before it was draggable.
+const CHILD_GRIDS_DEFAULT_HEIGHT = '40%';
 
 // Stable empty references used when localSortAndFilter is enabled to prevent
 // fetchData from being recreated (and re-triggering API calls) on sort/filter changes
@@ -364,6 +374,33 @@ const GridBase = memo(({
     // A row click on a model with relations declared selects it as the active parent row for the child grids rendered below.
     const hasChildGrids = !!model.relationItems?.length;
     const [selectedChildRow, setSelectedChildRow] = useState(null);
+    // The splitter between the parent grid and the child grids: dragging up grows the child panel,
+    // dragging down hands that height back to the parent grid so it shows more rows. Height is null
+    // until first dragged, so the panel starts on the CSS default rather than a measured pixel value.
+    const splitContainerRef = useRef(null);
+    const childPanelRef = useRef(null);
+    const dragStartHeightRef = useRef(0);
+    const [childPanelHeight, setChildPanelHeight] = useState(null);
+    const [isResizingSplit, setIsResizingSplit] = useState(false);
+    const handleSplitResizeStart = useCallback(() => {
+        dragStartHeightRef.current = childPanelRef.current?.getBoundingClientRect().height ?? 0;
+        setIsResizingSplit(true);
+    }, []);
+    const handleSplitResize = useCallback((delta) => {
+        setChildPanelHeight(clampSplitHeight({
+            startHeight: dragStartHeightRef.current,
+            delta,
+            containerHeight: splitContainerRef.current?.getBoundingClientRect().height ?? 0,
+            minPanelHeight: CHILD_GRIDS_MIN_HEIGHT,
+            minSiblingHeight: CHILD_GRIDS_RESERVED_HEIGHT
+        }));
+    }, []);
+    const handleSplitResizeEnd = useCallback(() => setIsResizingSplit(false), []);
+    // Picking a tab while the panel is dragged shut reopens it at the default split.
+    const expandChildGrids = useCallback(() => setChildPanelHeight(null), []);
+    // Dragged down to the tab strip: drop the grids themselves so they aren't left rendering into no
+    // space, while the tabs above them stay put.
+    const childGridsCollapsed = childPanelHeight !== null && childPanelHeight <= CHILD_GRIDS_MIN_HEIGHT;
     const childRelationFilters = useMemo(() => {
         if (!hasChildGrids || !selectedChildRow) return {};
         const parentValue = selectedChildRow[idProperty];
@@ -1922,7 +1959,9 @@ const GridBase = memo(({
     const mainGridElement = (
         <Box style={outerBoxStyle}>
             {/* height: '100%' only takes effect when outerBoxStyle gives this a definite-height parent (e.g. a flex:1, minHeight:0 wrapper); otherwise the 80vh cap behaves as before. */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '80vh' }}>
+            {/* With child grids the surrounding container already bounds the height, and the cap would
+                stop the grid from claiming the space freed by collapsing them. */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: hasChildGrids ? 'none' : '80vh' }}>
                 <DataGridPremium
                     {...gridProps}
                     sx={gridSxProps}
@@ -2018,36 +2057,49 @@ const GridBase = memo(({
             {showPageTitle !== false && <PageTitle navigate={navigate} showBreadcrumbs={!hideBreadcrumb && !hideBreadcrumbInGrid}
                 breadcrumbs={breadCrumbs} enableBackButton={navigateBack} breadcrumbColor={breadcrumbColor} model={model} />}
             {hasChildGrids ? (
-                <Box sx={{ display: 'flex', flexDirection: 'column', height: childGridsContainerHeight, gap: 2 }}>
-                    <Box sx={{ flex: 3, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                <Box
+                    ref={splitContainerRef}
+                    // overflow hidden so a rounding error in the split can never spill out of the
+                    // fixed height and put a scrollbar on the whole page - each grid scrolls itself.
+                    sx={{ display: 'flex', flexDirection: 'column', height: childGridsContainerHeight, overflow: 'hidden', ...(isResizingSplit && { userSelect: 'none' }) }}
+                >
+                    <Box sx={{ flex: 1, minHeight: PARENT_GRID_MIN_HEIGHT, display: 'flex', flexDirection: 'column' }}>
                         {mainGridElement}
                     </Box>
-                    <Box sx={{ flex: 2, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', bgcolor: 'background.paper' }}>
-                        {selectedChildRow ? (
-                            <model.ChildGrids
-                                parent={selectedChildRow}
-                                relationFilters={childRelationFilters}
-                                childGridStyle={CHILD_GRIDS_FILL_STYLE}
-                                disableCellRedirect
-                                tTranslate={tTranslate}
-                                tOpts={tOpts}
-                                sx={propsSx}
-                                {...props.childGridProps}
-                            />
-                        ) : (
-                            <Box sx={{ width: '100%', minWidth: 0 }}>
-                                <Box sx={{ borderBottom: 1, borderColor: 'divider', minWidth: 0 }}>
-                                    <Tabs value={0} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile>
-                                        {model.relationItems.map(childModel => (
-                                            <Tab key={childModel.name} label={tTranslate(childModel.listTitle || childModel.title, tOpts)} />
-                                        ))}
-                                    </Tabs>
-                                </Box>
-                                <Box sx={{ p: 3 }}>
-                                    {tTranslate('Please select a record to see its details', tOpts)}
-                                </Box>
-                            </Box>
-                        )}
+                    <SplitResizer
+                        onResizeStart={handleSplitResizeStart}
+                        onResize={handleSplitResize}
+                        onResizeEnd={handleSplitResizeEnd}
+                        label={tTranslate('Resize child grids', tOpts)}
+                    />
+                    {/* maxHeight keeps the parent grid's floor (and the handle's own height) intact when
+                        the window resizes, without re-clamping the dragged height on every resize. */}
+                    <Box
+                        ref={childPanelRef}
+                        sx={{
+                            flex: '0 0 auto',
+                            height: childPanelHeight ?? CHILD_GRIDS_DEFAULT_HEIGHT,
+                            minHeight: CHILD_GRIDS_MIN_HEIGHT,
+                            maxHeight: `calc(100% - ${CHILD_GRIDS_RESERVED_HEIGHT}px)`,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            overflow: 'hidden',
+                            bgcolor: 'background.paper'
+                        }}
+                    >
+                        <model.ChildGrids
+                            parent={selectedChildRow}
+                            relationFilters={childRelationFilters}
+                            childGridStyle={CHILD_GRIDS_FILL_STYLE}
+                            disableCellRedirect
+                            collapsed={childGridsCollapsed}
+                            onExpandRequest={expandChildGrids}
+                            emptyMessage={tTranslate('Please select a record to see its details', tOpts)}
+                            tTranslate={tTranslate}
+                            tOpts={tOpts}
+                            sx={propsSx}
+                            {...props.childGridProps}
+                        />
                     </Box>
                 </Box>
             ) : mainGridElement}
