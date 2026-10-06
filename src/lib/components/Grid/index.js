@@ -1683,10 +1683,6 @@ const GridBase = memo(({
                 return { ...item, value: null };
             }
 
-            if (isNumber && value < 0) {
-                return { ...item, value: null };
-            }
-
             if ((emptyIsAnyOfOperatorFilters.includes(operator)) || (isNumber && !isNaN(value)) || (!isNumber)) {
                 const isKeywordField = isElasticScreen && gridColumns.filter(element => element.field === field)[0]?.isKeywordField;
                 if (isKeywordField) {
