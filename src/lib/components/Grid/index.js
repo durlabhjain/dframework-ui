@@ -1502,9 +1502,14 @@ const GridBase = memo(({
 
     const updateAssignment = useCallback(({ unassign, assign }) => {
         const assignedValues = Array.isArray(selected) ? selected : (selected ? selected.split(',') : []);
-        const unassignSet = new Set((unassign || []).map(id => parseInt(id)));
-        const filtered = assignedValues.filter(id => !unassignSet.has(parseInt(id)));
-        const finalValues = assign ? [...new Set([...filtered, ...assign])] : filtered;
+        // Assigned ids are strings but row ids are numbers, so key everything as strings -
+        // a Set would otherwise keep "12" and 12 as two separate entries
+        const ids = new Set(assignedValues.map(String));
+        (unassign || []).forEach(id => ids.delete(String(id)));
+        (assign || []).forEach(id => ids.add(String(id)));
+        const finalValues = [...ids];
+        // Nothing changed: skip, else an equal-but-new value reloads both grids
+        if (finalValues.join(',') === assignedValues.map(String).join(',')) return;
         onAssignChange(typeof selected === constants.string ? finalValues.join(',') : finalValues);
     }, [selected, onAssignChange]);
 
