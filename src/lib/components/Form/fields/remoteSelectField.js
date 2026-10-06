@@ -192,6 +192,15 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
         applyValue(isMultiSelect ? newValue.map(o => o.value) : (newValue ? newValue.value : ''));
     }, [isMultiSelect, applyValue]);
 
+    // Mirrors select.js: an option carrying isDisabled is unselectable. A column can also derive it
+    // from the lookup row (e.g. an inactive record) - skipped in filterMode, where filtering by an
+    // existing-but-inactive value is still valid.
+    const isOptionDisabled = useCallback((option) => {
+        if (option?.isDisabled) return true;
+        if (filterMode || typeof column.getOptionDisabled !== 'function') return false;
+        return Boolean(column.getOptionDisabled(option));
+    }, [filterMode, column]);
+
     const control = (
         <Autocomplete
             multiple={isMultiSelect}
@@ -204,6 +213,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                 },
             }}
             getOptionKey={(option) => option.value}
+            getOptionDisabled={isOptionDisabled}
             filterOptions={(x) => x}
             loading={isChunkLoading}
             loadingText={`${tTranslate('Loading', tOpts)}...`}
