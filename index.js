@@ -5014,9 +5014,11 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	}, [getSelectedRowIds, onRowSelectionModelChangeProp]);
 	const updateAssignment = useCallback(({ unassign, assign }) => {
 		const assignedValues = Array.isArray(selected) ? selected : selected ? selected.split(",") : [];
-		const unassignSet = new Set((unassign || []).map((id) => parseInt(id)));
-		const filtered = assignedValues.filter((id) => !unassignSet.has(parseInt(id)));
-		const finalValues = assign ? [.../* @__PURE__ */ new Set([...filtered, ...assign])] : filtered;
+		const ids = new Set(assignedValues.map(String));
+		(unassign || []).forEach((id) => ids.delete(String(id)));
+		(assign || []).forEach((id) => ids.add(String(id)));
+		const finalValues = [...ids];
+		if (finalValues.join(",") === assignedValues.map(String).join(",")) return;
 		onAssignChange(typeof selected === constants.string ? finalValues.join(",") : finalValues);
 	}, [selected, onAssignChange]);
 	const onAssign = useCallback(() => {
