@@ -3404,6 +3404,11 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 	const handleChange = useCallback((e, newValue) => {
 		applyValue(isMultiSelect ? newValue.map((o) => o.value) : newValue ? newValue.value : "");
 	}, [isMultiSelect, applyValue]);
+	const isOptionDisabled = useCallback((option) => {
+		if (option?.isDisabled) return true;
+		if (filterMode || typeof column.getOptionDisabled !== "function") return false;
+		return Boolean(column.getOptionDisabled(option));
+	}, [filterMode, column]);
 	const control = /* @__PURE__ */ jsx(Autocomplete, {
 		multiple: isMultiSelect,
 		disabled: isReadOnly,
@@ -3413,6 +3418,7 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 			"& .MuiAutocomplete-inputRoot": { flexWrap: "wrap" }
 		},
 		getOptionKey: (option) => option.value,
+		getOptionDisabled: isOptionDisabled,
 		filterOptions: (x) => x,
 		loading: isChunkLoading,
 		loadingText: `${tTranslate("Loading", tOpts)}...`,
@@ -5198,10 +5204,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			const { field, operator, value } = item;
 			const isNumber = (gridColumns.find((col) => col.field === field) || {}).type === constants.Number;
 			if (NO_VALUE_OPERATORS.includes(operator)) return {
-				...item,
-				value: null
-			};
-			if (isNumber && value < 0) return {
 				...item,
 				value: null
 			};
@@ -8134,7 +8136,7 @@ var ChildGridTabs = React.memo(({ relations, models, parent, relationFilters, wh
 	});
 });
 //#endregion
-//#region \0@oxc-project+runtime@0.152.0/helpers/esm/typeof.js
+//#region \0@oxc-project+runtime@0.153.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -8144,7 +8146,7 @@ function _typeof(o) {
 	}, _typeof(o);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.152.0/helpers/esm/toPrimitive.js
+//#region \0@oxc-project+runtime@0.153.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -8156,13 +8158,13 @@ function toPrimitive(t, r) {
 	return ("string" === r ? String : Number)(t);
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.152.0/helpers/esm/toPropertyKey.js
+//#region \0@oxc-project+runtime@0.153.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
 //#endregion
-//#region \0@oxc-project+runtime@0.152.0/helpers/esm/defineProperty.js
+//#region \0@oxc-project+runtime@0.153.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
