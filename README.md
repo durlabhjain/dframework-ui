@@ -1268,3 +1268,26 @@ getList({ ... }); // Shows/hides loader automatically
 5. **Type Safety**: Better TypeScript support with explicit function signatures
 
 ---
+# Grid request parameters and refresh
+
+`GridBase` and model grids accept `extraParamsComparison="value"` to avoid a
+list request when a parent supplies a new object containing the same parameter
+values. The default remains `"reference"` for backwards compatibility. Value
+mode compares immutable plain objects and arrays, preserves array order and
+missing/undefined distinctions, and compares other values by identity. Traversal
+is limited to 1,000 values; unsupported or oversized data falls back to treating
+the parameters as changed. No request data is serialized or modified.
+
+Use `refreshKey` (for example, an incrementing number) when a successful mutation
+changes server data without changing the query. Changing it fetches the current
+list without remounting the grid or resetting its layout, sorting, or pagination.
+It is not sent to the server. Parameter changes and a refresh in the same render
+produce one list request. Existing list cancellation and export behavior apply.
+
+```jsx
+<model.Grid
+    extraParams={{ selectedClients, statusId }}
+    extraParamsComparison="value"
+    refreshKey={orderRevision}
+/>
+```

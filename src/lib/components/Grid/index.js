@@ -42,6 +42,7 @@ import { styled } from '@mui/material/styles';
 import { ERROR_CODES } from '../../errors';
 import RemoteSelectField from '../Form/fields/remoteSelectField.js';
 import { useChangedDeps } from '../../hooks/useChangedDeps';
+import useExtraParams from './useExtraParams';
 
 // MUI's fixed field id for the auto-generated treeData grouping column - not part of x-data-grid-premium's public named exports.
 const TREE_DATA_GROUPING_FIELD = '__tree_data_group__';
@@ -303,8 +304,11 @@ const GridBase = memo(({
     gridProps,
     childGridsContainerHeight: propsChildGridsContainerHeight,
     preserveListState: preserveListStateProp,
+    extraParamsComparison = 'reference',
+    refreshKey,
     ...props
 }) => {
+    const requestExtraParams = useExtraParams(props.extraParams, extraParamsComparison);
     // Overridable per-call or per-model since consumer chrome above the grid varies.
     const childGridsContainerHeight = propsChildGridsContainerHeight ?? model.childGridsContainerHeight ?? CHILD_GRIDS_CONTAINER_HEIGHT;
     const { onDataLoaded, processRowUpdate: processRowUpdateProp, onRowSelectionModelChange: onRowSelectionModelChangeProp } = props;
@@ -1107,7 +1111,7 @@ const GridBase = memo(({
     useChangedDeps('fetchData', {
         hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi,
         filterModelForFetch, baseFilters, id, assigned, available, selected,
-        extraParams: props.extraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters
+        extraParams: requestExtraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters, refreshKey
     }, model.debug);
 
     const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns, exportKey } = {}) => {
@@ -1146,7 +1150,7 @@ const GridBase = memo(({
         const mergedExtraParams = {
             ...model.relationsParam,
             ...extraParams,
-            ...props.extraParams,
+            ...requestExtraParams,
             ...joinParams,
         };
 
@@ -1221,7 +1225,7 @@ const GridBase = memo(({
         } finally {
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
-    }, [hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, props.extraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters, tTranslate, tOpts, apiRef, serverGroupField, groupAggregations]);
+    }, [hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, requestExtraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters, tTranslate, tOpts, apiRef, serverGroupField, groupAggregations]);
 
     const openForm = useCallback(async ({ id, record = {}, mode }) => {
         if (setActiveRecord) {
@@ -1603,7 +1607,7 @@ const GridBase = memo(({
 
     useEffect(() => {
         fetchData();
-    }, [fetchData]);
+    }, [fetchData, refreshKey]);
 
     // Start recording user changes after layout and preference initialization settle.
     const listStateArmedRef = useRef(false);
