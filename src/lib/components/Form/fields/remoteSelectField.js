@@ -201,6 +201,13 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
         return Boolean(column.getOptionDisabled(option));
     }, [filterMode, column]);
 
+    // Per-option styling derived from the lookup row, for a distinction that must not block
+    // selection (e.g. greying an inactive record that existing records still point at).
+    const getOptionSx = useCallback((option) => {
+        if (typeof column.getOptionSx !== 'function') return undefined;
+        return column.getOptionSx(option);
+    }, [column]);
+
     const control = (
         <Autocomplete
             multiple={isMultiSelect}
@@ -293,7 +300,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
                         {isMultiSelect && (
                             <Checkbox size="small" disableRipple sx={{ mr: 1, p: 0 }} checked={selected} />
                         )}
-                        <Typography variant="body2" noWrap>{option.label}</Typography>
+                        <Typography variant="body2" noWrap sx={getOptionSx(option)}>{option.label}</Typography>
                     </li>
                 );
             }}
