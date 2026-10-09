@@ -104,7 +104,6 @@ const Form = ({
   const canCopy = canAdd && Boolean({ ...model.permissions, ...permissions }.copy);
   const { hideBreadcrumb = false, navigateBack, actions: actionsMode = 'grid' } = model;
   const showFormActions = actionsMode === 'form' || actionsMode === 'both';
-  const recordEditable = !("canEdit" in data) || data.canEdit;
 
   const handleNavigation = useCallback(() => {
     let navigatePath;
@@ -131,6 +130,11 @@ const Form = ({
   }, [navigateBack, navigate, params, data, pathname]);
 
   const isNew = useMemo(() => utils.emptyIdValues.includes(id), [id]);
+  // A copied or new record is not the locked source row, so the source's canEdit never applies to it.
+  const recordEditable = isNew || !("canEdit" in data) || data.canEdit;
+  // Creating a record is governed by Add, not Edit - an add-only user reaches this form from the
+  // grid's Add button and must be able to fill in and save it.
+  const canSaveRecord = isNew ? canAdd : canEdit;
 
   const initialValues = useMemo(() => isNew
     ? { ...model.initialValues, ...data, ...baseSaveData }
@@ -338,15 +342,16 @@ const Form = ({
   ];
   const showRelations = Number(id) !== 0 && Boolean(relations.length);
   const showSaveButton = searchParams.has("showRelation");
-  const readOnlyRelations = !recordEditable || !canEdit || data.readOnlyRelations;
+  const readOnlyRelations = !recordEditable || !canSaveRecord || data.readOnlyRelations;
   const deleteRecordName = model.linkColumn ? data[model.linkColumn] : undefined;
   const { showPageTitle = true } = model;
   const showCopyButton = showFormActions && canCopy && !isNew;
   // A delete-only user reaches this form solely to delete the record, so Delete is offered even
   // when the model keeps its actions in the grid - otherwise the form would have no action at all.
   const showDeleteButton = canDelete && !isNew && (showFormActions || !canEdit);
-  // No edit rights means the record is viewed, not edited: every field renders read-only.
-  const isFormReadOnly = Boolean(readOnly) || !canEdit;
+  // No edit rights, or a record locked for this row, means it is viewed and not edited: every
+  // field renders read-only, matching how relations and the Save button are already gated.
+  const isFormReadOnly = Boolean(readOnly) || !canSaveRecord || !recordEditable;
   const hasFormHeaderActions = showCopyButton || showDeleteButton;
   return (
     <>
@@ -393,7 +398,7 @@ const Form = ({
               {showFormActions && hasFormHeaderActions && (
                 <Divider orientation="vertical" flexItem />
               )}
-              {canEdit && recordEditable && !showSaveButton && !readOnly && (
+              {canSaveRecord && recordEditable && !showSaveButton && !readOnly && (
                 <Button
                   variant="contained"
                   type="submit"
