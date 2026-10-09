@@ -3568,6 +3568,46 @@ function useChangedDeps(label, namedDeps, enabled = false) {
 	});
 }
 //#endregion
+//#region src/lib/components/Grid/useExtraParams.js
+function equalExtraParams(left, right) {
+	if (Object.is(left, right)) return true;
+	const pending = [[left, right]];
+	const seenLeft = /* @__PURE__ */ new WeakSet();
+	const seenRight = /* @__PURE__ */ new WeakSet();
+	let remaining = 1e3;
+	while (pending.length) {
+		if (--remaining < 0) return false;
+		const [a, b] = pending.pop();
+		if (Object.is(a, b)) continue;
+		if (!a || !b || typeof a !== "object" || typeof b !== "object") return false;
+		const array = Array.isArray(a);
+		if (array !== Array.isArray(b)) return false;
+		if (!array && (Object.getPrototypeOf(a) !== Object.prototype || Object.getPrototypeOf(b) !== Object.prototype)) return false;
+		if (array && (a.length !== b.length || a.length > remaining)) return false;
+		if (seenLeft.has(a) || seenRight.has(b)) return false;
+		seenLeft.add(a);
+		seenRight.add(b);
+		const keys = Object.keys(a);
+		if (keys.length > remaining || keys.length !== Object.keys(b).length) return false;
+		for (const key of keys) {
+			const aProp = Object.getOwnPropertyDescriptor(a, key);
+			const bProp = Object.getOwnPropertyDescriptor(b, key);
+			if (!aProp || !bProp || !("value" in aProp) || !("value" in bProp)) return false;
+			pending.push([aProp.value, bProp.value]);
+		}
+	}
+	return true;
+}
+function useExtraParams(value, comparison) {
+	const [previous, setPrevious] = useState(() => value);
+	if (comparison !== "value") return value;
+	if (!equalExtraParams(previous, value)) {
+		setPrevious(() => value);
+		return value;
+	}
+	return previous;
+}
+//#endregion
 //#region src/lib/components/Grid/index.js
 var TREE_DATA_GROUPING_FIELD = "__tree_data_group__";
 var defaultPageSize = 50;
@@ -3794,7 +3834,8 @@ var CustomCheckBox = ({ params, handleSelectRow, idProperty }) => {
 		inputProps: { "aria-label": "checkbox" }
 	});
 };
-var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, relationName, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, childGridsContainerHeight: propsChildGridsContainerHeight, preserveListState: preserveListStateProp, ...props }) => {
+var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, relationName, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, childGridsContainerHeight: propsChildGridsContainerHeight, preserveListState: preserveListStateProp, extraParamsComparison = "reference", refreshKey, ...props }) => {
+	const requestExtraParams = useExtraParams(props.extraParams, extraParamsComparison);
 	const childGridsContainerHeight = propsChildGridsContainerHeight ?? model.childGridsContainerHeight ?? CHILD_GRIDS_CONTAINER_HEIGHT;
 	const { onDataLoaded, processRowUpdate: processRowUpdateProp, onRowSelectionModelChange: onRowSelectionModelChangeProp } = props;
 	const staticDataSource = props.staticData ?? model.staticData;
@@ -4592,11 +4633,12 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		assigned,
 		available,
 		selected,
-		extraParams: props.extraParams,
+		extraParams: requestExtraParams,
 		sortModelForFetch,
 		fetchColumns,
 		parentFilters,
-		additionalFilters
+		additionalFilters,
+		refreshKey
 	}, model.debug);
 	const fetchData = useCallback(async ({ action = "list", extraParams = {}, isPivotExport = false, contentType, columns, exportKey } = {}) => {
 		if (hasStaticData || !backendApi || !preferencesReady) return;
@@ -4625,7 +4667,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		const mergedExtraParams = {
 			...model.relationsParam,
 			...extraParams,
-			...props.extraParams,
+			...requestExtraParams,
 			...joinParams
 		};
 		if (assigned || available) {
@@ -4706,7 +4748,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		assigned,
 		available,
 		selected,
-		props.extraParams,
+		requestExtraParams,
 		sortModelForFetch,
 		fetchColumns,
 		parentFilters,
@@ -5122,7 +5164,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	]);
 	useEffect(() => {
 		fetchData();
-	}, [fetchData]);
+	}, [fetchData, refreshKey]);
 	const listStateArmedRef = useRef(false);
 	const listStateCommitTimerRef = useRef(null);
 	useEffect(() => {
