@@ -362,3 +362,90 @@ it('still fetches records when no preference key is configured', async () => {
     expect(mocks.request).not.toHaveBeenCalled();
     expect(apiRef.current.getSortModel()).toEqual([]);
 });
+
+it('fetches only changed parameter values and explicitly refreshed requests in value mode', async () => {
+    const paramsModel = { ...model, preferenceId: undefined };
+    const apiRef = { current: null };
+    const element = (params, refreshKey = 0) => <Grid model={paramsModel} apiRef={apiRef}
+        extraParamsComparison="value" extraParams={params} refreshKey={refreshKey} />;
+    const { rerender } = render(element({ selectedClients: [1], filter: { status: 0 } }));
+    await ready();
+    mocks.getList.mockClear();
+    rerender(element({ filter: { status: 0 }, selectedClients: [1] }));
+    expect(mocks.getList).not.toHaveBeenCalled();
+    rerender(element({ selectedClients: [2], filter: { status: 0 } }));
+    await ready();
+    expect(mocks.getList).toHaveBeenCalledTimes(1);
+    expect(mocks.getList.mock.calls[0][0].extraParams.selectedClients).toEqual([2]);
+    mocks.getList.mockClear();
+    rerender(element({ selectedClients: [2], filter: { status: 0 } }, 1));
+    await ready();
+    expect(mocks.getList).toHaveBeenCalledTimes(1);
+    expect(mocks.getList.mock.calls[0][0].extraParams).not.toHaveProperty('refreshKey');
+    expect(apiRef.current.getSortModel()).toEqual([]);
+});
+
+it('preserves the existing reference-triggered refresh contract by default', async () => {
+    const paramsModel = { ...model, preferenceId: undefined };
+    const apiRef = { current: null };
+    const element = () => <Grid model={paramsModel} apiRef={apiRef} extraParams={{ status: 0 }} />;
+    const { rerender } = render(element());
+    await ready();
+    mocks.getList.mockClear();
+    rerender(element());
+    await ready();
+    expect(mocks.getList).toHaveBeenCalledTimes(1);
+});
+
+it('cancels an in-flight list on explicit refresh and ignores its late result', async () => {
+    const paramsModel = { ...model, preferenceId: undefined };
+    const apiRef = { current: null };
+    let resolveOld;
+    mocks.getList.mockReturnValueOnce(new Promise(resolve => { resolveOld = resolve; }));
+    const element = (refreshKey) => <Grid model={paramsModel} apiRef={apiRef}
+        extraParamsComparison="value" extraParams={{ status: 0 }} refreshKey={refreshKey} />;
+    const { rerender } = render(element(0));
+    await ready();
+    const signal = mocks.getList.mock.calls[0][0].signal;
+    mocks.getList.mockResolvedValue({ records: [{ id: 2, name: 'fresh' }], recordCount: 1, lookups: {} });
+    rerender(element(1));
+    await waitFor(() => expect(apiRef.current.getRow(2)).toBeTruthy());
+    expect(signal.aborted).toBe(true);
+    await act(async () => resolveOld({ records: [{ id: 1, name: 'stale' }], recordCount: 1, lookups: {} }));
+    expect(apiRef.current.getRow(1)).toBeFalsy();
+    expect(apiRef.current.getRow(2).name).toBe('fresh');
+});
+
+it('coalesces a parameter change with refresh and preserves paging and sorting', async () => {
+    const paramsModel = { ...model, preferenceId: undefined };
+    const apiRef = { current: null };
+    const element = (status, refreshKey) => <Grid model={paramsModel} apiRef={apiRef}
+        extraParamsComparison="value" extraParams={{ status }} refreshKey={refreshKey} />;
+    const { rerender } = render(element(0, 0));
+    await ready();
+    act(() => {
+        apiRef.current.setPaginationModel({ page: 1, pageSize: 20 });
+        apiRef.current.setSortModel([{ field: 'name', sort: 'asc' }]);
+    });
+    await waitFor(() => expect(mocks.getList.mock.lastCall[0].page).toBe(1));
+    mocks.getList.mockClear();
+    rerender(element(1, 1));
+    await ready();
+    expect(mocks.getList).toHaveBeenCalledTimes(1);
+    expect(mocks.getList.mock.calls[0][0]).toMatchObject({ page: 1, pageSize: 20,
+        sortModel: [{ field: 'name', sort: 'asc' }], extraParams: { status: 1 } });
+});
+
+it('exports current parameters without cancelling an in-flight list request', async () => {
+    const paramsModel = { ...model, preferenceId: undefined };
+    mocks.getList.mockReturnValueOnce(new Promise(() => {}));
+    render(<Grid model={paramsModel} extraParamsComparison="value" extraParams={{ status: 2 }} refreshKey={1} />);
+    await ready();
+    const listSignal = mocks.getList.mock.calls[0][0].signal;
+    mocks.getList.mockResolvedValue(undefined);
+    fireEvent.click(screen.getByRole('button', { name: /export/i }));
+    fireEvent.click(await screen.findByRole('menuitem', { name: 'CSV' }));
+    await waitFor(() => expect(mocks.getList).toHaveBeenCalledTimes(2));
+    expect(mocks.getList.mock.calls[1][0]).toMatchObject({ contentType: 'text/csv', extraParams: { status: 2 }, signal: null });
+    expect(listSignal.aborted).toBe(false);
+});
