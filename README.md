@@ -555,7 +555,13 @@ const exampleConfig = {
 
 ## Permissions
 
-The `permissions` object controls grid actions, including adding, editing, deleting, and exporting data. All properties are `true` by default.
+The `permissions` object controls grid actions, including adding, editing, deleting, and exporting data. Add, Edit and Delete default to `true`; Copy requires `copy: true` and Add permission.
+
+Grid and Form resolve permissions in the same order: defaults, model configuration, then component overrides. Matching `userData.permissions` entries further restrict Add (`Permission2`), Edit (`Permission3`) and Delete (`Permission4`) for the model's module. For compatibility, applications without a matching module entry retain their configured permissions. Pass the same component overrides to the Grid and its Form when using per-instance restrictions; use model configuration or user permissions for restrictions that must also apply when a form is opened directly.
+
+New records require Add to save. Copied records require Add and Copy, and ignore the source record's `canEdit` lock. Existing records require Edit and an editable record to save. A user with Copy or Delete permission may open an existing record with read-only fields to use those actions. `actions: 'grid' | 'form' | 'both'` controls where Copy and Delete appear; it does not grant permissions or move actions as a side effect of losing Edit permission.
+
+Form `readOnly`, model `readOnly`, and the `showRelation` view block Save, Copy, Delete and editable relations. All built-in fields honor the form's read-only state, including file uploads. Tabbed Finish and custom layout submission use the same save guard as the Save button. Custom layouts receive `readOnly` and `canSubmit` and should use them to render their controls. Record-level locks and `readOnlyRelations` also apply to relations. Backend endpoints must independently enforce authorization.
 
 #### Example:
 

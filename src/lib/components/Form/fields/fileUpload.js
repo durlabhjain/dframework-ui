@@ -11,7 +11,7 @@ const MB = 1024 * 1024;
 function FileUpload({ column, field, formik }) {
     const inputValue = formik.values[field] || "";
     const { getApiEndpoint } = useStateContext();
-    const { maxSize, formats } = column;
+    const { maxSize, formats, readOnly } = column;
     const uploadApi = getApiEndpoint("upload");
     const mediaApi = getApiEndpoint("media");
     const url = getApiEndpoint();
@@ -26,6 +26,7 @@ function FileUpload({ column, field, formik }) {
     const id = associationId?.split("-")[0] || 1;
 
     const handleRadioChange = (event) => {
+        if (readOnly) return;
         const isExternal = event.target.value;
         setFormState({
             ...formState,
@@ -36,10 +37,12 @@ function FileUpload({ column, field, formik }) {
     };
 
     const handleInputChange = (e) => {
+        if (readOnly) return;
         formik.setFieldValue(field, e.target.value);
     };
 
     const handleFileChange = (event) => {
+        if (readOnly) return;
         const selectedFile = event.target.files[0];
         if (!selectedFile) return;
         if (maxSize && selectedFile.size > maxSize * MB) {
@@ -54,7 +57,7 @@ function FileUpload({ column, field, formik }) {
     };
 
     const handleFileUpload = async () => {
-        if (!formState.selectedFile) return;
+        if (readOnly || !formState.selectedFile) return;
 
         setLoading(true); // Start loading
         try {
@@ -111,8 +114,8 @@ function FileUpload({ column, field, formik }) {
                     aria-label="is-external-link"
                     name="is-external-link"
                 >
-                    <FormControlLabel value="yes" control={<Radio />} label="Yes" />
-                    <FormControlLabel value="no" control={<Radio />} label="No" />
+                    <FormControlLabel value="yes" control={<Radio />} label="Yes" disabled={readOnly} />
+                    <FormControlLabel value="no" control={<Radio />} label="No" disabled={readOnly} />
                 </RadioGroup>
             </Box>
 
@@ -134,6 +137,7 @@ function FileUpload({ column, field, formik }) {
                                 }
                             }}
                             onChange={handleInputChange}
+                            InputProps={{ readOnly }}
                             placeholder="Enter external link"
                         />
                     ) : (
@@ -154,10 +158,10 @@ function FileUpload({ column, field, formik }) {
                     <Button
                         variant="outlined"
                         component="label"
-                        disabled={loading} // Disable while loading
+                        disabled={readOnly || loading}
                     >
                         Choose File
-                        <input type="file" hidden aria-label="Choose file" onChange={handleFileChange} />
+                        <input type="file" hidden aria-label="Choose file" disabled={readOnly} onChange={handleFileChange} />
                     </Button>
                     {formState.selectedFile && (
                         <Tooltip title={formState.selectedFile.name} arrow>
@@ -173,7 +177,7 @@ function FileUpload({ column, field, formik }) {
                         variant="contained"
                         color="primary"
                         onClick={handleFileUpload}
-                        disabled={!formState.selectedFile || loading} // Disable while loading
+                        disabled={readOnly || !formState.selectedFile || loading}
                     >
                         {loading ? <CircularProgress size={24} color="inherit" /> : "Upload File"}
                     </Button>

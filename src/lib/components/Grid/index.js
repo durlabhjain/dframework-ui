@@ -32,7 +32,8 @@ import LocalizedDatePicker from './LocalizedDatePicker';
 import CustomToolbar from './CustomToolbar';
 import SplitResizer, { SPLIT_RESIZER_HEIGHT } from './SplitResizer';
 import useGridPreferences, { parsePreferenceState } from './useGridPreferences';
-import utils, { getPermissions } from '../utils';
+import utils from '../utils';
+import { getModelPermissions, getRecordAccess } from '../permissions';
 import HistoryIcon from '@mui/icons-material/History';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import Checkbox from '@mui/material/Checkbox';
@@ -455,15 +456,15 @@ const GridBase = memo(({
     }, []);
 
     const showAddIcon = model.showAddIcon === true;
-    const toLink = model.columns.flatMap(({ link }) => link ? [link] : []);
     const { stateData, formatDate, getApiEndpoint, buildUrl, setPageTitle } = useStateContext();
     const [isLoading, setIsLoading] = useState(false);
     const effectivePermissions = useMemo(() => ({ ...constants.permissions, ...model.permissions, ...permissions }), [model.permissions, permissions]);
     const emptyIsAnyOfOperatorFilters = EMPTY_IS_ANY_OF_OPERATOR_FILTERS;
     const userData = stateData.userData || {};
     const documentField = model.columns.find(ele => ele.type === 'fileUpload')?.field || "";
-    const userDefinedPermissions = { add: effectivePermissions.add, edit: effectivePermissions.edit, delete: effectivePermissions.delete };
-    const { canAdd, canEdit, canDelete } = getPermissions({ userData, model, userDefinedPermissions });
+    const modelPermissions = getModelPermissions({ userData, model, permissions, readOnly: isReadOnly });
+    const { canAdd, canEdit, canDelete, canCopy } = modelPermissions;
+    const { canOpen: canOpenRecord } = getRecordAccess({ permissions: modelPermissions });
     const { addUrlParamKey, searchParamKey, hideBreadcrumb = false, tableName, showHistory = true, hideBreadcrumbInGrid = false, breadcrumbColor, disablePivoting = false, columnHeaderHeight = 70, disablePagination = false, showToolbar = true } = model;
     const gridTitle = model.gridTitle || model.title;
     const preferenceApi = getApiEndpoint("GridPreferenceManager");
@@ -474,6 +475,7 @@ const GridBase = memo(({
     const [rowPanelId, setRowPanelId] = useState(null);
     const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
     const enableRowDetailPanel = typeof model.getDetailPanelContent === 'function';
+    const canOpenFromCell = !isReadOnly && !disableCellRedirect && (enableRowDetailPanel || canOpenRecord);
     const [groupingModel, setGroupingModel] = useState(
         () => listStateSnapshot?.gridState?.rowGrouping?.model ?? (Array.isArray(props.rowGroupingField) ? props.rowGroupingField : [])
     );
@@ -813,7 +815,7 @@ const GridBase = memo(({
                     key: actionTypes.Copy,
                     title: "Copy",
                     icon: 'copy',
-                    show: !!canAdd && !!effectivePermissions.copy,
+                    show: canCopy,
                 },
                 {
                     key: actionTypes.Delete,
@@ -843,11 +845,10 @@ const GridBase = memo(({
     }, [
         forAssignment,
         isReadOnly,
-        canAdd,
         canEdit,
         canDelete,
         showHistory,
-        effectivePermissions.copy,
+        canCopy,
         documentField.length,
         customActions
     ]);
@@ -927,10 +928,9 @@ const GridBase = memo(({
             if (column.renderCell) {
                 overrides.renderCell = column.renderCell;
             }
-            // The link column only navigates when it has an explicit linkTo or can open the record
-            // form, so without edit/delete rights it renders as plain text instead of a dead link.
+            // Record links must match the click handler; explicit destinations remain independent.
             const opensRecordForm = column.field === model.linkColumn && !column.linkTo;
-            if (column.linkTo || (column.link && (!opensRecordForm || canEdit || canDelete))) {
+            if (column.linkTo || (column.link && (!opensRecordForm || canOpenFromCell))) {
                 overrides.cellClassName = 'mui-grid-linkColumn';
             }
 
@@ -995,7 +995,7 @@ const GridBase = memo(({
         if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push('__detail_panel_toggle__');
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
-    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, gridActionConfig.length, clientRowGroupingEnabled, canEdit, canDelete, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate]);
+    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, gridActionConfig.length, clientRowGroupingEnabled, canOpenFromCell, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate]);
 
     // Shallow-copy columns when lookups change so MUI DataGrid's GridFilterInputSingleSelect
     // sees new column object references and re-evaluates its memoized currentValueOptions.
@@ -1312,16 +1312,16 @@ const GridBase = memo(({
                         setRowPanelId(prevId => prevId === rowId ? null : rowId);
                         return;
                     }
-                    // Without edit rights the record form must stay closed; delete-only users still
-                    // need it, since that is where their Delete action lives.
-                    if (!canEdit && !canDelete) {
+                    if (!canOpenRecord) {
                         return;
                     }
                     return openForm({ id: record[idProperty], record });
                 }
                 case actionTypes.Copy:
+                    if (!canCopy) return;
                     return openForm({ id: record[idProperty], mode: 'copy' });
                 case actionTypes.Delete:
+                    if (!canDelete) return;
                     setIsDeleting(true);
                     setRecord({ name: record[model.linkColumn], id: record[idProperty] });
                     break;
@@ -1342,11 +1342,9 @@ const GridBase = memo(({
         if (action === actionTypes.Download) {
             handleDownload({ documentLink: record[documentField] });
         }
-        if (!toLink.length) {
-            return;
-        }
         const { row } = cellParams;
         const columnConfig = lookupMap[cellParams.field] || {};
+        if (!columnConfig.linkTo) return;
         const historyObject = {
             pathname: template.replaceTags(columnConfig.linkTo, row)
         };
@@ -1354,9 +1352,10 @@ const GridBase = memo(({
             historyObject.state = row;
         }
         navigate(historyObject);
-    }, [disableCellRedirect, isReadOnly, canEdit, canDelete, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, gridTitle, getApiEndpoint, handleDownload, openForm]);
+    }, [disableCellRedirect, isReadOnly, canOpenRecord, canCopy, canDelete, onCellClick, lookupMap, model, idProperty, documentField, navigate, customActions, tableName, searchParamKey, gridTitle, getApiEndpoint, handleDownload, openForm]);
 
     const handleDelete = useCallback(async () => {
+        if (!canDelete) return;
         if (isStaticDataWithoutBackendApi) {
             snackbar.showErrorCode(ERROR_CODES.API_UNDEFINED);
             return;
@@ -1371,7 +1370,7 @@ const GridBase = memo(({
         } finally {
             setIsDeleting(false);
         }
-    }, [isStaticDataWithoutBackendApi, backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts, buildUrl]);
+    }, [canDelete, isStaticDataWithoutBackendApi, backendApi, record?.id, snackbar, model, fetchData, tTranslate, tOpts, buildUrl]);
 
     const clearError = useCallback(() => {
         setErrorMessage(null);
@@ -1386,15 +1385,12 @@ const GridBase = memo(({
     }, [processRowUpdateProp, data]);
 
     const onCellDoubleClick = useCallback((event) => {
-        if (event.row.canEdit === false) {
-            return;
-        }
         const { row: record } = event;
         if (typeof onCellDoubleClickOverride === constants.function) {
             onCellDoubleClickOverride(event);
             return;
         }
-        if (!isReadOnly && !isDoubleClicked && !disableCellRedirect && (canEdit || canDelete)) {
+        if (!isReadOnly && !isDoubleClicked && !disableCellRedirect && canOpenRecord) {
             openForm({ id: record[idProperty], record });
         }
         if (isReadOnly && model.rowRedirectLink) {
@@ -1409,9 +1405,10 @@ const GridBase = memo(({
         if (typeof onRowDoubleClick === constants.function) {
             onRowDoubleClick(event);
         }
-    }, [onCellDoubleClickOverride, isReadOnly, isDoubleClicked, disableCellRedirect, canEdit, canDelete, openForm, idProperty, model.rowRedirectLink, model.addRecordToState, navigate, onRowDoubleClick]);
+    }, [onCellDoubleClickOverride, isReadOnly, isDoubleClicked, disableCellRedirect, canOpenRecord, openForm, idProperty, model.rowRedirectLink, model.addRecordToState, navigate, onRowDoubleClick]);
 
     const handleAddRecords = useCallback(async () => {
+        if (!canAdd) return;
         if (rowSelectionModel.ids.size < 1) {
             snackbar.showErrorCode(ERROR_CODES.SELECT_AT_LEAST_ONE);
             return;
@@ -1458,9 +1455,10 @@ const GridBase = memo(({
             });
             setShowAddConfirmation(false);
         }
-    }, [rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, selectionApi, backendApi, model, fetchData, tTranslate, tOpts, buildUrl]);
+    }, [canAdd, rowSelectionModel.ids, snackbar, data.records, idProperty, baseSaveData, selectionApi, backendApi, model, fetchData, tTranslate, tOpts, buildUrl]);
 
     const onAdd = useCallback(() => {
+        if (!canAdd) return;
         if (selectionApi.length > 0) {
             if (rowSelectionModel.ids.size > 0) {
                 setShowAddConfirmation(true);
@@ -1474,7 +1472,7 @@ const GridBase = memo(({
         } else {
             openForm({ id: 0 });
         }
-    }, [selectionApi, snackbar, onAddOverride, openForm, rowSelectionModel.ids.size]);
+    }, [canAdd, selectionApi, snackbar, onAddOverride, openForm, rowSelectionModel.ids.size]);
 
     const clearFilters = useCallback(() => {
         if (!filterModel?.items?.length) return;

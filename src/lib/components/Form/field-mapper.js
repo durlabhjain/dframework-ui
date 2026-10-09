@@ -66,7 +66,7 @@ const ImportantSpan = styled('span')({
   color: 'red !important',
 });
 
-const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, handleSubmit }) => {
+const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, handleSubmit, canSubmit }) => {
     const [skipped, setSkipped] = React.useState(new Set());
     const { tOpts, tTranslate } = useModelTranslation(model);
 
@@ -101,7 +101,7 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
         setSkipped((prevSkipped) => new Set(prevSkipped).add(activeStep));
 
         if (nextStep >= tabColumns.length || isLastStep()) {
-            handleSubmit();
+            if (canSubmit) handleSubmit();
         } else {
             setActiveStep(nextStep);
         }
@@ -138,7 +138,7 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
                 <RenderColumns formElements={currentStep.items} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
                 <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2, mr: 2 }}>
                     {activeStep !== 0 ? <Button color="inherit" disabled={activeStep === 0} onClick={handleBack} variant="contained" sx={{ mr: 2 }}>{tTranslate('Back', tOpts)}</Button> : null}
-                    <Button onClick={handleNext} variant="contained">{isLastStep() ? tTranslate('Finish', tOpts) : tTranslate('Next', tOpts)}</Button>
+                    <Button onClick={handleNext} variant="contained" disabled={isLastStep() && !canSubmit}>{isLastStep() ? tTranslate('Finish', tOpts) : tTranslate('Next', tOpts)}</Button>
                 </Box>
             </React.Fragment>
         </>
@@ -200,6 +200,10 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
                 formElements.map(({ Component, column, field, label, otherProps }, key) => {
                     const isGridComponent = typeof column.relation === 'function';
                     const fieldConfig = fieldConfigs?.[field] ?? {};
+                    const resolvedColumn = {
+                        ...column,
+                        readOnly: Boolean((typeof column.readOnly === 'function' ? column.readOnly(formik) : column.readOnly) || fieldConfig.readOnly)
+                    };
                     // fieldConfig.hidden: dynamically hide this field (e.g. via model.applyFieldConfig)
                     if (fieldConfig.hidden) return null;
                     // fieldConfig.label: runtime label override (e.g. rename based on record data)
@@ -220,7 +224,7 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
                             <Grid size={{ xs: isGridComponent ? 12 : 9 }} sx={gridContainerStyle}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                                        <Component isAdd={isAdd} model={model} fieldConfigs={fieldConfigs[field]} mode={mode} column={column} field={field} label={label} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} tTranslate={tTranslate} tOpts={tOpts} {...otherProps} />
+                                        <Component isAdd={isAdd} model={model} fieldConfigs={fieldConfig} mode={mode} column={resolvedColumn} field={field} label={label} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} tTranslate={tTranslate} tOpts={tOpts} {...otherProps} />
                                     </Box>
                                     {externalIcon}
                                 </Box>
@@ -266,7 +270,7 @@ const getFormConfig = function ({ columns, tabs = {}, id, searchParams, readOnly
     return { formElements, tabColumns: tabsData };
 };
 
-const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayId, fieldConfigs, mode, handleSubmit, readOnly = false }) => {
+const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayId, fieldConfigs, mode, handleSubmit, readOnly = false, canSubmit = !readOnly }) => {
     const isAdd = utils.emptyIdValues.includes(displayId);
     const { formElements, tabColumns, showTabs, showGrouped } = React.useMemo(() => {
         const tabbedMode = model.formConfig?.showTabbed;
@@ -284,7 +288,7 @@ const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displa
         <div>
             <RenderColumns isAdd={isAdd} formElements={formElements} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
             <div style={{ marginTop: showTabs ? sectionMarginTop : 0 }}>
-                {showTabs && <RenderSteps tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} handleSubmit={handleSubmit} />}
+                {showTabs && <RenderSteps tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} handleSubmit={handleSubmit} canSubmit={canSubmit} />}
                 {showGrouped && <RenderGroups isAdd={isAdd} tabColumns={tabColumns} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />}
             </div>
         </div>

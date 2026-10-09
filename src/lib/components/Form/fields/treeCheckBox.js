@@ -53,11 +53,9 @@ export default function treeCheckBox({ column, field, formik, lookups, fieldConf
   const options = lookups ? lookups[column.lookup] : [];
   const tree = buildTree(options);
   const inputValue = formik.values[field]?.length ? formik.values[field].split(", ") : [];
-  let isDisabled;
-  if (mode !== 'copy') {
-    isDisabled = fieldConfigs?.disabled;
-  }
+  const isDisabled = column.readOnly || (mode !== 'copy' && fieldConfigs?.disabled);
   const handleChange = (_, newValue) => {
+    if (isDisabled) return;
     formik.setFieldValue(field, newValue?.join(', ') || '');
   };
   return (
@@ -65,14 +63,13 @@ export default function treeCheckBox({ column, field, formik, lookups, fieldConf
       <SimpleTreeView
         selectedItems={inputValue}
         onSelectedItemsChange={handleChange}
-        disabled={isDisabled}
         multiSelect
         checkboxSelection
       >
         {tree.map((node) => (
-          <TreeItem key={node.value} itemId={node.value} label={node.label}>
+          <TreeItem key={node.value} itemId={node.value} label={node.label} disabled={isDisabled}>
             {node.children.map((child) => (
-              <TreeItem key={child.value} itemId={child.value} label={child.label} />
+              <TreeItem key={child.value} itemId={child.value} label={child.label} disabled={isDisabled} />
             ))}
           </TreeItem>
         ))}

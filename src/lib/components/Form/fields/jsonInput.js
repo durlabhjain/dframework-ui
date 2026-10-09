@@ -9,18 +9,19 @@ const parseJson = (raw) => {
     try { return JSON.parse(raw); } catch { return {}; }
 };
 
-const Field = ({ field, formik }) => {
+const Field = ({ column, field, formik }) => {
     const [state, setState] = React.useState(() => parseJson(formik.values[field]));
     const debouncedState = useDebounce(state, 300);
     const fieldValue = formik.values[field];
 
     // Update formik when debounced state changes
     React.useEffect(() => {
+        if (column.readOnly) return;
         const nextValue = JSON.stringify(debouncedState);
         if (fieldValue !== nextValue) {
             formik.setFieldValue(field, nextValue);
         }
-    }, [debouncedState, field, formik, fieldValue]);
+    }, [column.readOnly, debouncedState, field, formik, fieldValue]);
 
     // Resync local state when formik changes externally (e.g. form reinitialise). Can't be a plain
     // derived value: `state` is also directly user-edited via handleChange between formik updates.
@@ -30,6 +31,7 @@ const Field = ({ field, formik }) => {
     }, [fieldValue]);
 
     const handleChange = (key, value) => {
+        if (column.readOnly) return;
         const updatedState = { ...state, [key]: value };
         setState(updatedState);
     };
@@ -60,6 +62,7 @@ const Field = ({ field, formik }) => {
                         name={key}
                         value={state[key]}
                         onChange={(e) => handleChange(key, e.target.value)}
+                        readOnly={column.readOnly}
                         fullWidth
                         style={{ flex: 2 }}
                     />

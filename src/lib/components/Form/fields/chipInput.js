@@ -16,6 +16,7 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
         return Array.isArray(value) ? value : value.split(',').map(item => item.trim());
     }, [fieldValue]);
     const isDisabled = React.useMemo(() => {
+        if (column.readOnly) return true;
         if (typeof fieldConfigs.disabled !== 'undefined') return fieldConfigs.disabled;
         if (typeof column.disabled === 'function') return column.disabled({ isAdd, formik });
         return Boolean(column.disabled);
@@ -27,6 +28,7 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
     const [inputText, setInputText] = React.useState('');
 
     const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
+        if (isDisabled) return;
         const lastElement = newValue.pop()?.trim();
         if (!newValue.includes(lastElement)) {
             newValue.push(lastElement);
@@ -43,15 +45,16 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
             newValue = newValue.length ? newValue.join(',') : '';
         }
         formik.setFieldValue(field, newValue);
-    }, [formik, field, column, fixedOptions]);
+    }, [isDisabled, formik, field, column, fixedOptions]);
 
     const handleInputBlur = useCallback((e) => {
+        if (isDisabled) return;
         const typedValue = e.target.value?.trim();
         if (typedValue) {
             handleAutoCompleteChange(e, [...inputValue, typedValue], 'createOption');
         }
         setInputText('');
-    }, [handleAutoCompleteChange, inputValue]);
+    }, [isDisabled, handleAutoCompleteChange, inputValue]);
 
     return (
         <FormControl
