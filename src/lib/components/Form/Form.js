@@ -338,11 +338,15 @@ const Form = ({
   ];
   const showRelations = Number(id) !== 0 && Boolean(relations.length);
   const showSaveButton = searchParams.has("showRelation");
-  const readOnlyRelations = !recordEditable || data.readOnlyRelations;
+  const readOnlyRelations = !recordEditable || !canEdit || data.readOnlyRelations;
   const deleteRecordName = model.linkColumn ? data[model.linkColumn] : undefined;
   const { showPageTitle = true } = model;
   const showCopyButton = showFormActions && canCopy && !isNew;
-  const showDeleteButton = showFormActions && canDelete && !isNew;
+  // A delete-only user reaches this form solely to delete the record, so Delete is offered even
+  // when the model keeps its actions in the grid - otherwise the form would have no action at all.
+  const showDeleteButton = canDelete && !isNew && (showFormActions || !canEdit);
+  // No edit rights means the record is viewed, not edited: every field renders read-only.
+  const isFormReadOnly = Boolean(readOnly) || !canEdit;
   const hasFormHeaderActions = showCopyButton || showDeleteButton;
   return (
     <>
@@ -414,6 +418,7 @@ const Form = ({
               id={id}
               handleSubmit={handleSubmit}
               mode={mode}
+              readOnly={isFormReadOnly}
             />
           </form>
           )}

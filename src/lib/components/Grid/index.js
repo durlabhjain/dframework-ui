@@ -927,7 +927,10 @@ const GridBase = memo(({
             if (column.renderCell) {
                 overrides.renderCell = column.renderCell;
             }
-            if (column.linkTo || column.link) {
+            // The link column only navigates when it has an explicit linkTo or can open the record
+            // form, so without edit/delete rights it renders as plain text instead of a dead link.
+            const opensRecordForm = column.field === model.linkColumn && !column.linkTo;
+            if (column.linkTo || (column.link && (!opensRecordForm || canEdit || canDelete))) {
                 overrides.cellClassName = 'mui-grid-linkColumn';
             }
 
@@ -992,7 +995,7 @@ const GridBase = memo(({
         if (enableRowDetailPanel && model.detailPanelTogglePosition === constants.right) pinnedColumns.right.push('__detail_panel_toggle__');
         return { stableGridColumns: finalColumns, pinnedColumns, lookupMap };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
-    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, gridActionConfig.length, clientRowGroupingEnabled, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate]);
+    }, [columns, model, parent, dynamicColumns, translate, groupingModel, enableRowDetailPanel, gridActionConfig.length, clientRowGroupingEnabled, canEdit, canDelete, getActions, gridColumnTypes, lookupOptions, tOpts, tTranslate]);
 
     // Shallow-copy columns when lookups change so MUI DataGrid's GridFilterInputSingleSelect
     // sees new column object references and re-evaluates its memoized currentValueOptions.
@@ -1308,9 +1311,13 @@ const GridBase = memo(({
                         const rowId = record[idProperty];
                         setRowPanelId(prevId => prevId === rowId ? null : rowId);
                         return;
-                    } else {
-                        return openForm({ id: record[idProperty], record });
                     }
+                    // Without edit rights the record form must stay closed; delete-only users still
+                    // need it, since that is where their Delete action lives.
+                    if (!canEdit && !canDelete) {
+                        return;
+                    }
+                    return openForm({ id: record[idProperty], record });
                 }
                 case actionTypes.Copy:
                     return openForm({ id: record[idProperty], mode: 'copy' });
@@ -1347,7 +1354,7 @@ const GridBase = memo(({
             historyObject.state = row;
         }
         navigate(historyObject);
-    }, [disableCellRedirect, isReadOnly, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, gridTitle, getApiEndpoint, handleDownload, openForm]);
+    }, [disableCellRedirect, isReadOnly, canEdit, canDelete, onCellClick, lookupMap, model, idProperty, documentField, navigate, toLink, customActions, tableName, searchParamKey, gridTitle, getApiEndpoint, handleDownload, openForm]);
 
     const handleDelete = useCallback(async () => {
         if (isStaticDataWithoutBackendApi) {
@@ -1387,7 +1394,7 @@ const GridBase = memo(({
             onCellDoubleClickOverride(event);
             return;
         }
-        if (!isReadOnly && !isDoubleClicked && !disableCellRedirect) {
+        if (!isReadOnly && !isDoubleClicked && !disableCellRedirect && (canEdit || canDelete)) {
             openForm({ id: record[idProperty], record });
         }
         if (isReadOnly && model.rowRedirectLink) {
@@ -1402,7 +1409,7 @@ const GridBase = memo(({
         if (typeof onRowDoubleClick === constants.function) {
             onRowDoubleClick(event);
         }
-    }, [onCellDoubleClickOverride, isReadOnly, isDoubleClicked, disableCellRedirect, openForm, idProperty, model.rowRedirectLink, model.addRecordToState, navigate, onRowDoubleClick]);
+    }, [onCellDoubleClickOverride, isReadOnly, isDoubleClicked, disableCellRedirect, canEdit, canDelete, openForm, idProperty, model.rowRedirectLink, model.addRecordToState, navigate, onRowDoubleClick]);
 
     const handleAddRecords = useCallback(async () => {
         if (rowSelectionModel.ids.size < 1) {

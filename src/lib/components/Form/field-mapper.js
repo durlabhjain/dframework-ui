@@ -233,7 +233,7 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
     );
 };
 
-const getFormConfig = function ({ columns, tabs = {}, id, searchParams }) {
+const getFormConfig = function ({ columns, tabs = {}, id, searchParams, readOnly = false }) {
     const formElements = [], tabColumns = {};
     for (const tab in tabs) {
         tabColumns[tab] = [];
@@ -257,7 +257,7 @@ const getFormConfig = function ({ columns, tabs = {}, id, searchParams }) {
         }
 
         const target = tab && tabs[tab] ? tabColumns[tab] : formElements;
-        target.push({ Component, field, label, column: { ...column, readOnly: searchParams.has('showRelation') || column.readOnly }, otherProps });
+        target.push({ Component, field, label, column: { ...column, readOnly: readOnly || searchParams.has('showRelation') || column.readOnly }, otherProps });
     }
     const tabsData = [];
     for (const tabColumn in tabColumns) {
@@ -266,7 +266,7 @@ const getFormConfig = function ({ columns, tabs = {}, id, searchParams }) {
     return { formElements, tabColumns: tabsData };
 };
 
-const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayId, fieldConfigs, mode, handleSubmit }) => {
+const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayId, fieldConfigs, mode, handleSubmit, readOnly = false }) => {
     const isAdd = utils.emptyIdValues.includes(displayId);
     const { formElements, tabColumns, showTabs, showGrouped } = React.useMemo(() => {
         const tabbedMode = model.formConfig?.showTabbed;
@@ -274,12 +274,12 @@ const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displa
         const showGrouped = tabbedMode === 'group' || (tabbedMode !== true && tabbedMode !== 'group' && model.formConfig?.showGrouped === true);
         const searchParams = new URLSearchParams(window.location.search);
         const tabs = showTabs || showGrouped ? model.tabs : {};
-        const { formElements, tabColumns } = getFormConfig({ columns: model.columns, tabs, id: displayId, searchParams });
+        const { formElements, tabColumns } = getFormConfig({ columns: model.columns, tabs, id: displayId, searchParams, readOnly });
         const hasTabColumns = tabColumns.length > 0;
         const showTabbedLayout = showTabs && hasTabColumns;
         const showGroupedLayout = !showTabbedLayout && showGrouped && hasTabColumns;
         return { formElements, tabColumns, showTabs: showTabbedLayout, showGrouped: showGroupedLayout };
-    }, [model, displayId]);
+    }, [model, displayId, readOnly]);
     return (
         <div>
             <RenderColumns isAdd={isAdd} formElements={formElements} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
