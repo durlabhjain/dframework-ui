@@ -3409,6 +3409,10 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 		if (filterMode || typeof column.getOptionDisabled !== "function") return false;
 		return Boolean(column.getOptionDisabled(option));
 	}, [filterMode, column]);
+	const getOptionSx = useCallback((option) => {
+		if (typeof column.getOptionSx !== "function") return void 0;
+		return column.getOptionSx(option);
+	}, [column]);
 	const control = /* @__PURE__ */ jsx(Autocomplete, {
 		multiple: isMultiSelect,
 		disabled: isReadOnly,
@@ -3502,6 +3506,7 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 				}), /* @__PURE__ */ jsx(Typography$1, {
 					variant: "body2",
 					noWrap: true,
+					sx: getOptionSx(option),
 					children: option.label
 				})]
 			}, key);
