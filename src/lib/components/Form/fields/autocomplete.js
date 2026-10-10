@@ -16,8 +16,9 @@ const Field = React.memo(({ column, field, formik, lookups, dependsOn = [], fiel
         inputValue = inputValue.split(", ").map(Number);
     }
     const filteredCombos = options.filter(option => inputValue.includes(option.value)) || [];
-    const isDisabled = mode !== 'copy' && fieldConfigs.disabled;
+    const isDisabled = column.readOnly || (mode !== 'copy' && fieldConfigs.disabled);
     const handleAutoCompleteChange = (_, newValue) => {
+        if (isDisabled) return;
         let toSave = newValue?.map(val => val.value) || [];
         // multi-select values are stored as array or as comma-separated-string based on dataFormat
         if (column.dataFormat !== 'array') {

@@ -11,8 +11,9 @@ const TransferField = ({ component, name, formik, field, column, tTranslate = (k
     const { setFieldValue } = formik;
     const Component = component || column.relation;
     const onAssignChange = useCallback((value) => {
+        if (column.readOnly) return;
         setFieldValue(name || field, value);
-    }, [setFieldValue, name, field]);
+    }, [column.readOnly, setFieldValue, name, field]);
     return (
         <div>
             <DivSpacing>{`${tTranslate("Available", tOpts)} ${tTranslate(column.label, tOpts)}`}</DivSpacing>

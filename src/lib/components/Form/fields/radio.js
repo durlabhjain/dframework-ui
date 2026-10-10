@@ -4,13 +4,14 @@ const EMPTY_FIELD_CONFIGS = {};
 
 const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfigs = EMPTY_FIELD_CONFIGS, mode, tTranslate, tOpts, ...otherProps }) => {
     const handleChange = (event) => {
+        if (isDisabled) return;
         formik.setFieldValue(field, event.target.value);
     }
 
     const options = lookups ? lookups[otherProps.column.lookup] : [];
     const theme = useTheme();
     const isError = formik.touched[field] && Boolean(formik.errors[field]);
-    const isDisabled = mode !== 'copy' && fieldConfigs.disabled;
+    const isDisabled = otherProps.column.readOnly || (mode !== 'copy' && fieldConfigs.disabled);
     return (
         <>
             <FormControl component="fieldset" error={isError}>

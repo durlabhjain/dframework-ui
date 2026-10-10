@@ -18,7 +18,8 @@ import { DialogComponent } from "../Dialog";
 import { useStateContext, useRouter } from "../useRouter/StateProvider";
 import { LIST_STATE_PARAM, currentSearchParams } from "../Grid/listState";
 import PageTitle from "../PageTitle";
-import utils, { getPermissions } from "../utils";
+import utils from "../utils";
+import { getModelPermissions, getRecordAccess } from "../permissions";
 import Relations from "./relations";
 import { useModelTranslation } from "../../hooks/useModelTranslation";
 import { ERROR_CODES } from "../../errors";
@@ -89,22 +90,14 @@ const Form = ({
   const gridApi = buildUrl(model.api);
   // Determine mode from URL pattern: "0-{id}" indicates copy mode
   const mode = idWithOptions.includes('-') && idWithOptions.split('-')[0] === '0' ? 'copy' : '';
-  const userDefinedPermissions = {
-    add: true,
-    edit: true,
-    delete: true,
-    ...model.permissions,
-    ...permissions
-  };
-  const { canAdd, canEdit, canDelete } = getPermissions({
-    userData,
-    model,
-    userDefinedPermissions
+  const modelPermissions = getModelPermissions({ userData, model, permissions });
+  const isNew = utils.emptyIdValues.includes(id);
+  const access = getRecordAccess({
+    permissions: modelPermissions, record: data, isNew, mode,
+    readOnly: Boolean(readOnly || model.readOnly || searchParams.has('showRelation'))
   });
-  const canCopy = canAdd && Boolean({ ...model.permissions, ...permissions }.copy);
   const { hideBreadcrumb = false, navigateBack, actions: actionsMode = 'grid' } = model;
   const showFormActions = actionsMode === 'form' || actionsMode === 'both';
-  const recordEditable = !("canEdit" in data) || data.canEdit;
 
   const handleNavigation = useCallback(() => {
     let navigatePath;
@@ -129,8 +122,6 @@ const Form = ({
     }
     navigate(navigatePath);
   }, [navigateBack, navigate, params, data, pathname]);
-
-  const isNew = useMemo(() => utils.emptyIdValues.includes(id), [id]);
 
   const initialValues = useMemo(() => isNew
     ? { ...model.initialValues, ...data, ...baseSaveData }
@@ -178,6 +169,7 @@ const Form = ({
     validationSchema: validationSchema,
     validateOnBlur: model?.validateOnBlur ?? false,
     onSubmit: async (values, { resetForm }) => {
+      if (!access.canSave) return;
       Object.keys(values).forEach(key => {
         if (typeof values[key] === consts.string) {
           values[key] = values[key].trim();
@@ -264,7 +256,7 @@ const Form = ({
     });
   };
   const handleFormCancel = useCallback((event) => {
-    if (formik.dirty && recordEditable) {
+    if (formik.dirty && access.canSave) {
       setIsDiscardDialogOpen(true);
     } else {
       if (typeof onCancel === consts.function) {
@@ -273,8 +265,9 @@ const Form = ({
       navigateBack !== false && handleNavigation();
     }
     event.preventDefault();
-  }, [formik.dirty, recordEditable, onCancel, navigateBack, handleNavigation]);
+  }, [formik.dirty, access.canSave, onCancel, navigateBack, handleNavigation]);
   const handleDelete = useCallback(async () => {
+    if (!access.canDelete) return;
     try {
       setIsDeleting(true);
       const response = await deleteRecord({
@@ -291,11 +284,12 @@ const Form = ({
     } finally {
       setIsDeleting(false);
     }
-  }, [id, api, model, snackbar, navigateBack, handleNavigation, tTranslate, tOpts]);
+  }, [access.canDelete, id, api, model, snackbar, navigateBack, handleNavigation, tTranslate, tOpts]);
   const handleCopy = useCallback(() => {
+    if (!access.canCopy) return;
     const basePath = pathname.substring(0, pathname.lastIndexOf("/") + 1);
     navigate(`${basePath}0-${id}`);
-  }, [pathname, id, navigate]);
+  }, [access.canCopy, pathname, id, navigate]);
   const clearError = () => {
     setErrorMessage(null)
     setIsDeleting(false);
@@ -307,6 +301,7 @@ const Form = ({
 
   const handleSubmit = useCallback(async (e) => {
     if (e) e.preventDefault();
+    if (!access.canSave) return;
     if (typeof beforeSubmit === consts.function) {
       await beforeSubmit({ formik , model });
     }
@@ -330,19 +325,17 @@ const Form = ({
     if (fieldConfig.tab) {
       setActiveStep(Object.keys(model.tabs).indexOf(fieldConfig.tab));
     }
-  }, [beforeSubmit, formik, model, snackbar, setActiveStep]);
+  }, [access.canSave, beforeSubmit, formik, model, snackbar, setActiveStep]);
 
   const breadcrumbs = [
     { text: tTranslate(formTitle, tOpts) },
     { text: id === "0" ? tTranslate("New", tOpts) : tTranslate("Update", tOpts) }
   ];
   const showRelations = Number(id) !== 0 && Boolean(relations.length);
-  const showSaveButton = searchParams.has("showRelation");
-  const readOnlyRelations = !recordEditable || data.readOnlyRelations;
   const deleteRecordName = model.linkColumn ? data[model.linkColumn] : undefined;
   const { showPageTitle = true } = model;
-  const showCopyButton = showFormActions && canCopy && !isNew;
-  const showDeleteButton = showFormActions && canDelete && !isNew;
+  const showCopyButton = showFormActions && access.canCopy;
+  const showDeleteButton = showFormActions && access.canDelete;
   const hasFormHeaderActions = showCopyButton || showDeleteButton;
   return (
     <>
@@ -363,7 +356,7 @@ const Form = ({
               <CircularProgress />
             </Box>
           ) : (
-          <form>
+          <form onSubmit={handleSubmit} noValidate>
             <Stack
               direction="row"
               spacing={2}
@@ -389,17 +382,16 @@ const Form = ({
               {showFormActions && hasFormHeaderActions && (
                 <Divider orientation="vertical" flexItem />
               )}
-              {canEdit && recordEditable && !showSaveButton && !readOnly && (
+              {access.canSave && (
                 <Button
                   variant="contained"
                   type="submit"
                   color="success"
-                  onClick={handleSubmit}
                 >{tTranslate("Save", tOpts)}</Button>
               )}
               <Button
                 variant="contained"
-                type="cancel"
+                type="button"
                 color="error"
                 onClick={handleFormCancel}
               >{tTranslate("Cancel", tOpts)}</Button>
@@ -414,6 +406,8 @@ const Form = ({
               id={id}
               handleSubmit={handleSubmit}
               mode={mode}
+              readOnly={access.fieldsReadOnly}
+              canSubmit={access.canSave}
             />
           </form>
           )}
@@ -460,7 +454,7 @@ const Form = ({
           )}</DialogComponent>
           {showRelations ? (
             <Relations
-              readOnly={readOnlyRelations}
+              readOnly={access.relationsReadOnly}
               models={models}
               relationFilters={relationFilters}
               relations={relations}

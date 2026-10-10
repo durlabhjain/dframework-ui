@@ -105,6 +105,7 @@ function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key })
     const hasPreview = hasCanvasPreview || Boolean(previewSrc);
 
     const handleFileChange = (event) => {
+        if (column.readOnly) return;
         const file = event.target.files?.[0];
         if (!file) return;
         if (Array.isArray(formats) && file.type && !formats.includes(file.type)) {
@@ -125,9 +126,9 @@ function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key })
 
     return (
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Button variant="outlined" component="label">
+            <Button variant="outlined" component="label" disabled={column.readOnly}>
                 {tTranslate("Choose File", tOpts)}
-                <input type="file" hidden accept={column.accept} aria-label={tTranslate("Choose File", tOpts)} onChange={handleFileChange} />
+                <input type="file" hidden accept={column.accept} aria-label={tTranslate("Choose File", tOpts)} disabled={column.readOnly} onChange={handleFileChange} />
             </Button>
             {displayName && <Typography variant="body2">{displayName}</Typography>}
             {hasPreview && (

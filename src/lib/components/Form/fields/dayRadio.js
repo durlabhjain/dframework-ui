@@ -24,11 +24,12 @@ const CustomAvator = styled(Avatar)(({ isSelected }) => ({
     color: isSelected ? 'white' : 'black',
 }));
 
-const DayAvatar = ({ day, onClick, isSelected }) => {
+const DayAvatar = ({ day, onClick, isSelected, disabled }) => {
     return (
         <CustomAvator
             key={day.value}
-            onClick={() => onClick(day.value)}
+            onClick={disabled ? undefined : () => onClick(day.value)}
+            aria-disabled={disabled}
             isSelected={isSelected}
             style={{ margin: '4px' }}
         >
@@ -36,7 +37,8 @@ const DayAvatar = ({ day, onClick, isSelected }) => {
         </CustomAvator>
     );
 };
-const DaySelection = ({ name, field, formik, expired }) => {
+const DaySelection = ({ name, field, formik, expired, column }) => {
+    const isDisabled = Boolean(expired || column.readOnly);
     const { setFieldValue } = formik;
     const { value } = formik.getFieldProps(name || field);
 
@@ -54,6 +56,7 @@ const DaySelection = ({ name, field, formik, expired }) => {
     }, [value]);
     const [presetSelected, setPresetSelected] = useState(false);
     const onAssignChange = useCallback((newValue) => {
+        if (isDisabled) return;
         if (Array.isArray(newValue)) {
             let finalValue = defaultVal;
             for (const val of newValue) {
@@ -67,7 +70,7 @@ const DaySelection = ({ name, field, formik, expired }) => {
             setFieldValue(name || field, finalValue);
             setPresetSelected(false);
         }
-    }, [presetSelected, defaultVal, selectedDays, name, field, setFieldValue]);
+    }, [isDisabled, presetSelected, defaultVal, selectedDays, name, field, setFieldValue]);
     const theme = useTheme();
     const isError = formik.touched[field] && Boolean(formik.errors[field]);
     return (
@@ -78,6 +81,7 @@ const DaySelection = ({ name, field, formik, expired }) => {
                     name={name || field}
                     value={radioValue}
                     onChange={event => {
+                        if (isDisabled) return;
                         const val = event.target.value;
                         if (val !== 'Custom') {
                             setFieldValue(name || field, val);
@@ -88,16 +92,16 @@ const DaySelection = ({ name, field, formik, expired }) => {
                         }
                     }}
                 >
-                    <FormControlLabel value={isWeekend} control={<Radio />} label={"Weekends (Sat - Sun)"} onClick={() => onAssignChange([0, 6])} />
-                    <FormControlLabel value={isWeekdays} control={<Radio />} label={"Weekdays (Mon - Fri)"} onClick={() => onAssignChange([1, 2, 3, 4, 5])} />
-                    <FormControlLabel value={'Custom'} control={<Radio />} label={"Specific days"} />
+                    <FormControlLabel value={isWeekend} control={<Radio />} label={"Weekends (Sat - Sun)"} disabled={isDisabled} onClick={() => onAssignChange([0, 6])} />
+                    <FormControlLabel value={isWeekdays} control={<Radio />} label={"Weekdays (Mon - Fri)"} disabled={isDisabled} onClick={() => onAssignChange([1, 2, 3, 4, 5])} />
+                    <FormControlLabel value={'Custom'} control={<Radio />} label={"Specific days"} disabled={isDisabled} />
                     {days.map((day, index) => (
                         <DayAvatar
                             key={day.value}
                             day={day}
                             onClick={() => onAssignChange(index)}
                             isSelected={radioValue === 'Custom' && selectedDays[index] === "1"}
-                            disabled={expired}
+                            disabled={isDisabled}
                         />
                     ))}
                 </RadioGroup>
