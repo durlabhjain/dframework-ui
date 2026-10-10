@@ -202,7 +202,7 @@ const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lo
                     const fieldConfig = fieldConfigs?.[field] ?? {};
                     const resolvedColumn = {
                         ...column,
-                        readOnly: Boolean((typeof column.readOnly === 'function' ? column.readOnly(formik) : column.readOnly) || fieldConfig.readOnly)
+                        readOnly: Boolean((typeof column.readOnly === 'function' ? column.readOnly({ formik }) : column.readOnly) || fieldConfig.readOnly)
                     };
                     // fieldConfig.hidden: dynamically hide this field (e.g. via model.applyFieldConfig)
                     if (fieldConfig.hidden) return null;
