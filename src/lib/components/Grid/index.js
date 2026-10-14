@@ -29,6 +29,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import PageTitle from '../PageTitle';
 import { useStateContext, useRouter } from '../useRouter/StateProvider';
 import LocalizedDatePicker from './LocalizedDatePicker';
+import { withIntegerFilterValues } from './integerFilterValue';
 import CustomToolbar from './CustomToolbar';
 import SplitResizer, { SPLIT_RESIZER_HEIGHT } from './SplitResizer';
 import useGridPreferences, { parsePreferenceState } from './useGridPreferences';
@@ -157,6 +158,12 @@ const DEFAULT_FILTER_OPERATORS_BY_TYPE = {
     boolean: getGridBooleanOperators,
     singleSelect: getGridSingleSelectOperators
 };
+// Column types whose values are numeric, and so can carry a precision
+const NUMERIC_COLUMN_TYPES = ['number', 'decimal', 'currency', 'percentage'];
+// Operators a column ends up with before any further narrowing: its own, else the default list for its type
+const resolveFilterOperators = ({ overrides, column }) => overrides.filterOperators
+    ?? DEFAULT_FILTER_OPERATORS_BY_TYPE[overrides.type ?? column.type ?? 'string']?.()
+    ?? getStringOperatorsStartsWithFirst();
 
 // Fills and internally scrolls within a bounded-height flex ancestor; used when model.relations is set.
 const CHILD_GRIDS_FILL_STYLE = Object.freeze({ height: '100%', overflowY: 'auto' });
@@ -917,12 +924,14 @@ const GridBase = memo(({
                 overrides.filterOperators = getStringOperatorsStartsWithFirst();
             }
             if (column.allowEmpty === false) {
-                const finalType = overrides.type ?? column.type ?? 'string';
-                const baseOperators = overrides.filterOperators
-                    ?? DEFAULT_FILTER_OPERATORS_BY_TYPE[finalType]?.()
-                    ?? getStringOperatorsStartsWithFirst();
+                const baseOperators = resolveFilterOperators({ overrides, column });
                 // react-doctor-disable-next-line js-set-map-lookups -- NO_VALUE_OPERATORS is a fixed 2-item constant, not a growing collection; a Set adds hashing overhead for no real gain here
                 overrides.filterOperators = baseOperators.filter(op => !NO_VALUE_OPERATORS.includes(op.value));
+            }
+            // precision: 0 declares a whole-number column (an INT, typically), so no filter value may carry a fraction
+            // react-doctor-disable-next-line js-set-map-lookups -- NUMERIC_COLUMN_TYPES is a fixed 4-item constant, not a growing collection; a Set adds hashing overhead for no real gain here
+            if (column.precision === 0 && NUMERIC_COLUMN_TYPES.includes(overrides.type ?? column.type)) {
+                overrides.filterOperators = withIntegerFilterValues(resolveFilterOperators({ overrides, column }));
             }
             // Common filter operator pattern
             if (overrides.valueOptions === constants.lookup) {
