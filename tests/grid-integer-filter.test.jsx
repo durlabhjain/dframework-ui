@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getGridNumericOperators } from '@mui/x-data-grid-premium';
 import Grid from '../src/lib/components/Grid/index.js';
 import { toIntegerFilterValue } from '../src/lib/components/Grid/integerFilterValue.js';
 
@@ -49,9 +50,9 @@ beforeEach(() => {
 });
 afterEach(cleanup);
 
-async function mount() {
+async function mount(modelOverrides = {}) {
     const apiRef = { current: null };
-    const view = render(<Grid model={model} apiRef={apiRef} />);
+    const view = render(<Grid model={{ ...model, ...modelOverrides }} apiRef={apiRef} />);
     await waitFor(() => expect(mocks.getList).toHaveBeenCalled());
     return { ...view, apiRef };
 }
@@ -76,6 +77,11 @@ describe('toIntegerFilterValue', () => {
         expect(toIntegerFilterValue('   ')).toBeUndefined();
         expect(toIntegerFilterValue(null)).toBeUndefined();
         expect(toIntegerFilterValue(undefined)).toBeUndefined();
+        expect(toIntegerFilterValue('12abc')).toBeUndefined();
+        expect(toIntegerFilterValue('1e')).toBeUndefined();
+        expect(toIntegerFilterValue(true)).toBeUndefined();
+        expect(toIntegerFilterValue(Infinity)).toBeUndefined();
+        expect(toIntegerFilterValue(NaN)).toBeUndefined();
     });
     it('coerces an isAnyOf list entry by entry', () => {
         expect(toIntegerFilterValue([3, '2.25', '4.9', 1.5, '', 'abc'])).toEqual([3, 2, 4, 1]);
@@ -84,6 +90,60 @@ describe('toIntegerFilterValue', () => {
 });
 
 describe('a precision: 0 column', () => {
+    it.each(['number', 'currency', 'percentage'])('preserves allowEmpty: false for %s columns', async (type) => {
+        const { apiRef } = await mount({ columns: [{ field: 'Size', type, precision: 0, allowEmpty: false }] });
+        const operators = apiRef.current.getColumn('Size').filterOperators;
+        expect(operators.some(op => ['isEmpty', 'isNotEmpty'].includes(op.value))).toBe(false);
+        expect(operators.every(op => op.InputComponent.displayName === 'IntegerFilterInput')).toBe(true);
+    });
+
+    it('preserves custom operator metadata and rejects malformed custom input', async () => {
+        const InputComponent = ({ item, applyValue, marker }) => (
+            <input data-testid="custom-filter" data-marker={marker} value={item.value ?? ''}
+                onChange={event => applyValue({ ...item, value: event.target.value })} />
+        );
+        const operator = { ...getGridNumericOperators()[0], label: 'Custom equals', InputComponent, InputComponentProps: { marker: 'preserved' } };
+        const { apiRef, getByTestId } = await mount({ columns: [{ field: 'Size', type: 'number', precision: 0, filterOperators: [operator] }] });
+        expect(apiRef.current.getColumn('Size').filterOperators[0]).toMatchObject({ label: 'Custom equals', getApplyFilterFn: operator.getApplyFilterFn, InputComponentProps: operator.InputComponentProps });
+        await openFilter({ apiRef, operator: '=' });
+        const input = getByTestId('custom-filter');
+        expect(input.dataset.marker).toBe('preserved');
+        fireEvent.change(input, { target: { value: '12abc' } });
+        await waitFor(() => expect(filterValue(apiRef)).toBeNull());
+        fireEvent.change(input, { target: { value: '12.5' } });
+        await waitFor(() => expect(filterValue(apiRef)).toBe(12));
+        expect(input.value).toBe('12');
+    });
+
+    it('clears a populated single-value filter without filtering on zero', async () => {
+        const { apiRef } = await mount();
+        await openFilter({ apiRef, operator: '=' });
+        fireEvent.change(valueInput(), { target: { value: '2' } });
+        await waitFor(() => expect(filterValue(apiRef)).toBe(2));
+        fireEvent.change(valueInput(), { target: { value: '' } });
+        await waitFor(() => expect(filterValue(apiRef)).toBeNull());
+        expect(valueInput().value).toBe('');
+    });
+
+    it('updates the display even when successive fractions truncate to the same value', async () => {
+        const { apiRef } = await mount();
+        await openFilter({ apiRef, operator: '=' });
+        fireEvent.change(valueInput(), { target: { value: '2.5' } });
+        await waitFor(() => expect(valueInput().value).toBe('2'));
+        fireEvent.change(valueInput(), { target: { value: '2.9' } });
+        await waitFor(() => expect(valueInput().value).toBe('2'));
+        expect(filterValue(apiRef)).toBe(2);
+    });
+
+    it('truncates negative fractions in header filters', async () => {
+        const { apiRef } = await mount({ showHeaderFilters: true });
+        const input = document.querySelector('.MuiDataGrid-headerFilterRow input[type="number"]');
+        expect(input).not.toBeNull();
+        fireEvent.change(input, { target: { value: '-4.9' } });
+        await waitFor(() => expect(filterValue(apiRef)).toBe(-4));
+        await waitFor(() => expect(input.value).toBe('-4'));
+    });
+
     it('wraps every value-taking operator and leaves the valueless ones alone', async () => {
         const { apiRef } = await mount();
         const operators = apiRef.current.getColumn('Size').filterOperators;

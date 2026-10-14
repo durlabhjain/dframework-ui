@@ -10,7 +10,10 @@ export const toIntegerFilterValue = (value) => {
     if (Array.isArray(value)) {
         return value.map(toIntegerFilterValue).filter(entry => entry !== undefined);
     }
-    const integer = Math.trunc(Number.parseFloat(value));
+    // Accept a complete numeric value, not a numeric prefix such as "12abc" or "1e".
+    // Check blanks before Number(), which would otherwise turn an empty input into zero.
+    if (typeof value !== 'number' && (typeof value !== 'string' || value.trim() === '')) return undefined;
+    const integer = Math.trunc(Number(value));
     return Number.isFinite(integer) ? integer : undefined;
 };
 
