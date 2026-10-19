@@ -109,7 +109,7 @@ describe('a precision: 0 column', () => {
         const input = getByTestId('custom-filter');
         expect(input.dataset.marker).toBe('preserved');
         fireEvent.change(input, { target: { value: '12abc' } });
-        await waitFor(() => expect(filterValue(apiRef)).toBeNull());
+        await waitFor(() => expect(filterValue(apiRef)).toBeUndefined());
         fireEvent.change(input, { target: { value: '12.5' } });
         await waitFor(() => expect(filterValue(apiRef)).toBe(12));
         expect(input.value).toBe('12');
@@ -121,7 +121,7 @@ describe('a precision: 0 column', () => {
         fireEvent.change(valueInput(), { target: { value: '2' } });
         await waitFor(() => expect(filterValue(apiRef)).toBe(2));
         fireEvent.change(valueInput(), { target: { value: '' } });
-        await waitFor(() => expect(filterValue(apiRef)).toBeNull());
+        await waitFor(() => expect(filterValue(apiRef)).toBeUndefined());
         expect(valueInput().value).toBe('');
     });
 
@@ -224,8 +224,9 @@ describe('a precision: 0 column', () => {
         const { apiRef } = await mount();
         await openFilter({ apiRef, operator: '=' });
         fireEvent.change(valueInput(), { target: { value: 'abc' } });
-        // A number column with nothing valid to filter on is normalised to null by the grid
-        await waitFor(() => expect(filterValue(apiRef)).toBeNull());
+        // Left undefined rather than null: MUI's number valueParser reads null as 0, which would
+        // filter on zero instead of not filtering at all.
+        await waitFor(() => expect(filterValue(apiRef)).toBeUndefined());
     });
 });
 

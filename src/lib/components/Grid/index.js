@@ -1708,7 +1708,9 @@ const GridBase = memo(({
                 }
                 return { ...item };
             }
-            return { ...item, value: isNumber ? null : value };
+            // undefined, not null: MUI's number-column valueParser reads null as 0, which applies a
+            // live "= 0" filter and empties a client-filtered grid before any value is typed.
+            return { ...item, value: isNumber ? undefined : value };
         });
         const filteredItems = updatedItems.filter(item => !(item.operator === 'isAnyOf' && Array.isArray(item.value) && item.value.length === 0));
         setFilterModel({ ...e, items: filteredItems });
