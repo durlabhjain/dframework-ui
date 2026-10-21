@@ -49,6 +49,8 @@ import HistoryIcon from "@mui/icons-material/History";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import Checkbox$1 from "@mui/material/Checkbox";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import IconButton$1 from "@mui/material/IconButton";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import Paper from "@mui/material/Paper";
 import Stack$1 from "@mui/material/Stack";
 import Divider$1 from "@mui/material/Divider";
@@ -78,7 +80,7 @@ import PageviewIcon from "@mui/icons-material/PageviewOutlined";
 import Input$1 from "@mui/material/Input";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-//#region src/lib/errors.js
+// src/lib/errors.js
 /**
 * Centralized error code registry.
 *
@@ -176,8 +178,7 @@ var AppError = class extends Error {
 		this.httpStatus = httpStatus;
 	}
 };
-//#endregion
-//#region src/lib/components/SnackBar/index.js
+// src/lib/components/SnackBar/index.js
 var SnackbarContext = createContext(null);
 var ANCHOR_ORIGIN = {
 	vertical: "bottom",
@@ -247,8 +248,7 @@ var SnackbarProvider = ({ children }) => {
 	})] });
 };
 var useSnackbar = () => use(SnackbarContext);
-//#endregion
-//#region src/lib/components/Dialog/index.js
+// src/lib/components/Dialog/index.js
 /**
 * DialogComponent is a reusable dialog/modal component based on Material-UI's Dialog.
 *
@@ -298,8 +298,7 @@ var DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText, c
 		]
 	});
 };
-//#endregion
-//#region src/lib/components/Grid/httpRequest.js
+// src/lib/components/Grid/httpRequest.js
 var HTTP_STATUS_CODES = {
 	OK: 200,
 	SESSION_EXPIRED: 401,
@@ -504,8 +503,7 @@ var request = async ({ url, params = {}, history, jsonPayload = false, method = 
 		};
 	}
 };
-//#endregion
-//#region src/lib/components/Grid/crud-helper.js
+// src/lib/components/Grid/crud-helper.js
 var dateDataTypes = ["date", "dateTime"];
 var lookupDataTypes = ["singleSelect"];
 var exportDefaultLimit = 1e6;
@@ -890,8 +888,7 @@ var crudHelper = {
 	saveRecord,
 	getLookups
 };
-//#endregion
-//#region src/lib/components/Grid/listState.js
+// src/lib/components/Grid/listState.js
 var STORAGE_PREFIX = "grid-list-state:";
 function currentSearchParams() {
 	const hashQueryIndex = window.location.hash.indexOf("?");
@@ -955,8 +952,7 @@ if (typeof window !== "undefined" && isReload()) {
 	clearAllListState();
 	stripListStateFromUrl();
 }
-//#endregion
-//#region src/lib/components/Grid/footer.js
+// src/lib/components/Grid/footer.js
 var handleKeyPress = (event) => {
 	const keyCode = event.which || event.keyCode;
 	const keyValue = String.fromCharCode(keyCode);
@@ -1036,8 +1032,7 @@ var Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) 
 		] })
 	}), /* @__PURE__ */ jsx(GridFooter, {})] });
 };
-//#endregion
-//#region src/lib/components/Grid/template.js
+// src/lib/components/Grid/template.js
 var defaultTemplate$1 = /\${((\w+)\.)?(\w+)}/g;
 /**
 * @description Replaces the given tags in the given source with the given values.
@@ -1061,8 +1056,7 @@ var replaceTags = function(source, tags, { template = defaultTemplate$1, keepMis
 	});
 };
 var template_default = { replaceTags };
-//#endregion
-//#region src/lib/components/Typography/index.js
+// src/lib/components/Typography/index.js
 function MuiTypography({ variant = "h2", component = "h2", text = "", name = null, ...rest }) {
 	return /* @__PURE__ */ jsxs(Typography$1, {
 		variant,
@@ -1071,8 +1065,7 @@ function MuiTypography({ variant = "h2", component = "h2", text = "", name = nul
 		children: [text, name && ` ${name}`]
 	});
 }
-//#endregion
-//#region src/lib/components/useMobile.js
+// src/lib/components/useMobile.js
 /**
 * Detects the current device type and screen orientation via User-Agent sniffing and window dimensions.
 * @returns {{ mobile: boolean, tablet: boolean, portrait: boolean, landscape: boolean }}
@@ -1110,8 +1103,7 @@ function useMobile(onlyMobile = false) {
 	}, []);
 	return onlyMobile ? view.mobile : view;
 }
-//#endregion
-//#region src/lib/components/mui/locale/data-grid/daDK.js
+// src/lib/components/mui/locale/data-grid/daDK.js
 var daDKGrid = {
 	Jumptopage: "Gå til side",
 	Go: "Gå",
@@ -1123,8 +1115,7 @@ var mergedLocalizationDatadaDK = {
 	...locales$1["daDK"],
 	...daDKGrid
 };
-//#endregion
-//#region src/lib/components/mui/locale/data-grid/deDE.js
+// src/lib/components/mui/locale/data-grid/deDE.js
 var deDEGrid = {
 	Jumptopage: "Zur Seite springen",
 	Go: "Gehen",
@@ -1136,8 +1127,7 @@ var mergedLocalizationDatadeDE = {
 	...locales$1["deDE"],
 	...deDEGrid
 };
-//#endregion
-//#region src/lib/components/mui/locale/data-grid/elGR.js
+// src/lib/components/mui/locale/data-grid/elGR.js
 var elGRGrid = {
 	Jumptopage: "Μετάβαση στη σελίδα",
 	Go: "Πηγαίνω",
@@ -1149,8 +1139,7 @@ var mergedLocalizationDataelGR = {
 	...locales$1["elGR"],
 	...elGRGrid
 };
-//#endregion
-//#region src/lib/components/mui/locale/data-grid/esES.js
+// src/lib/components/mui/locale/data-grid/esES.js
 var esESGrid = {
 	Jumptopage: "Saltar a la página",
 	Go: "Ir",
@@ -1162,8 +1151,7 @@ var mergedLocalizationDataesES = {
 	...locales$1["esES"],
 	...esESGrid
 };
-//#endregion
-//#region src/lib/components/mui/locale/data-grid/frFR.js
+// src/lib/components/mui/locale/data-grid/frFR.js
 var frFRGrid = {
 	Jumptopage: "Aller à la page",
 	Go: "Aller",
@@ -1175,8 +1163,7 @@ var mergedLocalizationDatafrFR = {
 	...locales$1["frFR"],
 	...frFRGrid
 };
-//#endregion
-//#region src/lib/components/mui/locale/data-grid/itIT.js
+// src/lib/components/mui/locale/data-grid/itIT.js
 var itITGrid = {
 	Jumptopage: "Vai alla pagina",
 	Go: "Andare",
@@ -1188,8 +1175,7 @@ var mergedLocalizationDataitIT = {
 	...locales$1["itIT"],
 	...itITGrid
 };
-//#endregion
-//#region src/lib/components/mui/locale/data-grid/trTR.js
+// src/lib/components/mui/locale/data-grid/trTR.js
 var trTRGrid = {
 	Jumptopage: "Sayfaya atla",
 	Go: "Gitmek",
@@ -1201,8 +1187,7 @@ var mergedLocalizationDatatrTR = {
 	...locales$1["trTR"],
 	...trTRGrid
 };
-//#endregion
-//#region src/lib/components/mui/locale/data-grid/ptPT.js
+// src/lib/components/mui/locale/data-grid/ptPT.js
 var ptPT_default = { components: { MuiDataGrid: { defaultProps: { localeText: {
 	Add: "createew",
 	noRowsLabel: "Sem resultados",
@@ -1330,8 +1315,7 @@ var ptPT_default = { components: { MuiDataGrid: { defaultProps: { localeText: {
 	Pages: "Páginas",
 	MuiTablePagination: { labelRowsPerPage: "Linhas por página" }
 } } } } };
-//#endregion
-//#region src/lib/components/mui/locale/data-grid/enUS.js
+// src/lib/components/mui/locale/data-grid/enUS.js
 var enUSGrid = {
 	Jumptopage: "Jump to page",
 	Go: "Go",
@@ -1339,8 +1323,7 @@ var enUSGrid = {
 	Pages: "Pages",
 	MuiTablePagination: { labelRowsPerPage: "Rows per page" }
 };
-//#endregion
-//#region src/lib/components/mui/locale/localization.js
+// src/lib/components/mui/locale/localization.js
 var locales = {
 	"en": {
 		...locales$1["enUS"],
@@ -1355,8 +1338,7 @@ var locales = {
 	"pt-PT": ptPT_default,
 	"it-IT": mergedLocalizationDataitIT
 };
-//#endregion
-//#region src/lib/components/useRouter/StateProvider.js
+// src/lib/components/useRouter/StateProvider.js
 dayjs.extend(utc);
 dayjs.extend(timezone);
 var StateContext = createContext();
@@ -1569,8 +1551,7 @@ var useStateContext = () => {
 	if (context === void 0) throw new Error("useStateContext must be used within a StateProvider");
 	return context;
 };
-//#endregion
-//#region src/lib/components/HelpModal/index.js
+// src/lib/components/HelpModal/index.js
 var RATIO = 16 / 9;
 var HelpModal = () => {
 	const [height, setHeight] = useState();
@@ -1665,8 +1646,7 @@ var HelpModal = () => {
 		})]
 	}) });
 };
-//#endregion
-//#region src/lib/components/PageTitle/index.js
+// src/lib/components/PageTitle/index.js
 var EMPTY_BREADCRUMBS = [];
 function PageTitle({ titleHeading, navigate, name = null, RightComponent = null, mobileRightComponent, title = "", titleClass = "text-theme-blue text-max-width", showBreadcrumbs, breadcrumbs = EMPTY_BREADCRUMBS, enableBackButton = false, breadcrumbColor, showHelpButton = false, model }) {
 	const isMobile = useMobile(true);
@@ -1781,8 +1761,7 @@ function PageTitle({ titleHeading, navigate, name = null, RightComponent = null,
 	}), /* @__PURE__ */ jsx(HelpModal, {})] })] });
 }
 var PageTitle_default = withTranslation()(PageTitle);
-//#endregion
-//#region src/lib/components/utils.js
+// src/lib/components/utils.js
 /**
 * Matches placeholders like ${key} and ${group.key} in template strings.
 */
@@ -1864,8 +1843,7 @@ var getPermissions = ({ userData = {}, model, userDefinedPermissions }) => {
 		canDelete: userDefinedPermissions.delete && Boolean(userPermissions[[utils.permissionsMapper.delete]])
 	};
 };
-//#endregion
-//#region src/lib/components/Grid/LocalizedDatePicker.js
+// src/lib/components/Grid/LocalizedDatePicker.js
 dayjs.extend(utcPlugin);
 var componentMap = {
 	date: DatePicker,
@@ -1980,8 +1958,7 @@ var localizedDateFormat = (colProps) => getGridDateOperators(colProps?.columnTyp
 		...colProps
 	}) : void 0
 }));
-//#endregion
-//#region src/lib/components/Grid/integerFilterValue.js
+// src/lib/components/Grid/integerFilterValue.js
 var toIntegerFilterValue = (value) => {
 	if (Array.isArray(value)) return value.map(toIntegerFilterValue).filter((entry) => entry !== void 0);
 	if (typeof value !== "number" && (typeof value !== "string" || value.trim() === "")) return void 0;
@@ -2008,8 +1985,7 @@ var withIntegerFilterValues = (operators) => operators.map((op) => op.InputCompo
 	...op,
 	InputComponent: asIntegerFilterInput(op.InputComponent)
 } : op);
-//#endregion
-//#region src/lib/components/Grid/useGridPreferences.js
+// src/lib/components/Grid/useGridPreferences.js
 function parsePreferenceState(value) {
 	const state = typeof value === "string" ? JSON.parse(value) : value;
 	if (!state || typeof state !== "object" || Array.isArray(state)) throw new Error("Invalid grid state");
@@ -2070,8 +2046,7 @@ function useGridPreferences({ url, preferenceKey, onInitialize, onError }) {
 		reloadPreferences
 	};
 }
-//#endregion
-//#region src/lib/components/Grid/GridPreference.js
+// src/lib/components/Grid/GridPreference.js
 var actionTypes$1 = {
 	Edit: "Edit",
 	Delete: "Delete"
@@ -2544,8 +2519,7 @@ var GridPreferences = ({ gridRef, preferenceKey, preferences, reloadPreferences,
 		})
 	] });
 };
-//#endregion
-//#region src/lib/components/Grid/helper.js
+// src/lib/components/Grid/helper.js
 var convertDefaultSort = (defaultSort, constants, sortRegex) => {
 	if (typeof defaultSort !== constants.string) return [];
 	return defaultSort.split(",").flatMap((sortField) => {
@@ -2665,8 +2639,7 @@ var clampSplitHeight = ({ startHeight, delta, containerHeight, minPanelHeight, m
 	const maxHeight = Math.max(containerHeight - minSiblingHeight, minPanelHeight);
 	return Math.min(Math.max(startHeight - delta, minPanelHeight), maxHeight);
 };
-//#endregion
-//#region src/lib/components/Grid/ToolbarFilter.js
+// src/lib/components/Grid/ToolbarFilter.js
 dayjs.extend(utcPlugin);
 var ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTranslate, tOpts }) => {
 	const { systemDateTimeFormat, stateData } = useStateContext();
@@ -2886,8 +2859,7 @@ var ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTransla
 	};
 	return renderFilterInput();
 };
-//#endregion
-//#region src/lib/components/Grid/CustomToolbar.js
+// src/lib/components/Grid/CustomToolbar.js
 var ButtonWithMargin = styled$1(Button)({ margin: "6px" });
 var GridToolBar = styled$1(Toolbar)({
 	display: "flex",
@@ -3041,8 +3013,7 @@ var CustomToolbar = function(props) {
 		})
 	})] });
 };
-//#endregion
-//#region src/lib/components/Grid/SplitResizer.js
+// src/lib/components/Grid/SplitResizer.js
 var RESIZER_BAR_HEIGHT = 10;
 var RESIZER_MARGIN = 4;
 var SplitResizer = React.memo(({ onResizeStart, onResize, onResizeEnd, keyboardStep = 24, label = "Resize child grids" }) => {
@@ -3126,8 +3097,7 @@ var SplitResizer = React.memo(({ onResizeStart, onResize, onResizeEnd, keyboardS
 		})
 	});
 });
-//#endregion
-//#region src/lib/components/permissions.js
+// src/lib/components/permissions.js
 var DEFAULT_PERMISSIONS$1 = {
 	add: true,
 	edit: true,
@@ -3166,8 +3136,7 @@ function getRecordAccess({ permissions, record = {}, isNew = false, mode, readOn
 		relationsReadOnly: !canSave || Boolean(record.readOnlyRelations)
 	};
 }
-//#endregion
-//#region src/lib/hooks/useModelTranslation.js
+// src/lib/hooks/useModelTranslation.js
 /**
 * Custom hook for handling translations in components that work with UiModel.
 * Consolidates the translation initialization pattern used across Form, Grid, and field components.
@@ -3187,8 +3156,7 @@ function useModelTranslation(model) {
 		tTranslate: model?.tTranslate ?? ((key) => key)
 	};
 }
-//#endregion
-//#region src/lib/hooks/useCascadingLookup.js
+// src/lib/hooks/useCascadingLookup.js
 var emptyValues = [
 	null,
 	void 0,
@@ -3298,8 +3266,7 @@ function useCascadingLookup({ column, formik, lookups, dependsOn = [], isAutoCom
 		labelMap
 	};
 }
-//#endregion
-//#region src/lib/hooks/useDebounce.js
+// src/lib/hooks/useDebounce.js
 function useDebounce(value, delay) {
 	const [debouncedValue, setDebouncedValue] = useState(value);
 	useEffect(() => {
@@ -3312,8 +3279,7 @@ function useDebounce(value, delay) {
 	}, [value, delay]);
 	return debouncedValue;
 }
-//#endregion
-//#region src/lib/components/Form/fields/remoteSelectField.js
+// src/lib/components/Form/fields/remoteSelectField.js
 var DEFAULT_PAGE_SIZE = 50;
 var SEARCH_DEBOUNCE_MS = 300;
 var SCROLL_LOAD_MORE_THRESHOLD_PX = 48;
@@ -3600,8 +3566,7 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 		children: [control, /* @__PURE__ */ jsx(FormHelperText, { children: formik?.touched[field] && formik?.errors[field] })]
 	});
 });
-//#endregion
-//#region src/lib/hooks/useChangedDeps.js
+// src/lib/hooks/useChangedDeps.js
 /**
 * Logs which named dependencies changed between renders.
 *
@@ -3635,8 +3600,7 @@ function useChangedDeps(label, namedDeps, enabled = false) {
 		prevRef.current = deps;
 	});
 }
-//#endregion
-//#region src/lib/components/Grid/useExtraParams.js
+// src/lib/components/Grid/useExtraParams.js
 function equalExtraParams(left, right) {
 	if (Object.is(left, right)) return true;
 	const pending = [[left, right]];
@@ -3675,8 +3639,53 @@ function useExtraParams(value, comparison) {
 	}
 	return previous;
 }
-//#endregion
-//#region src/lib/components/Grid/index.js
+// src/lib/components/Grid/serverGrouping.js
+/**
+* The grouping column's cell for server-side row grouping.
+*
+* A group summary row arrives from the list API carrying `childrenCount` - the group's leaf count
+* over the whole filtered set, not just the rows paged onto this page - alongside any aggregates.
+* MUI's own tree cell instead appends its filtered descendant count, which only counts the group's
+* rows present on the current page, so a group of 120 split across pages reads as "(50)". This
+* renders the server's figure so the count stays the group's total however the rows are paged.
+*
+* Leaf rows render nothing here: their own cell for the grouped column already shows the value.
+*/
+function ServerGroupingCell({ id, row, rowNode, value }) {
+	const apiRef = useGridApiContext();
+	if (!row?.__isGroupRow) return null;
+	const expanded = Boolean(rowNode?.childrenExpanded);
+	const ToggleIcon = expanded ? KeyboardArrowDownIcon : KeyboardArrowRightIcon;
+	const toggle = (event) => {
+		event.stopPropagation();
+		apiRef.current.setRowChildrenExpansion(id, !expanded);
+	};
+	return /* @__PURE__ */ jsxs(Box, {
+		sx: {
+			display: "flex",
+			alignItems: "center",
+			gap: .25,
+			minWidth: 0
+		},
+		children: [/* @__PURE__ */ jsx(IconButton$1, {
+			size: "small",
+			tabIndex: -1,
+			onClick: toggle,
+			"aria-expanded": expanded,
+			"aria-label": String(value ?? ""),
+			children: /* @__PURE__ */ jsx(ToggleIcon, { fontSize: "inherit" })
+		}), /* @__PURE__ */ jsxs(Box, {
+			component: "span",
+			sx: {
+				overflow: "hidden",
+				textOverflow: "ellipsis",
+				whiteSpace: "nowrap"
+			},
+			children: [value, row.childrenCount === void 0 ? "" : ` (${row.childrenCount})`]
+		})]
+	});
+}
+// src/lib/components/Grid/index.js
 var TREE_DATA_GROUPING_FIELD = "__tree_data_group__";
 var defaultPageSize = 50;
 var sortRegex = /(\w+)( ASC| DESC)?/i;
@@ -4616,7 +4625,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		if (!serverGroupField) return void 0;
 		return {
 			headerName: gridColumns.find((col) => col.field === serverGroupField)?.headerName || serverGroupField,
-			valueGetter: (value, row) => row.__isGroupRow ? row[serverGroupField] : ""
+			valueGetter: (value, row) => row.__isGroupRow ? row[serverGroupField] : "",
+			renderCell: (params) => /* @__PURE__ */ jsx(ServerGroupingCell, { ...params })
 		};
 	}, [serverGroupField, gridColumns]);
 	const getTogglableColumns = useCallback((cols) => cols.reduce((fields, col) => {
@@ -5353,7 +5363,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			}
 			return {
 				...item,
-				value: isNumber ? null : value
+				value: isNumber ? void 0 : value
 			};
 		}).filter((item) => !(item.operator === "isAnyOf" && Array.isArray(item.value) && item.value.length === 0));
 		setFilterModel({
@@ -5877,8 +5887,7 @@ var renderers = {
 		return renderersCache.get(key);
 	}
 };
-//#endregion
-//#region src/lib/components/Form/fields/boolean.js
+// src/lib/components/Form/fields/boolean.js
 var Field$10 = ({ column, field, formik, otherProps }) => {
 	const handleChange = (event) => {
 		formik.setFieldValue(field, event.target.checked);
@@ -5899,8 +5908,7 @@ var Field$10 = ({ column, field, formik, otherProps }) => {
 		children: formik.touched[field] && formik.errors[field]
 	})] }, field);
 };
-//#endregion
-//#region src/lib/components/Form/fields/string.js
+// src/lib/components/Form/fields/string.js
 var Field$9 = ({ column, field, formik, otherProps }) => {
 	const theme = useTheme();
 	const rows = column.rows || (column.multiline ? 5 : 1);
@@ -5926,8 +5934,7 @@ var Field$9 = ({ column, field, formik, otherProps }) => {
 		defaultValue: column.defaultValue
 	}, field);
 };
-//#endregion
-//#region src/lib/components/Form/fields/number.js
+// src/lib/components/Form/fields/number.js
 var resolveValue = ({ value, state }) => {
 	if (typeof value === "string" && value.startsWith("{") && value.endsWith("}")) {
 		const key = value.slice(1, -1);
@@ -6049,8 +6056,7 @@ var Field$8 = ({ column, otherProps, formik, field, ...props }) => {
 		})]
 	});
 };
-//#endregion
-//#region src/lib/components/Form/fields/password.js
+// src/lib/components/Form/fields/password.js
 var handleMouseDownPassword = (event) => {
 	event.preventDefault();
 };
@@ -6084,8 +6090,7 @@ var Field$7 = ({ otherProps, ...props }) => {
 		...props
 	});
 };
-//#endregion
-//#region src/lib/components/Form/fields/date.js
+// src/lib/components/Form/fields/date.js
 var EMPTY_FIELD_CONFIGS$4 = {};
 var Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$4, mode }) => {
 	const isDisabled = mode !== "copy" && fieldConfigs.disabled;
@@ -6164,8 +6169,7 @@ var Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
 		} }
 	}, field);
 };
-//#endregion
-//#region src/lib/components/Form/fields/dateTime.js
+// src/lib/components/Form/fields/dateTime.js
 dayjs.extend(utc);
 var EMPTY_FIELD_CONFIGS$3 = {};
 var Field$5 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$3 }) => {
@@ -6200,8 +6204,7 @@ var Field$5 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
 		} }
 	}, field);
 };
-//#endregion
-//#region src/lib/components/Form/fields/time.js
+// src/lib/components/Form/fields/time.js
 dayjs.extend(utcPlugin);
 var Field$4 = ({ column, field, formik, otherProps }) => {
 	let inputValue = formik.values[field];
@@ -6226,8 +6229,7 @@ var Field$4 = ({ column, field, formik, otherProps }) => {
 		} }
 	}, field);
 };
-//#endregion
-//#region src/lib/components/Form/fields/select.js
+// src/lib/components/Form/fields/select.js
 var EMPTY_FIELD_CONFIGS$2 = {};
 var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, tTranslate, tOpts, fieldConfigs = EMPTY_FIELD_CONFIGS$2, ...otherProps }) => {
 	const isReadOnly = column.readOnly === true || Boolean(fieldConfigs.readOnly);
@@ -6370,8 +6372,7 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 		]
 	}, field);
 });
-//#endregion
-//#region src/lib/components/Form/fields/grid-transfer.js
+// src/lib/components/Form/fields/grid-transfer.js
 var DivSpacing = styled$1("div")({
 	marginTop: "10px",
 	marginBottom: "10px",
@@ -6411,8 +6412,7 @@ var TransferField = ({ component, name, formik, field, column, tTranslate = (key
 		})
 	] });
 };
-//#endregion
-//#region src/lib/components/Form/fields/radio.js
+// src/lib/components/Form/fields/radio.js
 var EMPTY_FIELD_CONFIGS$1 = {};
 var Field$3 = ({ field, formik, orientation = "row", label, lookups, fieldConfigs = EMPTY_FIELD_CONFIGS$1, mode, tTranslate, tOpts, ...otherProps }) => {
 	const handleChange = (event) => {
@@ -6444,8 +6444,7 @@ var Field$3 = ({ field, formik, orientation = "row", label, lookups, fieldConfig
 		children: formik.errors[field]
 	})] });
 };
-//#endregion
-//#region src/lib/components/Form/fields/autocomplete.js
+// src/lib/components/Form/fields/autocomplete.js
 var consts$2 = { limitTags: 5 };
 var Field$2 = React$1.memo(({ column, field, formik, lookups, dependsOn = [], fieldConfigs = {}, mode, model, ...otherProps }) => {
 	const { options } = useCascadingLookup({
@@ -6489,11 +6488,9 @@ var Field$2 = React$1.memo(({ column, field, formik, lookups, dependsOn = [], fi
 		}), formik.touched[field] && formik.errors[field] && /* @__PURE__ */ jsx(FormHelperText, { children: formik.errors[field] })]
 	}, field);
 });
-//#endregion
-//#region src/lib/components/Form/fields/CustomRenderCell.js
+// src/lib/components/Form/fields/CustomRenderCell.js
 var brandBackgroundColor = "#182eb5";
-//#endregion
-//#region src/lib/components/Form/fields/dayRadio.js
+// src/lib/components/Form/fields/dayRadio.js
 var days = [
 	{
 		label: "Sunday",
@@ -6646,14 +6643,12 @@ var DaySelection = ({ name, field, formik, expired, column }) => {
 		children: formik.errors[field]
 	})] });
 };
-//#endregion
-//#region src/lib/components/Form/context.js
+// src/lib/components/Form/context.js
 var ActiveStepContext = createContext({
 	activeStep: 0,
 	setActiveStep: () => {}
 });
-//#endregion
-//#region src/lib/components/Form/fields/chipInput.js
+// src/lib/components/Form/fields/chipInput.js
 var EMPTY_FIELD_CONFIGS = {};
 var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS }) => {
 	const theme = useTheme();
@@ -6752,8 +6747,7 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
 		}), formik.touched[field] && formik.errors[field] && /* @__PURE__ */ jsx(FormHelperText, { children: formik.errors[field] })]
 	}, field);
 };
-//#endregion
-//#region src/lib/components/Form/fields/treeCheckBox.js
+// src/lib/components/Form/fields/treeCheckBox.js
 /**
 * Builds a tree structure from a flat array of data.
 * 
@@ -6825,8 +6819,7 @@ function treeCheckBox({ column, field, formik, lookups, fieldConfigs, mode }) {
 		})
 	});
 }
-//#endregion
-//#region src/lib/components/Form/fields/fileUpload.js
+// src/lib/components/Form/fields/fileUpload.js
 var consts$1 = { maxLength: 500 };
 var { errorMapping } = utils;
 var MB = 1048576;
@@ -7038,8 +7031,7 @@ function FileUpload({ column, field, formik }) {
 		})
 	] });
 }
-//#endregion
-//#region src/lib/components/Form/fields/filePicker.js
+// src/lib/components/Form/fields/filePicker.js
 var CANVAS_PREVIEW_MAX_SIZE = 400;
 /**
 * Defers the actual upload to whenever the surrounding Form is submitted: stores the
@@ -7194,8 +7186,7 @@ function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key })
 		]
 	});
 }
-//#endregion
-//#region src/lib/components/Form/fields/jsonInput.js
+// src/lib/components/Form/fields/jsonInput.js
 var parseJson = (raw) => {
 	if (!raw) return {};
 	try {
@@ -7261,8 +7252,7 @@ var Field = ({ column, field, formik }) => {
 		}, key))
 	}, field);
 };
-//#endregion
-//#region src/lib/components/Form/field-mapper.js
+// src/lib/components/Form/field-mapper.js
 var ChildGridField = ({ column }) => {
 	const Component = column.relation;
 	if (!Component) return null;
@@ -7595,8 +7585,7 @@ var FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayI
 		})]
 	})] });
 };
-//#endregion
-//#region src/lib/components/Form/relations.js
+// src/lib/components/Form/relations.js
 function CustomTabPanel(props) {
 	const { children, value, index, fillHeight, ...other } = props;
 	const isActive = value === index;
@@ -7755,8 +7744,7 @@ var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE$1, models, 
 		}, relation))]
 	});
 });
-//#endregion
-//#region src/lib/components/Form/Form.js
+// src/lib/components/Form/Form.js
 var defaultFieldConfigs = {};
 var DEFAULT_RELATION_FILTERS = {};
 var DEFAULT_PERMISSIONS = {};
@@ -8223,8 +8211,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 		})
 	})] });
 };
-//#endregion
-//#region src/lib/components/Grid/ChildGridTabs.js
+// src/lib/components/Grid/ChildGridTabs.js
 var EMPTY_WHERE = [];
 /**
 * Child grid tabs for a parent *grid* - the `relations: { items: [...] }` form, resolved into
@@ -8328,8 +8315,7 @@ var ChildGridTabs = React.memo(({ relations, models, parent, relationFilters, wh
 		})]
 	});
 });
-//#endregion
-//#region \0@oxc-project+runtime@0.154.0/helpers/esm/typeof.js
+// \0@oxc-project+runtime@0.155.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -8338,8 +8324,7 @@ function _typeof(o) {
 		return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
 	}, _typeof(o);
 }
-//#endregion
-//#region \0@oxc-project+runtime@0.154.0/helpers/esm/toPrimitive.js
+// \0@oxc-project+runtime@0.155.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -8350,14 +8335,12 @@ function toPrimitive(t, r) {
 	}
 	return ("string" === r ? String : Number)(t);
 }
-//#endregion
-//#region \0@oxc-project+runtime@0.154.0/helpers/esm/toPropertyKey.js
+// \0@oxc-project+runtime@0.155.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
-//#endregion
-//#region \0@oxc-project+runtime@0.154.0/helpers/esm/defineProperty.js
+// \0@oxc-project+runtime@0.155.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
@@ -8366,8 +8349,7 @@ function _defineProperty(e, r, t) {
 		writable: !0
 	}) : e[r] = t, e;
 }
-//#endregion
-//#region src/lib/components/Grid/ui-models.js
+// src/lib/components/Grid/ui-models.js
 var regexConfig = {
 	password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/,
 	nonAlphaNumeric: /[^a-zA-Z0-9]/g,
@@ -8697,7 +8679,6 @@ _defineProperty(UiModel, "defaultPermissions", {
 	edit: true,
 	delete: true
 });
-//#endregion
 export { AppError, DialogComponent, ERROR_CODES, ERROR_MESSAGES, GridBase, HelpModal, MuiTypography, PageTitle_default as PageTitle, Relations, RouterProvider, SnackbarContext, SnackbarProvider, StateProvider, UiModel, crudHelper, daDKGrid, deDEGrid, elGRGrid, esESGrid, frFRGrid, request as httpRequest, itITGrid, locales, ptPT_default as ptPT, renderers, resolveErrorMessage, trTRGrid, useMobile, useModelTranslation, useRouter, useSnackbar, useStateContext, withMultiValueTagInput };
 
 //# sourceMappingURL=index.js.map
