@@ -45,6 +45,7 @@ import { ERROR_CODES } from '../../errors';
 import RemoteSelectField from '../Form/fields/remoteSelectField.js';
 import { useChangedDeps } from '../../hooks/useChangedDeps';
 import useExtraParams from './useExtraParams';
+import { ServerGroupingCell } from './serverGrouping';
 
 // MUI's fixed field id for the auto-generated treeData grouping column - not part of x-data-grid-premium's public named exports.
 const TREE_DATA_GROUPING_FIELD = '__tree_data_group__';
@@ -1024,12 +1025,15 @@ const GridBase = memo(({
 
     // Shows the grouped column's own name (not MUI's default "Group") and blanks out leaf rows,
     // which would otherwise fall back to showing their own id (their tree path's last segment).
+    // renderCell replaces MUI's built-in tree cell, whose count only covers the group's rows on
+    // this page, with the summary row's server-side total (see serverGrouping.js).
     const groupingColDef = useMemo(() => {
         if (!serverGroupField) return undefined;
         const groupedColumn = gridColumns.find(col => col.field === serverGroupField);
         return {
             headerName: groupedColumn?.headerName || serverGroupField,
-            valueGetter: (value, row) => (row.__isGroupRow ? row[serverGroupField] : '')
+            valueGetter: (value, row) => (row.__isGroupRow ? row[serverGroupField] : ''),
+            renderCell: (params) => <ServerGroupingCell {...params} />
         };
     }, [serverGroupField, gridColumns]);
     // Excludes the auto tree/group column from the "manage columns" panel entirely (not merely
