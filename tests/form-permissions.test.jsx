@@ -1,4 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useEffect } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import Form from '../src/lib/components/Form/Form.js';
 import FormLayout from '../src/lib/components/Form/field-mapper.js';
@@ -155,4 +156,67 @@ it('read-only file picker cannot replace a file', () => {
 it('evaluates column read-only callbacks instead of treating functions as true', () => {
     mountField('string', 'editable', { readOnly: () => false }, false);
     expect(screen.getByRole('textbox').readOnly).toBe(false);
+});
+
+const listRequests = vi.fn();
+function AssignmentGrid({ available, assigned }) {
+    useEffect(() => { listRequests({ available, assigned }); }, [available, assigned]);
+    return <div>{available ? 'Available members' : 'Assigned members'}</div>;
+}
+
+it.each([
+    ['redirect', undefined, 'success'],
+    ['stay open', false, 'success'],
+    ['failed save', undefined, 'error'],
+    ['unsuccessful save', undefined, 'false'],
+])('%s keeps assignment grids and remote lookups mounted during save', async (_label, navigateBack, outcome) => {
+    listRequests.mockClear();
+    let resolveSave, rejectSave, formState;
+    mocks.saveRecord.mockReturnValue(new Promise((resolve, reject) => { resolveSave = resolve; rejectSave = reject; }));
+    mocks.getLookups.mockResolvedValue([{ value: '1', label: 'One' }]);
+    const saveModel = {
+        ...model, navigateBack, actions: 'both', permissions: { add: true, edit: true, delete: true, copy: true },
+        columns: [
+            ...model.columns,
+            { field: 'members', type: 'oneToMany', label: 'Members', relation: AssignmentGrid },
+            { field: 'choice', type: 'remoteSelect', label: 'Choice', lookup: 'choices' },
+        ],
+    };
+    const Layout = (props) => { formState = props.formik; return <FormLayout {...props} />; };
+    const onSaveSuccess = vi.fn();
+    const { container } = render(<Form model={saveModel} Layout={Layout} onSaveSuccess={onSaveSuccess} />);
+    await screen.findByText('Available members');
+    await waitFor(() => expect(mocks.getLookups).toHaveBeenCalledTimes(1));
+    expect(listRequests).toHaveBeenCalledTimes(2);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Changed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(mocks.saveRecord).toHaveBeenCalledTimes(1));
+    expect(screen.getByText('Available members')).toBeTruthy();
+    expect(screen.getByText('Assigned members')).toBeTruthy();
+    expect(container.querySelector('form').hasAttribute('inert')).toBe(true);
+    for (const name of ['Save', 'Cancel', 'Copy', 'Delete']) {
+        expect(screen.getByRole('button', { name, hidden: true }).disabled).toBe(true);
+    }
+    fireEvent.submit(container.querySelector('form'));
+    expect(mocks.saveRecord).toHaveBeenCalledTimes(1);
+    await act(async () => {
+        if (outcome === 'error') rejectSave(new Error('Save failed'));
+        else resolveSave(outcome === 'false' ? false : { success: true });
+    });
+    await waitFor(() => expect(formState.isSubmitting).toBe(false));
+    expect(listRequests).toHaveBeenCalledTimes(2);
+    expect(mocks.getLookups).toHaveBeenCalledTimes(1);
+    expect(mocks.getRecord).toHaveBeenCalledTimes(1);
+    expect(formState.values.name).toBe('Changed');
+    expect(formState.dirty).toBe(!(outcome === 'success' && navigateBack === false));
+    if (outcome === 'success') {
+        expect(onSaveSuccess).toHaveBeenCalledTimes(1);
+        expect(mocks.snackbar.showMessage).toHaveBeenCalledTimes(1);
+        if (navigateBack === false) expect(mocks.router.navigate).not.toHaveBeenCalled();
+        else expect(mocks.router.navigate).toHaveBeenCalledWith('/items');
+    } else {
+        expect(onSaveSuccess).not.toHaveBeenCalled();
+        expect(mocks.router.navigate).not.toHaveBeenCalled();
+        if (outcome === 'error') expect(mocks.snackbar.showErrorCode).toHaveBeenCalled();
+    }
 });
