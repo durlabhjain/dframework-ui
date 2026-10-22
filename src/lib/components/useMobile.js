@@ -20,12 +20,15 @@ function useMobile(onlyMobile = false) {
   const [view, setView] = useState(checkDevice);
 
   useEffect(() => {
+    let resizeTimer;
     const handleWindowSizeChange = () => {
-      setTimeout(() => setView(checkDevice()), 10);
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => setView(checkDevice()), 10);
     };
     window.addEventListener('resize', handleWindowSizeChange);
     return () => {
       window.removeEventListener('resize', handleWindowSizeChange);
+      clearTimeout(resizeTimer);
     };
   }, []);
 

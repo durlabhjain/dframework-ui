@@ -13,6 +13,24 @@
     "react-doctor/prefer-useReducer": "off",
     "react-doctor/rendering-usetransition-loading": "off",
     "react-doctor/rerender-state-only-in-handlers": "off",
-    "deslop/circular-dependency": "off"
+    "deslop/circular-dependency": "off",
+    "react-doctor/no-high-complexity-react-function": "off",
+    "react-doctor/no-adjust-state-on-prop-change": "off",
+    "react-doctor/no-prop-callback-in-effect": "off"
+  },
+  "ignore": {
+    "files": [
+      ".review-pr168/**"
+    ],
+    "overrides": [
+      {
+        "files": [
+          "src/lib/index.js"
+        ],
+        "rules": [
+          "deslop/unused-file"
+        ]
+      }
+    ]
   }
 }

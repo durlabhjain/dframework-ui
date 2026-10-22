@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import Grid from '../src/lib/components/Grid/index.js';
 
 const mocks = vi.hoisted(() => ({
@@ -448,4 +448,18 @@ it('exports current parameters without cancelling an in-flight list request', as
     await waitFor(() => expect(mocks.getList).toHaveBeenCalledTimes(2));
     expect(mocks.getList.mock.calls[1][0]).toMatchObject({ contentType: 'text/csv', extraParams: { status: 2 }, signal: null });
     expect(listSignal.aborted).toBe(false);
+});
+
+it('reset reads the latest defaults after a rerender', async () => {
+    let defaultName = 'before';
+    const defaultFilters = () => [{ field: 'name', operator: 'contains', value: defaultName }];
+    const { apiRef, rerender } = mount({ saved: snapshot, overrides: { defaultFilters } });
+    await ready();
+    defaultName = 'after';
+    rerender(<Grid model={{ ...model, defaultFilters }} apiRef={apiRef} preserveListState />);
+    openPreferences();
+    fireEvent.click(screen.getByText('Reset to Default'));
+    await waitFor(() => expect(apiRef.current.exportState().filter.filterModel.items).toMatchObject([
+        { field: 'name', operator: 'contains', value: 'after' }
+    ]));
 });

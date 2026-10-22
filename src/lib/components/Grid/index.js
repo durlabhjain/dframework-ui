@@ -16,7 +16,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIcon from '@mui/icons-material/FileCopy';
 import ArticleIcon from '@mui/icons-material/Article';
 import EditIcon from '@mui/icons-material/Edit';
-import { useMemo, useEffect, memo, useRef, useState, useCallback } from 'react';
+import { useMemo, useEffect, memo, useRef, useState, useCallback, useLayoutEffect } from 'react';
 import { useSnackbar } from '../SnackBar/index';
 import { DialogComponent } from '../Dialog/index';
 import { getList, getRecord, deleteRecord, saveRecord } from './crud-helper';
@@ -124,7 +124,11 @@ const MultiValueTagInput = (props) => {
             return;
         }
         const segments = newInputValue.split(TYPE_VALUE_SEPARATOR_REGEX);
-        const completedValues = segments.slice(0, -1).map(value => value.trim()).filter(value => value !== '');
+        const completedValues = [];
+        for (const segment of segments.slice(0, -1)) {
+            const value = segment.trim();
+            if (value !== '') completedValues.push(value);
+        }
         if (completedValues.length > 0) {
             commitValues(completedValues);
         }
@@ -353,9 +357,9 @@ const GridBase = memo(({
     const [showAddConfirmation, setShowAddConfirmation] = useState(false);
     const snackbar = useSnackbar();
     const snackbarRef = useRef(snackbar);
-    snackbarRef.current = snackbar;
+    useLayoutEffect(() => { snackbarRef.current = snackbar; }, [snackbar]);
     const onListParamsChangeRef = useRef(onListParamsChange);
-    onListParamsChangeRef.current = onListParamsChange;
+    useLayoutEffect(() => { onListParamsChangeRef.current = onListParamsChange; }, [onListParamsChange]);
     // Force client pagination when localSortAndFilter is enabled so that all data is
     // fetched in a single request and MUI DataGrid handles paging/sort/filter locally.
     const paginationMode = (hasStaticData || model.localSortAndFilter) ? constants.client : (model.paginationMode === constants.client ? constants.client : constants.server);
@@ -372,6 +376,9 @@ const GridBase = memo(({
             initialFilterModel.items.push(ele);
         });
     }
+    // Reset handlers read the latest relative-date defaults without changing identity.
+    const initialFilterModelRef = useRef(initialFilterModel);
+    useLayoutEffect(() => { initialFilterModelRef.current = initialFilterModel; });
     const [filterModel, setFilterModel] = useState(() => listStateSnapshot?.gridState?.filter?.filterModel ?? { ...initialFilterModel });
     const [prevCustomFilters, setPrevCustomFilters] = useState(() => hasRestoredListState ? customFilters : {});
     const [prevHasStaticData, setPrevHasStaticData] = useState(hasStaticData);
@@ -607,7 +614,7 @@ const GridBase = memo(({
         setCurrentPreference(null);
         setPaginationModel({ pageSize: defaultPageSize, page: 0 });
         setSortModel(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
-        setFilterModel({ ...initialFilterModel });
+        setFilterModel({ ...initialFilterModelRef.current });
         setGroupingModel(Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []);
         const clearedSelection = { type: 'include', ids: new Set() };
         setRowSelectionModel(clearedSelection);
@@ -620,8 +627,7 @@ const GridBase = memo(({
         }
         stripListStateFromUrl();
         setTimeout(() => { listStateArmedRef.current = true; }, 0);
-        // react-doctor-disable-next-line no-effect-with-fresh-deps -- initialFilterModel is intentionally rebuilt every render (defaultFilters may be a function needing fresh relative dates); onResetToDefault is only invoked from user-triggered handlers, not render output, so the identity churn is harmless
-    }, [apiRef, preserveListState, defaultSort, model.defaultSort, initialFilterModel, props.rowGroupingField, onRowSelectionModelChangeProp]);
+    }, [apiRef, preserveListState, defaultSort, model.defaultSort, props.rowGroupingField, onRowSelectionModelChangeProp]);
 
     // Extract column grouping props from model to override
     const columnGroupingModel = useMemo(() => {
@@ -762,7 +768,7 @@ const GridBase = memo(({
             setData(normalizedStaticData);
         } else {
             setData((prevData) => ({
-                ...(prevData || {}),
+                ...prevData,
                 records: [],
                 recordCount: 0,
                 lookups: {}
@@ -1048,17 +1054,11 @@ const GridBase = memo(({
 
     // Stable slice of column properties that affect the API request only (what buildRequestData reads).
     // Isolates fetchData from render-only changes like headerName, renderCell, filterOperators, etc.
-    const fetchColumnsRef = useRef([]);
-    const fetchColumns = useMemo(() => {
-        const next = stableGridColumns.map(({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable }) => ({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable }));
-        const prev = fetchColumnsRef.current;
-        const isSame = Array.isArray(prev)
-            && prev.length === next.length
-            && next.every((col, i) => areEqual(prev[i], col));
-        if (isSame) return prev;
-        fetchColumnsRef.current = next;
-        return next;
-    }, [stableGridColumns]);
+    const [fetchColumns, setFetchColumns] = useState([]);
+    const nextFetchColumns = useMemo(() => stableGridColumns.map(({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable }) => ({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable })), [stableGridColumns]);
+    if (fetchColumns.length !== nextFetchColumns.length || !nextFetchColumns.every((col, i) => areEqual(fetchColumns[i], col))) {
+        setFetchColumns(nextFetchColumns);
+    }
 
     // Sort by the grouping field(s) first (desc) so group rows land first, then the current/default sort.
     // groupingModel is seeded from the (possibly page-shared) rowGroupingField prop regardless of
@@ -1077,7 +1077,8 @@ const GridBase = memo(({
             const column = fetchColumns.find(col => col.field === field) || {};
             return { field, sort: 'desc', filterField: resolveRequestField(field, column, isElasticScreen) };
         });
-        const remainingSorts = sortModel.filter(sort => !activeGroupingFields.includes(sort.field));
+        const groupingFields = new Set(activeGroupingFields);
+        const remainingSorts = sortModel.filter(sort => !groupingFields.has(sort.field));
         return [...groupSorts, ...remainingSorts];
     }, [activeGroupingFields, sortModel, fetchColumns, isElasticScreen]);
     // Stable empty reference when localSortAndFilter is on, so fetchData's useCallback/effect don't re-trigger on local sort changes.
@@ -1239,6 +1240,7 @@ const GridBase = memo(({
                 setData((prevData) => ({ ...prevData, records: [], recordCount: 0 }));
             }
         } finally {
+            // react-doctor-disable-next-line no-loading-flag-reset-outside-finally -- Already in finally; a newer request owns its own loading flag.
             if (!isExportRequest && fetchAbortControllerRef.current === controller) setIsLoading(false);
         }
     }, [hasStaticData, preferencesReady, paginationModelForFetch, buildUrl, model, backendApi, filterModelForFetch, baseFilters, id, assigned, available, selected, requestExtraParams, sortModelForFetch, fetchColumns, parentFilters, additionalFilters, tTranslate, tOpts, apiRef, serverGroupField, groupAggregations]);
@@ -1294,7 +1296,7 @@ const GridBase = memo(({
 
     const handleDownload = useCallback(({ documentLink }) => {
         if (!documentLink) return;
-        window.open(documentLink, '_blank');
+        window.open(documentLink, '_blank', 'noopener,noreferrer');
     }, []);
     const onCellClickHandler = useCallback(async (cellParams, event, details) => {
         let action = (!disableCellRedirect && cellParams.field === model.linkColumn) ? actionTypes.Edit : null;
@@ -1652,7 +1654,7 @@ const GridBase = memo(({
 
     // Kept fresh every render so the event subscriptions below always call the latest closure.
     const commitListStateRef = useRef(commitListState);
-    commitListStateRef.current = commitListState;
+    useLayoutEffect(() => { commitListStateRef.current = commitListState; }, [commitListState]);
 
     // Only commits once the user actually changes pagination/sort/filter/grouping/selection/preference - arming alone must not trigger this.
     useEffect(() => {

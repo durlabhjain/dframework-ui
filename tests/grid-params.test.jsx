@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 import { equalExtraParams } from '../src/lib/components/Grid/useExtraParams.js';
 
 it('compares nested parameter values without depending on property order', () => {

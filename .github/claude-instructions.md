@@ -1,3 +1,4 @@
+<!-- Current tooling commands and packaging behavior are documented in ../README.md. -->
 # DFramework UI - Claude AI Assistant Instructions
 
 ## Purpose
@@ -15,7 +16,7 @@ This file provides specific guidance for Claude (Anthropic's AI assistant) when 
 
 3. **📚 Library vs Application**: Remember this is a library, not an application. Changes affect all consuming applications.
 
-4. **🧪 No Automated Tests**: There are no automated tests. You must manually verify changes by running `npm run dev` and testing in the browser.
+4. **🧪 Verification**: Run `npm run check`, `npm test`, and `npm run build`. Use a consuming application for browser checks.
 
 ## Technology Stack Summary
 
@@ -248,7 +249,7 @@ const {
 5. **Test thoroughly**:
    ```bash
    npm run dev
-   # Test in browser at localhost:3000
+   # Exercise the build in a consuming application
    ```
 
 6. **Build and verify**:
@@ -343,14 +344,14 @@ const {
 ### Local Development
 
 ```bash
-# Start dev server (port 3000)
+# Watch the library package
 npm run dev
 
 # Build library
 npm run build
 
 # Preview built library
-npm run preview
+npm run check
 ```
 
 ### Build Output
@@ -384,7 +385,7 @@ git diff
 # Look for: dist/, node_modules/, lock files
 
 # 5. Verify externalized dependencies
-# Check vite.config.js external list matches peer dependencies
+# Check vite.config.ts external list matches peer dependencies
 ```
 
 ## Troubleshooting Guide
@@ -400,7 +401,7 @@ git diff
 
 **Symptom**: Bundle size too large
 - ❌ **Problem**: Dependencies not properly externalized
-- **Fix**: Check `vite.config.js` external function
+- **Fix**: Check `vite.config.ts` external function
 
 ### Development Issues
 
@@ -408,7 +409,7 @@ git diff
 - **Fix**: Clear Vite cache: `rm -rf node_modules/.vite`
 
 **Symptom**: Port 3000 already in use
-- **Fix**: Kill process on port 3000 or change port in `vite.config.js`
+- **Fix**: Kill process on port 3000 or change port in `vite.config.ts`
 
 **Symptom**: JSX syntax errors in .js files
 - ✅ **Normal**: All `.js` files in `src/` are treated as JSX automatically
@@ -478,7 +479,7 @@ git diff
    - Follow the conventions already in the codebase
 
 5. **Don't skip manual testing**
-   - There are no automated tests; you must test manually
+   - Run npm test, then exercise affected behavior in a consuming application
 
 6. **Don't commit without building**
    - Always run `npm run build` before committing
@@ -571,14 +572,14 @@ StateProvider.js                    state-provider.js
 
 ```bash
 # Development
-npm run dev              # Start dev server (port 3000, auto-open)
+npm run dev              # Watch the library package
 npm run start            # Alias for dev
 
 # Building
 npm run build            # Build for production (outputs to dist/)
 
 # Preview
-npm run preview          # Preview production build
+npm run check          # Preview production build
 
 # Bundle Analysis
 VISUALIZER_OPEN=true npm run build  # Build and auto-open bundle analyzer
@@ -600,7 +601,7 @@ rm -rf node_modules                 # Remove dependencies
 ## Final Reminders
 
 1. **This is a stable library** - make surgical changes only
-2. **Test manually** - there are no automated tests
+2. **Verify** - run npm test and check behavior in a consuming application
 3. **Build before committing** - ensure `npm run build` succeeds
 4. **Follow existing patterns** - consistency is key
 5. **Ask questions** - don't guess when uncertain

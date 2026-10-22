@@ -1,3 +1,4 @@
+<!-- Current tooling commands and packaging behavior are documented in ../README.md. -->
 # DFramework UI - Copilot Instructions
 
 ## Project Overview
@@ -31,7 +32,7 @@
 - **Day.js**: v1.11.19 - Date manipulation
 
 ### Build Tools
-- **Vite**: v7.3.0 - Build tool and dev server
+- **Vite+**: 1.3.0 - Library packaging, checks, and tests
 - **Rollup**: For library bundling
 - **Visualizer**: For bundle analysis
 
@@ -64,7 +65,7 @@ dframework-ui/
 │       │   └── utils.js        # Utility functions
 │       ├── hooks/              # Custom React hooks
 │       └── index.js            # Main export file
-├── vite.config.js              # Vite configuration
+├── vite.config.ts              # Vite configuration
 ├── package.json                # Package configuration
 ├── migration.md                # Migration guide for breaking changes
 └── TODO.md                     # Project todos and planned features
@@ -127,7 +128,7 @@ dframework-ui/
 npm run dev      # Start development server on port 3000
 npm run start    # Alias for dev
 npm run build    # Build library for production (outputs to dist/)
-npm run preview  # Preview production build
+npm run check  # Preview production build
 ```
 
 ### Build Configuration
@@ -143,7 +144,7 @@ npm run preview  # Preview production build
 - **Alias**: `@` points to `./src`
 
 ### File Processing
-- All `.js` files in `src/` are treated as JSX (using esbuild transform)
+- All `.js` files in `src/` are treated as JSX (using native Oxc transforms)
 - Assets from `src/lib/assets` are copied to `dist/` during build
 
 ## Deployment
@@ -194,7 +195,7 @@ npm run preview  # Preview production build
 ## External Dependencies
 
 ### Peer Dependencies
-All MUI packages, React, Formik, Yup, i18next, react-router-dom, and dayjs are peer dependencies. They must be installed by the consuming application.
+All MUI packages, React, Formik, Yup, i18next, and dayjs are peer dependencies. They must be installed by the consuming application.
 
 ### Externalized Packages
 The following packages are externalized in the build and not bundled:
@@ -203,8 +204,7 @@ The following packages are externalized in the build and not bundled:
 - @mui/* (all MUI packages and sub-paths)
 - @base-ui/react
 - dayjs, formik, yup
-- i18next, i18next-browser-languagedetector, react-i18next
-- react-router-dom
+- i18next, react-i18next
 
 ## Common Patterns
 
@@ -309,7 +309,7 @@ Before committing changes:
 
 7. **Documentation**: Update README.md or add docs/ files when adding major features.
 
-8. **Testing**: Test components by running `npm run dev` and verifying in the browser. There's no automated test suite currently.
+8. **Testing**: Test components by running `npm run dev` and verifying in the browser. Run `npm test` for the component regression suite.
 
 9. **Build Verification**: Always run `npm run build` before committing to ensure the library builds correctly.
 
@@ -322,7 +322,7 @@ Before committing changes:
 - **JSX transform issues**: All `.js` files in `src/` are automatically treated as JSX.
 
 ### Development Issues
-- **Port 3000 already in use**: Change the port in `vite.config.js` or kill the process using port 3000.
+- **Port 3000 already in use**: Change the port in `vite.config.ts` or kill the process using port 3000.
 - **Changes not reflecting**: Clear Vite cache: `rm -rf node_modules/.vite`
 
 ### Component Issues

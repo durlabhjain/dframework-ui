@@ -1,3 +1,40 @@
+# DFramework UI
+
+React component library for model-driven grids and forms, dialogs, notifications, and shared framework state. Runtime dependencies are peers; consumers install a published distribution tag.
+
+## Tooling
+
+Use Node 22.22.1+, 24.11+, or a supported newer release and the pinned npm 11.19.0. Install with `npm install`; no global Vite+ installation is required.
+
+| Command | Purpose |
+| --- | --- |
+| `npm run check` / `npm run lint` | Vite+ checks over source and tests; errors and warnings fail |
+| `npm run lint:fix` | Safe lint fixes |
+| `npm test` | Existing component/regression suite through bundled Vitest |
+| `npm run build` | Build the library with `vp pack` |
+| `npm run dev` / `npm start` | Rebuild the package on source changes with `vp pack --watch` |
+| `npm run lint:react:ci` | Additional full React Doctor audit |
+
+`vite.config.ts` contains the lint, test, and packaging configuration. Source stays JavaScript; the config uses Vite+'s standard filename for reliable discovery. Formatting is opt-in (`check.fmt: false`), and type checking/declaration generation are disabled for this JavaScript package.
+
+Packaging preserves ES modules, the ES2020 target, `dist/index.js`, source maps, assets under `dist/assets`, and external runtime peers. JSX in `.js` files is handled by the native packaging transform; tests use the shared JSX transform. Set `VISUALIZER_OPEN=true` to generate and open `stats.html` during a package build. Routine builds skip visualization.
+
+Vite+ manages the `.vite-hooks/pre-commit` dispatcher. `npm install` runs `vp config --no-agent` to initialize it. The hook keeps both the configured checks and React Doctor gate. VS Code settings use the Oxc extension.
+
+React Doctor CLI is pinned to 0.9.18, replacing the vulnerable legacy dependency chain. Native Oxlint runs the configured source/test policy; the CLI adds its broader audit. Existing effect/complexity opt-outs are retained under the current rule names.
+
+The dependency audit on October 22, 2026 reports zero vulnerabilities. The CLI still brings Sentry's upstream OpenTelemetry deprecation; that requires an upstream API migration rather than a package-name override.
+
+The full audit excludes the unrelated `.review-pr168` checkout and marks `src/lib/index.js` as an intentional public entry; React Doctor's dead-file discovery does not recognize `vp pack` entry configuration. No runtime code is excluded from lint or tests.
+
+The release workflow installs the pinned Vite+ toolchain, checks, tests, and builds before copying a minimal manifest into `dist` and publishing the existing dist branch/tag. The source manifest's `./index.js` entry is relative to that distribution root. Consumers continue to use release tags; source changes do not publish a new tag automatically.
+
+## Current capabilities and remaining work
+
+The Grid already supports cancellation of superseded requests, debounced filtering, lazy remote lookups, saved layouts/preferences and column order, list-state restoration, CSV/Excel export, and client/server grouping. Form support includes model-derived Yup validation, custom validation, conditional fields, dependent lookups, and permission-aware mutations. The package ships source maps and assets; tests cover permissions, preferences, nested tabs, split sizing, and resize cleanup.
+
+See [TODO.md](TODO.md) for reviewed remaining work. Existing usage guides cover [preferences](docs/GridPreferences.md), [toolbar filters](docs/ToolbarFilters.md), [CRUD hooks](docs/crud_helper_hooks.md), and [StateProvider](docs/StateProvider.md). Performance and accessibility reports that need a consumer are kept as verification tasks.
+
 # How we will use the durlabh/dframework-ui
 
 In Dframework we have create Multple Component for our Use
@@ -1016,7 +1053,7 @@ export default function App() {
 
 ### Loader Management
 
-**CRUD helper functions are pure** - they perform the requested operation and either return data or throw an error. They do **not** automatically show or hide any loader.
+**CRUD helpers perform data operations** - they either return data or throw an error. They do **not** automatically show or hide any loader.
 
 **Loader state is controlled by the caller:**
 - The **Grid** and **Form** components manage their own loading state locally when they use CRUD helpers
@@ -1025,7 +1062,8 @@ export default function App() {
 **Using CRUD helpers with the StateProvider loader:**
 ```js
 import { useStateContext } from "@durlabh/dframework-ui";
-import { getList } from "@durlabh/dframework-ui/crud-helper";
+import { crudHelper } from "@durlabh/dframework-ui";
+const { getList } = crudHelper;
 
 function MyComponent() {
   const { showLoader } = useStateContext();
@@ -1190,8 +1228,6 @@ function MyComponent() {
 
 Returns an object with the following properties:
 
-Returns an object with the following properties:
-
 **Loader Management:**
 | Property | Type | Description |
 |----------|------|-------------|
@@ -1244,36 +1280,21 @@ setTimeZone('America/New_York');
 
 ### Grid and Form Components
 
-Grid and Form components automatically use StateProvider for loader management. No changes are needed in your component code that uses these components.
+Grid and Form manage their own loading state. Custom callers of HTTP or CRUD helpers must manage their own loading state.
 
 ### Custom HTTP Requests
 
-When using `httpRequest` directly, loader management is automatic via CRUD functions:
+Import the public helpers from the package root; distribution subpaths are not exported.
 
 ```js
-import request from '@durlabh/dframework-ui/httpRequest';
+import { httpRequest, crudHelper } from '@durlabh/dframework-ui';
 
-// httpRequest is a pure transport layer - no loader management
-await request({
-  url: '/api/data',
-  params: { id: 1 }
-});
-
-// Loader is managed by CRUD functions
-import { getList } from '@durlabh/dframework-ui/crud-helper';
-getList({ ... }); // Shows/hides loader automatically
+const record = await crudHelper.getRecord({ model, id, api });
+await httpRequest({ url: '/api/data', params: { id: 1 } });
 ```
 
-## Benefits
+HTTP and CRUD helpers perform transport/data operations and propagate errors. Grid and Form manage their own loading state. Callers making their own requests should manage local loading or wrap the operation in StateProvider's `showLoader(true)` / `finally { showLoader(false); }`, as shown above.
 
-1. **Automatic Loader Management**: Loader shows/hides automatically at the point of API call
-2. **Centralized Utilities**: dayjs, i18n, and snackbar available from a single context
-3. **Cleaner Code**: No need to pass showLoader/hideLoader as parameters
-3. **Better Performance**: Eliminates unnecessary re-renders from global state updates
-4. **Cleaner API**: More intuitive `showLoader(true)`/`showLoader(false)` instead of dispatch actions
-5. **Type Safety**: Better TypeScript support with explicit function signatures
-
----
 # Grid request parameters and refresh
 
 `GridBase` and model grids accept `extraParamsComparison="value"` to avoid a

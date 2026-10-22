@@ -90,6 +90,7 @@ const transport = async (config) => {
         }
     }
 
+    // react-doctor-disable-next-line no-fetch-response-used-without-status-check -- Transport returns the status and body; request() below normalizes non-2xx responses.
     const response = await fetch(url, fetchOptions);
     const contentType = response.headers.get('content-type') || {};
     const responseObj = {

@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import Form from '../src/lib/components/Form/Form.js';
 import FormLayout from '../src/lib/components/Form/field-mapper.js';
 
@@ -44,11 +44,10 @@ it('delete-only tabbed forms cannot submit through Finish', async () => {
 
 it.each(['handleSubmit', 'submitForm'])('guards custom layout submission via %s', async (method) => {
     const beforeSubmit = vi.fn();
-    let submit;
-    const Layout = ({ handleSubmit, formik }) => { submit = method === 'handleSubmit' ? handleSubmit : formik.submitForm; return <div>Custom form</div>; };
+    const Layout = ({ handleSubmit, formik }) => <button onClick={() => (method === 'handleSubmit' ? handleSubmit : formik.submitForm)()}>Custom form</button>;
     render(<Form model={model} Layout={Layout} beforeSubmit={beforeSubmit} />);
     await screen.findByText('Custom form');
-    await act(async () => { await submit(); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Custom form' })); });
     expect(beforeSubmit).not.toHaveBeenCalled();
     expect(mocks.saveRecord).not.toHaveBeenCalled();
 });
