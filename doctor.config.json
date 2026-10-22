@@ -19,9 +19,6 @@
     "react-doctor/no-prop-callback-in-effect": "off"
   },
   "ignore": {
-    "files": [
-      ".review-pr168/**"
-    ],
     "overrides": [
       {
         "files": [

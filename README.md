@@ -25,7 +25,7 @@ React Doctor CLI is pinned to 0.9.18, replacing the vulnerable legacy dependency
 
 The dependency audit on October 22, 2026 reports zero vulnerabilities. The CLI still brings Sentry's upstream OpenTelemetry deprecation; that requires an upstream API migration rather than a package-name override.
 
-The full audit excludes the unrelated `.review-pr168` checkout and marks `src/lib/index.js` as an intentional public entry; React Doctor's dead-file discovery does not recognize `vp pack` entry configuration. No runtime code is excluded from lint or tests.
+The full audit marks `src/lib/index.js` as an intentional public entry; React Doctor's dead-file discovery does not recognize `vp pack` entry configuration. No runtime code is excluded from lint or tests.
 
 The release workflow installs the pinned Vite+ toolchain, checks, tests, and builds before copying a minimal manifest into `dist` and publishing the existing dist branch/tag. The source manifest's `./index.js` entry is relative to that distribution root. Consumers continue to use release tags; source changes do not publish a new tag automatically.
 

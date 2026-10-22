@@ -350,7 +350,7 @@ npm run dev
 # Build library
 npm run build
 
-# Preview built library
+# Check source and tests
 npm run check
 ```
 
@@ -578,8 +578,8 @@ npm run start            # Alias for dev
 # Building
 npm run build            # Build for production (outputs to dist/)
 
-# Preview
-npm run check          # Preview production build
+# Checks
+npm run check            # Lint source and tests; warnings and errors fail
 
 # Bundle Analysis
 VISUALIZER_OPEN=true npm run build  # Build and auto-open bundle analyzer

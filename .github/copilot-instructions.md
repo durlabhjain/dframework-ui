@@ -125,10 +125,10 @@ dframework-ui/
 
 ### Scripts
 ```bash
-npm run dev      # Start development server on port 3000
+npm run dev      # Watch the library package
 npm run start    # Alias for dev
 npm run build    # Build library for production (outputs to dist/)
-npm run check  # Preview production build
+npm run check    # Lint source and tests; warnings and errors fail
 ```
 
 ### Build Configuration

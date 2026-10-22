@@ -10,7 +10,7 @@ export default defineConfig({
     env: {
       builtin: true,
     },
-    ignorePatterns: ["dist/**", "node_modules/**", "build/**", ".review-pr168/**"],
+    ignorePatterns: ["dist/**", "node_modules/**", "build/**"],
     rules: {
       "constructor-super": "error",
       "for-direction": "error",
