@@ -175,8 +175,8 @@ const Form = ({
           values[key] = values[key].trim();
         }
       });
-      setIsLoading(true);
-      saveRecord({
+      // Keep fields mounted while saving so their grids and lookups do not reload.
+      return saveRecord({
         id,
         api: gridApi,
         values: values,
@@ -197,8 +197,11 @@ const Form = ({
           * By default, the form navigates back to the grid after save/cancel operations.
           * This behavior can be controlled by setting navigateBack "false" / false in model config which disables navigation completely.
           */
-          navigateBack !== false && handleNavigation();
-          resetForm({ values: formik.values});
+          if (navigateBack !== false) {
+            handleNavigation();
+          } else {
+            resetForm({ values });
+          }
         })
         .catch((err) => {
           snackbar.showErrorCode(
@@ -208,9 +211,6 @@ const Form = ({
           if (model.reloadOnSave) {
             resetForm();
           }
-        })
-        .finally(() => {
-          setIsLoading(false);
         });
     }
   });
@@ -301,7 +301,7 @@ const Form = ({
 
   const handleSubmit = useCallback(async (e) => {
     if (e) e.preventDefault();
-    if (!access.canSave) return;
+    if (!access.canSave || formik.isSubmitting) return;
     if (typeof beforeSubmit === consts.function) {
       await beforeSubmit({ formik , model });
     }
@@ -356,7 +356,7 @@ const Form = ({
               <CircularProgress />
             </Box>
           ) : (
-          <form onSubmit={handleSubmit} noValidate>
+          <form onSubmit={handleSubmit} noValidate inert={formik.isSubmitting} aria-busy={formik.isSubmitting}>
             <Stack
               direction="row"
               spacing={2}
@@ -368,6 +368,7 @@ const Form = ({
                 <Button
                   variant="contained"
                   color="primary"
+                  disabled={formik.isSubmitting}
                   onClick={handleCopy}
                 >{tTranslate("Copy", tOpts)}</Button>
               )}
@@ -375,6 +376,7 @@ const Form = ({
                 <Button
                   variant="contained"
                   color="error"
+                  disabled={formik.isSubmitting}
                   sx={{ bgcolor: 'error.dark', '&:hover': { bgcolor: 'error.dark' } }}
                   onClick={() => setIsDeleting(true)}
                 >{tTranslate("Delete", tOpts)}</Button>
@@ -387,12 +389,15 @@ const Form = ({
                   variant="contained"
                   type="submit"
                   color="success"
+                  disabled={formik.isSubmitting}
+                  loading={formik.isSubmitting}
                 >{tTranslate("Save", tOpts)}</Button>
               )}
               <Button
                 variant="contained"
                 type="button"
                 color="error"
+                disabled={formik.isSubmitting}
                 onClick={handleFormCancel}
               >{tTranslate("Cancel", tOpts)}</Button>
             </Stack>
@@ -407,7 +412,7 @@ const Form = ({
               handleSubmit={handleSubmit}
               mode={mode}
               readOnly={access.fieldsReadOnly}
-              canSubmit={access.canSave}
+              canSubmit={access.canSave && !formik.isSubmitting}
             />
           </form>
           )}
