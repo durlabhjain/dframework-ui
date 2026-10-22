@@ -1,5 +1,5 @@
 
-import * as locales from '@mui/x-data-grid-premium';
+import * as locales from '@mui/x-data-grid-premium/locales';
 
 export const enUSGrid = {
     Jumptopage: 'Jump to page',

@@ -38,9 +38,9 @@ export const CustomExportButton = ({ exportFormats, customExportOptions, isStati
         !isStaticDataMode && exportFormats.xml !== false && <ExportMenuItem key="xml" {...props} icon={<Code fontSize="small" />} type="XML" contentType="text/xml" exportKey="xmlExport" />,
         !isStaticDataMode && exportFormats.html !== false && <ExportMenuItem key="html" {...props} icon={<Language fontSize="small" />} type="HTML" contentType="text/html" exportKey="htmlExport" />,
         !isStaticDataMode && exportFormats.json !== false && <ExportMenuItem key="json" {...props} icon={<DataObjectIcon fontSize="small" />} type="JSON" contentType="application/json" exportKey="jsonExport" />,
-        !isStaticDataMode && Array.isArray(customExportOptions) && customExportOptions.map((item, index) => (
+        !isStaticDataMode && Array.isArray(customExportOptions) && customExportOptions.map((item) => (
             <ExportMenuItem
-                key={item.key || index}
+                key={item.key || item.label || item.contentType}
                 {...props}
                 icon={item.icon || <TableChart fontSize="small" />}
                 type={item.label || 'Excel'}

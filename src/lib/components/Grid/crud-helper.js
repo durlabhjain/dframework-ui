@@ -146,6 +146,7 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
     const isElasticExport = action === 'export' && model.isElasticExport === true;
 
     const lookups = [];
+    const seenLookups = new Set();
     const lookupWithDeps = []; // for backward compatibility having two lookups arrays
     const dateColumns = [];
     gridColumns.forEach(({ lookup, type, field, localize = false, dependsOn }) => {
@@ -155,7 +156,8 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
         if (!lookup) {
             return;
         }
-        if (!lookups.includes(lookup) && lookupDataTypes.includes(type)) {
+        if (!seenLookups.has(lookup) && lookupDataTypes.includes(type)) {
+            seenLookups.add(lookup);
             lookups.push(lookup);
             lookupWithDeps.push({ lookup, dependsOn });
         }
@@ -333,9 +335,11 @@ const getRecord = async (props = {}) => {
     const searchParams = new URLSearchParams();
     const url = `${api}/${id === undefined || id === null ? '-' : id}`;
     const lookupsToFetch = [];
+    const seenLookups = new Set();
     const fields = model.formDef || model.columns;
     fields?.forEach(field => {
-        if (field.lookup && !lookupsToFetch.includes(field.lookup) && !field.dependsOn) {
+        if (field.lookup && !seenLookups.has(field.lookup) && !field.dependsOn) {
+            seenLookups.add(field.lookup);
             lookupsToFetch.push(field.lookup);
         }
     });

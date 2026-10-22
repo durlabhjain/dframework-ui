@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 
 // ChildGridTabs only needs UiModel to build each child grid; stub it so these tests exercise the
 // tab/collapse logic without pulling a full DataGrid (and its data fetching) into every case.
