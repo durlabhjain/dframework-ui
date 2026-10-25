@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import Form from '../src/lib/components/Form/Form.js';
 import FormLayout from '../src/lib/components/Form/field-mapper.js';
 
@@ -45,11 +45,10 @@ it('delete-only tabbed forms cannot submit through Finish', async () => {
 
 it.each(['handleSubmit', 'submitForm'])('guards custom layout submission via %s', async (method) => {
     const beforeSubmit = vi.fn();
-    let submit;
-    const Layout = ({ handleSubmit, formik }) => { submit = method === 'handleSubmit' ? handleSubmit : formik.submitForm; return <div>Custom form</div>; };
+    const Layout = ({ handleSubmit, formik }) => <button onClick={() => (method === 'handleSubmit' ? handleSubmit : formik.submitForm)()}>Custom form</button>;
     render(<Form model={model} Layout={Layout} beforeSubmit={beforeSubmit} />);
     await screen.findByText('Custom form');
-    await act(async () => { await submit(); });
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Custom form' })); });
     expect(beforeSubmit).not.toHaveBeenCalled();
     expect(mocks.saveRecord).not.toHaveBeenCalled();
 });
@@ -164,6 +163,81 @@ function AssignmentGrid({ available, assigned }) {
     return <div>{available ? 'Available members' : 'Assigned members'}</div>;
 }
 
+it('blocks duplicate submissions while beforeSubmit is still pending', async () => {
+    let finishBeforeSubmit, submit;
+    const beforeSubmit = vi.fn(() => new Promise(resolve => { finishBeforeSubmit = resolve; }));
+    const Layout = ({ handleSubmit }) => {
+        useEffect(() => { submit = handleSubmit; }, [handleSubmit]);
+        return <div>Custom form</div>;
+    };
+    render(<Form model={{ ...model, permissions: { edit: true } }} Layout={Layout} beforeSubmit={beforeSubmit} />);
+    await screen.findByText('Custom form');
+    let first, second;
+    act(() => { first = submit(); second = submit(); });
+    expect(beforeSubmit).toHaveBeenCalledTimes(1);
+    await act(async () => { finishBeforeSubmit(); await Promise.all([first, second]); });
+    expect(mocks.saveRecord).toHaveBeenCalledTimes(1);
+});
+
+it('prevents changing an open remote-select portal during save', async () => {
+    let finishSave, formState;
+    mocks.saveRecord.mockReturnValue(new Promise(resolve => { finishSave = resolve; }));
+    mocks.getLookups.mockResolvedValue([{ value: '1', label: 'One' }, { value: '2', label: 'Two' }]);
+    const Layout = props => {
+        useEffect(() => { formState = props.formik; }, [props.formik]);
+        return <FormLayout {...props} />;
+    };
+    const { container } = render(<Form model={{
+        ...model, permissions: { edit: true },
+        columns: [{ field: 'choice', type: 'remoteSelect', label: 'Choice', lookup: 'choices' }],
+    }} Layout={Layout} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
+    const option = await screen.findByRole('option', { name: 'Two' });
+    expect(container.querySelector('form').contains(option)).toBe(false);
+    fireEvent.submit(container.querySelector('form'));
+    await waitFor(() => expect(mocks.saveRecord).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole('combobox', { hidden: true }).disabled).toBe(true);
+    fireEvent.click(option);
+    expect(formState.values.choice).toBe('1');
+    await act(async () => { finishSave(true); });
+    expect(screen.getByRole('combobox').disabled).toBe(false);
+});
+
+it('allows retry after beforeSubmit rejects', async () => {
+    let submit;
+    const beforeSubmit = vi.fn().mockRejectedValueOnce(new Error('Before submit failed')).mockResolvedValue(undefined);
+    const Layout = ({ handleSubmit }) => {
+        useEffect(() => { submit = handleSubmit; }, [handleSubmit]);
+        return <div>Custom form</div>;
+    };
+    render(<Form model={{ ...model, permissions: { edit: true } }} Layout={Layout} beforeSubmit={beforeSubmit} />);
+    await screen.findByText('Custom form');
+    await act(async () => { await expect(submit()).rejects.toThrow('Before submit failed'); });
+    expect(mocks.saveRecord).not.toHaveBeenCalled();
+    await act(async () => { await submit(); });
+    expect(mocks.saveRecord).toHaveBeenCalledTimes(1);
+});
+
+it('shares an in-flight save when a custom layout calls Formik submitForm twice', async () => {
+    let submit, finishSave, formState;
+    mocks.saveRecord.mockReturnValue(new Promise(resolve => { finishSave = resolve; }));
+    const Layout = ({ formik }) => {
+        useEffect(() => { formState = formik; submit = formik.submitForm; }, [formik]);
+        return <div>Custom form</div>;
+    };
+    render(<Form model={{ ...model, permissions: { edit: true } }} Layout={Layout} />);
+    await screen.findByText('Custom form');
+    let first, second;
+    act(() => { first = submit(); });
+    await waitFor(() => expect(mocks.saveRecord).toHaveBeenCalledTimes(1));
+    await act(async () => { second = submit(); });
+    expect(mocks.saveRecord).toHaveBeenCalledTimes(1);
+    expect(formState.isSubmitting).toBe(true);
+    await act(async () => { finishSave(true); await Promise.all([first, second]); });
+    expect(formState.isSubmitting).toBe(false);
+    expect(mocks.snackbar.showMessage).toHaveBeenCalledTimes(1);
+});
+
 it.each([
     ['redirect', undefined, 'success'],
     ['stay open', false, 'success'],
@@ -182,7 +256,10 @@ it.each([
             { field: 'choice', type: 'remoteSelect', label: 'Choice', lookup: 'choices' },
         ],
     };
-    const Layout = (props) => { formState = props.formik; return <FormLayout {...props} />; };
+    const Layout = (props) => {
+        useEffect(() => { formState = props.formik; }, [props.formik]);
+        return <FormLayout {...props} />;
+    };
     const onSaveSuccess = vi.fn();
     const { container } = render(<Form model={saveModel} Layout={Layout} onSaveSuccess={onSaveSuccess} />);
     await screen.findByText('Available members');

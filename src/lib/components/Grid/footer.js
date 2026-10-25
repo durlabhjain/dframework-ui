@@ -1,13 +1,17 @@
 import {
     GridFooterContainer,
-    GridFooter
+    GridFooter,
+    useGridSelector,
+    useGridApiContext,
+    gridPaginationModelSelector,
+    gridRowCountSelector
 } from '@mui/x-data-grid-premium';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const handleKeyPress = (event) => {
     const keyCode = event.which || event.keyCode;
@@ -15,21 +19,21 @@ const handleKeyPress = (event) => {
     if (!/\d/.test(keyValue)) event.preventDefault();
 };
 
-const Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) => {
-    const page = apiRef.current.state.pagination.paginationModel.page;
-    const rowsPerPage = apiRef.current.state.pagination.paginationModel.pageSize;
-    const totalRows = totalRowCount ?? apiRef.current.state.rows.totalRowCount;
+const Footer = ({ pagination, tTranslate = (key) => key, totalRowCount }) => {
+    const apiRef = useGridApiContext();
+    const { page, pageSize: rowsPerPage } = useGridSelector(apiRef, gridPaginationModelSelector);
+    const gridRowCount = useGridSelector(apiRef, gridRowCountSelector);
+    const totalRows = totalRowCount ?? gridRowCount;
     const totalPages = Math.ceil(totalRows / rowsPerPage);
     const isPaginationEnabled = !!pagination && totalPages > 1;
     const { t: translate, i18n } = useTranslation();
     const tOpts = { t: translate, i18n };
     const [pageNumber, setPageNumber] = useState(page + 1);
-    // Resync from apiRef's page when it changes externally (e.g. grid nav buttons). Can't be a plain
-    // derived value: `pageNumber` is also directly user-edited in the page-jump text field via handleChange.
-    // react-doctor-disable-next-line no-derived-state-effect -- see rationale above
-    useEffect(() => {
+    const [previousPage, setPreviousPage] = useState(page);
+    if (previousPage !== page) {
+        setPreviousPage(page);
         setPageNumber(page + 1);
-    }, [page]);
+    }
 
     const handleChange = function (e) {
         let value = e.target?.value;

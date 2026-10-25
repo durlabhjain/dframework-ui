@@ -24,10 +24,11 @@ function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key })
     const [hasCanvasPreview, setHasCanvasPreview] = useState(false);
     const [previewUnsupported, setPreviewUnsupported] = useState(false);
 
-    // react-doctor-disable-next-line no-derived-state-effect -- selectedName also needs to survive handleFileChange's own setSelectedName call (kept as state, not derived, so the picked name doesn't flicker off between setFieldValue and the next render)
-    useEffect(() => {
+    const [previousValue, setPreviousValue] = useState(value);
+    if (previousValue !== value) {
+        setPreviousValue(value);
         setSelectedName(isSelectedFile ? value.name : null);
-    }, [isSelectedFile, value]);
+    }
 
     // column.previewUrl: ({ formik, value }) => string | null — builds the URL for an already-saved
     // image. The column owns the base URL, filename field, and "does an image actually exist" check,
@@ -41,6 +42,7 @@ function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key })
     // The two flags below can't be derived inline during render: createImageBitmap is async, so there's
     // no synchronous value to compute them from — this effect's cancelled-flag pattern is the documented
     // "fetching data" case, not the sync "adjust state on prop change" antipattern the linter assumes.
+    /* oxlint-disable react/set-state-in-effect -- Reset the asynchronous canvas preview before drawing a newly selected image. */
     // react-doctor-disable-next-line no-cascading-set-state -- see note above; the resets below make sure the previous file's preview doesn't linger while the new one loads
     useEffect(() => {
         if (!isSelectedImage) {
@@ -100,6 +102,7 @@ function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key })
             cancelled = true;
         };
     }, [isSelectedImage, value]);
+    /* oxlint-enable react/set-state-in-effect */
 
     const previewSrc = !isSelectedFile ? savedPreviewSrc : null;
     const hasPreview = hasCanvasPreview || Boolean(previewSrc);

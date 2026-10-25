@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { getGridDateOperators } from '@mui/x-data-grid-premium';
@@ -25,6 +25,7 @@ const LocalizedDatePicker = (props) => {
     const { item, applyValue, convert, colDef: colDefProp, columnType: explicitColumnType, apiRef } = props;
     const { systemDateTimeFormat, stateData } = useStateContext();
     // The filter panel passes apiRef and item but never colDef, so column flags come from the lookup
+    // oxlint-disable-next-line react/refs -- MUI filter inputs expose column metadata through their imperative apiRef.
     const colDef = colDefProp ?? (item?.field ? apiRef?.current?.getColumn?.(item.field) : null);
     const columnType = explicitColumnType || colDef?.type || 'date';
     const filterFormat = fixedFilterFormat[columnType];
@@ -32,9 +33,11 @@ const LocalizedDatePicker = (props) => {
     const format = systemDateTimeFormat(columnType !== "dateTime", false, stateData.dateTime);
 
     const [pendingValue, setPendingValue] = useState(item?.value ?? null);
-    useEffect(() => {
+    const [previousValue, setPreviousValue] = useState(item?.value);
+    if (previousValue !== item?.value) {
+        setPreviousValue(item?.value);
         setPendingValue(item?.value ?? null);
-    }, [item?.value]);
+    }
 
     const commitValue = (newValue) => {
         if (columnType !== "date" && columnType !== "dateTime") return;
