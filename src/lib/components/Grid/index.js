@@ -1022,6 +1022,25 @@ const GridBase = memo(({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- lookupKeys isn't read directly but its change must trigger new column references
     const gridColumns = useMemo(() => stableGridColumns.map(col => ({ ...col })), [stableGridColumns, lookupKeys]);
 
+    // MUI rebuilds its column state from the `columns` prop on every identity change - and the columns
+    // above are re-created as soon as lookups arrive with the first fetch - which resets order and
+    // widths to the model's, dropping a restored snapshot, an applied preference or the user's own
+    // reorder. Capture in a layout effect before MUI's passive columns effect resets its state,
+    // then restore in the effect below. A changed column set (grouping, dynamic columns) is
+    // left alone, so new columns keep their natural position.
+    const previousGridColumns = useRef(gridColumns);
+    useLayoutEffect(() => {
+        if (previousGridColumns.current === gridColumns) return;
+        const previous = previousGridColumns.current;
+        previousGridColumns.current = gridColumns;
+        if (previous.length === gridColumns.length && previous.every(({ field }, index) => field === gridColumns[index].field)) {
+            const { columns, pinnedColumns } = apiRef.current?.exportState() ?? {};
+            // Visibility is left out: MUI carries it across rebuilds, and putting a stale model back
+            // would undo a show/hide made in the meantime.
+            if (columns) pendingLayoutRef.current = { columns: { orderedFields: columns.orderedFields, dimensions: columns.dimensions }, pinnedColumns };
+        }
+    }, [apiRef, gridColumns]);
+
     useEffect(() => {
         if (!pendingLayoutRef.current) return;
         const state = pendingLayoutRef.current;

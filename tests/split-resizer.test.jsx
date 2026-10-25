@@ -3,6 +3,9 @@ import { afterEach, expect, it, vi } from 'vite-plus/test';
 import SplitResizer, { SPLIT_RESIZER_HEIGHT } from '../src/lib/components/Grid/SplitResizer.js';
 import { clampSplitHeight } from '../src/lib/components/Grid/helper.js';
 
+// The clamp helper shares a module with export icons; these tests never render that menu.
+vi.mock('@mui/icons-material', () => ({ GridOn: () => null, Code: () => null, Language: () => null, TableChart: () => null, DataObject: () => null }));
+
 afterEach(() => {
     cleanup();
     document.body.style.userSelect = '';
