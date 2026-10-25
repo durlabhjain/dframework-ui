@@ -1,5 +1,5 @@
 import * as React$1 from "react";
-import React, { createContext, memo, use, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState } from "react";
+import React, { createContext, memo, use, useCallback, useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
 import { useTranslation, withTranslation } from "react-i18next";
@@ -10,8 +10,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
-import * as locales$1 from "@mui/x-data-grid-premium";
-import { ColumnsPanelTrigger, DataGridPremium, FilterPanelTrigger, GRID_CHECKBOX_SELECTION_COL_DEF, GridActionsCellItem, GridFilterInputMultipleValue, GridFooter, GridFooterContainer, GridToolbarExportContainer, Toolbar, getGridBooleanOperators, getGridDateOperators, getGridNumericOperators, getGridSingleSelectOperators, getGridStringOperators, gridRowSelectionStateSelector, useGridApiContext, useGridApiRef, useGridSelector } from "@mui/x-data-grid-premium";
+import { ColumnsPanelTrigger, DataGridPremium, FilterPanelTrigger, GRID_CHECKBOX_SELECTION_COL_DEF, GridActionsCellItem, GridFilterInputMultipleValue, GridFooter, GridFooterContainer, GridToolbarExportContainer, Toolbar, getGridBooleanOperators, getGridDateOperators, getGridNumericOperators, getGridSingleSelectOperators, getGridStringOperators, gridPaginationModelSelector, gridRowCountSelector, gridRowSelectionStateSelector, useGridApiContext, useGridApiRef, useGridSelector } from "@mui/x-data-grid-premium";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CopyIcon from "@mui/icons-material/FileCopy";
 import ArticleIcon from "@mui/icons-material/Article";
@@ -25,6 +24,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import HelpIcon from "@mui/icons-material/Help";
 import { Close, Code, DataObject, GridOn, Language, Replay, TableChart } from "@mui/icons-material";
+import * as locales$1 from "@mui/x-data-grid-premium/locales";
 import utc from "dayjs/plugin/utc";
 import timezone from "dayjs/plugin/timezone";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -80,7 +80,8 @@ import PageviewIcon from "@mui/icons-material/PageviewOutlined";
 import Input$1 from "@mui/material/Input";
 import Tab from "@mui/material/Tab";
 import Tabs from "@mui/material/Tabs";
-// src/lib/errors.js
+
+//#region src/lib/errors.js
 /**
 * Centralized error code registry.
 *
@@ -90,7 +91,7 @@ import Tabs from "@mui/material/Tabs";
 *
 * Pattern: error.<domain>_<verb>
 */
-var ERROR_CODES = {
+const ERROR_CODES = {
 	SESSION_EXPIRED: "error.session_expired",
 	ACCESS_DENIED: "error.access_denied",
 	NETWORK_FAILURE: "error.network_failure",
@@ -121,7 +122,7 @@ var ERROR_CODES = {
 *     }
 *   }
 */
-var ERROR_MESSAGES = {
+const ERROR_MESSAGES = {
 	[ERROR_CODES.SESSION_EXPIRED]: "Session Expired!",
 	[ERROR_CODES.ACCESS_DENIED]: "Access Denied!",
 	[ERROR_CODES.NETWORK_FAILURE]: "Network failure or server unreachable. Please try again.",
@@ -147,7 +148,7 @@ var ERROR_MESSAGES = {
 * @param {Function} [t] - Optional i18next t() function from useTranslation().
 * @returns {string}
 */
-var resolveErrorMessage = (codeOrMessage, t) => {
+const resolveErrorMessage = (codeOrMessage, t) => {
 	const effectiveCode = codeOrMessage || ERROR_CODES.UNKNOWN;
 	const isKnownCode = effectiveCode in ERROR_MESSAGES;
 	const fallback = isKnownCode ? ERROR_MESSAGES[effectiveCode] : effectiveCode;
@@ -178,19 +179,21 @@ var AppError = class extends Error {
 		this.httpStatus = httpStatus;
 	}
 };
-// src/lib/components/SnackBar/index.js
-var SnackbarContext = createContext(null);
-var ANCHOR_ORIGIN = {
+
+//#endregion
+//#region src/lib/components/SnackBar/index.js
+const SnackbarContext = createContext(null);
+const ANCHOR_ORIGIN = {
 	vertical: "bottom",
 	horizontal: "center"
 };
-var Alert = ({ ref, ...props }) => /* @__PURE__ */ jsx(MuiAlert, {
+const Alert = ({ ref, ...props }) => /* @__PURE__ */ jsx(MuiAlert, {
 	elevation: 6,
 	ref,
 	variant: "filled",
 	...props
 });
-var SnackbarProvider = ({ children }) => {
+const SnackbarProvider = ({ children }) => {
 	const [snack, setSnack] = useState({
 		open: false,
 		message: null,
@@ -247,8 +250,10 @@ var SnackbarProvider = ({ children }) => {
 		})
 	})] });
 };
-var useSnackbar = () => use(SnackbarContext);
-// src/lib/components/Dialog/index.js
+const useSnackbar = () => use(SnackbarContext);
+
+//#endregion
+//#region src/lib/components/Dialog/index.js
 /**
 * DialogComponent is a reusable dialog/modal component based on Material-UI's Dialog.
 *
@@ -266,7 +271,7 @@ var useSnackbar = () => use(SnackbarContext);
 * @param {Object} [props.props] - Additional props passed to the MUI Dialog component.
 * @returns {JSX.Element} The rendered Dialog component.
 */
-var DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText, cancelText, yesNo = false, children, maxWidth = "sm", fullWidth = true, ...props }) => {
+const DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText, cancelText, yesNo = false, children, maxWidth = "sm", fullWidth = true, ...props }) => {
 	okText = okText || (yesNo ? "Yes" : "Ok");
 	cancelText = cancelText || (yesNo ? "No" : "Cancel");
 	return /* @__PURE__ */ jsxs(Dialog, {
@@ -298,15 +303,17 @@ var DialogComponent = ({ open, onConfirm, title = "Confirm", onCancel, okText, c
 		]
 	});
 };
-// src/lib/components/Grid/httpRequest.js
-var HTTP_STATUS_CODES = {
+
+//#endregion
+//#region src/lib/components/Grid/httpRequest.js
+const HTTP_STATUS_CODES = {
 	OK: 200,
 	SESSION_EXPIRED: 401,
 	FORBIDDEN: 403,
 	NOT_FOUND: 404,
 	INTERNAL_SERVER_ERROR: 500
 };
-var HTTP_ERROR_MESSAGES = {
+const HTTP_ERROR_MESSAGES = {
 	401: "You are unauthorized to access this resource. Please log in with appropriate credentials.",
 	403: "You don't have permission to access this page.",
 	404: "The requested page was not found.",
@@ -315,7 +322,7 @@ var HTTP_ERROR_MESSAGES = {
 	503: "Something went wrong on our server. Please try again later.",
 	504: "The server is taking too long to respond. Please try again later."
 };
-var dateFormatterForForm = new Intl.DateTimeFormat("en-CA", {
+const dateFormatterForForm = new Intl.DateTimeFormat("en-CA", {
 	year: "numeric",
 	month: "2-digit",
 	day: "2-digit",
@@ -324,7 +331,7 @@ var dateFormatterForForm = new Intl.DateTimeFormat("en-CA", {
 	second: "2-digit",
 	hour12: false
 });
-var getFormData = (props) => {
+const getFormData = (props) => {
 	const formData = new FormData();
 	for (const key in props) {
 		let value = props[key];
@@ -336,7 +343,7 @@ var getFormData = (props) => {
 	}
 	return formData;
 };
-var exportRequest = (url, query) => {
+const exportRequest = (url, query) => {
 	const newURL = new URL(url);
 	for (const key in query) {
 		const value = typeof query[key] === "object" ? JSON.stringify(query[key]) : query[key];
@@ -344,7 +351,7 @@ var exportRequest = (url, query) => {
 	}
 	window.open(newURL, "_blank").focus();
 };
-var transport = async (config) => {
+const transport = async (config) => {
 	const { method = "GET", url, data, headers = {}, credentials = "include", ...rest } = config;
 	const fetchOptions = {
 		method,
@@ -369,9 +376,9 @@ var transport = async (config) => {
 		headers: Object.fromEntries(response.headers.entries())
 	};
 };
-var MAX_ERROR_MESSAGE_LENGTH = 300;
-var MARKUP_PATTERN = /<\s*(!doctype|\/?(?:html|head|body|div|span|p|h[1-6]|style|script|table|pre|title|meta|link))\b/i;
-var toDisplayableMessage = (value) => {
+const MAX_ERROR_MESSAGE_LENGTH = 300;
+const MARKUP_PATTERN = /<\s*(!doctype|\/?(?:html|head|body|div|span|p|h[1-6]|style|script|table|pre|title|meta|link))\b/i;
+const toDisplayableMessage = (value) => {
 	if (typeof value !== "string") return void 0;
 	const text = value.trim();
 	if (!text || text.length > MAX_ERROR_MESSAGE_LENGTH || MARKUP_PATTERN.test(text)) return void 0;
@@ -383,7 +390,7 @@ var toDisplayableMessage = (value) => {
 * Only returns short plain-text values; non-string fields (e.g. error: true) and server-rendered
 * HTML error pages are ignored so callers' `|| default` fallback applies.
 */
-var getErrorMessage = (response) => {
+const getErrorMessage = (response) => {
 	if (typeof response === "string") return toDisplayableMessage(response);
 	return [
 		response?.message,
@@ -396,7 +403,7 @@ var getErrorMessage = (response) => {
 * Default data parsers for different response types
 * Use these to normalize API responses to a consistent type
 */
-var DATA_PARSERS = Object.freeze({
+const DATA_PARSERS = Object.freeze({
 	/**
 	* Parse JSON string or return object as-is
 	* Automatically handles string JSON responses
@@ -453,7 +460,7 @@ var DATA_PARSERS = Object.freeze({
 *   }
 * });
 */
-var request = async ({ url, params = {}, history, jsonPayload = false, method = "POST", signal, additionalParams = {}, additionalHeaders = {}, dataParser = DATA_PARSERS.raw, onParseError }) => {
+const request = async ({ url, params = {}, history, jsonPayload = false, method = "POST", signal, additionalParams = {}, additionalHeaders = {}, dataParser = DATA_PARSERS.raw, onParseError }) => {
 	if (params.exportData) return exportRequest(url, params);
 	const reqParams = {
 		method,
@@ -503,10 +510,12 @@ var request = async ({ url, params = {}, history, jsonPayload = false, method = 
 		};
 	}
 };
-// src/lib/components/Grid/crud-helper.js
-var dateDataTypes = ["date", "dateTime"];
-var lookupDataTypes = ["singleSelect"];
-var exportDefaultLimit = 1e6;
+
+//#endregion
+//#region src/lib/components/Grid/crud-helper.js
+const dateDataTypes = ["date", "dateTime"];
+const lookupDataTypes = ["singleSelect"];
+const exportDefaultLimit = 1e6;
 function shouldApplyFilter(filter) {
 	const { operator, value, type } = filter;
 	return ["isEmpty", "isNotEmpty"].includes(operator) || value !== void 0 && value !== null && (value !== "" || type === "number" && value === 0 || type === "boolean" && value === false);
@@ -528,7 +537,7 @@ function shouldApplyFilter(filter) {
 * @example
 * dateParser("2026-04-13T10:44:06.000Z", false);
 */
-var dateParser = (value, utc = false) => {
+const dateParser = (value, utc = false) => {
 	if (typeof value !== "string" || value === void 0 || value === null) return value;
 	if (value.length === 0) return null;
 	if (value.length === 17) {
@@ -603,9 +612,10 @@ async function executeResponseHook({ model, action, responseData, context = {} }
 function validateResponse(response, defaultMessage) {
 	if (response?.error || response?.success === false) throw new Error(getErrorMessage(response) || defaultMessage);
 }
-var buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, baseFilters, action = "list", extraParams = {}, model, api }) => {
+const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, baseFilters, action = "list", extraParams = {}, model, api }) => {
 	const isElasticExport = action === "export" && model.isElasticExport === true;
 	const lookups = [];
+	const seenLookups = /* @__PURE__ */ new Set();
 	const lookupWithDeps = [];
 	const dateColumns = [];
 	gridColumns.forEach(({ lookup, type, field, localize = false, dependsOn }) => {
@@ -614,7 +624,8 @@ var buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, b
 			localize
 		});
 		if (!lookup) return;
-		if (!lookups.includes(lookup) && lookupDataTypes.includes(type)) {
+		if (!seenLookups.has(lookup) && lookupDataTypes.includes(type)) {
+			seenLookups.add(lookup);
 			lookups.push(lookup);
 			lookupWithDeps.push({
 				lookup,
@@ -674,7 +685,7 @@ var buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel, b
 *     from this function's perspective and should be handled via server-side logging or a custom UX flow
 *     (e.g. returning an error file or exposing a separate export-status API).
 */
-var getList = async (props = {}) => {
+const getList = async (props = {}) => {
 	const { contentType, columns, extraParams = {}, action = "list", model, signal } = props;
 	const { requestData, url, where, dateColumns } = buildRequestData({
 		...props,
@@ -718,7 +729,7 @@ var getList = async (props = {}) => {
 		}, 0);
 		return;
 	}
-	const response = await request(await executeRequestHook(model, {
+	const context = await executeRequestHook(model, {
 		where,
 		url,
 		requestData,
@@ -729,7 +740,8 @@ var getList = async (props = {}) => {
 		signal,
 		additionalHeaders: { "Content-Type": "application/json" },
 		...props
-	}));
+	});
+	const response = await request(context);
 	if (response?.aborted) return response;
 	validateResponse(response, "An error occurred while fetching data");
 	await executeResponseHook({
@@ -759,19 +771,23 @@ var getList = async (props = {}) => {
 * Loads a single record by id along with its lookups.
 * Returns { id, title, record, lookups } or throws on error.
 */
-var getRecord = async (props = {}) => {
+const getRecord = async (props = {}) => {
 	const { id, model, parentFilters, where = {} } = props;
 	let { api } = props;
 	api = api || model.api;
 	const searchParams = new URLSearchParams();
 	const url = `${api}/${id === void 0 || id === null ? "-" : id}`;
 	const lookupsToFetch = [];
+	const seenLookups = /* @__PURE__ */ new Set();
 	(model.formDef || model.columns)?.forEach((field) => {
-		if (field.lookup && !lookupsToFetch.includes(field.lookup) && !field.dependsOn) lookupsToFetch.push(field.lookup);
+		if (field.lookup && !seenLookups.has(field.lookup) && !field.dependsOn) {
+			seenLookups.add(field.lookup);
+			lookupsToFetch.push(field.lookup);
+		}
 	});
 	searchParams.set("lookups", lookupsToFetch);
 	if (where && Object.keys(where)?.length) searchParams.set("where", JSON.stringify(where));
-	const response = await request(await executeRequestHook(model, {
+	const context = await executeRequestHook(model, {
 		url: `${url}?${searchParams.toString()}`,
 		method: "GET",
 		lookupsToFetch,
@@ -779,7 +795,8 @@ var getRecord = async (props = {}) => {
 		action: "load",
 		dataParsers: DATA_PARSERS,
 		...props
-	}));
+	});
+	const response = await request(context);
 	validateResponse(response, "Load failed");
 	await executeResponseHook({
 		model,
@@ -811,23 +828,24 @@ var getRecord = async (props = {}) => {
 /**
 * Deletes a record by id. Returns true on success or throws on error.
 */
-var deleteRecord = async function(props = {}) {
+const deleteRecord = async function(props = {}) {
 	const { id, api, model } = props;
 	if (!id) throw new Error("Delete failed. No active record.");
-	validateResponse(await request(await executeRequestHook(model, {
+	const context = await executeRequestHook(model, {
 		url: `${api}/${id}`,
 		method: "DELETE",
 		dataParsers: DATA_PARSERS,
 		jsonPayload: true,
 		action: "delete",
 		...props
-	})), "Delete failed");
+	});
+	validateResponse(await request(context), "Delete failed");
 	return true;
 };
 /**
 * Creates or updates a record. Returns the response on success or throws on error.
 */
-var saveRecord = async function(props = {}) {
+const saveRecord = async function(props = {}) {
 	const { id, api, values, model } = props;
 	let url, method;
 	if (id !== 0) {
@@ -837,7 +855,7 @@ var saveRecord = async function(props = {}) {
 		url = api;
 		method = "POST";
 	}
-	const response = await request(await executeRequestHook(model, {
+	const context = await executeRequestHook(model, {
 		url,
 		method,
 		params: values,
@@ -846,14 +864,15 @@ var saveRecord = async function(props = {}) {
 		additionalHeaders: { "Content-Type": "application/json" },
 		dataParsers: DATA_PARSERS,
 		...props
-	}));
+	});
+	const response = await request(context);
 	validateResponse(response, "Save failed");
 	return response;
 };
 /**
 * Fetches lookup data for a given scope. Returns the response or throws on error.
 */
-var getLookups = async (props = {}) => {
+const getLookups = async (props = {}) => {
 	const { model, lookups, scopeId, reqData } = props;
 	let { api } = props;
 	api = api || model.api;
@@ -861,7 +880,7 @@ var getLookups = async (props = {}) => {
 	const url = `${api}/lookups`;
 	searchParams.set("lookups", lookups);
 	if (scopeId !== void 0) searchParams.set("scopeId", scopeId);
-	const response = await request(await executeRequestHook(model, {
+	const context = await executeRequestHook(model, {
 		url: `${url}?${searchParams.toString()}`,
 		method: "GET",
 		lookups,
@@ -872,7 +891,8 @@ var getLookups = async (props = {}) => {
 		action: "lookups",
 		...reqData,
 		...props
-	}));
+	});
+	const response = await request(context);
 	validateResponse(response, "Could not load lookups");
 	return await executeResponseHook({
 		model,
@@ -881,15 +901,18 @@ var getLookups = async (props = {}) => {
 		context: props
 	});
 };
-var crudHelper = {
+const crudHelper = {
 	getList,
 	getRecord,
 	deleteRecord,
 	saveRecord,
 	getLookups
 };
-// src/lib/components/Grid/listState.js
-var STORAGE_PREFIX = "grid-list-state:";
+
+//#endregion
+//#region src/lib/components/Grid/listState.js
+const STORAGE_PREFIX = "grid-list-state:";
+const LIST_STATE_PARAM = "ls";
 function currentSearchParams() {
 	const hashQueryIndex = window.location.hash.indexOf("?");
 	const search = hashQueryIndex !== -1 ? window.location.hash.slice(hashQueryIndex) : window.location.search;
@@ -952,17 +975,19 @@ if (typeof window !== "undefined" && isReload()) {
 	clearAllListState();
 	stripListStateFromUrl();
 }
-// src/lib/components/Grid/footer.js
-var handleKeyPress = (event) => {
+
+//#endregion
+//#region src/lib/components/Grid/footer.js
+const handleKeyPress = (event) => {
 	const keyCode = event.which || event.keyCode;
 	const keyValue = String.fromCharCode(keyCode);
 	if (!/\d/.test(keyValue)) event.preventDefault();
 };
-var Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) => {
-	const page = apiRef.current.state.pagination.paginationModel.page;
-	const rowsPerPage = apiRef.current.state.pagination.paginationModel.pageSize;
-	const totalRows = totalRowCount ?? apiRef.current.state.rows.totalRowCount;
-	const totalPages = Math.ceil(totalRows / rowsPerPage);
+const Footer = ({ pagination, tTranslate = (key) => key, totalRowCount }) => {
+	const apiRef = useGridApiContext();
+	const { page, pageSize: rowsPerPage } = useGridSelector(apiRef, gridPaginationModelSelector);
+	const gridRowCount = useGridSelector(apiRef, gridRowCountSelector);
+	const totalPages = Math.ceil((totalRowCount ?? gridRowCount) / rowsPerPage);
 	const isPaginationEnabled = !!pagination && totalPages > 1;
 	const { t: translate, i18n } = useTranslation();
 	const tOpts = {
@@ -970,9 +995,11 @@ var Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) 
 		i18n
 	};
 	const [pageNumber, setPageNumber] = useState(page + 1);
-	useEffect(() => {
+	const [previousPage, setPreviousPage] = useState(page);
+	if (previousPage !== page) {
+		setPreviousPage(page);
 		setPageNumber(page + 1);
-	}, [page]);
+	}
 	const handleChange = function(e) {
 		let value = e.target?.value;
 		if (value === "") setPageNumber("");
@@ -1032,8 +1059,10 @@ var Footer = ({ pagination, apiRef, tTranslate = (key) => key, totalRowCount }) 
 		] })
 	}), /* @__PURE__ */ jsx(GridFooter, {})] });
 };
-// src/lib/components/Grid/template.js
-var defaultTemplate$1 = /\${((\w+)\.)?(\w+)}/g;
+
+//#endregion
+//#region src/lib/components/Grid/template.js
+const defaultTemplate$1 = /\${((\w+)\.)?(\w+)}/g;
 /**
 * @description Replaces the given tags in the given source with the given values.
 * @param {string} source The source to replace the tags in.
@@ -1048,7 +1077,7 @@ var defaultTemplate$1 = /\${((\w+)\.)?(\w+)}/g;
 * console.log(template("${user.firstName} ${user.lastName}", { user: { firstName: "John", lastName: "Doe" } }));
 * // -> "John Doe"
 **/
-var replaceTags = function(source, tags, { template = defaultTemplate$1, keepMissingTags = false } = {}) {
+const replaceTags = function(source, tags, { template = defaultTemplate$1, keepMissingTags = false } = {}) {
 	if (!source || !tags) return source;
 	return source.replace(template, function(match, g1, g2, g3) {
 		const container = g2 ? tags[g2] || {} : tags;
@@ -1056,7 +1085,9 @@ var replaceTags = function(source, tags, { template = defaultTemplate$1, keepMis
 	});
 };
 var template_default = { replaceTags };
-// src/lib/components/Typography/index.js
+
+//#endregion
+//#region src/lib/components/Typography/index.js
 function MuiTypography({ variant = "h2", component = "h2", text = "", name = null, ...rest }) {
 	return /* @__PURE__ */ jsxs(Typography$1, {
 		variant,
@@ -1065,12 +1096,14 @@ function MuiTypography({ variant = "h2", component = "h2", text = "", name = nul
 		children: [text, name && ` ${name}`]
 	});
 }
-// src/lib/components/useMobile.js
+
+//#endregion
+//#region src/lib/components/useMobile.js
 /**
 * Detects the current device type and screen orientation via User-Agent sniffing and window dimensions.
 * @returns {{ mobile: boolean, tablet: boolean, portrait: boolean, landscape: boolean }}
 */
-var SSR_DEFAULT = {
+const SSR_DEFAULT = {
 	mobile: false,
 	tablet: false,
 	portrait: false,
@@ -1093,101 +1126,120 @@ function checkDevice() {
 function useMobile(onlyMobile = false) {
 	const [view, setView] = useState(checkDevice);
 	useEffect(() => {
+		let resizeTimer;
 		const handleWindowSizeChange = () => {
-			setTimeout(() => setView(checkDevice()), 10);
+			clearTimeout(resizeTimer);
+			resizeTimer = setTimeout(() => setView(checkDevice()), 10);
 		};
 		window.addEventListener("resize", handleWindowSizeChange);
 		return () => {
 			window.removeEventListener("resize", handleWindowSizeChange);
+			clearTimeout(resizeTimer);
 		};
 	}, []);
 	return onlyMobile ? view.mobile : view;
 }
-// src/lib/components/mui/locale/data-grid/daDK.js
-var daDKGrid = {
+
+//#endregion
+//#region src/lib/components/mui/locale/data-grid/daDK.js
+const daDKGrid = {
 	Jumptopage: "Gå til side",
 	Go: "Gå",
 	InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "I dette rum vil vi snart bringe dig et dashboard med hovedoversigt KPIer for nem adgang",
 	Pages: "sider",
 	MuiTablePagination: { labelRowsPerPage: "Rækker pr. side" }
 };
-var mergedLocalizationDatadaDK = {
+const mergedLocalizationDatadaDK = {
 	...locales$1["daDK"],
 	...daDKGrid
 };
-// src/lib/components/mui/locale/data-grid/deDE.js
-var deDEGrid = {
+
+//#endregion
+//#region src/lib/components/mui/locale/data-grid/deDE.js
+const deDEGrid = {
 	Jumptopage: "Zur Seite springen",
 	Go: "Gehen",
 	InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "In diesem Bereich werden wir Ihnen in Kürze ein Dashboard mit den wichtigsten Übersichts-KPIs für einen einfachen Zugriff bereitstellen",
 	Pages: "Seiten",
 	MuiTablePagination: { labelRowsPerPage: "Zeilen pro Seite" }
 };
-var mergedLocalizationDatadeDE = {
+const mergedLocalizationDatadeDE = {
 	...locales$1["deDE"],
 	...deDEGrid
 };
-// src/lib/components/mui/locale/data-grid/elGR.js
-var elGRGrid = {
+
+//#endregion
+//#region src/lib/components/mui/locale/data-grid/elGR.js
+const elGRGrid = {
 	Jumptopage: "Μετάβαση στη σελίδα",
 	Go: "Πηγαίνω",
 	InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "Σε αυτόν τον χώρο θα σας φέρουμε σύντομα έναν πίνακα ελέγχου βασικών επισκόπησης KPI για εύκολη πρόσβαση",
 	Pages: "Σελίδες",
 	MuiTablePagination: { labelRowsPerPage: "Σειρές ανά σελίδα" }
 };
-var mergedLocalizationDataelGR = {
+const mergedLocalizationDataelGR = {
 	...locales$1["elGR"],
 	...elGRGrid
 };
-// src/lib/components/mui/locale/data-grid/esES.js
-var esESGrid = {
+
+//#endregion
+//#region src/lib/components/mui/locale/data-grid/esES.js
+const esESGrid = {
 	Jumptopage: "Saltar a la página",
 	Go: "Ir",
 	InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "En este espacio pronto le ofreceremos un panel con los principales KPI generales para un fácil acceso.",
 	Pages: "paginas",
 	MuiTablePagination: { labelRowsPerPage: "Filas por página" }
 };
-var mergedLocalizationDataesES = {
+const mergedLocalizationDataesES = {
 	...locales$1["esES"],
 	...esESGrid
 };
-// src/lib/components/mui/locale/data-grid/frFR.js
-var frFRGrid = {
+
+//#endregion
+//#region src/lib/components/mui/locale/data-grid/frFR.js
+const frFRGrid = {
 	Jumptopage: "Aller à la page",
 	Go: "Aller",
 	InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "Dans cet espace, nous vous proposerons bientôt un tableau de bord des principaux KPI pour un accès facile.",
 	Pages: "Pages",
 	MuiTablePagination: { labelRowsPerPage: "Lignes par page" }
 };
-var mergedLocalizationDatafrFR = {
+const mergedLocalizationDatafrFR = {
 	...locales$1["frFR"],
 	...frFRGrid
 };
-// src/lib/components/mui/locale/data-grid/itIT.js
-var itITGrid = {
+
+//#endregion
+//#region src/lib/components/mui/locale/data-grid/itIT.js
+const itITGrid = {
 	Jumptopage: "Vai alla pagina",
 	Go: "Andare",
 	InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "In questo spazio presto ti forniremo una dashboard con i principali KPI generali per un facile accesso",
 	Pages: "Pagine",
 	MuiTablePagination: { labelRowsPerPage: "Righe per pagina" }
 };
-var mergedLocalizationDataitIT = {
+const mergedLocalizationDataitIT = {
 	...locales$1["itIT"],
 	...itITGrid
 };
-// src/lib/components/mui/locale/data-grid/trTR.js
-var trTRGrid = {
+
+//#endregion
+//#region src/lib/components/mui/locale/data-grid/trTR.js
+const trTRGrid = {
 	Jumptopage: "Sayfaya atla",
 	Go: "Gitmek",
 	InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "Bu alanda yakında size kolay erişim için ana genel bakış KPI larının bir kontrol panelini sunacağız",
 	Pages: "Sayfalar",
 	MuiTablePagination: { labelRowsPerPage: "Sayfa başına satır" }
 };
-var mergedLocalizationDatatrTR = {
+const mergedLocalizationDatatrTR = {
 	...locales$1["trTR"],
 	...trTRGrid
 };
-// src/lib/components/mui/locale/data-grid/ptPT.js
+
+//#endregion
+//#region src/lib/components/mui/locale/data-grid/ptPT.js
 var ptPT_default = { components: { MuiDataGrid: { defaultProps: { localeText: {
 	Add: "createew",
 	noRowsLabel: "Sem resultados",
@@ -1315,20 +1367,25 @@ var ptPT_default = { components: { MuiDataGrid: { defaultProps: { localeText: {
 	Pages: "Páginas",
 	MuiTablePagination: { labelRowsPerPage: "Linhas por página" }
 } } } } };
-// src/lib/components/mui/locale/data-grid/enUS.js
-var enUSGrid = {
+
+//#endregion
+//#region src/lib/components/mui/locale/data-grid/enUS.js
+const enUSGrid = {
 	Jumptopage: "Jump to page",
 	Go: "Go",
 	InthisspacewewillsoonbringyouadashboardofmainoverviewKPIsforeasyaccess: "In this space we will soon bring you a dashboard of main overview KPIs for easy access",
 	Pages: "Pages",
 	MuiTablePagination: { labelRowsPerPage: "Rows per page" }
 };
-// src/lib/components/mui/locale/localization.js
-var locales = {
-	"en": {
-		...locales$1["enUS"],
-		...enUSGrid
-	},
+const mergedLocalizationDataenUS = {
+	...locales$1["enUS"],
+	...enUSGrid
+};
+
+//#endregion
+//#region src/lib/components/mui/locale/localization.js
+const locales = {
+	"en": mergedLocalizationDataenUS,
 	"tr-TR": mergedLocalizationDatatrTR,
 	"es-ES": mergedLocalizationDataesES,
 	"da-DK": mergedLocalizationDatadaDK,
@@ -1338,14 +1395,16 @@ var locales = {
 	"pt-PT": ptPT_default,
 	"it-IT": mergedLocalizationDataitIT
 };
-// src/lib/components/useRouter/StateProvider.js
+
+//#endregion
+//#region src/lib/components/useRouter/StateProvider.js
 dayjs.extend(utc);
 dayjs.extend(timezone);
-var StateContext = createContext();
-var RouterContext = createContext(null);
-var snackbarWarning = () => console.warn("SnackbarProvider not found. Wrap StateProvider with SnackbarProvider.");
-var EMPTY_API_ENDPOINTS = Object.freeze({});
-var StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API_ENDPOINTS }) => {
+const StateContext = createContext();
+const RouterContext = createContext(null);
+const snackbarWarning = () => console.warn("SnackbarProvider not found. Wrap StateProvider with SnackbarProvider.");
+const EMPTY_API_ENDPOINTS = Object.freeze({});
+const StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API_ENDPOINTS }) => {
 	const [locale, setLocaleState] = useState("en");
 	const [dateTime, setDateTimeState] = useState("MM/DD/YYYY hh:mm:ss A");
 	const [pageTitle, setPageTitleState] = useState(null);
@@ -1542,18 +1601,20 @@ var StateProvider = ({ children, apiEndpoints: initialApiEndpoints = EMPTY_API_E
 		children
 	});
 };
-var RouterProvider = RouterContext.Provider;
-var useRouter = () => {
+const RouterProvider = RouterContext.Provider;
+const useRouter = () => {
 	return use(RouterContext);
 };
-var useStateContext = () => {
+const useStateContext = () => {
 	const context = use(StateContext);
 	if (context === void 0) throw new Error("useStateContext must be used within a StateProvider");
 	return context;
 };
-// src/lib/components/HelpModal/index.js
-var RATIO = 16 / 9;
-var HelpModal = () => {
+
+//#endregion
+//#region src/lib/components/HelpModal/index.js
+const RATIO = 16 / 9;
+const HelpModal = () => {
 	const [height, setHeight] = useState();
 	const [loading, setLoading] = useState(false);
 	const { stateData, setModal } = useStateContext();
@@ -1646,8 +1707,10 @@ var HelpModal = () => {
 		})]
 	}) });
 };
-// src/lib/components/PageTitle/index.js
-var EMPTY_BREADCRUMBS = [];
+
+//#endregion
+//#region src/lib/components/PageTitle/index.js
+const EMPTY_BREADCRUMBS = [];
 function PageTitle({ titleHeading, navigate, name = null, RightComponent = null, mobileRightComponent, title = "", titleClass = "text-theme-blue text-max-width", showBreadcrumbs, breadcrumbs = EMPTY_BREADCRUMBS, enableBackButton = false, breadcrumbColor, showHelpButton = false, model }) {
 	const isMobile = useMobile(true);
 	const breadcrumbsLasIndex = breadcrumbs.length - 1;
@@ -1695,11 +1758,11 @@ function PageTitle({ titleHeading, navigate, name = null, RightComponent = null,
 										color: "#1976d2"
 									},
 									children: breadcrumb.text
-								}, `${index}-${breadcrumb.text}`) : /* @__PURE__ */ jsx(Typography$1, {
+								}, breadcrumbs.slice(0, index + 1).map((item) => item.text).join("/")) : /* @__PURE__ */ jsx(Typography$1, {
 									className: `${titleClass} breadcrumbs-text-title text-max-width`,
 									variant: "inherit",
 									children: breadcrumb.text
-								}, `${index}-${breadcrumb.text}`))
+								}, breadcrumbs.slice(0, index + 1).map((item) => item.text).join("/")))
 							})
 						}),
 						enableBackButton && /* @__PURE__ */ jsx(Grid, {
@@ -1761,12 +1824,14 @@ function PageTitle({ titleHeading, navigate, name = null, RightComponent = null,
 	}), /* @__PURE__ */ jsx(HelpModal, {})] })] });
 }
 var PageTitle_default = withTranslation()(PageTitle);
-// src/lib/components/utils.js
+
+//#endregion
+//#region src/lib/components/utils.js
 /**
 * Matches placeholders like ${key} and ${group.key} in template strings.
 */
-var defaultTemplate = /\$\{((\w+)\.)?(\w+)\}/gm;
-var utils = {
+const defaultTemplate = /\$\{((\w+)\.)?(\w+)\}/gm;
+const utils = {
 	filterFieldDataTypes: {
 		Number: "number",
 		String: "string",
@@ -1824,7 +1889,7 @@ var utils = {
 		});
 	}
 };
-var getPermissions = ({ userData = {}, model, userDefinedPermissions }) => {
+const getPermissions = ({ userData = {}, model, userDefinedPermissions }) => {
 	const { permissions = [] } = userData;
 	userDefinedPermissions = userDefinedPermissions || {
 		add: true,
@@ -1843,17 +1908,19 @@ var getPermissions = ({ userData = {}, model, userDefinedPermissions }) => {
 		canDelete: userDefinedPermissions.delete && Boolean(userPermissions[[utils.permissionsMapper.delete]])
 	};
 };
-// src/lib/components/Grid/LocalizedDatePicker.js
+
+//#endregion
+//#region src/lib/components/Grid/LocalizedDatePicker.js
 dayjs.extend(utcPlugin);
-var componentMap = {
+const componentMap = {
 	date: DatePicker,
 	dateTime: DateTimePicker
 };
-var isValidDate = (date) => {
+const isValidDate = (date) => {
 	const parsedDate = dayjs(date);
 	return parsedDate.isValid() && parsedDate.year() > 1900;
 };
-var LocalizedDatePicker = (props) => {
+const LocalizedDatePicker = (props) => {
 	const { fixedFilterFormat } = utils;
 	const { item, applyValue, convert, colDef: colDefProp, columnType: explicitColumnType, apiRef } = props;
 	const { systemDateTimeFormat, stateData } = useStateContext();
@@ -1863,9 +1930,11 @@ var LocalizedDatePicker = (props) => {
 	const localize = colDef?.localize ?? props.localize ?? false;
 	const format = systemDateTimeFormat(columnType !== "dateTime", false, stateData.dateTime);
 	const [pendingValue, setPendingValue] = useState(item?.value ?? null);
-	useEffect(() => {
+	const [previousValue, setPreviousValue] = useState(item?.value);
+	if (previousValue !== item?.value) {
+		setPreviousValue(item?.value);
 		setPendingValue(item?.value ?? null);
-	}, [item?.value]);
+	}
 	const commitValue = (newValue) => {
 		if (columnType !== "date" && columnType !== "dateTime") return;
 		const isPartialDate = (value) => {
@@ -1951,22 +2020,24 @@ var LocalizedDatePicker = (props) => {
 		})
 	});
 };
-var localizedDateFormat = (colProps) => getGridDateOperators(colProps?.columnType === "dateTime").map((operator) => ({
+const localizedDateFormat = (colProps) => getGridDateOperators(colProps?.columnType === "dateTime").map((operator) => ({
 	...operator,
 	InputComponent: operator.InputComponent ? (props) => /* @__PURE__ */ jsx(LocalizedDatePicker, {
 		...props,
 		...colProps
 	}) : void 0
 }));
-// src/lib/components/Grid/integerFilterValue.js
-var toIntegerFilterValue = (value) => {
+
+//#endregion
+//#region src/lib/components/Grid/integerFilterValue.js
+const toIntegerFilterValue = (value) => {
 	if (Array.isArray(value)) return value.map(toIntegerFilterValue).filter((entry) => entry !== void 0);
 	if (typeof value !== "number" && (typeof value !== "string" || value.trim() === "")) return void 0;
 	const integer = Math.trunc(Number(value));
 	return Number.isFinite(integer) ? integer : void 0;
 };
-var integerFilterInputs = /* @__PURE__ */ new WeakMap();
-var asIntegerFilterInput = (InputComponent) => {
+const integerFilterInputs = /* @__PURE__ */ new WeakMap();
+const asIntegerFilterInput = (InputComponent) => {
 	if (!integerFilterInputs.has(InputComponent)) {
 		const IntegerFilterInput = ({ applyValue, ...props }) => /* @__PURE__ */ jsx(InputComponent, {
 			...props,
@@ -1981,11 +2052,13 @@ var asIntegerFilterInput = (InputComponent) => {
 	}
 	return integerFilterInputs.get(InputComponent);
 };
-var withIntegerFilterValues = (operators) => operators.map((op) => op.InputComponent ? {
+const withIntegerFilterValues = (operators) => operators.map((op) => op.InputComponent ? {
 	...op,
 	InputComponent: asIntegerFilterInput(op.InputComponent)
 } : op);
-// src/lib/components/Grid/useGridPreferences.js
+
+//#endregion
+//#region src/lib/components/Grid/useGridPreferences.js
 function parsePreferenceState(value) {
 	const state = typeof value === "string" ? JSON.parse(value) : value;
 	if (!state || typeof state !== "object" || Array.isArray(state)) throw new Error("Invalid grid state");
@@ -2046,34 +2119,36 @@ function useGridPreferences({ url, preferenceKey, onInitialize, onError }) {
 		reloadPreferences
 	};
 }
-// src/lib/components/Grid/GridPreference.js
-var actionTypes$1 = {
+
+//#endregion
+//#region src/lib/components/Grid/GridPreference.js
+const actionTypes$1 = {
 	Edit: "Edit",
 	Delete: "Delete"
 };
-var DIALOG_TYPES = {
+const DIALOG_TYPES = {
 	ADD: "Add",
 	EDIT: "Edit",
 	MANAGE: "Manage",
 	NONE: null
 };
-var initialValues = {
+const initialValues = {
 	prefName: "",
 	prefDesc: "",
 	isDefault: false
 };
-var paginationModel = {
+const paginationModel = {
 	pageSize: 50,
 	page: 0
 };
-var pageSizeOptions = [
+const pageSizeOptions = [
 	5,
 	10,
 	20,
 	50,
 	100
 ];
-var GridPreferences = ({ gridRef, preferenceKey, preferences, reloadPreferences, onPreferenceChange, onResetToDefault, currentPreference, hasRestoredListState, t, tOpts }) => {
+const GridPreferences = ({ gridRef, preferenceKey, preferences, reloadPreferences, onPreferenceChange, onResetToDefault, currentPreference, hasRestoredListState, t, tOpts }) => {
 	const { getApiEndpoint } = useStateContext();
 	const preferenceApi = getApiEndpoint("GridPreferenceManager");
 	const apiRef = useGridApiRef();
@@ -2519,8 +2594,10 @@ var GridPreferences = ({ gridRef, preferenceKey, preferences, reloadPreferences,
 		})
 	] });
 };
-// src/lib/components/Grid/helper.js
-var convertDefaultSort = (defaultSort, constants, sortRegex) => {
+
+//#endregion
+//#region src/lib/components/Grid/helper.js
+const convertDefaultSort = (defaultSort, constants, sortRegex) => {
 	if (typeof defaultSort !== constants.string) return [];
 	return defaultSort.split(",").flatMap((sortField) => {
 		sortRegex.lastIndex = 0;
@@ -2533,7 +2610,7 @@ var convertDefaultSort = (defaultSort, constants, sortRegex) => {
 		}];
 	});
 };
-var ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, exportKey, icon }) => /* @__PURE__ */ jsxs(MenuItem$1, {
+const ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPivotExport = false, exportKey, icon }) => /* @__PURE__ */ jsxs(MenuItem$1, {
 	onClick: handleExport,
 	"data-type": type,
 	"data-content-type": contentType,
@@ -2548,7 +2625,7 @@ var ExportMenuItem = ({ tTranslate, tOpts, handleExport, contentType, type, isPi
 		children: icon
 	}), tTranslate(type, tOpts)]
 });
-var CustomExportButton = ({ exportFormats, customExportOptions, isStaticDataMode = false, ...props }) => {
+const CustomExportButton = ({ exportFormats, customExportOptions, isStaticDataMode = false, ...props }) => {
 	const exportItems = [
 		exportFormats.csv !== false && /* @__PURE__ */ jsx(ExportMenuItem, {
 			...props,
@@ -2593,14 +2670,14 @@ var CustomExportButton = ({ exportFormats, customExportOptions, isStaticDataMode
 			contentType: "application/json",
 			exportKey: "jsonExport"
 		}, "json"),
-		!isStaticDataMode && Array.isArray(customExportOptions) && customExportOptions.map((item, index) => /* @__PURE__ */ jsx(ExportMenuItem, {
+		!isStaticDataMode && Array.isArray(customExportOptions) && customExportOptions.map((item) => /* @__PURE__ */ jsx(ExportMenuItem, {
 			...props,
 			icon: item.icon || /* @__PURE__ */ jsx(TableChart, { fontSize: "small" }),
 			type: item.label || "Excel",
 			exportKey: item.key,
 			contentType: item.contentType || "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 			handleExport: item.handleExport || props.handleExport
-		}, item.key || index))
+		}, item.key || item.label || item.contentType))
 	].flat().filter(Boolean);
 	if (exportItems.length === 0) return null;
 	return /* @__PURE__ */ jsx(GridToolbarExportContainer, {
@@ -2608,7 +2685,7 @@ var CustomExportButton = ({ exportFormats, customExportOptions, isStaticDataMode
 		children: exportItems
 	});
 };
-var getDefaultOperator = (type, customOperator) => {
+const getDefaultOperator = (type, customOperator) => {
 	if (customOperator) return customOperator;
 	switch (type) {
 		case "string": return "startsWith";
@@ -2621,7 +2698,7 @@ var getDefaultOperator = (type, customOperator) => {
 		default: return "startsWith";
 	}
 };
-var areEqual = (prevProps = {}, nextProps = {}) => {
+const areEqual = (prevProps = {}, nextProps = {}) => {
 	let equal = true;
 	for (const o in prevProps) if (prevProps[o] !== nextProps[o]) equal = false;
 	for (const o in nextProps) if (!(o in prevProps)) equal = false;
@@ -2635,13 +2712,15 @@ var areEqual = (prevProps = {}, nextProps = {}) => {
 * The parent's floor wins when the container is too short to honour both: the panel gets squeezed to
 * its own minimum rather than the clamp inverting and jumping the handle.
 */
-var clampSplitHeight = ({ startHeight, delta, containerHeight, minPanelHeight, minSiblingHeight }) => {
+const clampSplitHeight = ({ startHeight, delta, containerHeight, minPanelHeight, minSiblingHeight }) => {
 	const maxHeight = Math.max(containerHeight - minSiblingHeight, minPanelHeight);
 	return Math.min(Math.max(startHeight - delta, minPanelHeight), maxHeight);
 };
-// src/lib/components/Grid/ToolbarFilter.js
+
+//#endregion
+//#region src/lib/components/Grid/ToolbarFilter.js
 dayjs.extend(utcPlugin);
-var ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTranslate, tOpts }) => {
+const ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTranslate, tOpts }) => {
 	const { systemDateTimeFormat, stateData } = useStateContext();
 	const { fixedFilterFormat } = utils;
 	const existingFilter = useMemo(() => {
@@ -2859,9 +2938,11 @@ var ToolbarFilter = ({ column, filterModel, setFilterModel, lookupData, tTransla
 	};
 	return renderFilterInput();
 };
-// src/lib/components/Grid/CustomToolbar.js
-var ButtonWithMargin = styled$1(Button)({ margin: "6px" });
-var GridToolBar = styled$1(Toolbar)({
+
+//#endregion
+//#region src/lib/components/Grid/CustomToolbar.js
+const ButtonWithMargin = styled$1(Button)({ margin: "6px" });
+const GridToolBar = styled$1(Toolbar)({
 	display: "flex",
 	alignItems: "center",
 	gap: "1.5rem",
@@ -2870,9 +2951,9 @@ var GridToolBar = styled$1(Toolbar)({
 	minHeight: "auto",
 	borderBottom: "none"
 });
-var hasNonEmptyValue = (value) => value !== null && value !== void 0 && value !== "" && !(Array.isArray(value) && value.length === 0);
-var filterValidItems$1 = (items = []) => items.filter((item) => ["isEmpty", "isNotEmpty"].includes(item.operator) || hasNonEmptyValue(item.value));
-var CustomToolbar = function(props) {
+const hasNonEmptyValue = (value) => value !== null && value !== void 0 && value !== "" && !(Array.isArray(value) && value.length === 0);
+const filterValidItems$1 = (items = []) => items.filter((item) => ["isEmpty", "isNotEmpty"].includes(item.operator) || hasNonEmptyValue(item.value));
+const CustomToolbar = function(props) {
 	const { model, data, currentPreference, hasRestoredListState, preferences, reloadPreferences, isReadOnly, canAdd, canDelete, forAssignment, showAddIcon, onAdd, selectionApi, rowSelectionModel, selectAll, available, onAssign, assigned, onUnassign, effectivePermissions, clearFilters, handleExport, preferenceKey, apiRef, tTranslate, tOpts, filterModel, setFilterModel, onPreferenceChange, onResetToDefault, toolbarItems, gridColumns, customExportOptions, isStaticDataMode } = props;
 	const addText = model.customAddText || (model.title ? `Add ${model.title}` : "Add");
 	const activeFilterCount = filterValidItems$1(filterModel?.items || []).length || 0;
@@ -3013,10 +3094,12 @@ var CustomToolbar = function(props) {
 		})
 	})] });
 };
-// src/lib/components/Grid/SplitResizer.js
-var RESIZER_BAR_HEIGHT = 10;
-var RESIZER_MARGIN = 4;
-var SplitResizer = React.memo(({ onResizeStart, onResize, onResizeEnd, keyboardStep = 24, label = "Resize child grids" }) => {
+
+//#endregion
+//#region src/lib/components/Grid/SplitResizer.js
+const RESIZER_BAR_HEIGHT = 10;
+const RESIZER_MARGIN = 4;
+const SplitResizer = React.memo(({ onResizeStart, onResize, onResizeEnd, keyboardStep = 24, label = "Resize child grids" }) => {
 	const startYRef = useRef(0);
 	const draggingRef = useRef(false);
 	const setDragging = useCallback((isDragging) => {
@@ -3097,8 +3180,10 @@ var SplitResizer = React.memo(({ onResizeStart, onResize, onResizeEnd, keyboardS
 		})
 	});
 });
-// src/lib/components/permissions.js
-var DEFAULT_PERMISSIONS$1 = {
+
+//#endregion
+//#region src/lib/components/permissions.js
+const DEFAULT_PERMISSIONS$1 = {
 	add: true,
 	edit: true,
 	delete: true
@@ -3136,7 +3221,9 @@ function getRecordAccess({ permissions, record = {}, isNew = false, mode, readOn
 		relationsReadOnly: !canSave || Boolean(record.readOnlyRelations)
 	};
 }
-// src/lib/hooks/useModelTranslation.js
+
+//#endregion
+//#region src/lib/hooks/useModelTranslation.js
 /**
 * Custom hook for handling translations in components that work with UiModel.
 * Consolidates the translation initialization pattern used across Form, Grid, and field components.
@@ -3156,8 +3243,10 @@ function useModelTranslation(model) {
 		tTranslate: model?.tTranslate ?? ((key) => key)
 	};
 }
-// src/lib/hooks/useCascadingLookup.js
-var emptyValues = [
+
+//#endregion
+//#region src/lib/hooks/useCascadingLookup.js
+const emptyValues = [
 	null,
 	void 0,
 	""
@@ -3266,7 +3355,9 @@ function useCascadingLookup({ column, formik, lookups, dependsOn = [], isAutoCom
 		labelMap
 	};
 }
-// src/lib/hooks/useDebounce.js
+
+//#endregion
+//#region src/lib/hooks/useDebounce.js
 function useDebounce(value, delay) {
 	const [debouncedValue, setDebouncedValue] = useState(value);
 	useEffect(() => {
@@ -3279,12 +3370,15 @@ function useDebounce(value, delay) {
 	}, [value, delay]);
 	return debouncedValue;
 }
-// src/lib/components/Form/fields/remoteSelectField.js
-var DEFAULT_PAGE_SIZE = 50;
-var SEARCH_DEBOUNCE_MS = 300;
-var SCROLL_LOAD_MORE_THRESHOLD_PX = 48;
-var EMPTY_ARRAY = [];
-var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, formik, model, lookups = {}, dependsOn = [], tTranslate = (k) => k, tOpts = {}, filterMode = false, filterValue, onFilterChange, multiSelect: multiSelectProp }) {
+
+//#endregion
+//#region src/lib/components/Form/fields/remoteSelectField.js
+const DEFAULT_PAGE_SIZE = 50;
+const SEARCH_DEBOUNCE_MS = 300;
+const SCROLL_LOAD_MORE_THRESHOLD_PX = 48;
+const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
+const RemoteSelectField = React.memo(function RemoteSelectField({ column, field, formik, model, lookups = EMPTY_OBJECT, dependsOn = EMPTY_ARRAY, tTranslate = (k) => k, tOpts = EMPTY_OBJECT, filterMode = false, filterValue, onFilterChange, multiSelect: multiSelectProp }) {
 	const chunkSize = column.pageSize || DEFAULT_PAGE_SIZE;
 	const isMultiSelect = Boolean(multiSelectProp) || Boolean(column.multiSelect) && !filterMode;
 	const isReadOnly = Boolean(column.readOnly);
@@ -3566,7 +3660,9 @@ var RemoteSelectField = React.memo(function RemoteSelectField({ column, field, f
 		children: [control, /* @__PURE__ */ jsx(FormHelperText, { children: formik?.touched[field] && formik?.errors[field] })]
 	});
 });
-// src/lib/hooks/useChangedDeps.js
+
+//#endregion
+//#region src/lib/hooks/useChangedDeps.js
 /**
 * Logs which named dependencies changed between renders.
 *
@@ -3600,7 +3696,9 @@ function useChangedDeps(label, namedDeps, enabled = false) {
 		prevRef.current = deps;
 	});
 }
-// src/lib/components/Grid/useExtraParams.js
+
+//#endregion
+//#region src/lib/components/Grid/useExtraParams.js
 function equalExtraParams(left, right) {
 	if (Object.is(left, right)) return true;
 	const pending = [[left, right]];
@@ -3639,7 +3737,9 @@ function useExtraParams(value, comparison) {
 	}
 	return previous;
 }
-// src/lib/components/Grid/serverGrouping.js
+
+//#endregion
+//#region src/lib/components/Grid/serverGrouping.js
 /**
 * The grouping column's cell for server-side row grouping.
 *
@@ -3685,21 +3785,23 @@ function ServerGroupingCell({ id, row, rowNode, value }) {
 		})]
 	});
 }
-// src/lib/components/Grid/index.js
-var TREE_DATA_GROUPING_FIELD = "__tree_data_group__";
-var defaultPageSize = 50;
-var sortRegex = /(\w+)( ASC| DESC)?/i;
-var recordCounts = 6e4;
-var exportPage = 0;
-var exportPageSize = 1e6;
-var actionTypes = {
+
+//#endregion
+//#region src/lib/components/Grid/index.js
+const TREE_DATA_GROUPING_FIELD = "__tree_data_group__";
+const defaultPageSize = 50;
+const sortRegex = /(\w+)( ASC| DESC)?/i;
+const recordCounts = 6e4;
+const exportPage = 0;
+const exportPageSize = 1e6;
+const actionTypes = {
 	Copy: "Copy",
 	Edit: "Edit",
 	Delete: "Delete",
 	History: "History",
 	Download: "Download"
 };
-var iconMapper = {
+const iconMapper = {
 	"article": /* @__PURE__ */ jsx(ArticleIcon, {}),
 	"edit": /* @__PURE__ */ jsx(EditIcon, {}),
 	"copy": /* @__PURE__ */ jsx(CopyIcon, {}),
@@ -3707,7 +3809,7 @@ var iconMapper = {
 	"history": /* @__PURE__ */ jsx(HistoryIcon, {}),
 	"download": /* @__PURE__ */ jsx(FileDownloadIcon, {})
 };
-var constants = {
+const constants = {
 	gridFilterModel: {
 		items: [],
 		logicOperator: "and",
@@ -3746,15 +3848,15 @@ var constants = {
 	],
 	defaultActionWidth: 50
 };
-var NO_VALUE_OPERATORS = ["isEmpty", "isNotEmpty"];
-var EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze([
+const NO_VALUE_OPERATORS = ["isEmpty", "isNotEmpty"];
+const EMPTY_IS_ANY_OF_OPERATOR_FILTERS = Object.freeze([
 	"isEmpty",
 	"isNotEmpty",
 	"isAnyOf"
 ]);
-var PASTE_VALUE_SEPARATOR_REGEX = /\r\n|\r|\n|,/;
-var TYPE_VALUE_SEPARATOR_REGEX = /,/;
-var MultiValueTagInput = (props) => {
+const PASTE_VALUE_SEPARATOR_REGEX = /\r\n|\r|\n|,/;
+const TYPE_VALUE_SEPARATOR_REGEX = /,/;
+const MultiValueTagInput = (props) => {
 	const { item, applyValue, slotProps, ...other } = props;
 	const [inputValue, setInputValue] = useState("");
 	const commitValues = (newValues) => {
@@ -3780,7 +3882,11 @@ var MultiValueTagInput = (props) => {
 			return;
 		}
 		const segments = newInputValue.split(TYPE_VALUE_SEPARATOR_REGEX);
-		const completedValues = segments.slice(0, -1).map((value) => value.trim()).filter((value) => value !== "");
+		const completedValues = [];
+		for (const segment of segments.slice(0, -1)) {
+			const value = segment.trim();
+			if (value !== "") completedValues.push(value);
+		}
 		if (completedValues.length > 0) commitValues(completedValues);
 		setInputValue(segments[segments.length - 1].replace(/^\s+/, ""));
 	};
@@ -3799,51 +3905,51 @@ var MultiValueTagInput = (props) => {
 		}
 	});
 };
-var withMultiValueTagInput = (operators) => operators.map((op) => op.value === "isAnyOf" ? {
+const withMultiValueTagInput = (operators) => operators.map((op) => op.value === "isAnyOf" ? {
 	...op,
 	InputComponent: MultiValueTagInput
 } : op);
-var getStringOperatorsStartsWithFirst = () => {
+const getStringOperatorsStartsWithFirst = () => {
 	const operators = withMultiValueTagInput(getGridStringOperators());
 	const startsWithIndex = operators.findIndex((op) => op.value === "startsWith");
 	if (startsWithIndex <= 0) return operators;
 	return [operators[startsWithIndex], ...operators.filter((op) => op.value !== "startsWith")];
 };
-var DEFAULT_FILTER_OPERATORS_BY_TYPE = {
+const DEFAULT_FILTER_OPERATORS_BY_TYPE = {
 	string: getStringOperatorsStartsWithFirst,
 	number: getGridNumericOperators,
 	boolean: getGridBooleanOperators,
 	singleSelect: getGridSingleSelectOperators
 };
-var NUMERIC_COLUMN_TYPES = [
+const NUMERIC_COLUMN_TYPES = [
 	"number",
 	"decimal",
 	"currency",
 	"percentage"
 ];
-var resolveFilterOperators = ({ overrides, column }) => overrides.filterOperators ?? DEFAULT_FILTER_OPERATORS_BY_TYPE[overrides.type ?? column.type ?? "string"]?.() ?? getStringOperatorsStartsWithFirst();
-var CHILD_GRIDS_FILL_STYLE = Object.freeze({
+const resolveFilterOperators = ({ overrides, column }) => overrides.filterOperators ?? DEFAULT_FILTER_OPERATORS_BY_TYPE[overrides.type ?? column.type ?? "string"]?.() ?? getStringOperatorsStartsWithFirst();
+const CHILD_GRIDS_FILL_STYLE = Object.freeze({
 	height: "100%",
 	overflowY: "auto"
 });
-var CHILD_GRIDS_CONTAINER_HEIGHT = "calc(100vh - 88px)";
-var CHILD_GRIDS_MIN_HEIGHT = 48;
-var PARENT_GRID_MIN_HEIGHT = 120;
-var CHILD_GRIDS_RESERVED_HEIGHT = PARENT_GRID_MIN_HEIGHT + 18;
-var CHILD_GRIDS_DEFAULT_HEIGHT = "40%";
-var EMPTY_SORT_MODEL = Object.freeze([]);
-var EMPTY_FILTER_MODEL = Object.freeze({
+const CHILD_GRIDS_CONTAINER_HEIGHT = "calc(100vh - 88px)";
+const CHILD_GRIDS_MIN_HEIGHT = 48;
+const PARENT_GRID_MIN_HEIGHT = 120;
+const CHILD_GRIDS_RESERVED_HEIGHT = PARENT_GRID_MIN_HEIGHT + 18;
+const CHILD_GRIDS_DEFAULT_HEIGHT = "40%";
+const EMPTY_SORT_MODEL = Object.freeze([]);
+const EMPTY_FILTER_MODEL = Object.freeze({
 	items: [],
 	logicOperator: "and",
 	quickFilterValues: [],
 	quickFilterLogicOperator: "and"
 });
-var LOCAL_MODE_PAGINATION_MODEL = Object.freeze({
+const LOCAL_MODE_PAGINATION_MODEL = Object.freeze({
 	page: 0,
 	pageSize: exportPageSize
 });
-var EMPTY_ACTIONS = Object.freeze([]);
-var normalizeStaticData = (staticData) => {
+const EMPTY_ACTIONS = Object.freeze([]);
+const normalizeStaticData = (staticData) => {
 	const records = Array.isArray(staticData) ? staticData : Array.isArray(staticData?.records) ? staticData.records : [];
 	return {
 		records,
@@ -3851,17 +3957,17 @@ var normalizeStaticData = (staticData) => {
 		lookups: staticData && typeof staticData.lookups === "object" && staticData.lookups !== null && !Array.isArray(staticData.lookups) ? staticData.lookups : {}
 	};
 };
-var filterValidItems = (items) => {
+const filterValidItems = (items) => {
 	return (items || []).filter((item) => {
 		if (NO_VALUE_OPERATORS.includes(item.operator)) return true;
 		return item.value !== null && item.value !== void 0 && item.value !== "";
 	});
 };
-var resolveRequestField = (field, column = {}, isElasticScreen) => {
+const resolveRequestField = (field, column = {}, isElasticScreen) => {
 	if (column.dataIndex) return column.dataIndex;
 	return isElasticScreen && column.isKeywordField ? `${field}.keyword` : field;
 };
-var auditColumnMappings = [
+const auditColumnMappings = [
 	{
 		key: "addCreatedOnColumn",
 		field: "CreatedOn",
@@ -3887,22 +3993,22 @@ var auditColumnMappings = [
 		header: "Modified By"
 	}
 ];
-var booleanIconRenderer = (params) => {
+const booleanIconRenderer = (params) => {
 	if (params.value) return /* @__PURE__ */ jsx(CheckIcon, { style: { color: "green" } });
 	else return /* @__PURE__ */ jsx(CloseIcon, { style: { color: "gray" } });
 };
-var gridGroupByColumnName = [
+const gridGroupByColumnName = [
 	"__row_group_by_columns_group__",
 	"__detail_panel_toggle__",
 	TREE_DATA_GROUPING_FIELD
 ];
-var DeleteContentText = styled$1("span")({
+const DeleteContentText = styled$1("span")({
 	width: "100%",
 	whiteSpace: "nowrap",
 	overflow: "hidden",
 	textOverflow: "ellipsis"
 });
-var CustomCheckBox = ({ params, handleSelectRow, idProperty }) => {
+const CustomCheckBox = ({ params, handleSelectRow, idProperty }) => {
 	const apiRef = useGridApiContext();
 	const rowId = params.row[idProperty];
 	const isChecked = useGridSelector(apiRef, gridRowSelectionStateSelector)?.ids?.has(rowId) ?? false;
@@ -3918,7 +4024,7 @@ var CustomCheckBox = ({ params, handleSelectRow, idProperty }) => {
 		inputProps: { "aria-label": "checkbox" }
 	});
 };
-var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, relationName, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, childGridsContainerHeight: propsChildGridsContainerHeight, preserveListState: preserveListStateProp, extraParamsComparison = "reference", refreshKey, ...props }) => {
+const GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parentFilters, parent, relationName, where, title, showPageTitle, permissions, selected, assigned, available, disableCellRedirect = false, onAssignChange, customStyle, onCellClick, showRowsSelected, customFilters, onRowDoubleClick, onRowClick = () => {}, gridStyle, additionalFilters, onCellDoubleClickOverride, onAddOverride, dynamicColumns, toolbarItems, readOnly = false, onListParamsChange, apiRef: propsApiRef, baseFilters, customExportOptions, sx: propsSx, gridProps, childGridsContainerHeight: propsChildGridsContainerHeight, preserveListState: preserveListStateProp, extraParamsComparison = "reference", refreshKey, ...props }) => {
 	const requestExtraParams = useExtraParams(props.extraParams, extraParamsComparison);
 	const childGridsContainerHeight = propsChildGridsContainerHeight ?? model.childGridsContainerHeight ?? CHILD_GRIDS_CONTAINER_HEIGHT;
 	const { onDataLoaded, processRowUpdate: processRowUpdateProp, onRowSelectionModelChange: onRowSelectionModelChangeProp } = props;
@@ -3954,9 +4060,13 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	const [showAddConfirmation, setShowAddConfirmation] = useState(false);
 	const snackbar = useSnackbar();
 	const snackbarRef = useRef(snackbar);
-	snackbarRef.current = snackbar;
+	useLayoutEffect(() => {
+		snackbarRef.current = snackbar;
+	}, [snackbar]);
 	const onListParamsChangeRef = useRef(onListParamsChange);
-	onListParamsChangeRef.current = onListParamsChange;
+	useLayoutEffect(() => {
+		onListParamsChangeRef.current = onListParamsChange;
+	}, [onListParamsChange]);
 	const paginationMode = hasStaticData || model.localSortAndFilter ? constants.client : model.paginationMode === constants.client ? constants.client : constants.server;
 	const { translate, tOpts, tTranslate } = useModelTranslation(model);
 	const [errorMessage, setErrorMessage] = useState("");
@@ -3974,6 +4084,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			initialFilterModel.items.push(ele);
 		});
 	}
+	const initialFilterModelRef = useRef(initialFilterModel);
+	useLayoutEffect(() => {
+		initialFilterModelRef.current = initialFilterModel;
+	});
 	const [filterModel, setFilterModel] = useState(() => listStateSnapshot?.gridState?.filter?.filterModel ?? { ...initialFilterModel });
 	const [prevCustomFilters, setPrevCustomFilters] = useState(() => hasRestoredListState ? customFilters : {});
 	const [prevHasStaticData, setPrevHasStaticData] = useState(hasStaticData);
@@ -4211,7 +4325,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 			page: 0
 		});
 		setSortModel(convertDefaultSort(defaultSort || model.defaultSort, constants, sortRegex));
-		setFilterModel({ ...initialFilterModel });
+		setFilterModel({ ...initialFilterModelRef.current });
 		setGroupingModel(Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []);
 		const clearedSelection = {
 			type: "include",
@@ -4233,7 +4347,6 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		preserveListState,
 		defaultSort,
 		model.defaultSort,
-		initialFilterModel,
 		props.rowGroupingField,
 		onRowSelectionModelChangeProp
 	]);
@@ -4378,7 +4491,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		setPrevNormalizedStaticData(normalizedStaticData);
 		if (hasStaticData) setData(normalizedStaticData);
 		else setData((prevData) => ({
-			...prevData || {},
+			...prevData,
 			records: [],
 			recordCount: 0,
 			lookups: {}
@@ -4615,6 +4728,22 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		tTranslate
 	]);
 	const gridColumns = useMemo(() => stableGridColumns.map((col) => ({ ...col })), [stableGridColumns, lookupKeys]);
+	const previousGridColumns = useRef(gridColumns);
+	useLayoutEffect(() => {
+		if (previousGridColumns.current === gridColumns) return;
+		const previous = previousGridColumns.current;
+		previousGridColumns.current = gridColumns;
+		if (previous.length === gridColumns.length && previous.every(({ field }, index) => field === gridColumns[index].field)) {
+			const { columns, pinnedColumns } = apiRef.current?.exportState() ?? {};
+			if (columns) pendingLayoutRef.current = {
+				columns: {
+					orderedFields: columns.orderedFields,
+					dimensions: columns.dimensions
+				},
+				pinnedColumns
+			};
+		}
+	}, [apiRef, gridColumns]);
 	useEffect(() => {
 		if (!pendingLayoutRef.current) return;
 		const state = pendingLayoutRef.current;
@@ -4633,23 +4762,18 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		if (col.field !== TREE_DATA_GROUPING_FIELD || Boolean(serverGroupField)) fields.push(col.field);
 		return fields;
 	}, []), [serverGroupField]);
-	const fetchColumnsRef = useRef([]);
-	const fetchColumns = useMemo(() => {
-		const next = stableGridColumns.map(({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable }) => ({
-			field,
-			type,
-			lookup,
-			localize,
-			dependsOn,
-			dataIndex,
-			isKeywordField,
-			groupable
-		}));
-		const prev = fetchColumnsRef.current;
-		if (Array.isArray(prev) && prev.length === next.length && next.every((col, i) => areEqual(prev[i], col))) return prev;
-		fetchColumnsRef.current = next;
-		return next;
-	}, [stableGridColumns]);
+	const [fetchColumns, setFetchColumns] = useState([]);
+	const nextFetchColumns = useMemo(() => stableGridColumns.map(({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable }) => ({
+		field,
+		type,
+		lookup,
+		localize,
+		dependsOn,
+		dataIndex,
+		isKeywordField,
+		groupable
+	})), [stableGridColumns]);
+	if (fetchColumns.length !== nextFetchColumns.length || !nextFetchColumns.every((col, i) => areEqual(fetchColumns[i], col))) setFetchColumns(nextFetchColumns);
 	const activeGroupingFields = useMemo(() => clientRowGroupingEnabled || serverGroupField ? groupingModel.filter((field) => fetchColumns.some((col) => col.field === field)) : [], [
 		clientRowGroupingEnabled,
 		serverGroupField,
@@ -4661,13 +4785,15 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		const groupSorts = activeGroupingFields.map((field) => {
 			const existing = sortModel.find((sort) => sort.field === field);
 			if (existing) return existing;
+			const column = fetchColumns.find((col) => col.field === field) || {};
 			return {
 				field,
 				sort: "desc",
-				filterField: resolveRequestField(field, fetchColumns.find((col) => col.field === field) || {}, isElasticScreen)
+				filterField: resolveRequestField(field, column, isElasticScreen)
 			};
 		});
-		const remainingSorts = sortModel.filter((sort) => !activeGroupingFields.includes(sort.field));
+		const groupingFields = new Set(activeGroupingFields);
+		const remainingSorts = sortModel.filter((sort) => !groupingFields.has(sort.field));
 		return [...groupSorts, ...remainingSorts];
 	}, [
 		activeGroupingFields,
@@ -4855,9 +4981,10 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 				return;
 			}
 			try {
+				const baseUrl = buildUrl(backendApi);
 				setActiveRecord(await getRecord({
 					id,
-					api: buildUrl(backendApi),
+					api: baseUrl,
 					model,
 					parentFilters,
 					where
@@ -4900,7 +5027,7 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 	]);
 	const handleDownload = useCallback(({ documentLink }) => {
 		if (!documentLink) return;
-		window.open(documentLink, "_blank");
+		window.open(documentLink, "_blank", "noopener,noreferrer");
 	}, []);
 	const onCellClickHandler = useCallback(async (cellParams, event, details) => {
 		let action = !disableCellRedirect && cellParams.field === model.linkColumn ? actionTypes.Edit : null;
@@ -5300,7 +5427,9 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		pathname
 	]);
 	const commitListStateRef = useRef(commitListState);
-	commitListStateRef.current = commitListState;
+	useLayoutEffect(() => {
+		commitListStateRef.current = commitListState;
+	}, [commitListState]);
 	useEffect(() => {
 		commitListState();
 	}, [
@@ -5856,8 +5985,8 @@ var GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, parent
 		]
 	}) : mainGridElement] });
 }, areEqual);
-var renderersCache = /* @__PURE__ */ new Map();
-var renderers = {
+const renderersCache = /* @__PURE__ */ new Map();
+const renderers = {
 	number: function({ precision = 2, ifNaN = "-", prefix = "", suffix = "" } = {}) {
 		const key = `number.${precision}:${ifNaN}:${prefix}:${suffix}`;
 		if (!renderersCache.has(key)) {
@@ -5887,8 +6016,10 @@ var renderers = {
 		return renderersCache.get(key);
 	}
 };
-// src/lib/components/Form/fields/boolean.js
-var Field$10 = ({ column, field, formik, otherProps }) => {
+
+//#endregion
+//#region src/lib/components/Form/fields/boolean.js
+const Field$10 = ({ column, field, formik, otherProps }) => {
 	const handleChange = (event) => {
 		formik.setFieldValue(field, event.target.checked);
 	};
@@ -5908,8 +6039,10 @@ var Field$10 = ({ column, field, formik, otherProps }) => {
 		children: formik.touched[field] && formik.errors[field]
 	})] }, field);
 };
-// src/lib/components/Form/fields/string.js
-var Field$9 = ({ column, field, formik, otherProps }) => {
+
+//#endregion
+//#region src/lib/components/Form/fields/string.js
+const Field$9 = ({ column, field, formik, otherProps }) => {
 	const theme = useTheme();
 	const rows = column.rows || (column.multiline ? 5 : 1);
 	return /* @__PURE__ */ jsx(TextField, {
@@ -5934,20 +6067,22 @@ var Field$9 = ({ column, field, formik, otherProps }) => {
 		defaultValue: column.defaultValue
 	}, field);
 };
-// src/lib/components/Form/fields/number.js
-var resolveValue = ({ value, state }) => {
+
+//#endregion
+//#region src/lib/components/Form/fields/number.js
+const resolveValue = ({ value, state }) => {
 	if (typeof value === "string" && value.startsWith("{") && value.endsWith("}")) {
 		const key = value.slice(1, -1);
 		return state[key] !== void 0 ? state[key] : value;
 	}
 	return value;
 };
-var inputComponentMap = {
+const inputComponentMap = {
 	outlined: OutlinedInput,
 	filled: FilledInput,
 	standard: Input
 };
-var NumberFieldAdornment = () => /* @__PURE__ */ jsxs(InputAdornment, {
+const NumberFieldAdornment = () => /* @__PURE__ */ jsxs(InputAdornment, {
 	position: "end",
 	sx: {
 		flexDirection: "column",
@@ -5980,7 +6115,7 @@ var NumberFieldAdornment = () => /* @__PURE__ */ jsxs(InputAdornment, {
 		})
 	})]
 });
-var Field$8 = ({ column, otherProps, formik, field, ...props }) => {
+const Field$8 = ({ column, otherProps, formik, field, ...props }) => {
 	const { min, max, readOnly, precision } = column;
 	const theme = useTheme();
 	const resolvedMin = useMemo(() => resolveValue({
@@ -6011,7 +6146,8 @@ var Field$8 = ({ column, otherProps, formik, field, ...props }) => {
 		if (typeof props.onBlur === "function") props.onBlur(event);
 	};
 	const id = `number-field-${field}-${useId()}`;
-	const InputComponent = inputComponentMap[column.variant || "standard"];
+	const variant = column.variant || "standard";
+	const InputComponent = inputComponentMap[variant];
 	const numberFormat = useMemo(() => {
 		if (precision !== void 0) return { maximumFractionDigits: precision };
 	}, [precision]);
@@ -6056,11 +6192,13 @@ var Field$8 = ({ column, otherProps, formik, field, ...props }) => {
 		})]
 	});
 };
-// src/lib/components/Form/fields/password.js
-var handleMouseDownPassword = (event) => {
+
+//#endregion
+//#region src/lib/components/Form/fields/password.js
+const handleMouseDownPassword = (event) => {
 	event.preventDefault();
 };
-var Field$7 = ({ otherProps, ...props }) => {
+const Field$7 = ({ otherProps, ...props }) => {
 	const [showPassword, setShowPassword] = React.useState(false);
 	const handleClickShowPassword = () => setShowPassword((show) => !show);
 	const { readOnly = false, disabled = false } = props.column || {};
@@ -6090,9 +6228,11 @@ var Field$7 = ({ otherProps, ...props }) => {
 		...props
 	});
 };
-// src/lib/components/Form/fields/date.js
-var EMPTY_FIELD_CONFIGS$4 = {};
-var Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$4, mode }) => {
+
+//#endregion
+//#region src/lib/components/Form/fields/date.js
+const EMPTY_FIELD_CONFIGS$4 = {};
+const Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$4, mode }) => {
 	const isDisabled = mode !== "copy" && fieldConfigs.disabled;
 	const { systemDateTimeFormat, stateData } = useStateContext();
 	const fieldValue = formik.values[field];
@@ -6169,10 +6309,12 @@ var Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
 		} }
 	}, field);
 };
-// src/lib/components/Form/fields/dateTime.js
+
+//#endregion
+//#region src/lib/components/Form/fields/dateTime.js
 dayjs.extend(utc);
-var EMPTY_FIELD_CONFIGS$3 = {};
-var Field$5 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$3 }) => {
+const EMPTY_FIELD_CONFIGS$3 = {};
+const Field$5 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$3 }) => {
 	const isReadOnly = column?.readOnly === true || Boolean(fieldConfigs.readOnly);
 	const { systemDateTimeFormat, stateData } = useStateContext();
 	const fieldValue = formik.values[field];
@@ -6204,9 +6346,11 @@ var Field$5 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
 		} }
 	}, field);
 };
-// src/lib/components/Form/fields/time.js
+
+//#endregion
+//#region src/lib/components/Form/fields/time.js
 dayjs.extend(utcPlugin);
-var Field$4 = ({ column, field, formik, otherProps }) => {
+const Field$4 = ({ column, field, formik, otherProps }) => {
 	let inputValue = formik.values[field];
 	if (!column.localize && inputValue) inputValue = dayjs.utc(inputValue).utcOffset(dayjs().utcOffset(), true).format();
 	return /* @__PURE__ */ jsx(TimePicker, {
@@ -6229,11 +6373,14 @@ var Field$4 = ({ column, field, formik, otherProps }) => {
 		} }
 	}, field);
 };
-// src/lib/components/Form/fields/select.js
-var EMPTY_FIELD_CONFIGS$2 = {};
-var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, tTranslate, tOpts, fieldConfigs = EMPTY_FIELD_CONFIGS$2, ...otherProps }) => {
+
+//#endregion
+//#region src/lib/components/Form/fields/select.js
+const EMPTY_FIELD_CONFIGS$2 = {};
+const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, tTranslate, tOpts, fieldConfigs = EMPTY_FIELD_CONFIGS$2, ...otherProps }) => {
 	const isReadOnly = column.readOnly === true || Boolean(fieldConfigs.readOnly);
 	const userSelected = React.useRef(false);
+	const [userHasSelected, setUserHasSelected] = React.useState(false);
 	const { placeHolder } = column;
 	const { options } = useCascadingLookup({
 		column,
@@ -6246,7 +6393,7 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 	const theme = useTheme();
 	const inputValue = useMemo(() => {
 		let value = formik.values[field];
-		if (!value && !userSelected.current && column.defaultValue !== void 0) {
+		if (!value && !userHasSelected && column.defaultValue !== void 0) {
 			const userDefault = column.defaultValue;
 			if (userDefault !== void 0 && userDefault !== null && userDefault !== "") {
 				if (options && options.length) {
@@ -6275,7 +6422,8 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 		field,
 		column.defaultValue,
 		column.multiSelect,
-		options
+		options,
+		userHasSelected
 	]);
 	const handleChange = useCallback((event) => {
 		formik.handleChange(event);
@@ -6288,6 +6436,7 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 			tOpts
 		});
 		userSelected.current = true;
+		setUserHasSelected(true);
 	}, [
 		formik,
 		column,
@@ -6319,6 +6468,7 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 			tOpts
 		});
 		userSelected.current = true;
+		setUserHasSelected(true);
 	}, [
 		column,
 		formik,
@@ -6372,13 +6522,15 @@ var SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], 
 		]
 	}, field);
 });
-// src/lib/components/Form/fields/grid-transfer.js
-var DivSpacing = styled$1("div")({
+
+//#endregion
+//#region src/lib/components/Form/fields/grid-transfer.js
+const DivSpacing = styled$1("div")({
 	marginTop: "10px",
 	marginBottom: "10px",
 	fontSize: "20px"
 });
-var TransferField = ({ component, name, formik, field, column, tTranslate = (key) => key, tOpts }) => {
+const TransferField = ({ component, name, formik, field, column, tTranslate = (key) => key, tOpts }) => {
 	const { value } = formik.getFieldProps(name || field);
 	const { setFieldValue } = formik;
 	const Component = component || column.relation;
@@ -6412,9 +6564,11 @@ var TransferField = ({ component, name, formik, field, column, tTranslate = (key
 		})
 	] });
 };
-// src/lib/components/Form/fields/radio.js
-var EMPTY_FIELD_CONFIGS$1 = {};
-var Field$3 = ({ field, formik, orientation = "row", label, lookups, fieldConfigs = EMPTY_FIELD_CONFIGS$1, mode, tTranslate, tOpts, ...otherProps }) => {
+
+//#endregion
+//#region src/lib/components/Form/fields/radio.js
+const EMPTY_FIELD_CONFIGS$1 = {};
+const Field$3 = ({ field, formik, orientation = "row", label, lookups, fieldConfigs = EMPTY_FIELD_CONFIGS$1, mode, tTranslate, tOpts, ...otherProps }) => {
 	const handleChange = (event) => {
 		if (isDisabled) return;
 		formik.setFieldValue(field, event.target.value);
@@ -6423,6 +6577,7 @@ var Field$3 = ({ field, formik, orientation = "row", label, lookups, fieldConfig
 	const theme = useTheme();
 	const isError = formik.touched[field] && Boolean(formik.errors[field]);
 	const isDisabled = otherProps.column.readOnly || mode !== "copy" && fieldConfigs.disabled;
+	const disableForCurrentValue = Boolean(otherProps?.column?.disableForValues?.includes?.(formik.values[field]));
 	return /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(FormControl, {
 		component: "fieldset",
 		error: isError,
@@ -6436,7 +6591,7 @@ var Field$3 = ({ field, formik, orientation = "row", label, lookups, fieldConfig
 				value: option.value,
 				control: /* @__PURE__ */ jsx(Radio, {}),
 				label: tTranslate(option.label, tOpts),
-				disabled: isDisabled || (otherProps?.column?.disableForValues || [])?.includes?.(formik.values[field])
+				disabled: isDisabled || disableForCurrentValue
 			}, option.value))
 		})
 	}), isError && /* @__PURE__ */ jsx(FormHelperText, {
@@ -6444,9 +6599,11 @@ var Field$3 = ({ field, formik, orientation = "row", label, lookups, fieldConfig
 		children: formik.errors[field]
 	})] });
 };
-// src/lib/components/Form/fields/autocomplete.js
-var consts$2 = { limitTags: 5 };
-var Field$2 = React$1.memo(({ column, field, formik, lookups, dependsOn = [], fieldConfigs = {}, mode, model, ...otherProps }) => {
+
+//#endregion
+//#region src/lib/components/Form/fields/autocomplete.js
+const consts$2 = { limitTags: 5 };
+const Field$2 = React$1.memo(({ column, field, formik, lookups, dependsOn = [], fieldConfigs = {}, mode, model, ...otherProps }) => {
 	const { options } = useCascadingLookup({
 		column,
 		formik,
@@ -6457,7 +6614,8 @@ var Field$2 = React$1.memo(({ column, field, formik, lookups, dependsOn = [], fi
 	});
 	let inputValue = formik.values[field] || [];
 	if (!Array.isArray(inputValue)) inputValue = inputValue.split(", ").map(Number);
-	const filteredCombos = options.filter((option) => inputValue.includes(option.value)) || [];
+	const selectedValues = new Set(inputValue);
+	const filteredCombos = options.filter((option) => selectedValues.has(option.value)) || [];
 	const isDisabled = column.readOnly || mode !== "copy" && fieldConfigs.disabled;
 	const handleAutoCompleteChange = (_, newValue) => {
 		if (isDisabled) return;
@@ -6488,10 +6646,14 @@ var Field$2 = React$1.memo(({ column, field, formik, lookups, dependsOn = [], fi
 		}), formik.touched[field] && formik.errors[field] && /* @__PURE__ */ jsx(FormHelperText, { children: formik.errors[field] })]
 	}, field);
 });
-// src/lib/components/Form/fields/CustomRenderCell.js
-var brandBackgroundColor = "#182eb5";
-// src/lib/components/Form/fields/dayRadio.js
-var days = [
+
+//#endregion
+//#region src/lib/components/Form/fields/CustomRenderCell.js
+const brandBackgroundColor = "#182eb5";
+
+//#endregion
+//#region src/lib/components/Form/fields/dayRadio.js
+const days = [
 	{
 		label: "Sunday",
 		value: 0,
@@ -6528,7 +6690,7 @@ var days = [
 		display: "S"
 	}
 ];
-var CustomAvator = styled(Avatar)(({ isSelected }) => ({
+const CustomAvator = styled(Avatar)(({ isSelected }) => ({
 	width: 34,
 	height: 34,
 	padding: 1,
@@ -6537,7 +6699,7 @@ var CustomAvator = styled(Avatar)(({ isSelected }) => ({
 	border: `1px solid ${grey[500]}`,
 	color: isSelected ? "white" : "black"
 }));
-var DayAvatar = ({ day, onClick, isSelected, disabled }) => {
+const DayAvatar = ({ day, onClick, isSelected, disabled }) => {
 	return /* @__PURE__ */ jsx(CustomAvator, {
 		onClick: disabled ? void 0 : () => onClick(day.value),
 		"aria-disabled": disabled,
@@ -6546,7 +6708,7 @@ var DayAvatar = ({ day, onClick, isSelected, disabled }) => {
 		children: day.display
 	}, day.value);
 };
-var DaySelection = ({ name, field, formik, expired, column }) => {
+const DaySelection = ({ name, field, formik, expired, column }) => {
 	const isDisabled = Boolean(expired || column.readOnly);
 	const { setFieldValue } = formik;
 	const { value } = formik.getFieldProps(name || field);
@@ -6643,14 +6805,18 @@ var DaySelection = ({ name, field, formik, expired, column }) => {
 		children: formik.errors[field]
 	})] });
 };
-// src/lib/components/Form/context.js
-var ActiveStepContext = createContext({
+
+//#endregion
+//#region src/lib/components/Form/context.js
+const ActiveStepContext = createContext({
 	activeStep: 0,
 	setActiveStep: () => {}
 });
-// src/lib/components/Form/fields/chipInput.js
-var EMPTY_FIELD_CONFIGS = {};
-var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS }) => {
+
+//#endregion
+//#region src/lib/components/Form/fields/chipInput.js
+const EMPTY_FIELD_CONFIGS = {};
+const Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS }) => {
 	const theme = useTheme();
 	const fieldValue = formik.values[field];
 	const inputValue = React$1.useMemo(() => {
@@ -6676,6 +6842,7 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
 		isAdd,
 		inputValue
 	]);
+	const fixedOptionValues = new Set(fixedOptions);
 	const [inputText, setInputText] = React$1.useState("");
 	const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
 		if (isDisabled) return;
@@ -6740,14 +6907,16 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
 				return /* @__PURE__ */ jsx(Chip$1, {
 					label: option,
 					...tagProps,
-					disabled: fixedOptions.includes(option)
+					disabled: fixedOptionValues.has(option)
 				}, key);
 			}),
 			disabled: isDisabled
 		}), formik.touched[field] && formik.errors[field] && /* @__PURE__ */ jsx(FormHelperText, { children: formik.errors[field] })]
 	}, field);
 };
-// src/lib/components/Form/fields/treeCheckBox.js
+
+//#endregion
+//#region src/lib/components/Form/fields/treeCheckBox.js
 /**
 * Builds a tree structure from a flat array of data.
 * 
@@ -6758,7 +6927,7 @@ var Field$1 = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
 * @param {string} data[].label - The label for the item.
 * @returns {Array<Object>} The tree structure containing parent and child nodes.
 */
-var buildTree = (data = []) => {
+const buildTree = (data = []) => {
 	const tree = {};
 	data.forEach((item) => {
 		if (item.ParentId && tree[item.ParentId]) tree[item.ParentId].children.push({
@@ -6792,7 +6961,8 @@ var buildTree = (data = []) => {
 * @returns {JSX.Element} The rendered tree view component.
 */
 function treeCheckBox({ column, field, formik, lookups, fieldConfigs, mode }) {
-	const tree = buildTree(lookups ? lookups[column.lookup] : []);
+	const options = lookups ? lookups[column.lookup] : [];
+	const tree = buildTree(options);
 	const inputValue = formik.values[field]?.length ? formik.values[field].split(", ") : [];
 	const isDisabled = column.readOnly || mode !== "copy" && fieldConfigs?.disabled;
 	const handleChange = (_, newValue) => {
@@ -6819,10 +6989,12 @@ function treeCheckBox({ column, field, formik, lookups, fieldConfigs, mode }) {
 		})
 	});
 }
-// src/lib/components/Form/fields/fileUpload.js
-var consts$1 = { maxLength: 500 };
-var { errorMapping } = utils;
-var MB = 1048576;
+
+//#endregion
+//#region src/lib/components/Form/fields/fileUpload.js
+const consts$1 = { maxLength: 500 };
+const { errorMapping } = utils;
+const MB = 1048576;
 function FileUpload({ column, field, formik }) {
 	const inputValue = formik.values[field] || "";
 	const { getApiEndpoint } = useStateContext();
@@ -7031,8 +7203,10 @@ function FileUpload({ column, field, formik }) {
 		})
 	] });
 }
-// src/lib/components/Form/fields/filePicker.js
-var CANVAS_PREVIEW_MAX_SIZE = 400;
+
+//#endregion
+//#region src/lib/components/Form/fields/filePicker.js
+const CANVAS_PREVIEW_MAX_SIZE = 400;
 /**
 * Defers the actual upload to whenever the surrounding Form is submitted: stores the
 * raw File object in the formik field value so it travels through the normal save
@@ -7050,9 +7224,11 @@ function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key })
 	const canvasRef = useRef(null);
 	const [hasCanvasPreview, setHasCanvasPreview] = useState(false);
 	const [previewUnsupported, setPreviewUnsupported] = useState(false);
-	useEffect(() => {
+	const [previousValue, setPreviousValue] = useState(value);
+	if (previousValue !== value) {
+		setPreviousValue(value);
 		setSelectedName(isSelectedFile ? value.name : null);
-	}, [isSelectedFile, value]);
+	}
 	const savedPreviewSrc = typeof column.previewUrl === "function" && !isSelectedFile ? column.previewUrl({
 		formik,
 		value
@@ -7186,8 +7362,10 @@ function FilePicker({ column, field, formik, tOpts, tTranslate = (key) => key })
 		]
 	});
 }
-// src/lib/components/Form/fields/jsonInput.js
-var parseJson = (raw) => {
+
+//#endregion
+//#region src/lib/components/Form/fields/jsonInput.js
+const parseJson = (raw) => {
 	if (!raw) return {};
 	try {
 		return JSON.parse(raw);
@@ -7195,7 +7373,7 @@ var parseJson = (raw) => {
 		return {};
 	}
 };
-var Field = ({ column, field, formik }) => {
+const Field = ({ column, field, formik }) => {
 	const [state, setState] = React$1.useState(() => parseJson(formik.values[field]));
 	const debouncedState = useDebounce(state, 300);
 	const fieldValue = formik.values[field];
@@ -7210,9 +7388,11 @@ var Field = ({ column, field, formik }) => {
 		formik,
 		fieldValue
 	]);
-	React$1.useEffect(() => {
+	const [previousValue, setPreviousValue] = React$1.useState(fieldValue);
+	if (previousValue !== fieldValue) {
+		setPreviousValue(fieldValue);
 		setState(parseJson(fieldValue));
-	}, [fieldValue]);
+	}
 	const handleChange = (key, value) => {
 		if (column.readOnly) return;
 		const updatedState = {
@@ -7252,8 +7432,10 @@ var Field = ({ column, field, formik }) => {
 		}, key))
 	}, field);
 };
-// src/lib/components/Form/field-mapper.js
-var ChildGridField = ({ column }) => {
+
+//#endregion
+//#region src/lib/components/Form/field-mapper.js
+const ChildGridField = ({ column }) => {
 	const Component = column.relation;
 	if (!Component) return null;
 	return /* @__PURE__ */ jsx(Component, {
@@ -7262,7 +7444,7 @@ var ChildGridField = ({ column }) => {
 		showPageTitle: false
 	});
 };
-var fieldMappers = {
+const fieldMappers = {
 	"boolean": Field$10,
 	"select": SelectField,
 	"string": Field$9,
@@ -7284,13 +7466,13 @@ var fieldMappers = {
 	"json": Field,
 	"remoteSelect": RemoteSelectField
 };
-var gridContainerStyle = {
+const gridContainerStyle = {
 	paddingTop: "2.5px",
 	paddingBottom: "2.5px"
 };
-var sectionMarginTop = "20px";
-var ImportantSpan = styled$2("span")({ color: "red !important" });
-var RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, handleSubmit, canSubmit }) => {
+const sectionMarginTop = "20px";
+const ImportantSpan = styled$2("span")({ color: "red !important" });
+const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, handleSubmit, canSubmit }) => {
 	const [skipped, setSkipped] = React$1.useState(/* @__PURE__ */ new Set());
 	const { tOpts, tTranslate } = useModelTranslation(model);
 	const { activeStep, setActiveStep } = use(ActiveStepContext);
@@ -7365,7 +7547,7 @@ var RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookups,
 		})]
 	})] })] });
 };
-var RenderGroups = ({ tabColumns, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, isAdd }) => {
+const RenderGroups = ({ tabColumns, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, isAdd }) => {
 	const { tOpts, tTranslate } = useModelTranslation(model);
 	if (!tabColumns?.length) return null;
 	return /* @__PURE__ */ jsx(Fragment, { children: tabColumns.map(({ key, title, items }, index) => /* @__PURE__ */ jsxs(Box, {
@@ -7407,7 +7589,7 @@ var RenderGroups = ({ tabColumns, model, formik, data, onChange, combos, lookups
 		})]
 	}, key)) });
 };
-var RenderColumns = ({ formElements, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, isAdd }) => {
+const RenderColumns = ({ formElements, model, formik, data, onChange, combos, lookups, fieldConfigs, mode, isAdd }) => {
 	const { tOpts, tTranslate } = useModelTranslation(model);
 	if (!formElements?.length) return null;
 	return /* @__PURE__ */ jsx(Fragment, { children: formElements.map(({ Component, column, field, label, otherProps }, key) => {
@@ -7484,7 +7666,7 @@ var RenderColumns = ({ formElements, model, formik, data, onChange, combos, look
 		}, key);
 	}) });
 };
-var getFormConfig = function({ columns, tabs = {}, id, searchParams, readOnly = false }) {
+const getFormConfig = function({ columns, tabs = {}, id, searchParams, readOnly = false }) {
 	const formElements = [], tabColumns = {};
 	for (const tab in tabs) tabColumns[tab] = [];
 	for (const column of columns) {
@@ -7518,7 +7700,7 @@ var getFormConfig = function({ columns, tabs = {}, id, searchParams, readOnly = 
 		tabColumns: tabsData
 	};
 };
-var FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayId, fieldConfigs, mode, handleSubmit, readOnly = false, canSubmit = !readOnly }) => {
+const FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayId, fieldConfigs, mode, handleSubmit, readOnly = false, canSubmit = !readOnly }) => {
 	const isAdd = utils.emptyIdValues.includes(displayId);
 	const { formElements, tabColumns, showTabs, showGrouped } = React$1.useMemo(() => {
 		const tabbedMode = model.formConfig?.showTabbed;
@@ -7585,39 +7767,9 @@ var FormLayout = ({ model, formik, data, combos, onChange, lookups, id: displayI
 		})]
 	})] });
 };
-// src/lib/components/Form/relations.js
-function CustomTabPanel(props) {
-	const { children, value, index, fillHeight, ...other } = props;
-	const isActive = value === index;
-	return /* @__PURE__ */ jsx("div", {
-		role: "tabpanel",
-		hidden: !isActive,
-		id: `simple-tabpanel-${index}`,
-		"aria-labelledby": `simple-tab-${index}`,
-		style: fillHeight && isActive ? {
-			display: "flex",
-			flexDirection: "column",
-			flex: 1,
-			minHeight: 0
-		} : void 0,
-		...other,
-		children: isActive && /* @__PURE__ */ jsx(Box, {
-			sx: fillHeight ? {
-				flex: 1,
-				minHeight: 0,
-				display: "flex",
-				flexDirection: "column"
-			} : { p: 3 },
-			children
-		})
-	});
-}
-function a11yProps(index) {
-	return {
-		id: `simple-tab-${index}`,
-		"aria-controls": `simple-tabpanel-${index}`
-	};
-}
+
+//#endregion
+//#region src/lib/components/Form/ChildGrid.js
 /**
 * Memoized ChildGrid Component
 * @param {Object} params - Parameters for rendering the child grid
@@ -7634,7 +7786,7 @@ function a11yProps(index) {
 * @param {boolean} [params.showHeaderFilters] - Overrides the model's showHeaderFilters setting for this child grid
 * @param {Object} [params.sx] - MUI sx prop forwarded to the child grid
 */
-var ChildGrid = memo(({ relation, parentFilters, extraParams, parent, where, models, readOnly, disableCellRedirect, onCellClick, gridStyle, showHeaderFilters, sx }) => {
+const ChildGrid = memo(({ relation, parentFilters, extraParams, parent, where, models, readOnly, disableCellRedirect, onCellClick, gridStyle, showHeaderFilters, sx }) => {
 	const modelConfigOfChildGrid = models.find(({ name }) => name === relation);
 	const ChildModel = React.useMemo(() => {
 		if (!modelConfigOfChildGrid) return null;
@@ -7664,7 +7816,45 @@ var ChildGrid = memo(({ relation, parentFilters, extraParams, parent, where, mod
 		sx
 	});
 });
-var EMPTY_WHERE$1 = [];
+
+//#endregion
+//#region src/lib/components/Form/CustomTabPanel.js
+function CustomTabPanel(props) {
+	const { children, value, index, fillHeight, ...other } = props;
+	const isActive = value === index;
+	return /* @__PURE__ */ jsx("div", {
+		role: "tabpanel",
+		hidden: !isActive,
+		id: `simple-tabpanel-${index}`,
+		"aria-labelledby": `simple-tab-${index}`,
+		style: fillHeight && isActive ? {
+			display: "flex",
+			flexDirection: "column",
+			flex: 1,
+			minHeight: 0
+		} : void 0,
+		...other,
+		children: isActive && /* @__PURE__ */ jsx(Box, {
+			sx: fillHeight ? {
+				flex: 1,
+				minHeight: 0,
+				display: "flex",
+				flexDirection: "column"
+			} : { p: 3 },
+			children
+		})
+	});
+}
+
+//#endregion
+//#region src/lib/components/Form/relations.js
+function a11yProps(index) {
+	return {
+		id: `simple-tab-${index}`,
+		"aria-controls": `simple-tabpanel-${index}`
+	};
+}
+const EMPTY_WHERE$1 = [];
 /**
 * Relations component using MUI Tabs
 * Renders a tab for each relation, and a ChildGrid in each panel
@@ -7684,7 +7874,7 @@ var EMPTY_WHERE$1 = [];
 * @param {Function} [props.tTranslate] - Translation function used for tab labels
 * @param {Object} [props.tOpts] - Options passed to tTranslate
 */
-var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE$1, models, relationFilters, readOnly, disableCellRedirect, onCellClick, childGridStyle, showChildHeaderFilters, extraParams, sx, tTranslate = (key) => key, tOpts = {} }) => {
+const Relations = React.memo(({ relations, parent, where = EMPTY_WHERE$1, models, relationFilters, readOnly, disableCellRedirect, onCellClick, childGridStyle, showChildHeaderFilters, extraParams, sx, tTranslate = (key) => key, tOpts = {} }) => {
 	const [tabIndex, setTabIndex] = useState(0);
 	const handleChange = (_, newValue) => {
 		setTabIndex(newValue);
@@ -7744,12 +7934,14 @@ var Relations = React.memo(({ relations, parent, where = EMPTY_WHERE$1, models, 
 		}, relation))]
 	});
 });
-// src/lib/components/Form/Form.js
-var defaultFieldConfigs = {};
-var DEFAULT_RELATION_FILTERS = {};
-var DEFAULT_PERMISSIONS = {};
-var DEFAULT_BASE_SAVE_DATA = {};
-var consts = {
+
+//#endregion
+//#region src/lib/components/Form/Form.js
+const defaultFieldConfigs = {};
+const DEFAULT_RELATION_FILTERS = {};
+const DEFAULT_PERMISSIONS = {};
+const DEFAULT_BASE_SAVE_DATA = {};
+const consts = {
 	object: "object",
 	function: "function",
 	baseData: "baseData",
@@ -7761,7 +7953,7 @@ var consts = {
 	loadIdIndex: 1,
 	editIdIndex: 0
 };
-var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, permissions = DEFAULT_PERMISSIONS, Layout = FormLayout, baseSaveData = DEFAULT_BASE_SAVE_DATA, sx, readOnly, beforeSubmit, deletePromptText, detailPanelId = null, onCancel, onSaveSuccess }) => {
+const Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, permissions = DEFAULT_PERMISSIONS, Layout = FormLayout, baseSaveData = DEFAULT_BASE_SAVE_DATA, sx, readOnly, beforeSubmit, deletePromptText, detailPanelId = null, onCancel, onSaveSuccess }) => {
 	const formTitle = model.formTitle || model.title;
 	const { translate, tOpts, tTranslate } = useModelTranslation(model);
 	const { navigate, getParams, useParams, pathname } = useRouter();
@@ -7832,7 +8024,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 			default: {
 				navigatePath = pathname.substring(0, pathname.lastIndexOf("/"));
 				const listStateId = currentSearchParams().get("ls");
-				if (listStateId) navigatePath += `?ls=${encodeURIComponent(listStateId)}`;
+				if (listStateId) navigatePath += `?${"ls"}=${encodeURIComponent(listStateId)}`;
 				break;
 			}
 		}
@@ -7919,8 +8111,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 			Object.keys(values).forEach((key) => {
 				if (typeof values[key] === consts.string) values[key] = values[key].trim();
 			});
-			setIsLoading(true);
-			saveRecord({
+			return saveRecord({
 				id,
 				api: gridApi,
 				values,
@@ -7936,13 +8127,11 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 				* By default, the form navigates back to the grid after save/cancel operations.
 				* This behavior can be controlled by setting navigateBack "false" / false in model config which disables navigation completely.
 				*/
-				navigateBack !== false && handleNavigation();
-				resetForm({ values: formik.values });
+				if (navigateBack !== false) handleNavigation();
+				else resetForm({ values });
 			}).catch((err) => {
 				snackbar.showErrorCode(ERROR_CODES.AN_ERROR_OCCURRED, tTranslate(err?.message, tOpts));
 				if (model.reloadOnSave) resetForm();
-			}).finally(() => {
-				setIsLoading(false);
 			});
 		}
 	});
@@ -7950,7 +8139,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 		formik.resetForm();
 		setIsDiscardDialogOpen(false);
 		if (typeof onCancel === consts.function) onCancel();
-		navigateBack !== false && handleNavigation();
+		if (navigateBack !== false) handleNavigation();
 	}, [
 		formik,
 		onCancel,
@@ -7990,7 +8179,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 		if (formik.dirty && access.canSave) setIsDiscardDialogOpen(true);
 		else {
 			if (typeof onCancel === consts.function) onCancel();
-			navigateBack !== false && handleNavigation();
+			if (navigateBack !== false) handleNavigation();
 		}
 		event.preventDefault();
 	}, [
@@ -8010,7 +8199,7 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 				model
 			}) === true) {
 				snackbar.showMessage(tTranslate("Record Deleted Successfully.", tOpts));
-				navigateBack !== false && handleNavigation();
+				if (navigateBack !== false) handleNavigation();
 			}
 		} catch (error) {
 			snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, tTranslate(error?.message, tOpts));
@@ -8052,21 +8241,26 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 	const handleSubmit = useCallback(async (e) => {
 		if (e) e.preventDefault();
 		if (!access.canSave) return;
-		if (typeof beforeSubmit === consts.function) await beforeSubmit({
-			formik,
-			model
-		});
-		const errors = await formik.validateForm();
-		if (Object.keys(errors).length > 0) formik.setTouched(Object.keys(errors).reduce((acc, key) => {
-			acc[key] = true;
-			return acc;
-		}, {}), false);
-		else formik.handleSubmit();
-		const fieldName = model.columns.find((col) => errors[col.field])?.field || Object.keys(errors)[0];
-		const errorMessage = errors[fieldName];
-		if (errorMessage) snackbar.showError(errorMessage, null, "error");
-		const fieldConfig = model.columns.find((column) => column.field === fieldName) || {};
-		if (fieldConfig.tab) setActiveStep(Object.keys(model.tabs).indexOf(fieldConfig.tab));
+		formik.setSubmitting(true);
+		try {
+			if (typeof beforeSubmit === consts.function) await beforeSubmit({
+				formik,
+				model
+			});
+			const errors = await formik.validateForm();
+			if (Object.keys(errors).length > 0) formik.setTouched(Object.keys(errors).reduce((acc, key) => {
+				acc[key] = true;
+				return acc;
+			}, {}), false);
+			else await formik.submitForm();
+			const fieldName = model.columns.find((col) => errors[col.field])?.field || Object.keys(errors)[0];
+			const errorMessage = errors[fieldName];
+			if (errorMessage) snackbar.showError(errorMessage, null, "error");
+			const fieldConfig = model.columns.find((column) => column.field === fieldName) || {};
+			if (fieldConfig.tab) setActiveStep(Object.keys(model.tabs).indexOf(fieldConfig.tab));
+		} finally {
+			formik.setSubmitting(false);
+		}
 	}, [
 		access.canSave,
 		beforeSubmit,
@@ -8107,6 +8301,8 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 				}) : /* @__PURE__ */ jsxs("form", {
 					onSubmit: handleSubmit,
 					noValidate: true,
+					inert: formik.isSubmitting,
+					"aria-busy": formik.isSubmitting,
 					children: [/* @__PURE__ */ jsxs(Stack$1, {
 						direction: "row",
 						spacing: 2,
@@ -8117,12 +8313,14 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 							showCopyButton && /* @__PURE__ */ jsx(Button, {
 								variant: "contained",
 								color: "primary",
+								disabled: formik.isSubmitting,
 								onClick: handleCopy,
 								children: tTranslate("Copy", tOpts)
 							}),
 							showDeleteButton && /* @__PURE__ */ jsx(Button, {
 								variant: "contained",
 								color: "error",
+								disabled: formik.isSubmitting,
 								sx: {
 									bgcolor: "error.dark",
 									"&:hover": { bgcolor: "error.dark" }
@@ -8138,12 +8336,15 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 								variant: "contained",
 								type: "submit",
 								color: "success",
+								disabled: formik.isSubmitting,
+								loading: formik.isSubmitting,
 								children: tTranslate("Save", tOpts)
 							}),
 							/* @__PURE__ */ jsx(Button, {
 								variant: "contained",
 								type: "button",
 								color: "error",
+								disabled: formik.isSubmitting,
 								onClick: handleFormCancel,
 								children: tTranslate("Cancel", tOpts)
 							})
@@ -8158,8 +8359,8 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 						id,
 						handleSubmit,
 						mode,
-						readOnly: access.fieldsReadOnly,
-						canSubmit: access.canSave
+						readOnly: access.fieldsReadOnly || formik.isSubmitting,
+						canSubmit: access.canSave && !formik.isSubmitting
 					})]
 				}),
 				errorMessage && /* @__PURE__ */ jsxs(DialogComponent, {
@@ -8211,8 +8412,10 @@ var Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, pe
 		})
 	})] });
 };
-// src/lib/components/Grid/ChildGridTabs.js
-var EMPTY_WHERE = [];
+
+//#endregion
+//#region src/lib/components/Grid/ChildGridTabs.js
+const EMPTY_WHERE = [];
 /**
 * Child grid tabs for a parent *grid* - the `relations: { items: [...] }` form, resolved into
 * model.relationItems and rendered below the parent grid once a row is selected (see GridBase).
@@ -8243,7 +8446,7 @@ var EMPTY_WHERE = [];
 * @param {Function} [props.tTranslate] - Translation function used for tab labels
 * @param {Object} [props.tOpts] - Options passed to tTranslate
 */
-var ChildGridTabs = React.memo(({ relations, models, parent, relationFilters, where = EMPTY_WHERE, readOnly, disableCellRedirect, onCellClick, childGridStyle, showChildHeaderFilters, extraParams, sx, collapsed = false, onExpandRequest, emptyMessage, tTranslate = (key) => key, tOpts = {} }) => {
+const ChildGridTabs = React.memo(({ relations, models, parent, relationFilters, where = EMPTY_WHERE, readOnly, disableCellRedirect, onCellClick, childGridStyle, showChildHeaderFilters, extraParams, sx, collapsed = false, onExpandRequest, emptyMessage, tTranslate = (key) => key, tOpts = {} }) => {
 	const [tabIndex, setTabIndex] = useState(0);
 	const handleChange = (_, newValue) => {
 		setTabIndex(newValue);
@@ -8315,7 +8518,9 @@ var ChildGridTabs = React.memo(({ relations, models, parent, relationFilters, wh
 		})]
 	});
 });
-// \0@oxc-project+runtime@0.155.0/helpers/esm/typeof.js
+
+//#endregion
+//#region \0@oxc-project+runtime@0.154.0/helpers/esm/typeof.js
 function _typeof(o) {
 	"@babel/helpers - typeof";
 	return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function(o) {
@@ -8324,7 +8529,9 @@ function _typeof(o) {
 		return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
 	}, _typeof(o);
 }
-// \0@oxc-project+runtime@0.155.0/helpers/esm/toPrimitive.js
+
+//#endregion
+//#region \0@oxc-project+runtime@0.154.0/helpers/esm/toPrimitive.js
 function toPrimitive(t, r) {
 	if ("object" != _typeof(t) || !t) return t;
 	var e = t[Symbol.toPrimitive];
@@ -8335,12 +8542,16 @@ function toPrimitive(t, r) {
 	}
 	return ("string" === r ? String : Number)(t);
 }
-// \0@oxc-project+runtime@0.155.0/helpers/esm/toPropertyKey.js
+
+//#endregion
+//#region \0@oxc-project+runtime@0.154.0/helpers/esm/toPropertyKey.js
 function toPropertyKey(t) {
 	var i = toPrimitive(t, "string");
 	return "symbol" == _typeof(i) ? i : i + "";
 }
-// \0@oxc-project+runtime@0.155.0/helpers/esm/defineProperty.js
+
+//#endregion
+//#region \0@oxc-project+runtime@0.154.0/helpers/esm/defineProperty.js
 function _defineProperty(e, r, t) {
 	return (r = toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
 		value: t,
@@ -8349,15 +8560,17 @@ function _defineProperty(e, r, t) {
 		writable: !0
 	}) : e[r] = t, e;
 }
-// src/lib/components/Grid/ui-models.js
-var regexConfig = {
+
+//#endregion
+//#region src/lib/components/Grid/ui-models.js
+const regexConfig = {
 	password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,50}$/,
 	nonAlphaNumeric: /[^a-zA-Z0-9]/g,
 	compareValidatorRegex: /^compare:(.+)$/,
 	notEqualValidatorRegex: /^notEqual:([^:]+)(?::(.+))?$/,
 	email: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
 };
-var validationMessageTemplates = {
+const validationMessageTemplates = {
 	required: "${label}: required",
 	requiredSelectOption: "${label}: select at least one option",
 	requiredSelect: "${label}: required",
@@ -8372,7 +8585,7 @@ var validationMessageTemplates = {
 	mustMatch: "${label}: must match ${compareLabel}",
 	notEqual: "${label}: must not be the same as ${compareLabel}"
 };
-var defaultValidationTranslationKeyPrefix = "validation";
+const defaultValidationTranslationKeyPrefix = "validation";
 /**
 * Resolves a validation message for a rule.
 *
@@ -8386,24 +8599,24 @@ var defaultValidationTranslationKeyPrefix = "validation";
 * @param {Function} [t] Optional i18next t() function for i18n lookup.
 * @returns {string}
 */
-var resolveValidationMessage = (rule, params, t) => {
+const resolveValidationMessage = (rule, params, t) => {
 	const template = validationMessageTemplates[rule];
 	const key = `${defaultValidationTranslationKeyPrefix}.${rule}`;
 	const translated = typeof t === "function" ? t(key, { defaultValue: template }) : template;
 	return utils.replaceTags(translated, params);
 };
-var emptyToNullTransform = (value, originalValue) => {
+const emptyToNullTransform = (value, originalValue) => {
 	if (originalValue === "" || originalValue === null) return null;
 	return value;
 };
-var isValidNumericValue = (value) => value !== void 0 && value !== "" && !isNaN(Number(value));
-var applyRequired = (config, label, shouldTrim = false, t) => {
+const isValidNumericValue = (value) => value !== void 0 && value !== "" && !isNaN(Number(value));
+const applyRequired = (config, label, shouldTrim = false, t) => {
 	if (shouldTrim && typeof config.trim === "function") return config.trim().required(resolveValidationMessage("required", { label }, t));
 	return config.required(resolveValidationMessage("required", { label }, t));
 };
-var customStyle = {};
-var showRowsSelected = true;
-var defaultValueConfigs = {
+const customStyle = {};
+const showRowsSelected = true;
+const defaultValueConfigs = {
 	"string": "",
 	"boolean": false,
 	"radio": false,
@@ -8484,10 +8697,13 @@ var UiModel = class UiModel {
 		const needsColumnOverride = hiddenFields.size > 0 || readOnly;
 		const overrides = {
 			...name && { name },
-			...needsColumnOverride && { columns: model.columns.filter((col) => !hiddenFields.has(col.field)).map((col) => readOnly && col.link === true ? {
-				...col,
-				link: false
-			} : col) },
+			...needsColumnOverride && { columns: model.columns.reduce((columns, col) => {
+				if (!hiddenFields.has(col.field)) columns.push(readOnly && col.link === true ? {
+					...col,
+					link: false
+				} : col);
+				return columns;
+			}, []) },
 			...joinColumn && { joinColumn },
 			...joinColumnAsParam !== void 0 && { joinColumnAsParam },
 			...relationsParam && { relationsParam },
@@ -8679,6 +8895,7 @@ _defineProperty(UiModel, "defaultPermissions", {
 	edit: true,
 	delete: true
 });
-export { AppError, DialogComponent, ERROR_CODES, ERROR_MESSAGES, GridBase, HelpModal, MuiTypography, PageTitle_default as PageTitle, Relations, RouterProvider, SnackbarContext, SnackbarProvider, StateProvider, UiModel, crudHelper, daDKGrid, deDEGrid, elGRGrid, esESGrid, frFRGrid, request as httpRequest, itITGrid, locales, ptPT_default as ptPT, renderers, resolveErrorMessage, trTRGrid, useMobile, useModelTranslation, useRouter, useSnackbar, useStateContext, withMultiValueTagInput };
 
+//#endregion
+export { AppError, DialogComponent, ERROR_CODES, ERROR_MESSAGES, GridBase, HelpModal, MuiTypography, PageTitle_default as PageTitle, Relations, RouterProvider, SnackbarContext, SnackbarProvider, StateProvider, UiModel, crudHelper, daDKGrid, deDEGrid, elGRGrid, esESGrid, frFRGrid, request as httpRequest, itITGrid, locales, ptPT_default as ptPT, renderers, resolveErrorMessage, trTRGrid, useMobile, useModelTranslation, useRouter, useSnackbar, useStateContext, withMultiValueTagInput };
 //# sourceMappingURL=index.js.map
