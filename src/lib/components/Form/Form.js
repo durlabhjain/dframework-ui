@@ -125,7 +125,7 @@ const Form = ({
 
   const initialValues = useMemo(() => isNew
     ? { ...model.initialValues, ...data, ...baseSaveData }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- id kept as a dep so a route change forces recompute even though isNew already derives from it
+    // oxlint-disable-next-line react/exhaustive-deps -- id kept as a dep so a route change forces recompute even though isNew already derives from it
     : { ...baseSaveData, ...model.initialValues, ...data }, [model.initialValues, data, id, baseSaveData, isNew]);
 
   const formApi = api || gridApi;
@@ -150,7 +150,7 @@ const Form = ({
     } finally {
       setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- errorOnLoad/setActiveRecord deliberately excluded: including them recreates loadRecord on every load (both depend transitively on `data`), retriggering the load effect and causing an infinite reload loop. idWithOptions is included on top of idToLoad so switching between edit and copy of the same record (idToLoad stays the same, only the "0-" prefix changes) still rebuilds the closure that isCopy is computed from.
+    // oxlint-disable-next-line react/exhaustive-deps -- errorOnLoad/setActiveRecord deliberately excluded: including them recreates loadRecord on every load (both depend transitively on `data`), retriggering the load effect and causing an infinite reload loop. idWithOptions is included on top of idToLoad so switching between edit and copy of the same record (idToLoad stays the same, only the "0-" prefix changes) still rebuilds the closure that isCopy is computed from.
   }, [formApi, model, idToLoad, idWithOptions]);
   
   useEffect(() => {
@@ -159,7 +159,7 @@ const Form = ({
 
   const validationSchema = useMemo(
     () => model.getValidationSchema({ id, tTranslate, tOpts }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
+    // oxlint-disable-next-line react/exhaustive-deps -- translate isn't read directly but its change must trigger recompute
     [id, model, translate, tOpts, tTranslate]
   );
 
@@ -197,7 +197,7 @@ const Form = ({
           * By default, the form navigates back to the grid after save/cancel operations.
           * This behavior can be controlled by setting navigateBack "false" / false in model config which disables navigation completely.
           */
-          navigateBack !== false && handleNavigation();
+          if (navigateBack !== false) handleNavigation();
           resetForm({ values: formik.values});
         })
         .catch((err) => {
@@ -221,7 +221,7 @@ const Form = ({
     if (typeof onCancel === consts.function) {
       onCancel();
     }
-    navigateBack !== false && handleNavigation();
+    if (navigateBack !== false) handleNavigation();
   }, [formik, onCancel, navigateBack, handleNavigation]);
 
   const errorOnLoad = useCallback((error) => {
@@ -262,7 +262,7 @@ const Form = ({
       if (typeof onCancel === consts.function) {
         onCancel();
       }
-      navigateBack !== false && handleNavigation();
+      if (navigateBack !== false) handleNavigation();
     }
     event.preventDefault();
   }, [formik.dirty, access.canSave, onCancel, navigateBack, handleNavigation]);
@@ -277,7 +277,7 @@ const Form = ({
       });
       if (response === true) {
         snackbar.showMessage(tTranslate("Record Deleted Successfully.", tOpts));
-        navigateBack !== false && handleNavigation();
+        if (navigateBack !== false) handleNavigation();
       }
     } catch (error) {
       snackbar.showErrorCode(ERROR_CODES.DELETE_FAILED, tTranslate(error?.message, tOpts));

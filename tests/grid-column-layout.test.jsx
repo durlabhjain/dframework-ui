@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
 import Grid from '../src/lib/components/Grid/index.js';
 
 const mocks = vi.hoisted(() => ({
@@ -70,13 +70,23 @@ const ready = () => waitFor(() => expect(mocks.getList).toHaveBeenCalled());
 it('restores reordered columns from a snapshot when lookups load after mount', async () => {
     const saved = {
         currentPreference: null,
-        gridState: { columns: { orderedFields: ['name', 'statusId', 'id'], columnVisibilityModel: {} } },
+        gridState: {
+            columns: {
+                orderedFields: ['name', 'statusId', 'id'],
+                columnVisibilityModel: { statusId: false },
+                dimensions: { name: { width: 240 } }
+            },
+            pinnedColumns: { left: ['name'], right: [] }
+        },
         rowSelectionModel: { type: 'include', ids: [] }
     };
     const { apiRef } = mount({ saved });
     await ready();
     await act(async () => { await new Promise(r => setTimeout(r, 120)); });
     expect(fields(apiRef)).toEqual(['name', 'statusId', 'id']);
+    expect(apiRef.current.exportState().columns.columnVisibilityModel.statusId).toBe(false);
+    expect(apiRef.current.getColumn('name').width).toBe(240);
+    expect(apiRef.current.exportState().pinnedColumns.left).toContain('name');
 });
 
 it('keeps a dragged column order across saving a preference and a form round trip', async () => {
@@ -85,7 +95,10 @@ it('keeps a dragged column order across saving a preference and a form round tri
     await act(async () => { await new Promise(r => setTimeout(r, 60)); });
     act(() => {
         first.apiRef.current.setColumnIndex('name', 0);
-        first.apiRef.current.publishEvent('columnOrderChange', { field: 'name', targetIndex: 0, oldIndex: 1 });
+        first.apiRef.current.publishEvent('columnOrderChange', { column: first.apiRef.current.getColumn('name'), targetIndex: 0, oldIndex: 1 });
+        first.apiRef.current.setColumnVisibility('statusId', false);
+        first.apiRef.current.setColumnWidth('name', 320);
+        first.apiRef.current.setPinnedColumns({ left: ['name'], right: [] });
     });
     await act(async () => { await new Promise(r => setTimeout(r, 120)); });
     expect(fields(first.apiRef)).toEqual(['name', 'id', 'statusId']);
@@ -101,6 +114,10 @@ it('keeps a dragged column order across saving a preference and a form round tri
     fireEvent.change(screen.getByRole('textbox', { name: /Preference Name/ }), { target: { value: 'Mine' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(mocks.request).toHaveBeenCalledTimes(3));
+    const preferenceState = JSON.parse(mocks.request.mock.calls[1][0].params.prefValue);
+    expect(preferenceState.columns.columnVisibilityModel.statusId).toBe(false);
+    expect(preferenceState.columns.dimensions.name.width).toBe(320);
+    expect(preferenceState.pinnedColumns.left).toContain('name');
     await act(async () => { await new Promise(r => setTimeout(r, 120)); });
 
     const latest = JSON.parse(sessionStorage.getItem(written[0]));
@@ -112,6 +129,31 @@ it('keeps a dragged column order across saving a preference and a form round tri
     await ready();
     await act(async () => { await new Promise(r => setTimeout(r, 150)); });
     expect(fields(second.apiRef)).toEqual(['name', 'id', 'statusId']);
+    expect(second.apiRef.current.exportState().columns.columnVisibilityModel.statusId).toBe(false);
+    expect(second.apiRef.current.getColumn('name').width).toBe(320);
+    expect(second.apiRef.current.exportState().pinnedColumns.left).toContain('name');
+});
+
+it('keeps a visibility change made during the lookup column rebuild', async () => {
+    let resolveList;
+    mocks.getList.mockReturnValueOnce(new Promise(resolve => { resolveList = resolve; }));
+    const { apiRef } = mount({ saved: {
+        gridState: { columns: { orderedFields: ['name', 'statusId', 'id'], columnVisibilityModel: { statusId: false } } },
+        rowSelectionModel: { type: 'include', ids: [] }
+    } });
+    await ready();
+    let changed = false;
+    // MUI emits this after replacing columns, before Grid's delayed layout restore.
+    const unsubscribe = apiRef.current.subscribeEvent('columnsChange', () => {
+        if (changed) return;
+        changed = true;
+        apiRef.current.setColumnVisibilityModel({ statusId: true, id: false });
+    });
+    await act(async () => resolveList({ records: [], recordCount: 100, lookups: { Status: [] } }));
+    await waitFor(() => expect(changed).toBe(true));
+    expect(fields(apiRef)).toEqual(['name', 'statusId', 'id']);
+    expect(apiRef.current.exportState().columns.columnVisibilityModel).toMatchObject({ statusId: true, id: false });
+    unsubscribe();
 });
 
 it('keeps a resized column width across the rebuild', async () => {

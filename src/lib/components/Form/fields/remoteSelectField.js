@@ -14,16 +14,17 @@ const SCROLL_LOAD_MORE_THRESHOLD_PX = 48;
 // Autocomplete's `value` prop change identity every time, tripping MUI's internal input-reset (which always
 // blanks the input in multi-select) on every re-render - e.g. every state update while a chunk is loading.
 const EMPTY_ARRAY = [];
+const EMPTY_OBJECT = {};
 
 const RemoteSelectField = React.memo(function RemoteSelectField({
     column,
     field,
     formik,
     model,
-    lookups = {},
-    dependsOn = [],
+    lookups = EMPTY_OBJECT,
+    dependsOn = EMPTY_ARRAY,
     tTranslate = k => k,
-    tOpts = {},
+    tOpts = EMPTY_OBJECT,
     filterMode = false,
     filterValue,
     onFilterChange,
@@ -101,7 +102,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
         if (pendingScrollRestore == null || !listboxNode) return;
         listboxNode.scrollTop = pendingScrollRestore;
         setPendingScrollRestore(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react/exhaustive-deps
     }, [options]);
 
     // isChunkLoading also guards against overlapping "load more" requests from rapid scroll events;
@@ -133,7 +134,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
         fetchOptions({ lookupId: missingIds.length === 1 ? missingIds[0] : missingIds }).then(result => {
             if (!result) missingIds.forEach(id => requestedLookupIdsRef.current.delete(String(id)));
         });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react/exhaustive-deps
     }, [selectedIdsKey, fetchOptions]);
 
     // labelMap is a superset of options (it also carries past chunks and lookupId resolutions).
@@ -152,7 +153,7 @@ const RemoteSelectField = React.memo(function RemoteSelectField({
     const selectedValue = useMemo(() => {
         if (isMultiSelect) return currentValue.length === 0 ? EMPTY_ARRAY : currentValue.map(v => ({ value: v, label: getLabel(v) }));
         return currentValue === '' ? null : { value: currentValue, label: getLabel(currentValue) };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react/exhaustive-deps
     }, [currentValue, isMultiSelect, selectedLabelsKey]);
 
     // No reset here: MUI also opens as a side effect of the first keystroke when focused-but-closed (e.g. grid filter auto-focus), which would wipe that keystroke.

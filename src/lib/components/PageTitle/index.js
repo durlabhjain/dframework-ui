@@ -56,10 +56,10 @@ function PageTitle({
               <Grid sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 <Breadcrumbs variant="h5" aria-label="breadcrumb" separator=">" className={`${titleClass} breadcrumbs-text-title text-max-width`}>
                   {breadcrumbs.map((breadcrumb, index) => index < breadcrumbsLasIndex ? (
-                    <MuiLink onClick={handleBack} key={`${index}-${breadcrumb.text}`} className={`${titleClass} breadcrumbs-text-title text-max-width`} variant="inherit" sx={{ textDecoration: 'none', color: '#1976d2' }}>
+                    <MuiLink onClick={handleBack} key={breadcrumbs.slice(0, index + 1).map(item => item.text).join('/')} className={`${titleClass} breadcrumbs-text-title text-max-width`} variant="inherit" sx={{ textDecoration: 'none', color: '#1976d2' }}>
                       {breadcrumb.text}
                     </MuiLink>
-                  ) : <Typography key={`${index}-${breadcrumb.text}`} className={`${titleClass} breadcrumbs-text-title text-max-width`} variant="inherit">
+                  ) : <Typography key={breadcrumbs.slice(0, index + 1).map(item => item.text).join('/')} className={`${titleClass} breadcrumbs-text-title text-max-width`} variant="inherit">
                     {breadcrumb.text}
                   </Typography>)}
                 </Breadcrumbs>

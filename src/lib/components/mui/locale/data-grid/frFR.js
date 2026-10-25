@@ -1,6 +1,6 @@
 
 
-import * as locales from '@mui/x-data-grid-premium';
+import * as locales from '@mui/x-data-grid-premium/locales';
 export const frFRGrid = {
     Jumptopage: 'Aller à la page',
     Go: 'Aller',

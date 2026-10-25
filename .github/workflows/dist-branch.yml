@@ -10,25 +10,30 @@ permissions:
 jobs:
   deploy:
     runs-on: [self-hosted, Linux, X64, dframework-runner]
+    env:
+      VP_GIT_HOOKS: "0"
     steps:
       - uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Setup Vite+ and Node.js
+        uses: voidzero-dev/setup-vp@v1.21.2
         with:
-          node-version: 'lts/*'
+          node-version: '24.21.0'
+          run-install: false
 
       - name: Build
         run: |
-          npm install
-          npm run build
+          vp install
+          vp run check
+          vp run test
+          vp run build
 
       - name: Prepare Dist for NPM
         # Writes a minimal package.json into dist/ instead of copying the source
         # one verbatim. The source package.json carries devDependencies and a
-        # "prepare": "husky" script for local development; shipping those as-is
+        # "prepare": "vp config --no-agent" script for local development; shipping those as-is
         # breaks installs when this branch is consumed as a git dependency,
-        # since husky's prepare step fails when it can't find a .git directory
+        # since the hook setup can fail when it can't find a .git directory
         # in the temp clone yarn/npm use, aborting the dependency's install
         # before its build output gets linked into node_modules.
         run: |

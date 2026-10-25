@@ -27,12 +27,14 @@ const HelpModal = () => {
         setHeight(Math.min(calculatedHeight, maxHeight));
     }, []);
 
+    /* oxlint-disable react/set-state-in-effect -- A newly opened iframe needs a loading reset and measurement of its committed DOM width. */
     useEffect(() => {
         if (openModal?.status) {
             setLoading(true);
             updateHeight();
         }
     }, [openModal, updateHeight]);
+    /* oxlint-enable react/set-state-in-effect */
 
     useEffect(() => {
         window.addEventListener("resize", updateHeight);
