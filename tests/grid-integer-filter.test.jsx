@@ -1,5 +1,5 @@
 import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { getGridNumericOperators } from '@mui/x-data-grid-premium';
 import Grid from '../src/lib/components/Grid/index.js';
 import { toIntegerFilterValue } from '../src/lib/components/Grid/integerFilterValue.js';

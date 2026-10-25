@@ -13,6 +13,7 @@ const EMPTY_FIELD_CONFIGS = {};
 const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = [], model, tTranslate, tOpts, fieldConfigs = EMPTY_FIELD_CONFIGS, ...otherProps }) => {
     const isReadOnly = column.readOnly === true || Boolean(fieldConfigs.readOnly);
     const userSelected = React.useRef(false);
+    const [userHasSelected, setUserHasSelected] = React.useState(false);
     const { placeHolder } = column;
     const { options } = useCascadingLookup({ column, formik, lookups, dependsOn, userSelected, model });
     const theme = useTheme();
@@ -22,7 +23,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
         let value = formik.values[field];
 
         // Handle default value from column.defaultValue
-        if (!value && !userSelected.current && column.defaultValue !== undefined) {
+        if (!value && !userHasSelected && column.defaultValue !== undefined) {
             const userDefault = column.defaultValue;
             if (userDefault !== undefined && userDefault !== null && userDefault !== '') {
                 if (options && options.length) {
@@ -54,7 +55,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
         }
         
         return value;
-    }, [formik, field, column.defaultValue, column.multiSelect, options]);
+    }, [formik, field, column.defaultValue, column.multiSelect, options, userHasSelected]);
 
     const handleChange = useCallback((event) => {
         formik.handleChange(event);
@@ -62,6 +63,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
             column.onChange({ formik, value: event.target.value, options, event , t: tTranslate, tOpts});
         }
         userSelected.current = true;
+        setUserHasSelected(true);
     }, [formik, column, options, tTranslate, tOpts]);
 
     // Determine if the current value is valid and should show the clear button
@@ -87,6 +89,7 @@ const SelectField = React.memo(({ column, field, formik, lookups, dependsOn = []
             column.onChange({ formik, value: newValue, options, event: e, t: tTranslate, tOpts });
         }
         userSelected.current = true;
+        setUserHasSelected(true);
     }, [column, formik, field, options, tTranslate, tOpts]);
 
     return (

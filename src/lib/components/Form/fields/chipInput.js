@@ -25,6 +25,7 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
         () => (column.hasDefault && !isAdd ? [inputValue[0]] : []),
         [column, isAdd, inputValue]
     );
+    const fixedOptionValues = new Set(fixedOptions);
     const [inputText, setInputText] = React.useState('');
 
     const handleAutoCompleteChange = useCallback((e, newValue, action, item = {}) => {
@@ -99,7 +100,7 @@ const Field = ({ isAdd, column, field, formik, otherProps, fieldConfigs = EMPTY_
                                 key={key}
                                 label={option}
                                 {...tagProps}
-                                disabled={fixedOptions.includes(option)}
+                                disabled={fixedOptionValues.has(option)}
                             />
                         );
                     })

@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vite-plus/test';
 import SplitResizer, { SPLIT_RESIZER_HEIGHT } from '../src/lib/components/Grid/SplitResizer.js';
 import { clampSplitHeight } from '../src/lib/components/Grid/helper.js';
 

@@ -39,3 +39,6 @@ next-env.d.ts
 /dist
 
 /stats.html
+.vitest/
+
+.vite-hooks/_/

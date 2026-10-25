@@ -23,12 +23,11 @@ const Field = ({ column, field, formik }) => {
         }
     }, [column.readOnly, debouncedState, field, formik, fieldValue]);
 
-    // Resync local state when formik changes externally (e.g. form reinitialise). Can't be a plain
-    // derived value: `state` is also directly user-edited via handleChange between formik updates.
-    // react-doctor-disable-next-line no-derived-state-effect -- see rationale above
-    React.useEffect(() => {
+    const [previousValue, setPreviousValue] = React.useState(fieldValue);
+    if (previousValue !== fieldValue) {
+        setPreviousValue(fieldValue);
         setState(parseJson(fieldValue));
-    }, [fieldValue]);
+    }
 
     const handleChange = (key, value) => {
         if (column.readOnly) return;

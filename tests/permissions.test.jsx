@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it } from 'vite-plus/test';
 import { getModelPermissions, getRecordAccess } from '../src/lib/components/permissions';
 
 const model = { module: 'Items', permissions: { copy: true } };

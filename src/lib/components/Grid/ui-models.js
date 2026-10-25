@@ -134,8 +134,12 @@ class UiModel {
 			// such a column would still render as a dead edit-navigation link.
 			...(needsColumnOverride && {
 				columns: model.columns
-					.filter(col => !hiddenFields.has(col.field))
-					.map(col => (readOnly && col.link === true) ? { ...col, link: false } : col)
+					.reduce((columns, col) => {
+                        if (!hiddenFields.has(col.field)) {
+                            columns.push(readOnly && col.link === true ? { ...col, link: false } : col);
+                        }
+                        return columns;
+                    }, [])
 			}),
 			...(joinColumn && { joinColumn }),
 			...(joinColumnAsParam !== undefined && { joinColumnAsParam }),

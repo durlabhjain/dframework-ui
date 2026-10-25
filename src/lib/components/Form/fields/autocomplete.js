@@ -15,7 +15,8 @@ const Field = React.memo(({ column, field, formik, lookups, dependsOn = [], fiel
     if (!Array.isArray(inputValue)) {
         inputValue = inputValue.split(", ").map(Number);
     }
-    const filteredCombos = options.filter(option => inputValue.includes(option.value)) || [];
+    const selectedValues = new Set(inputValue);
+    const filteredCombos = options.filter(option => selectedValues.has(option.value)) || [];
     const isDisabled = column.readOnly || (mode !== 'copy' && fieldConfigs.disabled);
     const handleAutoCompleteChange = (_, newValue) => {
         if (isDisabled) return;

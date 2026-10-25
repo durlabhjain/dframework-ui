@@ -1,4 +1,4 @@
-import * as locales from '@mui/x-data-grid-premium';
+import * as locales from '@mui/x-data-grid-premium/locales';
 export const daDKGrid = {
 
     Jumptopage: 'Gå til side',

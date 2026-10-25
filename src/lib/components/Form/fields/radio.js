@@ -12,6 +12,7 @@ const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfig
     const theme = useTheme();
     const isError = formik.touched[field] && Boolean(formik.errors[field]);
     const isDisabled = otherProps.column.readOnly || (mode !== 'copy' && fieldConfigs.disabled);
+    const disableForCurrentValue = Boolean(otherProps?.column?.disableForValues?.includes?.(formik.values[field]));
     return (
         <>
             <FormControl component="fieldset" error={isError}>
@@ -28,7 +29,7 @@ const Field = ({ field, formik, orientation = "row", label, lookups, fieldConfig
                             value={option.value}
                             control={<Radio />}
                             label={tTranslate(option.label, tOpts)}
-                            disabled={isDisabled || ((otherProps?.column?.disableForValues || [])?.includes?.((formik.values[field])))}
+                            disabled={isDisabled || disableForCurrentValue}
                         />
                     ))}
                 </RadioGroup>
