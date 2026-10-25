@@ -82,8 +82,7 @@ it('restores reordered columns from a snapshot when lookups load after mount', a
     };
     const { apiRef } = mount({ saved });
     await ready();
-    await act(async () => { await new Promise(r => setTimeout(r, 120)); });
-    expect(fields(apiRef)).toEqual(['name', 'statusId', 'id']);
+    await waitFor(() => expect(fields(apiRef)).toEqual(['name', 'statusId', 'id']));
     expect(apiRef.current.exportState().columns.columnVisibilityModel.statusId).toBe(false);
     expect(apiRef.current.getColumn('name').width).toBe(240);
     expect(apiRef.current.exportState().pinnedColumns.left).toContain('name');
