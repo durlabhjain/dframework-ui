@@ -1,5 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useEffect } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
+import * as yup from 'yup';
 import Form from '../src/lib/components/Form/Form.js';
 import FormLayout from '../src/lib/components/Form/field-mapper.js';
 
@@ -154,4 +156,152 @@ it('read-only file picker cannot replace a file', () => {
 it('evaluates column read-only callbacks instead of treating functions as true', () => {
     mountField('string', 'editable', { readOnly: () => false }, false);
     expect(screen.getByRole('textbox').readOnly).toBe(false);
+});
+
+const listRequests = vi.fn();
+function AssignmentGrid({ available, assigned }) {
+    useEffect(() => { listRequests({ available, assigned }); }, [available, assigned]);
+    return <div>{available ? 'Available members' : 'Assigned members'}</div>;
+}
+
+it('disables Save throughout beforeSubmit, validation and saving', async () => {
+    let finishBeforeSubmit, finishValidation, finishSave;
+    const beforeSubmit = vi.fn(() => new Promise(resolve => { finishBeforeSubmit = resolve; }));
+    const validate = vi.fn().mockImplementationOnce(() => new Promise(resolve => { finishValidation = resolve; })).mockResolvedValue(true);
+    const schema = yup.object({ name: yup.string().test('pending', 'Invalid name', validate) });
+    mocks.saveRecord.mockReturnValue(new Promise(resolve => { finishSave = resolve; }));
+    render(<Form model={{ ...model, permissions: { edit: true }, getValidationSchema: () => schema }} beforeSubmit={beforeSubmit} />);
+    const save = await screen.findByRole('button', { name: 'Save' });
+    fireEvent.click(save);
+    expect(save.disabled).toBe(true);
+    fireEvent.click(save);
+    expect(beforeSubmit).toHaveBeenCalledTimes(1);
+    expect(mocks.saveRecord).not.toHaveBeenCalled();
+    await act(async () => { finishBeforeSubmit(); });
+    await waitFor(() => expect(validate).toHaveBeenCalledTimes(1));
+    expect(save.disabled).toBe(true);
+    fireEvent.click(save);
+    expect(mocks.saveRecord).not.toHaveBeenCalled();
+    await act(async () => { finishValidation(true); });
+    await waitFor(() => expect(mocks.saveRecord).toHaveBeenCalledTimes(1));
+    expect(save.disabled).toBe(true);
+    fireEvent.click(save);
+    expect(mocks.saveRecord).toHaveBeenCalledTimes(1);
+    await act(async () => { finishSave(true); });
+    await waitFor(() => expect(save.disabled).toBe(false));
+});
+
+it('prevents changing an open remote-select portal during save', async () => {
+    let finishSave, formState;
+    mocks.saveRecord.mockReturnValue(new Promise(resolve => { finishSave = resolve; }));
+    mocks.getLookups.mockResolvedValue([{ value: '1', label: 'One' }, { value: '2', label: 'Two' }]);
+    const Layout = props => {
+        useEffect(() => { formState = props.formik; }, [props.formik]);
+        return <FormLayout {...props} />;
+    };
+    const { container } = render(<Form model={{
+        ...model, permissions: { edit: true },
+        columns: [{ field: 'choice', type: 'remoteSelect', label: 'Choice', lookup: 'choices' }],
+    }} Layout={Layout} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
+    const option = await screen.findByRole('option', { name: 'Two' });
+    expect(container.querySelector('form').contains(option)).toBe(false);
+    fireEvent.submit(container.querySelector('form'));
+    await waitFor(() => expect(mocks.saveRecord).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole('combobox', { hidden: true }).disabled).toBe(true);
+    fireEvent.click(option);
+    expect(formState.values.choice).toBe('1');
+    await act(async () => { finishSave(true); });
+    expect(screen.getByRole('combobox').disabled).toBe(false);
+});
+
+it('allows retry after beforeSubmit rejects', async () => {
+    let submit;
+    const beforeSubmit = vi.fn().mockRejectedValueOnce(new Error('Before submit failed')).mockResolvedValue(undefined);
+    const Layout = ({ handleSubmit }) => {
+        useEffect(() => { submit = handleSubmit; }, [handleSubmit]);
+        return <div>Custom form</div>;
+    };
+    render(<Form model={{ ...model, permissions: { edit: true } }} Layout={Layout} beforeSubmit={beforeSubmit} />);
+    await screen.findByText('Custom form');
+    await act(async () => { await expect(submit()).rejects.toThrow('Before submit failed'); });
+    expect(mocks.saveRecord).not.toHaveBeenCalled();
+    const save = screen.getByRole('button', { name: 'Save' });
+    expect(save.disabled).toBe(false);
+    fireEvent.click(save);
+    await waitFor(() => expect(mocks.saveRecord).toHaveBeenCalledTimes(1));
+});
+
+it('re-enables Save after validation fails so the user can correct and retry', async () => {
+    const validate = vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true);
+    const schema = yup.object({ name: yup.string().test('retry', 'Invalid name', validate) });
+    render(<Form model={{ ...model, permissions: { edit: true }, getValidationSchema: () => schema }} />);
+    const save = await screen.findByRole('button', { name: 'Save' });
+    fireEvent.click(save);
+    await waitFor(() => expect(mocks.snackbar.showError).toHaveBeenCalledWith('Invalid name', null, 'error'));
+    expect(save.disabled).toBe(false);
+    expect(mocks.saveRecord).not.toHaveBeenCalled();
+    fireEvent.click(save);
+    await waitFor(() => expect(mocks.saveRecord).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(save.disabled).toBe(false));
+});
+
+it.each([
+    ['redirect', undefined, 'success'],
+    ['stay open', false, 'success'],
+    ['failed save', undefined, 'error'],
+    ['unsuccessful save', undefined, 'false'],
+])('%s keeps assignment grids and remote lookups mounted during save', async (_label, navigateBack, outcome) => {
+    listRequests.mockClear();
+    let resolveSave, rejectSave, formState;
+    mocks.saveRecord.mockReturnValue(new Promise((resolve, reject) => { resolveSave = resolve; rejectSave = reject; }));
+    mocks.getLookups.mockResolvedValue([{ value: '1', label: 'One' }]);
+    const saveModel = {
+        ...model, navigateBack, actions: 'both', permissions: { add: true, edit: true, delete: true, copy: true },
+        columns: [
+            ...model.columns,
+            { field: 'members', type: 'oneToMany', label: 'Members', relation: AssignmentGrid },
+            { field: 'choice', type: 'remoteSelect', label: 'Choice', lookup: 'choices' },
+        ],
+    };
+    const Layout = (props) => {
+        useEffect(() => { formState = props.formik; }, [props.formik]);
+        return <FormLayout {...props} />;
+    };
+    const onSaveSuccess = vi.fn();
+    const { container } = render(<Form model={saveModel} Layout={Layout} onSaveSuccess={onSaveSuccess} />);
+    await screen.findByText('Available members');
+    await waitFor(() => expect(mocks.getLookups).toHaveBeenCalledTimes(1));
+    expect(listRequests).toHaveBeenCalledTimes(2);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Changed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(mocks.saveRecord).toHaveBeenCalledTimes(1));
+    expect(screen.getByText('Available members')).toBeTruthy();
+    expect(screen.getByText('Assigned members')).toBeTruthy();
+    expect(container.querySelector('form').hasAttribute('inert')).toBe(true);
+    for (const name of ['Save', 'Cancel', 'Copy', 'Delete']) {
+        expect(screen.getByRole('button', { name, hidden: true }).disabled).toBe(true);
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Save', hidden: true }));
+    expect(mocks.saveRecord).toHaveBeenCalledTimes(1);
+    await act(async () => {
+        if (outcome === 'error') rejectSave(new Error('Save failed'));
+        else resolveSave(outcome === 'false' ? false : { success: true });
+    });
+    await waitFor(() => expect(formState.isSubmitting).toBe(false));
+    expect(listRequests).toHaveBeenCalledTimes(2);
+    expect(mocks.getLookups).toHaveBeenCalledTimes(1);
+    expect(mocks.getRecord).toHaveBeenCalledTimes(1);
+    expect(formState.values.name).toBe('Changed');
+    expect(formState.dirty).toBe(!(outcome === 'success' && navigateBack === false));
+    if (outcome === 'success') {
+        expect(onSaveSuccess).toHaveBeenCalledTimes(1);
+        expect(mocks.snackbar.showMessage).toHaveBeenCalledTimes(1);
+        if (navigateBack === false) expect(mocks.router.navigate).not.toHaveBeenCalled();
+        else expect(mocks.router.navigate).toHaveBeenCalledWith('/items');
+    } else {
+        expect(onSaveSuccess).not.toHaveBeenCalled();
+        expect(mocks.router.navigate).not.toHaveBeenCalled();
+        if (outcome === 'error') expect(mocks.snackbar.showErrorCode).toHaveBeenCalled();
+    }
 });
