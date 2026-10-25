@@ -1,5 +1,5 @@
 import { useFormik } from "formik";
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   getRecord,
   saveRecord,
@@ -74,8 +74,6 @@ const Form = ({
     }
   }
   const [isLoading, setIsLoading] = useState(true);
-  const submissionInProgress = useRef(false);
-  const pendingSave = useRef(null);
   const [data, setData] = useState({});
   const [lookups, setLookups] = useState({});
   const [isDeleting, setIsDeleting] = useState(false);
@@ -172,14 +170,13 @@ const Form = ({
     validateOnBlur: model?.validateOnBlur ?? false,
     onSubmit: async (values, { resetForm }) => {
       if (!access.canSave) return;
-      if (pendingSave.current) return pendingSave.current;
       Object.keys(values).forEach(key => {
         if (typeof values[key] === consts.string) {
           values[key] = values[key].trim();
         }
       });
       // Keep fields mounted while saving so their grids and lookups do not reload.
-      return pendingSave.current = saveRecord({
+      return saveRecord({
         id,
         api: gridApi,
         values: values,
@@ -214,9 +211,6 @@ const Form = ({
           if (model.reloadOnSave) {
             resetForm();
           }
-        })
-        .finally(() => {
-          pendingSave.current = null;
         });
     }
   });
@@ -307,9 +301,8 @@ const Form = ({
 
   const handleSubmit = useCallback(async (e) => {
     if (e) e.preventDefault();
-    if (!access.canSave || formik.isSubmitting || submissionInProgress.current) return;
-    // Formik is not submitting yet while beforeSubmit and validation are pending.
-    submissionInProgress.current = true;
+    if (!access.canSave) return;
+    formik.setSubmitting(true);
     try {
       if (typeof beforeSubmit === consts.function) {
         await beforeSubmit({ formik , model });
@@ -335,7 +328,7 @@ const Form = ({
         setActiveStep(Object.keys(model.tabs).indexOf(fieldConfig.tab));
       }
     } finally {
-      submissionInProgress.current = false;
+      formik.setSubmitting(false);
     }
   }, [access.canSave, beforeSubmit, formik, model, snackbar, setActiveStep]);
 

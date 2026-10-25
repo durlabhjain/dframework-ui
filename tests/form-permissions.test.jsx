@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { afterEach, beforeEach, expect, it, vi } from 'vite-plus/test';
+import * as yup from 'yup';
 import Form from '../src/lib/components/Form/Form.js';
 import FormLayout from '../src/lib/components/Form/field-mapper.js';
 
@@ -163,20 +164,31 @@ function AssignmentGrid({ available, assigned }) {
     return <div>{available ? 'Available members' : 'Assigned members'}</div>;
 }
 
-it('blocks duplicate submissions while beforeSubmit is still pending', async () => {
-    let finishBeforeSubmit, submit;
+it('disables Save throughout beforeSubmit, validation and saving', async () => {
+    let finishBeforeSubmit, finishValidation, finishSave;
     const beforeSubmit = vi.fn(() => new Promise(resolve => { finishBeforeSubmit = resolve; }));
-    const Layout = ({ handleSubmit }) => {
-        useEffect(() => { submit = handleSubmit; }, [handleSubmit]);
-        return <div>Custom form</div>;
-    };
-    render(<Form model={{ ...model, permissions: { edit: true } }} Layout={Layout} beforeSubmit={beforeSubmit} />);
-    await screen.findByText('Custom form');
-    let first, second;
-    act(() => { first = submit(); second = submit(); });
+    const validate = vi.fn().mockImplementationOnce(() => new Promise(resolve => { finishValidation = resolve; })).mockResolvedValue(true);
+    const schema = yup.object({ name: yup.string().test('pending', 'Invalid name', validate) });
+    mocks.saveRecord.mockReturnValue(new Promise(resolve => { finishSave = resolve; }));
+    render(<Form model={{ ...model, permissions: { edit: true }, getValidationSchema: () => schema }} beforeSubmit={beforeSubmit} />);
+    const save = await screen.findByRole('button', { name: 'Save' });
+    fireEvent.click(save);
+    expect(save.disabled).toBe(true);
+    fireEvent.click(save);
     expect(beforeSubmit).toHaveBeenCalledTimes(1);
-    await act(async () => { finishBeforeSubmit(); await Promise.all([first, second]); });
+    expect(mocks.saveRecord).not.toHaveBeenCalled();
+    await act(async () => { finishBeforeSubmit(); });
+    await waitFor(() => expect(validate).toHaveBeenCalledTimes(1));
+    expect(save.disabled).toBe(true);
+    fireEvent.click(save);
+    expect(mocks.saveRecord).not.toHaveBeenCalled();
+    await act(async () => { finishValidation(true); });
+    await waitFor(() => expect(mocks.saveRecord).toHaveBeenCalledTimes(1));
+    expect(save.disabled).toBe(true);
+    fireEvent.click(save);
     expect(mocks.saveRecord).toHaveBeenCalledTimes(1);
+    await act(async () => { finishSave(true); });
+    await waitFor(() => expect(save.disabled).toBe(false));
 });
 
 it('prevents changing an open remote-select portal during save', async () => {
@@ -214,28 +226,24 @@ it('allows retry after beforeSubmit rejects', async () => {
     await screen.findByText('Custom form');
     await act(async () => { await expect(submit()).rejects.toThrow('Before submit failed'); });
     expect(mocks.saveRecord).not.toHaveBeenCalled();
-    await act(async () => { await submit(); });
-    expect(mocks.saveRecord).toHaveBeenCalledTimes(1);
+    const save = screen.getByRole('button', { name: 'Save' });
+    expect(save.disabled).toBe(false);
+    fireEvent.click(save);
+    await waitFor(() => expect(mocks.saveRecord).toHaveBeenCalledTimes(1));
 });
 
-it('shares an in-flight save when a custom layout calls Formik submitForm twice', async () => {
-    let submit, finishSave, formState;
-    mocks.saveRecord.mockReturnValue(new Promise(resolve => { finishSave = resolve; }));
-    const Layout = ({ formik }) => {
-        useEffect(() => { formState = formik; submit = formik.submitForm; }, [formik]);
-        return <div>Custom form</div>;
-    };
-    render(<Form model={{ ...model, permissions: { edit: true } }} Layout={Layout} />);
-    await screen.findByText('Custom form');
-    let first, second;
-    act(() => { first = submit(); });
+it('re-enables Save after validation fails so the user can correct and retry', async () => {
+    const validate = vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true);
+    const schema = yup.object({ name: yup.string().test('retry', 'Invalid name', validate) });
+    render(<Form model={{ ...model, permissions: { edit: true }, getValidationSchema: () => schema }} />);
+    const save = await screen.findByRole('button', { name: 'Save' });
+    fireEvent.click(save);
+    await waitFor(() => expect(mocks.snackbar.showError).toHaveBeenCalledWith('Invalid name', null, 'error'));
+    expect(save.disabled).toBe(false);
+    expect(mocks.saveRecord).not.toHaveBeenCalled();
+    fireEvent.click(save);
     await waitFor(() => expect(mocks.saveRecord).toHaveBeenCalledTimes(1));
-    await act(async () => { second = submit(); });
-    expect(mocks.saveRecord).toHaveBeenCalledTimes(1);
-    expect(formState.isSubmitting).toBe(true);
-    await act(async () => { finishSave(true); await Promise.all([first, second]); });
-    expect(formState.isSubmitting).toBe(false);
-    expect(mocks.snackbar.showMessage).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(save.disabled).toBe(false));
 });
 
 it.each([
@@ -274,7 +282,7 @@ it.each([
     for (const name of ['Save', 'Cancel', 'Copy', 'Delete']) {
         expect(screen.getByRole('button', { name, hidden: true }).disabled).toBe(true);
     }
-    fireEvent.submit(container.querySelector('form'));
+    fireEvent.click(screen.getByRole('button', { name: 'Save', hidden: true }));
     expect(mocks.saveRecord).toHaveBeenCalledTimes(1);
     await act(async () => {
         if (outcome === 'error') rejectSave(new Error('Save failed'));
