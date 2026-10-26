@@ -46,6 +46,9 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
 
     const shouldDisableDate = useCallback((day) => Boolean(rangeLimitDate) && day.isAfter(rangeLimitDate, 'day'), [rangeLimitDate]);
 
+    // Only ever added, never set to false, so the picker's own out-of-range error styling still stands.
+    const fieldError = formik.touched[field] && formik.errors[field];
+
     const handleChange = useCallback((value) => {
         // MUI reports an unparseable date (31-Feb, a part-typed year) as an invalid Dayjs - treat it as
         // cleared, because toISOString() throws RangeError on it and took the whole form down.
@@ -75,7 +78,7 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
         maxDate={maxDateValue}
         shouldDisableDate={rangeLimitDate ? shouldDisableDate : undefined}
         disabled={isDisabled}
-        slotProps={{ textField: { fullWidth: true, helperText: formik.touched[field] && formik.errors[field], variant: "standard" } }}
+        slotProps={{ textField: { fullWidth: true, variant: "standard", ...(fieldError && { error: true, helperText: fieldError }) } }}
     />
 
 }

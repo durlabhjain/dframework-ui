@@ -111,5 +111,6 @@ it('an unparseable date clears the field instead of crashing Next', async () => 
 
     expect(document.querySelector('input[name="startDate"]').value).toBe('');
     expect(shownFields()).toContain('startDate');
-    expect(screen.getByText('Start Date: required')).toBeTruthy();
+    // Rendered through the textField slot with error:true, so it is red like every other field's message.
+    expect(screen.getByText('Start Date: required').classList).toContain('Mui-error');
 });
