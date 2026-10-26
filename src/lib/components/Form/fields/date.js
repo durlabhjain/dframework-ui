@@ -47,7 +47,9 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
     const shouldDisableDate = useCallback((day) => Boolean(rangeLimitDate) && day.isAfter(rangeLimitDate, 'day'), [rangeLimitDate]);
 
     const handleChange = useCallback((value) => {
-        if (value === null) {
+        // MUI reports an unparseable date (31-Feb, a part-typed year) as an invalid Dayjs - treat it as
+        // cleared, because toISOString() throws RangeError on it and took the whole form down.
+        if (value === null || !dayjs(value).isValid()) {
             formik.setFieldValue(field, null);
             if (column.maxField && maxRangeDays != null) formik.setFieldValue(column.maxField, null);
             return;
@@ -69,12 +71,11 @@ const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_C
         value={dateValue}
         onChange={handleChange}
         onBlur={formik.handleBlur}
-        helperText={formik.touched[field] && formik.errors[field]}
         minDate={minDateValue}
         maxDate={maxDateValue}
         shouldDisableDate={rangeLimitDate ? shouldDisableDate : undefined}
         disabled={isDisabled}
-        slotProps={{ textField: { fullWidth: true, variant: "standard" } }}
+        slotProps={{ textField: { fullWidth: true, helperText: formik.touched[field] && formik.errors[field], variant: "standard" } }}
     />
 
 }

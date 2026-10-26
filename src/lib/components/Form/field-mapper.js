@@ -92,15 +92,26 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
         }
         return true;
     };
-    const handleNext = () => {
+    const handleNext = async () => {
         let nextStep = activeStep + 1;
         while (skipSteps[nextStep]) {
             nextStep++;
         }
+        const isFinish = nextStep >= tabColumns.length || isLastStep();
+
+        // Next validates the step being left; Finish defers to handleSubmit, which validates all steps.
+        if (!isFinish) {
+            const stepFields = tabColumns[activeStep].items.map(({ field }) => field);
+            const errors = await formik.validateForm();
+            if (stepFields.some((field) => errors[field])) {
+                formik.setTouched({ ...formik.touched, ...Object.fromEntries(stepFields.map((field) => [field, true])) }, false);
+                return;
+            }
+        }
 
         setSkipped((prevSkipped) => new Set(prevSkipped).add(activeStep));
 
-        if (nextStep >= tabColumns.length || isLastStep()) {
+        if (isFinish) {
             if (canSubmit) handleSubmit();
         } else {
             setActiveStep(nextStep);
