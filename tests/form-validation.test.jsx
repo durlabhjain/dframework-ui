@@ -27,7 +27,7 @@ const startDate = { field: 'startDate', type: 'date', label: 'Start Date', requi
 const model = {
     title: 'Items', api: '/items', linkColumn: 'name', tabs: {}, formConfig: {},
     columns: [name, startDate],
-    initialValues: { name: '', startDate: '' },
+    initialValues: { name: '', startDate: '', notes: '' },
     permissions: { add: true, edit: true, delete: false, copy: true },
     getValidationSchema: () => yup.object({
         name: yup.string().required('Name: required'),
@@ -64,13 +64,89 @@ it('Next holds an invalid step open until its fields are filled', async () => {
     expect(shownFields()).toEqual(['notes']);
 });
 
-it('Finish still reports an invalid earlier step', async () => {
+it('Finish validates the final step', async () => {
     renderForm(stepped({ field: 'notes', type: 'string', label: 'Notes', tab: 'first' }, { ...name, tab: 'second' }));
     await screen.findByRole('button', { name: 'Next' });
     await click('Next');
     await click('Finish');
     expect(mocks.saveRecord).not.toHaveBeenCalled();
     expect(mocks.snackbar.showError).toHaveBeenCalledWith('Name: required', null, 'error');
+});
+
+it('read-only forms can navigate past invalid values', async () => {
+    mocks.router.useParams = () => ({ id: '7' });
+    renderForm({
+        ...stepped({ ...name, tab: 'first' }, { field: 'notes', type: 'string', label: 'Notes', tab: 'second' }),
+        permissions: { edit: false, delete: true }
+    });
+    await screen.findByRole('button', { name: 'Next' });
+    await click('Next');
+    expect(shownFields()).toEqual(['notes']);
+    expect(screen.getByRole('button', { name: 'Finish' }).disabled).toBe(true);
+});
+
+it('a failed Finish returns to the earlier error and keeps Next available', async () => {
+    renderForm({
+        ...stepped({ ...name, tab: 'first' }, { field: 'notes', type: 'string', label: 'Notes', tab: 'second' }),
+        getValidationSchema: () => yup.object({
+            name: yup.string().when('notes', ([notes], schema) => notes === 'require name' ? schema.required('Name: required') : schema),
+            notes: yup.string()
+        })
+    });
+    await screen.findByRole('button', { name: 'Next' });
+    await click('Next');
+    await act(async () => { fireEvent.change(await findInput('notes'), { target: { value: 'require name' } }); });
+    await click('Finish');
+    expect(mocks.saveRecord).not.toHaveBeenCalled();
+    expect(shownFields()).toEqual(['name']);
+    expect(screen.getByRole('button', { name: 'Next' })).toBeTruthy();
+    await act(async () => { fireEvent.change(await findInput('name'), { target: { value: 'Weekly check' } }); });
+    await click('Next');
+    expect(shownFields()).toEqual(['notes']);
+    await click('Finish');
+    expect(mocks.saveRecord).toHaveBeenCalledTimes(1);
+});
+
+it('waits for asynchronous validation before allowing Next or Back', async () => {
+    let pauseValidation = false;
+    let releaseValidation;
+    renderForm({
+        ...stepped({ ...name, tab: 'first' }, { field: 'notes', type: 'string', label: 'Notes', tab: 'second' }),
+        tabs: { first: 'First', second: 'Second', third: 'Third' },
+        getValidationSchema: () => yup.object({
+            name: yup.string().test('slow', 'Invalid', () => pauseValidation
+                ? new Promise(resolve => { releaseValidation = resolve; })
+                : true)
+        })
+    });
+    await screen.findByRole('button', { name: 'Next' });
+    await click('Next');
+    pauseValidation = true;
+    await click('Next');
+    expect(screen.getByRole('button', { name: 'Next' }).disabled).toBe(true);
+    expect(screen.getByRole('button', { name: 'Back' }).disabled).toBe(true);
+    await click('Back');
+    expect(shownFields()).toEqual(['notes']);
+    await act(async () => { releaseValidation(true); });
+    expect(screen.getByRole('button', { name: 'Finish' }).disabled).toBe(false);
+});
+
+it('Next skips a configured step without validating its fields', async () => {
+    renderForm({
+        ...stepped(
+            { field: 'skipNotes', type: 'boolean', label: 'Skip notes', tab: 'first', skip: { step: 1 } },
+            { field: 'notes', type: 'string', label: 'Notes', tab: 'second' },
+            { ...name, tab: 'third' }
+        ),
+        tabs: { first: 'First', second: 'Second', third: 'Third' },
+        initialValues: { skipNotes: true, name: '', notes: '' },
+        getValidationSchema: () => yup.object({ notes: yup.string().required('Notes: required') })
+    });
+    await screen.findByRole('button', { name: 'Next' });
+    await click('Next');
+    expect(shownFields()).toEqual(['name']);
+    await click('Back');
+    expect(shownFields()).toEqual(['skipNotes']);
 });
 
 it('copy clears a skipCopy date and cannot be saved until it is re-entered', async () => {

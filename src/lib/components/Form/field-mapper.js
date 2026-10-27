@@ -86,7 +86,7 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
 
     const isLastStep = () => {
         for (let nextStep = activeStep + 1; nextStep < tabColumns.length; nextStep++) {
-            if (!isStepSkipped(nextStep)) {
+            if (!skipSteps[nextStep]) {
                 return false;
             }
         }
@@ -100,7 +100,7 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
         const isFinish = nextStep >= tabColumns.length || isLastStep();
 
         // Next validates the step being left; Finish defers to handleSubmit, which validates all steps.
-        if (!isFinish) {
+        if (!isFinish && canSubmit) {
             const stepFields = tabColumns[activeStep].items.map(({ field }) => field);
             const errors = await formik.validateForm();
             if (stepFields.some((field) => errors[field])) {
@@ -148,8 +148,8 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
             <React.Fragment>
                 <RenderColumns formElements={currentStep.items} model={model} formik={formik} data={data} onChange={onChange} combos={combos} lookups={lookups} fieldConfigs={fieldConfigs} mode={mode} />
                 <Box sx={{ display: 'flex', flexDirection: 'row', pt: 2, mr: 2 }}>
-                    {activeStep !== 0 ? <Button color="inherit" disabled={activeStep === 0} onClick={handleBack} variant="contained" sx={{ mr: 2 }}>{tTranslate('Back', tOpts)}</Button> : null}
-                    <Button onClick={handleNext} variant="contained" disabled={isLastStep() && !canSubmit}>{isLastStep() ? tTranslate('Finish', tOpts) : tTranslate('Next', tOpts)}</Button>
+                    {activeStep !== 0 ? <Button color="inherit" disabled={formik.isValidating} onClick={handleBack} variant="contained" sx={{ mr: 2 }}>{tTranslate('Back', tOpts)}</Button> : null}
+                    <Button onClick={handleNext} variant="contained" disabled={formik.isValidating || (isLastStep() && !canSubmit)}>{isLastStep() ? tTranslate('Finish', tOpts) : tTranslate('Next', tOpts)}</Button>
                 </Box>
             </React.Fragment>
         </>
