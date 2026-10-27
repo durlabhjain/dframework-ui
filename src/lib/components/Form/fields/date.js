@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import { useStateContext } from '../../useRouter/StateProvider';
@@ -6,77 +6,50 @@ import { useStateContext } from '../../useRouter/StateProvider';
 const EMPTY_FIELD_CONFIGS = {};
 
 const Field = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS, mode }) => {
-    const isDisabled = mode !== 'copy' && fieldConfigs.disabled;
-    const { systemDateTimeFormat, stateData } = useStateContext(); //provider
-    
+    const { systemDateTimeFormat, stateData } = useStateContext();
     const fieldValue = formik.values[field];
-    const dateValue = useMemo(() => {
-        return fieldValue ? dayjs(fieldValue) : null;
-    }, [fieldValue]);
+    const dateValue = useMemo(() => fieldValue ? dayjs(fieldValue) : null, [fieldValue]);
+    const fieldError = formik.touched[field] && formik.errors[field];
+    const minFieldValue = column.minField ? formik.values[column.minField] : null;
+    const maxFieldValue = column.maxField ? formik.values[column.maxField] : null;
 
-    const minFieldValue = column.minField ? formik.values[column.minField] : undefined;
-    const maxFieldValue = column.maxField ? formik.values[column.maxField] : undefined;
+    // Ignore invalid range settings rather than generating invalid dates.
+    const rangeDays = Number(column.maxRangeDays);
+    const maxRangeDays = column.maxRangeDays != null && Number.isFinite(rangeDays) ? rangeDays : null;
+    const minDate = column.min || minFieldValue;
+    // An auto-filled maxField is an output, not an upper bound for this field.
+    const maxDate = column.max || (maxRangeDays == null ? maxFieldValue : null);
+    const rangeLimitDate = minFieldValue && maxRangeDays != null ? dayjs(minFieldValue).add(maxRangeDays, 'day') : null;
 
-    // Invalid maxRangeDays (non-numeric, NaN) is treated as "not configured" rather than
-    // producing invalid Dayjs calculations or auto-populating maxField with an invalid ISO string.
-    const maxRangeDays = useMemo(() => {
-        const n = Number(column.maxRangeDays);
-        return column.maxRangeDays != null && Number.isFinite(n) ? n : null;
-    }, [column.maxRangeDays]);
-
-    const minDateValue = useMemo(() => {
-        if (column.min) return dayjs(column.min);
-        if (column.minField && minFieldValue) return dayjs(minFieldValue);
-        return null;
-    }, [column.min, column.minField, minFieldValue]);
-
-    const maxDateValue = useMemo(() => {
-        if (column.max) return dayjs(column.max);
-        // When maxRangeDays drives this field (see handleChange), maxField holds a value
-        // this field just auto-set, not an independent upper bound — don't clamp maxDate to it.
-        if (column.maxField && maxRangeDays == null && maxFieldValue) return dayjs(maxFieldValue);
-        return null;
-    }, [column.max, column.maxField, maxRangeDays, maxFieldValue]);
-
-    // minField + maxRangeDays: days past minField + maxRangeDays stay visible on the calendar but disabled, rather than bounding maxDate (which would also block navigating to those months).
-    const rangeLimitDate = useMemo(() => {
-        if (column.minField && maxRangeDays != null && minFieldValue) return dayjs(minFieldValue).add(maxRangeDays, 'day');
-        return null;
-    }, [column.minField, maxRangeDays, minFieldValue]);
-
-    const shouldDisableDate = useCallback((day) => Boolean(rangeLimitDate) && day.isAfter(rangeLimitDate, 'day'), [rangeLimitDate]);
-
-    const handleChange = useCallback((value) => {
-        if (value === null) {
-            formik.setFieldValue(field, null);
-            if (column.maxField && maxRangeDays != null) formik.setFieldValue(column.maxField, null);
-            return;
+    const handleChange = (value) => {
+        // Invalid picker values must be cleared before calling toISOString().
+        const adjustedDate = value?.isValid() ? value.hour(12) : null;
+        formik.setFieldValue(field, adjustedDate?.toISOString() ?? null);
+        if (column.maxField && maxRangeDays != null) {
+            formik.setFieldValue(column.maxField, adjustedDate?.add(maxRangeDays, 'day').toISOString() ?? null);
         }
-        const adjustedDate = dayjs(value).hour(12);
-        formik.setFieldValue(field, adjustedDate.toISOString());
-
-        if (column.maxField && maxRangeDays != null) formik.setFieldValue(column.maxField, adjustedDate.add(maxRangeDays, 'day').toISOString());
-    }, [field, formik, column.maxField, maxRangeDays]);
+    };
     
     return <DatePicker
         key={field}
         {...otherProps}
-        variant="standard"
-        readOnly={column?.readOnly === true}
-        fullWidth
+        readOnly={column.readOnly === true}
         format={systemDateTimeFormat(true, false, stateData.dateTime)}
         name={field}
         value={dateValue}
         onChange={handleChange}
         onBlur={formik.handleBlur}
-        helperText={formik.touched[field] && formik.errors[field]}
-        minDate={minDateValue}
-        maxDate={maxDateValue}
-        shouldDisableDate={rangeLimitDate ? shouldDisableDate : undefined}
-        disabled={isDisabled}
-        slotProps={{ textField: { fullWidth: true, variant: "standard" } }}
-    />
-
-}
+        minDate={minDate ? dayjs(minDate) : null}
+        maxDate={maxDate ? dayjs(maxDate) : null}
+        shouldDisableDate={rangeLimitDate ? day => day.isAfter(rangeLimitDate, 'day') : undefined}
+        disabled={mode !== 'copy' && fieldConfigs.disabled}
+        slotProps={{ textField: {
+            fullWidth: true,
+            variant: 'standard',
+            // Preserve the picker's own error styling when Formik has no error.
+            ...(fieldError && { error: true, helperText: fieldError })
+        } }}
+    />;
+};
 
 export default Field;
