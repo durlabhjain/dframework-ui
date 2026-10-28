@@ -6233,79 +6233,41 @@ const Field$7 = ({ otherProps, ...props }) => {
 //#region src/lib/components/Form/fields/date.js
 const EMPTY_FIELD_CONFIGS$4 = {};
 const Field$6 = ({ column, field, formik, otherProps, fieldConfigs = EMPTY_FIELD_CONFIGS$4, mode }) => {
-	const isDisabled = mode !== "copy" && fieldConfigs.disabled;
 	const { systemDateTimeFormat, stateData } = useStateContext();
 	const fieldValue = formik.values[field];
-	const dateValue = useMemo(() => {
-		return fieldValue ? dayjs(fieldValue) : null;
-	}, [fieldValue]);
-	const minFieldValue = column.minField ? formik.values[column.minField] : void 0;
-	const maxFieldValue = column.maxField ? formik.values[column.maxField] : void 0;
-	const maxRangeDays = useMemo(() => {
-		const n = Number(column.maxRangeDays);
-		return column.maxRangeDays != null && Number.isFinite(n) ? n : null;
-	}, [column.maxRangeDays]);
-	const minDateValue = useMemo(() => {
-		if (column.min) return dayjs(column.min);
-		if (column.minField && minFieldValue) return dayjs(minFieldValue);
-		return null;
-	}, [
-		column.min,
-		column.minField,
-		minFieldValue
-	]);
-	const maxDateValue = useMemo(() => {
-		if (column.max) return dayjs(column.max);
-		if (column.maxField && maxRangeDays == null && maxFieldValue) return dayjs(maxFieldValue);
-		return null;
-	}, [
-		column.max,
-		column.maxField,
-		maxRangeDays,
-		maxFieldValue
-	]);
-	const rangeLimitDate = useMemo(() => {
-		if (column.minField && maxRangeDays != null && minFieldValue) return dayjs(minFieldValue).add(maxRangeDays, "day");
-		return null;
-	}, [
-		column.minField,
-		maxRangeDays,
-		minFieldValue
-	]);
-	const shouldDisableDate = useCallback((day) => Boolean(rangeLimitDate) && day.isAfter(rangeLimitDate, "day"), [rangeLimitDate]);
-	const handleChange = useCallback((value) => {
-		if (value === null) {
-			formik.setFieldValue(field, null);
-			if (column.maxField && maxRangeDays != null) formik.setFieldValue(column.maxField, null);
-			return;
-		}
-		const adjustedDate = dayjs(value).hour(12);
-		formik.setFieldValue(field, adjustedDate.toISOString());
-		if (column.maxField && maxRangeDays != null) formik.setFieldValue(column.maxField, adjustedDate.add(maxRangeDays, "day").toISOString());
-	}, [
-		field,
-		formik,
-		column.maxField,
-		maxRangeDays
-	]);
+	const dateValue = useMemo(() => fieldValue ? dayjs(fieldValue) : null, [fieldValue]);
+	const fieldError = formik.touched[field] && formik.errors[field];
+	const minFieldValue = column.minField ? formik.values[column.minField] : null;
+	const maxFieldValue = column.maxField ? formik.values[column.maxField] : null;
+	const rangeDays = Number(column.maxRangeDays);
+	const maxRangeDays = column.maxRangeDays != null && Number.isFinite(rangeDays) ? rangeDays : null;
+	const minDate = column.min || minFieldValue;
+	const maxDate = column.max || (maxRangeDays == null ? maxFieldValue : null);
+	const rangeLimitDate = minFieldValue && maxRangeDays != null ? dayjs(minFieldValue).add(maxRangeDays, "day") : null;
+	const handleChange = (value) => {
+		const adjustedDate = value?.isValid() ? value.hour(12) : null;
+		formik.setFieldValue(field, adjustedDate?.toISOString() ?? null);
+		if (column.maxField && maxRangeDays != null) formik.setFieldValue(column.maxField, adjustedDate?.add(maxRangeDays, "day").toISOString() ?? null);
+	};
 	return /* @__PURE__ */ jsx(DatePicker, {
 		...otherProps,
-		variant: "standard",
-		readOnly: column?.readOnly === true,
-		fullWidth: true,
+		readOnly: column.readOnly === true,
 		format: systemDateTimeFormat(true, false, stateData.dateTime),
 		name: field,
 		value: dateValue,
 		onChange: handleChange,
 		onBlur: formik.handleBlur,
-		helperText: formik.touched[field] && formik.errors[field],
-		minDate: minDateValue,
-		maxDate: maxDateValue,
-		shouldDisableDate: rangeLimitDate ? shouldDisableDate : void 0,
-		disabled: isDisabled,
+		minDate: minDate ? dayjs(minDate) : null,
+		maxDate: maxDate ? dayjs(maxDate) : null,
+		shouldDisableDate: rangeLimitDate ? (day) => day.isAfter(rangeLimitDate, "day") : void 0,
+		disabled: mode !== "copy" && fieldConfigs.disabled,
 		slotProps: { textField: {
 			fullWidth: true,
-			variant: "standard"
+			variant: "standard",
+			...fieldError && {
+				error: true,
+				helperText: fieldError
+			}
 		} }
 	}, field);
 };
@@ -7485,14 +7447,26 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
 		return skipped.has(step) || skipSteps[step];
 	};
 	const isLastStep = () => {
-		for (let nextStep = activeStep + 1; nextStep < tabColumns.length; nextStep++) if (!isStepSkipped(nextStep)) return false;
+		for (let nextStep = activeStep + 1; nextStep < tabColumns.length; nextStep++) if (!skipSteps[nextStep]) return false;
 		return true;
 	};
-	const handleNext = () => {
+	const handleNext = async () => {
 		let nextStep = activeStep + 1;
 		while (skipSteps[nextStep]) nextStep++;
+		const isFinish = nextStep >= tabColumns.length || isLastStep();
+		if (!isFinish && canSubmit) {
+			const stepFields = tabColumns[activeStep].items.map(({ field }) => field);
+			const errors = await formik.validateForm();
+			if (stepFields.some((field) => errors[field])) {
+				formik.setTouched({
+					...formik.touched,
+					...Object.fromEntries(stepFields.map((field) => [field, true]))
+				}, false);
+				return;
+			}
+		}
 		setSkipped((prevSkipped) => new Set(prevSkipped).add(activeStep));
-		if (nextStep >= tabColumns.length || isLastStep()) {
+		if (isFinish) {
 			if (canSubmit) handleSubmit();
 		} else setActiveStep(nextStep);
 	};
@@ -7534,7 +7508,7 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
 		},
 		children: [activeStep !== 0 ? /* @__PURE__ */ jsx(Button, {
 			color: "inherit",
-			disabled: activeStep === 0,
+			disabled: formik.isValidating,
 			onClick: handleBack,
 			variant: "contained",
 			sx: { mr: 2 },
@@ -7542,7 +7516,7 @@ const RenderSteps = ({ tabColumns, model, formik, data, onChange, combos, lookup
 		}) : null, /* @__PURE__ */ jsx(Button, {
 			onClick: handleNext,
 			variant: "contained",
-			disabled: isLastStep() && !canSubmit,
+			disabled: formik.isValidating || isLastStep() && !canSubmit,
 			children: isLastStep() ? tTranslate("Finish", tOpts) : tTranslate("Next", tOpts)
 		})]
 	})] })] });
