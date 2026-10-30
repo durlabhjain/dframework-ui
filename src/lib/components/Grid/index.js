@@ -492,7 +492,7 @@ const GridBase = memo(({
     const [currentPreference, setCurrentPreference] = useState(() => hasRestoredListState ? listStateSnapshot.currentPreference ?? null : null);
     // State for single expanded detail panel row
     const [rowPanelId, setRowPanelId] = useState(null);
-    const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
+    const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId !== null ? [rowPanelId] : []), [rowPanelId]);
     const enableRowDetailPanel = typeof model.getDetailPanelContent === 'function';
     const canOpenFromCell = !isReadOnly && !disableCellRedirect && (enableRowDetailPanel || canOpenRecord);
     const [groupingModel, setGroupingModel] = useState(
@@ -2053,7 +2053,10 @@ const GridBase = memo(({
                     {...(enableRowDetailPanel && {
                         getDetailPanelContent,
                         detailPanelExpandedRowIds,
-                        onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded
+                        onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded,
+                        // MUI only renders a detail panel while its row is in the virtualization window,
+                        // so scrolling past an open panel remounts its form and reloads the record.
+                        disableVirtualization: gridProps?.disableVirtualization || rowPanelId !== null
                     })}
                     localeText={localeText}
                     showToolbar={showToolbar}

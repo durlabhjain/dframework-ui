@@ -83,6 +83,28 @@ it('detail panel links remain styled and toggle without mutation permissions', a
     expect(mocks.router.navigate).not.toHaveBeenCalled();
 });
 
+it.each([7, 0])('keeps the panel for row %s mounted until it is closed', async (id) => {
+    const record = { ...row, id };
+    await mount({ getDetailPanelContent: () => <input aria-label="Draft" defaultValue="unsaved" /> }, { staticData: [record] });
+    expect(mocks.gridProps.disableVirtualization).toBe(false);
+    await click(record);
+    expect(mocks.gridProps.detailPanelExpandedRowIds.has(id)).toBe(true);
+    expect(mocks.gridProps.disableVirtualization).toBe(true);
+    expect(screen.getByRole('textbox', { name: 'Draft' }).value).toBe('unsaved');
+    await click(record);
+    expect(mocks.gridProps.detailPanelExpandedRowIds.size).toBe(0);
+    expect(mocks.gridProps.disableVirtualization).toBe(false);
+    expect(screen.queryByRole('textbox', { name: 'Draft' })).toBeNull();
+});
+
+it('honors a caller disabling virtualization before and after a panel is closed', async () => {
+    await mount({ getDetailPanelContent: () => <div>Details</div> }, { gridProps: { disableVirtualization: true } });
+    expect(mocks.gridProps.disableVirtualization).toBe(true);
+    await click();
+    await click();
+    expect(mocks.gridProps.disableVirtualization).toBe(true);
+});
+
 it('explicit links remain available without mutation permissions', async () => {
     await mount({ columns: [{ ...model.columns[1], linkTo: '/view/${id}' }] });
     await click();
