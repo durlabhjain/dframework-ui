@@ -2053,7 +2053,10 @@ const GridBase = memo(({
                     {...(enableRowDetailPanel && {
                         getDetailPanelContent,
                         detailPanelExpandedRowIds,
-                        onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded
+                        onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded,
+                        // MUI only renders a detail panel while its row is in the virtualization window,
+                        // so scrolling past an open panel remounts its form and reloads the record.
+                        disableVirtualization: !!rowPanelId
                     })}
                     localeText={localeText}
                     showToolbar={showToolbar}
