@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => ({
     router: { navigate: vi.fn(), useParams: () => ({ id: '7' }), pathname: '/items/7' },
     context: { stateData: { userData: {} }, buildUrl: x => x, setPageTitle: vi.fn(), getApiEndpoint: () => '/api' },
     snackbar: { showMessage: vi.fn(), showError: vi.fn(), showErrorCode: vi.fn() },
-    translation: { tTranslate: x => x, tOpts: {}, translate: false }
+    translation: { tTranslate: x => x, tOpts: {}, translate: false },
+    dialogs: []
 }));
 vi.mock('../src/lib/components/useRouter/StateProvider', () => ({ useRouter: () => mocks.router, useStateContext: () => mocks.context }));
 vi.mock('../src/lib/components/SnackBar', () => ({ useSnackbar: () => mocks.snackbar }));
@@ -18,7 +19,7 @@ vi.mock('../src/lib/hooks/useModelTranslation', () => ({ useModelTranslation: ()
 vi.mock('../src/lib/components/Grid/crud-helper', () => ({ getRecord: mocks.getRecord, saveRecord: mocks.saveRecord, deleteRecord: mocks.deleteRecord, getLookups: mocks.getLookups }));
 vi.mock('../src/lib/components/Grid/httpRequest', () => ({ default: vi.fn(), transport: mocks.transport, DATA_PARSERS: { json: x => x } }));
 vi.mock('../src/lib/components/PageTitle', () => ({ default: () => null }));
-vi.mock('../src/lib/components/Dialog', () => ({ DialogComponent: () => null }));
+vi.mock('../src/lib/components/Dialog', () => ({ DialogComponent: (props) => { mocks.dialogs.push(props); return null; } }));
 vi.mock('../src/lib/components/Form/relations', () => ({ default: ({ readOnly }) => <div data-testid="relations" data-readonly={String(readOnly)} /> }));
 
 const model = {
@@ -28,6 +29,7 @@ const model = {
 };
 beforeEach(() => {
     vi.clearAllMocks();
+    mocks.dialogs.length = 0;
     mocks.router.useParams = () => ({ id: '7' });
     window.history.replaceState({}, '', '/items/7');
     mocks.getRecord.mockResolvedValue({ id: '7', record: { name: 'Example', choice: '1' }, lookups: { choices: [{ value: '1', label: 'One' }, { value: '2', label: 'Two' }] } });
@@ -303,5 +305,70 @@ it.each([
         expect(onSaveSuccess).not.toHaveBeenCalled();
         expect(mocks.router.navigate).not.toHaveBeenCalled();
         if (outcome === 'error') expect(mocks.snackbar.showErrorCode).toHaveBeenCalled();
+    }
+});
+
+
+// Tracks the prop GridTransfer actually feeds the two assignment grids. A changed `selected`
+// is what makes GridBase refetch its list, so it has to be a dep here - unlike AssignmentGrid
+// above, which only records mounts.
+const transferRequests = vi.fn();
+function TransferGrid({ available, assigned, selected }) {
+    useEffect(() => { transferRequests({ available, assigned, selected }); }, [available, assigned, selected]);
+    return <div>{available ? 'Available members' : 'Assigned members'}</div>;
+}
+
+const openDiscardDialog = () => {
+    const dialog = mocks.dialogs.filter(d => d.okText === 'Discard' && d.open).at(-1);
+    expect(dialog).toBeTruthy();
+    return dialog;
+};
+
+it.each([
+    ['redirect', undefined],
+    ['stay open', false],
+])('%s discards member changes without reloading assignment grids on the way out', async (_label, navigateBack) => {
+    transferRequests.mockClear();
+    let formState;
+    mocks.getRecord.mockResolvedValue({ id: '7', record: { name: 'Example', members: ['1', '2', '3'] }, lookups: {} });
+    const cancelModel = {
+        ...model, navigateBack, actions: 'both', permissions: { add: true, edit: true },
+        columns: [
+            ...model.columns,
+            { field: 'members', type: 'oneToMany', label: 'Members', relation: TransferGrid },
+        ],
+    };
+    const Layout = (props) => {
+        useEffect(() => { formState = props.formik; }, [props.formik]);
+        return <FormLayout {...props} />;
+    };
+    const onCancel = vi.fn();
+    render(<Form model={cancelModel} Layout={Layout} onCancel={onCancel} />);
+    await screen.findByText('Available members');
+    expect(transferRequests).toHaveBeenCalledTimes(2);
+
+    // Assign a member, exactly as the transfer control does
+    await act(async () => { formState.setFieldValue('members', ['1', '2', '3', '4']); });
+    const selectionsOf = () => transferRequests.mock.calls.map(([p]) => p.selected);
+    await waitFor(() => expect(selectionsOf().at(-1)).toEqual(['1', '2', '3', '4']));
+    expect(formState.dirty).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    const callsBeforeDiscard = transferRequests.mock.calls.length;
+    await act(async () => { openDiscardDialog().onConfirm(); });
+
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(mocks.getRecord).toHaveBeenCalledTimes(1);
+    const afterDiscard = transferRequests.mock.calls.slice(callsBeforeDiscard).map(([p]) => p.selected);
+    if (navigateBack === false) {
+        // Form stays mounted, so the grids must see the restored selection
+        expect(mocks.router.navigate).not.toHaveBeenCalled();
+        expect(formState.values.members).toEqual(['1', '2', '3']);
+        expect(afterDiscard.at(-1)).toEqual(['1', '2', '3']);
+    } else {
+        // Navigating away: restoring the selection first refetches both grids for a
+        // form that is about to unmount, and those requests end up cancelled.
+        expect(mocks.router.navigate).toHaveBeenCalledWith('/items');
+        expect(afterDiscard).toEqual([]);
     }
 });
