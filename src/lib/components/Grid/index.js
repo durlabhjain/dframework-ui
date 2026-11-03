@@ -1074,7 +1074,8 @@ const GridBase = memo(({
     // Stable slice of column properties that affect the API request only (what buildRequestData reads).
     // Isolates fetchData from render-only changes like headerName, renderCell, filterOperators, etc.
     const [fetchColumns, setFetchColumns] = useState([]);
-    const nextFetchColumns = useMemo(() => stableGridColumns.map(({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable }) => ({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable })), [stableGridColumns]);
+    // multiplier belongs here: buildRequestData reads it to convert a filter value back to the stored unit.
+    const nextFetchColumns = useMemo(() => stableGridColumns.map(({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable, multiplier }) => ({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable, multiplier })), [stableGridColumns]);
     if (fetchColumns.length !== nextFetchColumns.length || !nextFetchColumns.every((col, i) => areEqual(fetchColumns[i], col))) {
         setFetchColumns(nextFetchColumns);
     }
@@ -1632,7 +1633,9 @@ const GridBase = memo(({
                 hyperlinkURL: gridCol?.hyperlinkURL ?? col.hyperlinkURL,
                 hyperlinkIndex: gridCol?.hyperlinkIndex ?? col.hyperlinkIndex,
                 localize: col.localize,
-                exportIndex: col.exportIndex
+                exportIndex: col.exportIndex,
+                // Column unit, so a server-side export can apply the same conversion the grid shows
+                multiplier: gridCol?.multiplier ?? col.multiplier
             };
         });
         fetchData({

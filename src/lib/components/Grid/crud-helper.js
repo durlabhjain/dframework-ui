@@ -1,4 +1,5 @@
 import request, { DATA_PARSERS, getErrorMessage } from "./httpRequest";
+import { hasMultiplier, toStoredUnit } from "./columnMultiplier";
 
 const dateDataTypes = ['date', 'dateTime'];
 const lookupDataTypes = ['singleSelect'];
@@ -177,6 +178,11 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
                     value = Array.isArray(value) ? value.filter(e => e !== null && e !== undefined && e !== '') : value;
                 }
                 value = filter.filterValues || value;
+                // A column read in another unit (multiplier) is filtered in that unit too, since that is
+                // what the grid shows: the typed value goes back to the stored one - volts to millivolts.
+                if (hasMultiplier(column[0]?.multiplier)) {
+                    value = toStoredUnit(value, column[0].multiplier);
+                }
                 where.push({
                     field: filterField || field,
                     operator,
