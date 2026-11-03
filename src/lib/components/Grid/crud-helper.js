@@ -1,8 +1,10 @@
 import request, { DATA_PARSERS, getErrorMessage } from "./httpRequest";
+import { hasMultiplier, toStoredUnit } from "./columnMultiplier";
 
 const dateDataTypes = ['date', 'dateTime'];
 const lookupDataTypes = ['singleSelect'];
 const exportDefaultLimit = 1_000_000;
+const reversedComparisons = { '>': '<', '>=': '<=', '<': '>', '<=': '>=' };
 
 function shouldApplyFilter(filter) {
     const { operator, value, type } = filter;
@@ -167,16 +169,22 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
     if (filterModel?.items?.length) {
         filterModel.items.forEach(filter => {
             if (shouldApplyFilter(filter)) {
-                const { field, operator, filterField } = filter;
-                let { value } = filter;
-                const column = gridColumns.filter((item) => item?.field === filter.field);
-                const type = column[0]?.type;
+                const { field, filterField } = filter;
+                let { value, operator } = filter;
+                const column = gridColumns.find((item) => item?.field === field);
+                const type = column?.type;
                 if (type === 'boolean') {
                     value = (value === 'true' || value === true) ? 1 : 0;
                 } else if (type === 'number') {
                     value = Array.isArray(value) ? value.filter(e => e !== null && e !== undefined && e !== '') : value;
                 }
                 value = filter.filterValues || value;
+                // A column read in another unit (multiplier) is filtered in that unit too, since that is
+                // what the grid shows: the typed value goes back to the stored one - volts to millivolts.
+                if (hasMultiplier(column?.multiplier)) {
+                    value = toStoredUnit(value, column.multiplier);
+                    if (column.multiplier < 0) operator = reversedComparisons[operator] ?? operator;
+                }
                 where.push({
                     field: filterField || field,
                     operator,

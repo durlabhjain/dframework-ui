@@ -228,6 +228,7 @@ it('allows retry after beforeSubmit rejects', async () => {
     };
     render(<Form model={{ ...model, permissions: { edit: true } }} Layout={Layout} beforeSubmit={beforeSubmit} />);
     await screen.findByText('Custom form');
+    await waitFor(() => expect(submit).toBeTypeOf('function'));
     await act(async () => { await expect(submit()).rejects.toThrow('Before submit failed'); });
     expect(mocks.saveRecord).not.toHaveBeenCalled();
     const save = screen.getByRole('button', { name: 'Save' });
