@@ -512,10 +512,43 @@ const request = async ({ url, params = {}, history, jsonPayload = false, method 
 };
 
 //#endregion
+//#region src/lib/components/Grid/columnMultiplier.js
+const hasMultiplier = (multiplier) => typeof multiplier === "number" && Number.isFinite(multiplier) && multiplier !== 0;
+const decimalGuardPlaces = 80;
+const decimalGuardScale = 10n ** BigInt(decimalGuardPlaces);
+const decimalParts = (value) => {
+	const [coefficient, exponent = "0"] = value.toString().split("e");
+	const [whole, fraction = ""] = coefficient.split(".");
+	return {
+		digits: BigInt(whole + fraction),
+		exponent: Number(exponent) - fraction.length
+	};
+};
+const toStoredNumber = (value, multiplier) => {
+	const numeric = typeof value === "number" ? value : typeof value === "string" && value.trim() !== "" ? Number(value) : NaN;
+	if (!Number.isFinite(numeric)) return value;
+	const numerator = decimalParts(numeric);
+	const denominator = decimalParts(multiplier);
+	const quotient = numerator.digits * decimalGuardScale / denominator.digits;
+	const stored = Number(`${quotient}e${numerator.exponent - denominator.exponent - decimalGuardPlaces}`);
+	return Number.isFinite(stored) ? stored : value;
+};
+const toStoredUnit = (value, multiplier) => {
+	if (!hasMultiplier(multiplier)) return value;
+	return Array.isArray(value) ? value.map((entry) => toStoredNumber(entry, multiplier)) : toStoredNumber(value, multiplier);
+};
+
+//#endregion
 //#region src/lib/components/Grid/crud-helper.js
 const dateDataTypes = ["date", "dateTime"];
 const lookupDataTypes = ["singleSelect"];
 const exportDefaultLimit = 1e6;
+const reversedComparisons = {
+	">": "<",
+	">=": "<=",
+	"<": ">",
+	"<=": ">="
+};
 function shouldApplyFilter(filter) {
 	const { operator, value, type } = filter;
 	return ["isEmpty", "isNotEmpty"].includes(operator) || value !== void 0 && value !== null && (value !== "" || type === "number" && value === 0 || type === "boolean" && value === false);
@@ -636,12 +669,17 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
 	const where = [];
 	if (filterModel?.items?.length) filterModel.items.forEach((filter) => {
 		if (shouldApplyFilter(filter)) {
-			const { field, operator, filterField } = filter;
-			let { value } = filter;
-			const type = gridColumns.filter((item) => item?.field === filter.field)[0]?.type;
+			const { field, filterField } = filter;
+			let { value, operator } = filter;
+			const column = gridColumns.find((item) => item?.field === field);
+			const type = column?.type;
 			if (type === "boolean") value = value === "true" || value === true ? 1 : 0;
 			else if (type === "number") value = Array.isArray(value) ? value.filter((e) => e !== null && e !== void 0 && e !== "") : value;
 			value = filter.filterValues || value;
+			if (hasMultiplier(column?.multiplier)) {
+				value = toStoredUnit(value, column.multiplier);
+				if (column.multiplier < 0) operator = reversedComparisons[operator] ?? operator;
+			}
 			where.push({
 				field: filterField || field,
 				operator,
@@ -4203,7 +4241,7 @@ const GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, pare
 	const searchParams = new URLSearchParams(window.location.search);
 	const [currentPreference, setCurrentPreference] = useState(() => hasRestoredListState ? listStateSnapshot.currentPreference ?? null : null);
 	const [rowPanelId, setRowPanelId] = useState(null);
-	const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId ? [rowPanelId] : []), [rowPanelId]);
+	const detailPanelExpandedRowIds = useMemo(() => new Set(rowPanelId !== null ? [rowPanelId] : []), [rowPanelId]);
 	const enableRowDetailPanel = typeof model.getDetailPanelContent === "function";
 	const canOpenFromCell = !isReadOnly && !disableCellRedirect && (enableRowDetailPanel || canOpenRecord);
 	const [groupingModel, setGroupingModel] = useState(() => listStateSnapshot?.gridState?.rowGrouping?.model ?? (Array.isArray(props.rowGroupingField) ? props.rowGroupingField : []));
@@ -4763,7 +4801,7 @@ const GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, pare
 		return fields;
 	}, []), [serverGroupField]);
 	const [fetchColumns, setFetchColumns] = useState([]);
-	const nextFetchColumns = useMemo(() => stableGridColumns.map(({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable }) => ({
+	const nextFetchColumns = useMemo(() => stableGridColumns.map(({ field, type, lookup, localize, dependsOn, dataIndex, isKeywordField, groupable, multiplier }) => ({
 		field,
 		type,
 		lookup,
@@ -4771,7 +4809,8 @@ const GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, pare
 		dependsOn,
 		dataIndex,
 		isKeywordField,
-		groupable
+		groupable,
+		multiplier
 	})), [stableGridColumns]);
 	if (fetchColumns.length !== nextFetchColumns.length || !nextFetchColumns.every((col, i) => areEqual(fetchColumns[i], col))) setFetchColumns(nextFetchColumns);
 	const activeGroupingFields = useMemo(() => clientRowGroupingEnabled || serverGroupField ? groupingModel.filter((field) => fetchColumns.some((col) => col.field === field)) : [], [
@@ -5371,7 +5410,8 @@ const GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, pare
 				hyperlinkURL: gridCol?.hyperlinkURL ?? col.hyperlinkURL,
 				hyperlinkIndex: gridCol?.hyperlinkIndex ?? col.hyperlinkIndex,
 				localize: col.localize,
-				exportIndex: col.exportIndex
+				exportIndex: col.exportIndex,
+				multiplier: gridCol?.multiplier ?? col.multiplier
 			};
 		});
 		fetchData({
@@ -5858,7 +5898,8 @@ const GridBase = memo(({ model, columns, api, defaultSort, setActiveRecord, pare
 					...enableRowDetailPanel && {
 						getDetailPanelContent,
 						detailPanelExpandedRowIds,
-						onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded
+						onDetailPanelExpandedRowIdsChange: handleDetailPanelExpanded,
+						disableVirtualization: gridProps?.disableVirtualization || rowPanelId !== null
 					},
 					localeText,
 					showToolbar,
@@ -8110,10 +8151,10 @@ const Form = ({ model, api, models, relationFilters = DEFAULT_RELATION_FILTERS, 
 		}
 	});
 	const handleDiscardChanges = useCallback(() => {
-		formik.resetForm();
 		setIsDiscardDialogOpen(false);
 		if (typeof onCancel === consts.function) onCancel();
 		if (navigateBack !== false) handleNavigation();
+		else formik.resetForm();
 	}, [
 		formik,
 		onCancel,
