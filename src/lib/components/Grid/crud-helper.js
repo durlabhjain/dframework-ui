@@ -171,8 +171,8 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
             if (shouldApplyFilter(filter)) {
                 const { field, filterField } = filter;
                 let { value, operator } = filter;
-                const column = gridColumns.filter((item) => item?.field === filter.field);
-                const type = column[0]?.type;
+                const column = gridColumns.find((item) => item?.field === field);
+                const type = column?.type;
                 if (type === 'boolean') {
                     value = (value === 'true' || value === true) ? 1 : 0;
                 } else if (type === 'number') {
@@ -181,9 +181,9 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
                 value = filter.filterValues || value;
                 // A column read in another unit (multiplier) is filtered in that unit too, since that is
                 // what the grid shows: the typed value goes back to the stored one - volts to millivolts.
-                if (hasMultiplier(column[0]?.multiplier)) {
-                    value = toStoredUnit(value, column[0].multiplier);
-                    if (column[0].multiplier < 0) operator = reversedComparisons[operator] ?? operator;
+                if (hasMultiplier(column?.multiplier)) {
+                    value = toStoredUnit(value, column.multiplier);
+                    if (column.multiplier < 0) operator = reversedComparisons[operator] ?? operator;
                 }
                 where.push({
                     field: filterField || field,

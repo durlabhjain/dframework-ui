@@ -1,6 +1,9 @@
 // Displayed values are multiplied by this factor; filters must undo that scaling.
 export const hasMultiplier = (multiplier) => typeof multiplier === 'number' && Number.isFinite(multiplier) && multiplier !== 0;
 
+const decimalGuardPlaces = 80;
+const decimalGuardScale = 10n ** BigInt(decimalGuardPlaces);
+
 const decimalParts = (value) => {
     const [coefficient, exponent = '0'] = value.toString().split('e');
     const [whole, fraction = ''] = coefficient.split('.');
@@ -18,8 +21,8 @@ const toStoredNumber = (value, multiplier) => {
     // result to 12 significant digits discards valid input, even with a multiplier of 1.
     // Each operand has at most 17 significant digits; 80 decimal guard places retain the
     // precision needed by Number while removing artefacts such as 4.35 / .01 !== 435.
-    const quotient = numerator.digits * (10n ** 80n) / denominator.digits;
-    const stored = Number(`${quotient}e${numerator.exponent - denominator.exponent - 80}`);
+    const quotient = numerator.digits * decimalGuardScale / denominator.digits;
+    const stored = Number(`${quotient}e${numerator.exponent - denominator.exponent - decimalGuardPlaces}`);
     return Number.isFinite(stored) ? stored : value;
 };
 
