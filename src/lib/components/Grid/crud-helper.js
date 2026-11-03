@@ -4,6 +4,7 @@ import { hasMultiplier, toStoredUnit } from "./columnMultiplier";
 const dateDataTypes = ['date', 'dateTime'];
 const lookupDataTypes = ['singleSelect'];
 const exportDefaultLimit = 1_000_000;
+const reversedComparisons = { '>': '<', '>=': '<=', '<': '>', '<=': '>=' };
 
 function shouldApplyFilter(filter) {
     const { operator, value, type } = filter;
@@ -168,8 +169,8 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
     if (filterModel?.items?.length) {
         filterModel.items.forEach(filter => {
             if (shouldApplyFilter(filter)) {
-                const { field, operator, filterField } = filter;
-                let { value } = filter;
+                const { field, filterField } = filter;
+                let { value, operator } = filter;
                 const column = gridColumns.filter((item) => item?.field === filter.field);
                 const type = column[0]?.type;
                 if (type === 'boolean') {
@@ -182,6 +183,7 @@ const buildRequestData = ({ gridColumns, page, pageSize, sortModel, filterModel,
                 // what the grid shows: the typed value goes back to the stored one - volts to millivolts.
                 if (hasMultiplier(column[0]?.multiplier)) {
                     value = toStoredUnit(value, column[0].multiplier);
+                    if (column[0].multiplier < 0) operator = reversedComparisons[operator] ?? operator;
                 }
                 where.push({
                     field: filterField || field,

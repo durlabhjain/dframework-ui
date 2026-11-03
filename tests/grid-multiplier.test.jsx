@@ -67,6 +67,15 @@ describe('toStoredUnit', () => {
         expect(toStoredUnit(4.35, 0.01)).toBe(435);
         expect(toStoredUnit(0, MILLIVOLTS_TO_VOLTS)).toBe(0);
     });
+    it('preserves full numeric precision instead of rounding every filter to 12 digits', () => {
+        expect(toStoredUnit(1234567890123, 1)).toBe(1234567890123);
+        expect(toStoredUnit(1.23456789012345, 1)).toBe(1.23456789012345);
+        expect(toStoredUnit(Number.MAX_SAFE_INTEGER, 1)).toBe(Number.MAX_SAFE_INTEGER);
+        expect(toStoredUnit(1.23456789012345, 0.001)).toBe(1234.56789012345);
+        expect(toStoredUnit(4.35, 0.02)).toBe(217.5);
+        expect(toStoredUnit(4.128e-12, 1e-15)).toBe(4128);
+        expect(toStoredUnit(4.128, -0.001)).toBe(-4128);
+    });
     it('converts an isAnyOf list entry by entry', () => {
         expect(toStoredUnit([4.128, '4.1'], MILLIVOLTS_TO_VOLTS)).toEqual([4128, 4100]);
     });
@@ -128,6 +137,12 @@ describe('the filter the grid sends', () => {
         expect(where).toEqual([{ field: 'BatteryVolt', operator: '=', value: 4128, type: 'number' }]);
         // The chip goes on showing what was typed
         expect(apiRef.current.state.filter.filterModel.items[0].value).toBe(4.128);
+    });
+
+    it('reverses range comparisons when display scaling is negative', async () => {
+        const { apiRef } = await mount({ columns: [{ ...model.columns[0], multiplier: -0.001 }] });
+        const where = await sendFilter(apiRef, { field: 'BatteryVolt', operator: '>=', value: -4.128 });
+        expect(where).toEqual([{ field: 'BatteryVolt', operator: '<=', value: 4128, type: 'number' }]);
     });
 
     it('leaves a column without a multiplier alone', async () => {

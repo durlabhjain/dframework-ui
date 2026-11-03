@@ -1,22 +1,31 @@
-// A numeric column read in a unit other than the one it is stored in - millivolts read as volts.
-// The column renders that itself; `multiplier` only tells the request builder how to convert a filter
-// value back to the stored unit, so what is typed as 4.13 reaches the server as 4130.
-
-// Only a finite non-zero multiplier means anything: zero would make this a division by zero.
+// Displayed values are multiplied by this factor; filters must undo that scaling.
 export const hasMultiplier = (multiplier) => typeof multiplier === 'number' && Number.isFinite(multiplier) && multiplier !== 0;
 
-// Dividing a decimal leaves artefacts (4.35 / 0.01 is 434.99999999999994) that an equals filter would
-// never match, so the result lands back on the number that was typed.
+const decimalParts = (value) => {
+    const [coefficient, exponent = '0'] = value.toString().split('e');
+    const [whole, fraction = ''] = coefficient.split('.');
+    return { digits: BigInt(whole + fraction), exponent: Number(exponent) - fraction.length };
+};
+
 const toStoredNumber = (value, multiplier) => {
     const numeric = typeof value === 'number'
         ? value
         : (typeof value === 'string' && value.trim() !== '' ? Number(value) : NaN);
     if (!Number.isFinite(numeric)) return value;
-    const stored = Number((numeric / multiplier).toPrecision(12));
+    const numerator = decimalParts(numeric);
+    const denominator = decimalParts(multiplier);
+    // Divide the decimal representations before converting back to Number. Rounding every
+    // result to 12 significant digits discards valid input, even with a multiplier of 1.
+    // Each operand has at most 17 significant digits; 80 decimal guard places retain the
+    // precision needed by Number while removing artefacts such as 4.35 / .01 !== 435.
+    const quotient = numerator.digits * (10n ** 80n) / denominator.digits;
+    const stored = Number(`${quotient}e${numerator.exponent - denominator.exponent - 80}`);
     return Number.isFinite(stored) ? stored : value;
 };
 
-// isAnyOf carries a list; anything that isn't a number is left for the server to reject.
-export const toStoredUnit = (value, multiplier) => Array.isArray(value)
-    ? value.map(entry => toStoredNumber(entry, multiplier))
-    : toStoredNumber(value, multiplier);
+export const toStoredUnit = (value, multiplier) => {
+    if (!hasMultiplier(multiplier)) return value;
+    return Array.isArray(value)
+        ? value.map(entry => toStoredNumber(entry, multiplier))
+        : toStoredNumber(value, multiplier);
+};
