@@ -216,12 +216,18 @@ const Form = ({
   });
 
   const handleDiscardChanges = useCallback(() => {
-    formik.resetForm();
     setIsDiscardDialogOpen(false);
     if (typeof onCancel === consts.function) {
       onCancel();
     }
-    if (navigateBack !== false) handleNavigation();
+    // Reset only when the form stays open. Resetting before navigating pushes the
+    // original values back into still-mounted fields, reloading their grids and
+    // lookups for a form that is about to unmount.
+    if (navigateBack !== false) {
+      handleNavigation();
+    } else {
+      formik.resetForm();
+    }
   }, [formik, onCancel, navigateBack, handleNavigation]);
 
   const errorOnLoad = useCallback((error) => {
