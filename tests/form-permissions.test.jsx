@@ -173,6 +173,8 @@ it('disables Save throughout beforeSubmit, validation and saving', async () => {
     const schema = yup.object({ name: yup.string().test('pending', 'Invalid name', validate) });
     mocks.saveRecord.mockReturnValue(new Promise(resolve => { finishSave = resolve; }));
     render(<Form model={{ ...model, permissions: { edit: true }, getValidationSchema: () => schema }} beforeSubmit={beforeSubmit} />);
+    // Wait for Formik to apply the loaded record before testing submission state.
+    await screen.findByDisplayValue('Example');
     const save = await screen.findByRole('button', { name: 'Save' });
     fireEvent.click(save);
     expect(save.disabled).toBe(true);
