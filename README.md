@@ -4,7 +4,7 @@ React component library for model-driven grids and forms, dialogs, notifications
 
 ## Tooling
 
-Use Node 22.22.1+, 24.11+, or a supported newer release and the pinned npm 11.19.0. Install with `npm install`; no global Vite+ installation is required.
+Use Node 22.22.1+, 24.11+, or a supported newer release and the pinned npm 11.19.0. Install with `npm install`; no global Vite+ installation is required. The project `.npmrc` disables automatic lifecycle scripts. Run `npm run prepare` explicitly after installation to initialize the reviewed Vite+ Git hooks; ordinary check, test and build commands still work. Do not enable all dependency scripts to configure hooks.
 
 | Command | Purpose |
 | --- | --- |
@@ -19,7 +19,7 @@ Use Node 22.22.1+, 24.11+, or a supported newer release and the pinned npm 11.19
 
 Packaging preserves ES modules, the ES2020 target, `dist/index.js`, source maps, assets under `dist/assets`, and external runtime peers. JSX in `.js` files is handled by the native packaging transform; tests use the shared JSX transform. Set `VISUALIZER_OPEN=true` to generate and open `stats.html` during a package build. Routine builds skip visualization.
 
-Vite+ manages the `.vite-hooks/pre-commit` dispatcher. `npm install` runs `vp config --no-agent` to initialize it. The hook keeps both the configured checks and React Doctor gate. VS Code settings use the Oxc extension.
+Vite+ manages the `.vite-hooks/pre-commit` dispatcher. `npm run prepare` runs `vp config --no-agent` to initialize it. The hook keeps both the configured checks and React Doctor gate. VS Code settings use the Oxc extension.
 
 React Doctor CLI is pinned to 0.9.18, replacing the vulnerable legacy dependency chain. Native Oxlint runs the configured source/test policy; the CLI adds its broader audit. Existing effect/complexity opt-outs are retained under the current rule names.
 
