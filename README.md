@@ -4,7 +4,7 @@ React component library for model-driven grids and forms, dialogs, notifications
 
 ## Tooling
 
-Use Node 22.22.1+, 24.11+, or a supported newer release and the pinned npm 11.19.0. Install with `npm install`; no global Vite+ installation is required. The project `.npmrc` disables automatic lifecycle scripts. Run `npm run prepare` explicitly after installation to initialize the reviewed Vite+ Git hooks; ordinary check, test and build commands still work. Do not enable all dependency scripts to configure hooks.
+Use Node 22.22.1+, 24.11+, or a supported newer release and the pinned npm 11.19.0. Install with `npm ci --ignore-scripts`; no global Vite+ installation is required. Commit `package-lock.json` and update it with the manifest using `npm install --ignore-scripts` only when intentionally changing dependencies. Do not add a second installer's lockfile. The lock includes development and peer dependencies for reproducible tooling and scanning; consumers still resolve their own runtime peer versions. The project `.npmrc` disables automatic lifecycle scripts. Run `npm run prepare` explicitly after installation to initialize the reviewed Vite+ Git hooks; ordinary check, test and build commands still work. Do not enable all dependency scripts to configure hooks.
 
 | Command | Purpose |
 | --- | --- |
@@ -27,7 +27,9 @@ The dependency audit on October 22, 2026 reports zero vulnerabilities. The CLI s
 
 The full audit marks `src/lib/index.js` as an intentional public entry; React Doctor's dead-file discovery does not recognize `vp pack` entry configuration. No runtime code is excluded from lint or tests.
 
-The release workflow installs the pinned Vite+ toolchain, checks, tests, and builds before copying a minimal manifest into `dist` and publishing the existing dist branch/tag. The source manifest's `./index.js` entry is relative to that distribution root. Consumers continue to use release tags; source changes do not publish a new tag automatically.
+The PR quality and release workflows use pinned npm with `npm ci --ignore-scripts`, then run the locally installed Vite+ checks, tests, and build. Release packaging copies a minimal manifest into `dist` and publishes the existing dist branch/tag. The source manifest's `./index.js` entry is relative to that distribution root. Consumers continue to use release tags; source changes do not publish a new tag automatically. Oneleet inventory remains based on the scanned branch until this lockfile is merged and a new scan completes.
+
+After that rescan, verify both runtime peers and development tooling are inventoried. Local Syft 1.56 reads Vite+, React Doctor and ESLint only with its development-dependency option enabled; Oneleet's deployed scanner configuration remains unverified. Keep correct dependency classifications and confirm coverage on the platform.
 
 ## Current capabilities and remaining work
 
