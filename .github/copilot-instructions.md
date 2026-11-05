@@ -1,339 +1,76 @@
-<!-- Current tooling commands and packaging behavior are documented in ../README.md. -->
-# DFramework UI - Copilot Instructions
+<!-- Generated from AGENTS.md; edit the source and run yarn instructions:sync. -->
 
-## Project Overview
+# dframework-ui contributor instructions
 
-**DFramework UI** (`@durlabh/dframework-ui`) is a React-based UI component library built on top of Material-UI (MUI). It provides a comprehensive set of reusable components for building enterprise applications with features like advanced data grids, forms, dialogs, and state management.
+`AGENTS.md` is the canonical repository-wide guidance. Edit this source;
+`CLAUDE.md` imports it and Copilot instructions are generated. Scoped rules live
+in `src/lib/AGENTS.md` and `tests/AGENTS.md`. Reference material lives in
+`docs/CONTRIBUTING.md`, README and the existing component documentation.
 
-### Key Features
-- Advanced data grid with CRUD operations (based on MUI X Data Grid Premium)
-- Form builder with validation (using Formik and Yup)
-- Snackbar notifications system
-- Dialog components
-- State management with React Context
-- Internationalization (i18next)
-- Router integration
+## Scope and working process
 
-## Technology Stack
+- This is the stable React/MUI library `@durlabh/dframework-ui`, not a consuming
+  application. Keep changes surgical; preserve public APIs and consumer behavior.
+- Inspect status, history, existing branches/PRs and related implementations.
+  Preserve unrelated work and use a dedicated branch/worktree. The default base
+  is `main`; confirm a different requested base rather than substituting one.
+- Understand affected components, imports and exports before editing. Explain
+  material behavior changes and risks; ask when ambiguity blocks safe progress.
+  Avoid unrelated refactors and commented-out code.
+- Do not change peer ranges, add dependencies, rename/remove exports or introduce
+  breaking behavior outside the user's authorized scope. Document approved
+  breaking changes in `migration.md` and update affected usage documentation.
+- Validate only touched projects and affected behavior. Instructions-only edits
+  need `yarn instructions:check`; workflow/tooling edits also need workflow checks
+  and their UI quality commands. Runtime/package changes need `yarn check`,
+  relevant tests and `yarn build`, plus consumer verification when UI behavior
+  changes. Do not require blanket builds of Playbook or other repositories.
+- Do not merge, create/push release tags, publish, deploy or access production
+  services without explicit user authorization. Draft PRs are reviewable work.
 
-### Core Dependencies (Peer Dependencies)
-- **React**: 19.2.3
-- **Material-UI (MUI)**: v7.3.6
-  - `@mui/material` - Core components
-  - `@mui/icons-material` - Icons
-  - `@mui/x-data-grid-premium` - Advanced data grid
-  - `@mui/x-date-pickers` - Date/time pickers
-  - `@mui/x-tree-view` - Tree view components
-- **Emotion**: For CSS-in-JS styling
-- **Formik**: v2.4.9 - Form management
-- **Yup**: v1.7.1 - Schema validation
-- **React Router DOM**: v7.11.0 - Routing
-- **i18next**: v25.7.3 - Internationalization
-- **Day.js**: v1.11.19 - Date manipulation
+## Toolchain and dependencies
 
-### Build Tools
-- **Vite+**: 1.3.0 - Library packaging, checks, and tests
-- **Rollup**: For library bundling
-- **Visualizer**: For bundle analysis
+- Use CI's Node 24.21.0 (supported engines are in `package.json`) and the pinned
+  Yarn 4.18.1. Install with `yarn install --immutable`; commit `yarn.lock`.
+- Intentional dependency updates use `yarn install`; commit manifest and lock
+  together. Keep one installer's lockfile. Dependency scripts stay disabled in
+  `.yarnrc.yml`; preserve its age gate, Git-source restriction and narrow Vitest
+  exceptions, plus `.npmrc`'s defensive script restriction.
+- Runtime dependencies are peers, with explicit development copies for tests and
+  separate development tooling. Do not classify every dependency as a peer or
+  treat development vulnerabilities as irrelevant. Consumers lock their own graph.
+- Run `yarn prepare` explicitly to initialize the reviewed Vite+ hooks. It uses
+  `vp config --no-agent`; do not enable all dependency scripts or overwrite agent
+  guidance to initialize hooks. Preserve the check and React Doctor commit gates.
+- Use locally installed Vite+. `yarn dev`/`yarn start` watch the library package;
+  they do not launch a browser application. Browser checks use a safe consumer.
 
-## Project Structure
+## Checks and packaging
 
-```
-dframework-ui/
-├── .github/                    # GitHub workflows and configurations
-│   └── workflows/
-│       └── dist-branch.yml     # Auto-deploy to dist-release on version tags
-├── docs/                       # Documentation
-│   ├── StateProvider.md        # State management documentation
-│   └── defaultPreferenceEnums.md
-├── src/
-│   └── lib/                    # Library source code
-│       ├── assets/             # Static assets
-│       ├── components/         # React components
-│       │   ├── Dialog/         # Dialog components
-│       │   ├── Form/           # Form components and field types
-│       │   │   └── fields/     # Form field components (date, autocomplete, select, etc.)
-│       │   ├── Grid/           # Data grid components and utilities
-│       │   ├── HelpModal/      # Help modal component
-│       │   ├── PageTitle/      # Page title component
-│       │   ├── SnackBar/       # Notification system
-│       │   ├── Typography/     # Typography component
-│       │   ├── mui/            # MUI customizations and localization
-│       │   │   └── locale/     # Locale files for data grid
-│       │   ├── useRouter/      # Router state management
-│       │   ├── useMobile.js    # Mobile detection hook
-│       │   └── utils.js        # Utility functions
-│       ├── hooks/              # Custom React hooks
-│       └── index.js            # Main export file
-├── vite.config.ts              # Vite configuration
-├── package.json                # Package configuration
-├── migration.md                # Migration guide for breaking changes
-└── TODO.md                     # Project todos and planned features
+```text
+yarn instructions:check
+yarn check
+yarn test
+yarn build
 ```
 
-## Main Components
+- `vite.config.ts` owns checks, tests and packaging. Check warnings/errors fail;
+  formatting is opt-in, and this JavaScript package does not generate declarations.
+- `yarn lint:react:ci` runs the additional React Doctor gate. Do not weaken
+  existing opt-outs or skip Git hooks to make a change pass.
+- Preserve ES modules, ES2020 output, source maps, copied assets and external
+  runtime peers. `src/lib/index.js` is the public source entry; `dist/index.js`
+  is the generated distribution entry. The source manifest's `./index.js` paths
+  apply at the distribution root. Do not commit `dist/` or `stats.html`.
+- Release tags (`v*`) build and publish the existing `dist-release` branch and
+  `dist-v*` tag with a minimal manifest, without development dependencies or
+  lifecycle scripts. Source changes do not publish releases automatically.
 
-### 1. Grid (Data Grid)
-- **Location**: `src/lib/components/Grid/`
-- **Main Files**:
-  - `index.js` - Main grid component
-  - `ui-models.js` - Grid model definitions
-  - `crud-helper.js` - CRUD operations
-  - `httpRequest.js` - HTTP request utilities
-  - `GridPreference.js` - User preferences management
-  - `footer.js` - Grid footer component
-  - `helper.js` - Helper functions
-  - `template.js` - Grid templates
-  - `CustomDropdownMenu.js` - Custom dropdown menu component
-  - `LocalizedDatePicker.js` - Localized date picker component
-- **Features**: CRUD operations, filtering, sorting, pagination, column management, preferences, localization
+## Instruction and workflow maintenance
 
-### 2. Form
-- **Location**: `src/lib/components/Form/`
-- **Main Files**:
-  - `Form.js` - Main form component
-  - `field-mapper.js` - Field type mapping
-  - `relations.js` - Relationship handling
-  - `fields/` - Individual field components
-- **Common Field Types** (see `field-mapper.js` for full list): string, email, number, date, dateTime, time, boolean, select, autocomplete, password, radio, chipInput, jsonInput, fileUpload, treeCheckBox, dayRadio, oneToMany
-- **Uses**: Formik for form state, Yup for validation
-
-### 3. SnackBar (Notifications)
-- **Location**: `src/lib/components/SnackBar/`
-- **Usage**: Wrap app with `<SnackbarProvider>`, use `useSnackbar()` hook
-- **Features**: Global notification system with customizable duration
-
-### 4. Dialog
-- **Location**: `src/lib/components/Dialog/`
-- **Component**: `DialogComponent`
-- **Features**: Reusable dialog/modal with confirm/cancel actions
-
-### 5. StateProvider (State Management)
-- **Location**: `src/lib/components/useRouter/`
-- **Files**: `StateProvider.js`, `initialState.js`, `stateReducer.js`, `actions.js`
-- **Purpose**: Centralized state management, API endpoint configuration, router utilities
-- **Documentation**: See `docs/StateProvider.md`
-
-### 6. Custom Hooks
-- **Location**: `src/lib/hooks/`
-- **Available Hooks**:
-  - `useCascadingLookup.js` - Handle cascading dropdown dependencies
-  - `useDebounce.js` - Debounce input values
-- **Additional Hooks**: `useMobile.js` (in components/) - Detect mobile devices
-
-## Build and Development
-
-### Scripts
-```bash
-npm run dev      # Watch the library package
-npm run start    # Alias for dev
-npm run build    # Build library for production (outputs to dist/)
-npm run check    # Lint source and tests; warnings and errors fail
-```
-
-### Build Configuration
-- **Entry Point**: `src/lib/index.js`
-- **Output**: `dist/` directory
-- **Format**: ES modules only
-- **Source Maps**: Enabled
-- **Bundle Analyzer**: Stats available in `stats.html` (set `VISUALIZER_OPEN=true` to auto-open)
-
-### Development Server
-- **Port**: 3000
-- **Auto-open**: Enabled
-- **Alias**: `@` points to `./src`
-
-### File Processing
-- All `.js` files in `src/` are treated as JSX (using native Oxc transforms)
-- Assets from `src/lib/assets` are copied to `dist/` during build
-
-## Deployment
-
-### Version Tagging
-- Tags starting with `v*` (e.g., `v1.0.5`) trigger the dist-branch workflow
-- Workflow builds the library and deploys to `dist-release` branch
-- Creates a dist tag like `dist-v1.0.5`
-
-### NPM Package
-- Package is scoped: `@durlabh/dframework-ui`
-- Current version: 1.0.5
-- Main entry: `./index.js`
-- Package is marked as private in package.json (not published to npm, distributed via git)
-- Distribution: Built library is deployed to `dist-release` branch for consumption
-
-## Coding Conventions
-
-### File Extensions
-- Use `.js` for all component files (not `.jsx`)
-- Files are automatically processed as JSX by Vite
-
-### Component Structure
-- Use functional components with hooks
-- Prefer named exports for utilities, default exports for components
-- Use memo() for performance optimization where appropriate
-
-### Imports
-- Use absolute imports with `@/` alias for src directory
-- Group imports: external libraries first, then internal components
-
-### State Management
-- Use `useStateContext()` for global state
-- Use `useRouter()` for routing utilities
-- Use `useSnackbar()` for notifications
-- Use `useState`/`useEffect` for local component state
-
-### Styling
-- Use MUI's `sx` prop for component styling
-- Use `styled()` from `@mui/material/styles` for custom styled components
-- Avoid inline styles except for dynamic values
-
-### Localization
-- Use `useTranslation()` hook from react-i18next
-- Locale files are in `src/lib/components/mui/locale/`
-- Supported languages: en-US, es-ES, fr-FR, de-DE, it-IT, pt-PT, el-GR, tr-TR, da-DK
-
-## External Dependencies
-
-### Peer Dependencies
-All MUI packages, React, Formik, Yup, i18next, and dayjs are peer dependencies. They must be installed by the consuming application.
-
-### Externalized Packages
-The following packages are externalized in the build and not bundled:
-- react, react-dom
-- @emotion/react, @emotion/styled
-- @mui/* (all MUI packages and sub-paths)
-- @base-ui/react
-- dayjs, formik, yup
-- i18next, react-i18next
-
-## Common Patterns
-
-### Exported Components and Utilities
-The following are exported from the library (see `src/lib/index.js`):
-- Components: `GridBase`, `DialogComponent`, `HelpModal`, `PageTitle`, `MuiTypography`
-- Models: `UiModel`
-- State Management: `StateProvider`, `RouterProvider`, `useStateContext`, `useRouter`
-- Notifications: `SnackbarProvider`, `SnackbarContext`, `useSnackbar`
-- Utilities: `httpRequest`, `crudHelper`, `useMobile`
-- Localization: `locales`, `daDKGrid`, `deDEGrid`, `elGRGrid`, `esESGrid`, `frFRGrid`, `itITGrid`, `ptPT`, `trTRGrid`
-
-**Note**: `Form` component is NOT currently exported. Grid and other components handle form functionality internally.
-
-### CRUD Operations
-```javascript
-import { httpRequest, crudHelper } from '@durlabh/dframework-ui';
-```
-- Use crud-helper functions for consistent API interactions
-- Functions handle error handling and response formatting
-- These utilities are primarily used internally by Grid and Form components
-
-### Grid Usage
-```javascript
-import { GridBase, UiModel } from '@durlabh/dframework-ui';
-
-const model = new UiModel({
-  title: "My Grid",
-  api: "MyApi",
-  columns: [
-    { field: "id", type: "number", gridLabel: "ID" },
-    { field: "name", type: "string", gridLabel: "Name" }
-  ]
-});
-
-<GridBase model={model} />
-```
-
-### Snackbar Usage
-```javascript
-import { SnackbarProvider, useSnackbar } from '@durlabh/dframework-ui';
-
-// In app root
-<SnackbarProvider>
-  <App />
-</SnackbarProvider>
-
-// In component
-const snackbar = useSnackbar();
-snackbar.showMessage("Success!");
-```
-
-## Important Notes
-
-### Migration Guide
-See `migration.md` for breaking changes and migration steps from previous versions.
-
-### Git Configuration
-- Lock files (`package-lock.json`, `yarn.lock`) are ignored
-- Build output (`dist/`, `stats.html`) is ignored
-- Standard node_modules and IDE files are ignored
-
-### File Organization
-- Keep components self-contained in their directories
-- Shared utilities go in `components/utils.js` or dedicated utility files
-- Localization files follow MUI's structure
-
-### Performance Considerations
-- Grid uses DataGridPremium for advanced features
-- Components use React.memo() for performance
-- Large datasets are handled with server-side pagination
-- Default page size is 50 records
-
-## Testing and Validation
-
-### Pre-commit Checks
-Before committing changes:
-1. Run `npm run build` to ensure build succeeds
-2. Check that no new files are unintentionally added to git
-3. Verify that all peer dependencies are properly externalized
-4. Test components in a consuming application if making breaking changes
-
-### Code Quality
-- Follow existing code style and patterns
-- Use meaningful variable and function names
-- Add comments for complex logic
-- Keep components focused and single-purpose
-
-## Tips for AI Agents
-
-1. **Minimal Changes**: This is a stable library. Make minimal, surgical changes. Don't refactor working code.
-
-2. **Dependencies**: Never modify peer dependencies or add new dependencies without careful consideration. This is a library, not an application.
-
-3. **Breaking Changes**: Avoid breaking changes. If necessary, document them in `migration.md`.
-
-4. **Component Patterns**: Follow the existing component patterns. Look at similar components for reference.
-
-5. **Exports**: When adding new components, update `src/lib/index.js` to export them. Check existing exports to ensure consistency.
-
-6. **Localization**: If adding user-facing text, consider adding i18next support.
-
-7. **Documentation**: Update README.md or add docs/ files when adding major features.
-
-8. **Testing**: Test components by running `npm run dev` and verifying in the browser. Run `npm test` for the component regression suite.
-
-9. **Build Verification**: Always run `npm run build` before committing to ensure the library builds correctly.
-
-10. **Grid and Form**: These are the most complex components. Be very careful when modifying them. They have many interconnected features.
-
-## Common Issues and Solutions
-
-### Build Issues
-- **Missing peer dependency errors**: These are expected warnings during build. Peer dependencies are provided by the consuming application.
-- **JSX transform issues**: All `.js` files in `src/` are automatically treated as JSX.
-
-### Development Issues
-- **Port 3000 already in use**: Change the port in `vite.config.ts` or kill the process using port 3000.
-- **Changes not reflecting**: Clear Vite cache: `rm -rf node_modules/.vite`
-
-### Component Issues
-- **Grid not loading data**: Check API endpoint configuration in StateProvider
-- **Form validation not working**: Verify Yup schema is correctly defined in model
-- **Snackbar not showing**: Ensure SnackbarProvider wraps your app
-
-## Contact and Support
-
-For questions or issues specific to this library, refer to:
-- README.md for usage examples
-- docs/ directory for detailed documentation
-- migration.md for breaking changes
-- Component source code for implementation details
+- Run `yarn instructions:sync` after editing root/scoped sources; commit generated
+  regular Claude bridges and Copilot files with them. `yarn instructions:check`
+  checks drift without writing. Add new scopes to the generator explicitly.
+- Quality/release workflows reuse the exact-commit Yarn setup action from
+  dframework-node. Keep UI's Vite+ version explicit, quality permissions read-only,
+  and existing publishing permissions/secrets confined to the release workflow.

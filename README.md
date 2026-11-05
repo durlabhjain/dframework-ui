@@ -4,30 +4,36 @@ React component library for model-driven grids and forms, dialogs, notifications
 
 ## Tooling
 
-Use Node 22.22.1+, 24.11+, or a supported newer release and the pinned npm 11.19.0. Install with `npm install`; no global Vite+ installation is required.
+Contributor and coding-agent guidance starts in [AGENTS.md](AGENTS.md).
+See [Contributing](docs/CONTRIBUTING.md) for scoped rules, instruction
+synchronization and the shared workflow foundation.
+
+Use Node 22.22.1+, 24.11+, or a supported newer release and the pinned Yarn 4.18.1. Install with `yarn install --immutable`; no global Vite+ installation is required. Commit `yarn.lock` and update it with the manifest using `yarn install` only when intentionally changing dependencies. Do not add a second installer's lockfile. The lock includes development and peer dependencies for reproducible tooling and scanning; consumers still resolve their own runtime peer versions. The project `.yarnrc.yml` uses node_modules and disables automatic dependency build scripts; `.npmrc` retains a defensive script restriction for accidental npm use. Runtime peer ranges remain unchanged, with development copies explicitly provided for library tests because Yarn does not auto-install peers. Run `yarn prepare` explicitly after installation to initialize the reviewed Vite+ Git hooks; ordinary check, test and build commands still work. Do not enable all dependency scripts to configure hooks.
 
 | Command | Purpose |
 | --- | --- |
-| `npm run check` / `npm run lint` | Vite+ checks over source and tests; errors and warnings fail |
-| `npm run lint:fix` | Safe lint fixes |
-| `npm test` | Existing component/regression suite through bundled Vitest |
-| `npm run build` | Build the library with `vp pack` |
-| `npm run dev` / `npm start` | Rebuild the package on source changes with `vp pack --watch` |
-| `npm run lint:react:ci` | Additional full React Doctor audit |
+| `yarn check` / `yarn lint` | Vite+ checks over source and tests; errors and warnings fail |
+| `yarn lint:fix` | Safe lint fixes |
+| `yarn test` | Existing component/regression suite through bundled Vitest |
+| `yarn build` | Build the library with `vp pack` |
+| `yarn dev` / `yarn start` | Rebuild the package on source changes with `vp pack --watch` |
+| `yarn lint:react:ci` | Additional full React Doctor audit |
 
 `vite.config.ts` contains the lint, test, and packaging configuration. Source stays JavaScript; the config uses Vite+'s standard filename for reliable discovery. Formatting is opt-in (`check.fmt: false`), and type checking/declaration generation are disabled for this JavaScript package.
 
 Packaging preserves ES modules, the ES2020 target, `dist/index.js`, source maps, assets under `dist/assets`, and external runtime peers. JSX in `.js` files is handled by the native packaging transform; tests use the shared JSX transform. Set `VISUALIZER_OPEN=true` to generate and open `stats.html` during a package build. Routine builds skip visualization.
 
-Vite+ manages the `.vite-hooks/pre-commit` dispatcher. `npm install` runs `vp config --no-agent` to initialize it. The hook keeps both the configured checks and React Doctor gate. VS Code settings use the Oxc extension.
+Vite+ manages the `.vite-hooks/pre-commit` dispatcher. `yarn prepare` runs `vp config --no-agent` to initialize it. The hook keeps both the configured checks and React Doctor gate. VS Code settings use the Oxc extension.
 
 React Doctor CLI is pinned to 0.9.18, replacing the vulnerable legacy dependency chain. Native Oxlint runs the configured source/test policy; the CLI adds its broader audit. Existing effect/complexity opt-outs are retained under the current rule names.
 
-The dependency audit on October 22, 2026 reports zero vulnerabilities. The CLI still brings Sentry's upstream OpenTelemetry deprecation; that requires an upstream API migration rather than a package-name override.
+The recursive Yarn 4 audit on November 5, 2026 reports no advisory families. The CLI still brings Sentry's upstream OpenTelemetry deprecation; that requires an upstream API migration rather than a package-name override.
 
 The full audit marks `src/lib/index.js` as an intentional public entry; React Doctor's dead-file discovery does not recognize `vp pack` entry configuration. No runtime code is excluded from lint or tests.
 
-The release workflow installs the pinned Vite+ toolchain, checks, tests, and builds before copying a minimal manifest into `dist` and publishing the existing dist branch/tag. The source manifest's `./index.js` entry is relative to that distribution root. Consumers continue to use release tags; source changes do not publish a new tag automatically.
+The PR quality and release workflows use pinned Yarn 4.18.1 with `yarn install --immutable`, then run the locally installed Vite+ checks, tests, and build. Release packaging copies a minimal manifest into `dist` and publishes the existing dist branch/tag. The source manifest's `./index.js` entry is relative to that distribution root. Consumers continue to use release tags; source changes do not publish a new tag automatically. Oneleet inventory remains based on the scanned branch until this lockfile is merged and a new scan completes.
+
+After that rescan, verify both runtime peers and development tooling are inventoried. Local scanner verification must include development tooling; Oneleet's deployed scanner configuration remains unverified. The complete Yarn lockfile records that graph, and platform inventory still needs post-merge verification. Keep correct dependency classifications and confirm coverage on the platform.
 
 ## Current capabilities and remaining work
 
