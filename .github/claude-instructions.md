@@ -16,7 +16,7 @@ This file provides specific guidance for Claude (Anthropic's AI assistant) when 
 
 3. **📚 Library vs Application**: Remember this is a library, not an application. Changes affect all consuming applications.
 
-4. **🧪 Verification**: Run `npm run check`, `npm test`, and `npm run build`. Use a consuming application for browser checks.
+4. **🧪 Verification**: Run `yarn check`, `yarn test`, and `yarn build`. Use a consuming application for browser checks.
 
 ## Technology Stack Summary
 
@@ -248,13 +248,13 @@ const {
 
 5. **Test thoroughly**:
    ```bash
-   npm run dev
+   yarn dev
    # Exercise the build in a consuming application
    ```
 
 6. **Build and verify**:
    ```bash
-   npm run build
+   yarn build
    # Check that build succeeds and dist/ is created
    ```
 
@@ -345,13 +345,13 @@ const {
 
 ```bash
 # Watch the library package
-npm run dev
+yarn dev
 
 # Build library
-npm run build
+yarn build
 
 # Check source and tests
-npm run check
+yarn check
 ```
 
 ### Build Output
@@ -373,7 +373,7 @@ npm run check
 
 ```bash
 # 1. Build successfully
-npm run build
+yarn build
 
 # 2. Check git status
 git status
@@ -479,10 +479,10 @@ git diff
    - Follow the conventions already in the codebase
 
 5. **Don't skip manual testing**
-   - Run npm test, then exercise affected behavior in a consuming application
+   - Run yarn test, then exercise affected behavior in a consuming application
 
 6. **Don't commit without building**
-   - Always run `npm run build` before committing
+   - Always run `yarn build` before committing
 
 7. **Don't modify peer dependency versions**
    - These are locked for compatibility reasons
@@ -572,17 +572,17 @@ StateProvider.js                    state-provider.js
 
 ```bash
 # Development
-npm run dev              # Watch the library package
-npm run start            # Alias for dev
+yarn dev              # Watch the library package
+yarn start            # Alias for dev
 
 # Building
-npm run build            # Build for production (outputs to dist/)
+yarn build            # Build for production (outputs to dist/)
 
 # Checks
-npm run check            # Lint source and tests; warnings and errors fail
+yarn check            # Lint source and tests; warnings and errors fail
 
 # Bundle Analysis
-VISUALIZER_OPEN=true npm run build  # Build and auto-open bundle analyzer
+VISUALIZER_OPEN=true yarn build  # Build and auto-open bundle analyzer
 
 # Cleanup
 rm -rf node_modules/.vite           # Clear Vite cache
@@ -601,8 +601,8 @@ rm -rf node_modules                 # Remove dependencies
 ## Final Reminders
 
 1. **This is a stable library** - make surgical changes only
-2. **Verify** - run npm test and check behavior in a consuming application
-3. **Build before committing** - ensure `npm run build` succeeds
+2. **Verify** - run yarn test and check behavior in a consuming application
+3. **Build before committing** - ensure `yarn build` succeeds
 4. **Follow existing patterns** - consistency is key
 5. **Ask questions** - don't guess when uncertain
 6. **Document breaking changes** - in `migration.md`

@@ -15,20 +15,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Node.js and pinned Yarn
+        uses: voidzero-dev/setup-vp@v1.21.2
         with:
           node-version: '24.21.0'
-
-      - name: Install pinned npm
-        run: npm install --global npm@11.19.0 --ignore-scripts
+          run-install: false
 
       - name: Build
         run: |
-          npm ci --ignore-scripts
-          npm run check
-          npm test
-          npm run build
+          yarn install --immutable
+          yarn check
+          yarn test
+          yarn build
 
       - name: Prepare Dist for NPM
         # Writes a minimal package.json into dist/ instead of copying the source

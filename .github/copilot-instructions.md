@@ -125,10 +125,10 @@ dframework-ui/
 
 ### Scripts
 ```bash
-npm run dev      # Watch the library package
-npm run start    # Alias for dev
-npm run build    # Build library for production (outputs to dist/)
-npm run check    # Lint source and tests; warnings and errors fail
+yarn dev      # Watch the library package
+yarn start    # Alias for dev
+yarn build    # Build library for production (outputs to dist/)
+yarn check    # Lint source and tests; warnings and errors fail
 ```
 
 ### Build Configuration
@@ -263,7 +263,7 @@ snackbar.showMessage("Success!");
 See `migration.md` for breaking changes and migration steps from previous versions.
 
 ### Git Configuration
-- Lock files (`package-lock.json`, `yarn.lock`) are ignored
+- Lock files (`yarn.lock`, `yarn.lock`) are ignored
 - Build output (`dist/`, `stats.html`) is ignored
 - Standard node_modules and IDE files are ignored
 
@@ -282,7 +282,7 @@ See `migration.md` for breaking changes and migration steps from previous versio
 
 ### Pre-commit Checks
 Before committing changes:
-1. Run `npm run build` to ensure build succeeds
+1. Run `yarn build` to ensure build succeeds
 2. Check that no new files are unintentionally added to git
 3. Verify that all peer dependencies are properly externalized
 4. Test components in a consuming application if making breaking changes
@@ -309,9 +309,9 @@ Before committing changes:
 
 7. **Documentation**: Update README.md or add docs/ files when adding major features.
 
-8. **Testing**: Test components by running `npm run dev` and verifying in the browser. Run `npm test` for the component regression suite.
+8. **Testing**: Test components by running `yarn dev` and verifying in the browser. Run `yarn test` for the component regression suite.
 
-9. **Build Verification**: Always run `npm run build` before committing to ensure the library builds correctly.
+9. **Build Verification**: Always run `yarn build` before committing to ensure the library builds correctly.
 
 10. **Grid and Form**: These are the most complex components. Be very careful when modifying them. They have many interconnected features.
 
