@@ -4,6 +4,10 @@ React component library for model-driven grids and forms, dialogs, notifications
 
 ## Tooling
 
+Contributor and coding-agent guidance starts in [AGENTS.md](AGENTS.md).
+See [Contributing](docs/CONTRIBUTING.md) for scoped rules, instruction
+synchronization and the shared workflow foundation.
+
 Use Node 22.22.1+, 24.11+, or a supported newer release and the pinned Yarn 4.18.1. Install with `yarn install --immutable`; no global Vite+ installation is required. Commit `yarn.lock` and update it with the manifest using `yarn install` only when intentionally changing dependencies. Do not add a second installer's lockfile. The lock includes development and peer dependencies for reproducible tooling and scanning; consumers still resolve their own runtime peer versions. The project `.yarnrc.yml` uses node_modules and disables automatic dependency build scripts; `.npmrc` retains a defensive script restriction for accidental npm use. Runtime peer ranges remain unchanged, with development copies explicitly provided for library tests because Yarn does not auto-install peers. Run `yarn prepare` explicitly after installation to initialize the reviewed Vite+ Git hooks; ordinary check, test and build commands still work. Do not enable all dependency scripts to configure hooks.
 
 | Command | Purpose |

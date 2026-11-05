@@ -10,6 +10,8 @@
   "module": "./index.js",
   "exports": "./index.js",
   "scripts": {
+    "instructions:sync": "node scripts/sync-agent-instructions.mjs",
+    "instructions:check": "node scripts/sync-agent-instructions.mjs --check",
     "test": "vp test run",
     "dev": "vp pack --watch",
     "start": "vp pack --watch",
