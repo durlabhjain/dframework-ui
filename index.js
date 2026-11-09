@@ -2,6 +2,7 @@ import * as React$1 from "react";
 import React, { createContext, memo, use, useCallback, useEffect, useEffectEvent, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Snackbar from "@mui/material/Snackbar";
 import MuiAlert from "@mui/material/Alert";
+import AlertTitle from "@mui/material/AlertTitle";
 import { useTranslation, withTranslation } from "react-i18next";
 import { Fragment, jsx, jsxs } from "react/jsx-runtime";
 import Button from "@mui/material/Button";
@@ -196,17 +197,17 @@ const Alert = ({ ref, ...props }) => /* @__PURE__ */ jsx(MuiAlert, {
 const SnackbarProvider = ({ children }) => {
 	const [snack, setSnack] = useState({
 		open: false,
+		title: null,
 		message: null,
 		severity: null,
 		onAction: null
 	});
 	const { t } = useTranslation();
 	const showMessage = useCallback((title, message, severity = "info", onAction) => {
-		const titleStr = typeof title === "string" ? title : String(title);
-		const text = message ? `${titleStr}: ${typeof message === "string" ? message : String(message)}` : titleStr;
 		setSnack({
 			open: true,
-			message: text,
+			title: typeof title === "string" ? title : String(title),
+			message: message ? typeof message === "string" ? message : String(message) : null,
 			severity,
 			onAction: onAction ?? null
 		});
@@ -246,7 +247,7 @@ const SnackbarProvider = ({ children }) => {
 		anchorOrigin: ANCHOR_ORIGIN,
 		children: /* @__PURE__ */ jsx(Alert, {
 			severity: snack.severity,
-			children: snack.message
+			children: snack.message ? /* @__PURE__ */ jsxs(Fragment, { children: [/* @__PURE__ */ jsx(AlertTitle, { children: snack.title }), snack.message] }) : snack.title
 		})
 	})] });
 };
