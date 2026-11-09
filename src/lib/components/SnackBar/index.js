@@ -1,6 +1,7 @@
 import { useState, use, createContext, useCallback, useMemo } from 'react'
 import Snackbar from '@mui/material/Snackbar'
 import MuiAlert from '@mui/material/Alert';
+import AlertTitle from '@mui/material/AlertTitle';
 import { useTranslation } from 'react-i18next';
 import { resolveErrorMessage } from '../../errors';
 
@@ -10,17 +11,17 @@ const ANCHOR_ORIGIN = { vertical: 'bottom', horizontal: 'center' };
 const Alert = ({ ref, ...props }) => <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 
 const SnackbarProvider = ({ children }) => {
-    const [snack, setSnack] = useState({ open: false, message: null, severity: null, onAction: null });
+    const [snack, setSnack] = useState({ open: false, title: null, message: null, severity: null, onAction: null });
     const { t } = useTranslation();
 
 
     const showMessage = useCallback((title, message, severity = "info", onAction) => {
         const titleStr = typeof title === 'string' ? title : String(title);
-        const text = message
-            ? `${titleStr}: ${typeof message === 'string' ? message : String(message)}`
-            : titleStr;
+        const messageStr = message ? (typeof message === 'string' ? message : String(message)) : null;
+        // A message is shown under the title instead of being joined to it as "title: message",
+        // so a complete sentence (e.g. a validation message) reads on its own in every language.
         // onAction stored inside an object — React won't treat it as a state updater fn
-        setSnack({ open: true, message: text, severity, onAction: onAction ?? null });
+        setSnack({ open: true, title: titleStr, message: messageStr, severity, onAction: onAction ?? null });
     }, []);
 
     const showError = useCallback((title, message, severity = "error", onAction) => {
@@ -46,7 +47,9 @@ const SnackbarProvider = ({ children }) => {
                 {children}
             </SnackbarContext.Provider>
             <Snackbar open={snack.open} autoHideDuration={6000} onClose={handleClose} anchorOrigin={ANCHOR_ORIGIN}>
-                <Alert severity={snack.severity}>{snack.message}</Alert>
+                <Alert severity={snack.severity}>
+                    {snack.message ? <><AlertTitle>{snack.title}</AlertTitle>{snack.message}</> : snack.title}
+                </Alert>
             </Snackbar>
         </>
     );
