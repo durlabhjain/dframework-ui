@@ -22,6 +22,7 @@ import httpRequest from './components/Grid/httpRequest';
 import crudHelper from './components/Grid/crud-helper';
 import { useModelTranslation } from './hooks/useModelTranslation';
 import { ERROR_CODES, ERROR_MESSAGES, AppError, resolveErrorMessage } from './errors';
+import { isPasskeySupported, getPasskeyDeviceSupport, passkeySetupHint, describeCurrentDevice, isPasskeyCancelled, createPasskey, getPasskeyAssertion } from './passkey';
 export { 
   SnackbarProvider,
   SnackbarContext,
@@ -55,5 +56,12 @@ export {
   ERROR_CODES,
   ERROR_MESSAGES,
   AppError,
-  resolveErrorMessage
+  resolveErrorMessage,
+  isPasskeySupported,
+  getPasskeyDeviceSupport,
+  passkeySetupHint,
+  describeCurrentDevice,
+  isPasskeyCancelled,
+  createPasskey,
+  getPasskeyAssertion
 };

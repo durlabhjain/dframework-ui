@@ -39,6 +39,8 @@ After that rescan, verify both runtime peers and development tooling are invento
 
 The Grid already supports cancellation of superseded requests, debounced filtering, lazy remote lookups, saved layouts/preferences and column order, list-state restoration, CSV/Excel export, and client/server grouping. Form support includes model-derived Yup validation, custom validation, conditional fields, dependent lookups, and permission-aware mutations. The package ships source maps and assets; tests cover permissions, preferences, nested tabs, split sizing, and resize cleanup.
 
+Passkey (WebAuthn) browser helpers are exported for the framework `ExtJSHelper` passkey endpoints: `isPasskeySupported`, `getPasskeyDeviceSupport`, `passkeySetupHint`, `describeCurrentDevice`, `isPasskeyCancelled`, `createPasskey` and `getPasskeyAssertion`. They convert the server's base64url JSON to and from the browser API.
+
 See [TODO.md](TODO.md) for reviewed remaining work. Existing usage guides cover [preferences](docs/GridPreferences.md), [toolbar filters](docs/ToolbarFilters.md), [CRUD hooks](docs/crud_helper_hooks.md), and [StateProvider](docs/StateProvider.md). Performance and accessibility reports that need a consumer are kept as verification tasks.
 
 # How we will use the durlabh/dframework-ui
