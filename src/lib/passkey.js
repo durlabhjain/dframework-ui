@@ -41,16 +41,16 @@ const detectPasskeyDeviceSupport = async () => {
     const platform = builtIn || capabilities.userVerifyingPlatformAuthenticator === true || capabilities.passkeyPlatformAuthenticator === true;
     // Signing in with a phone by QR code; browsers report it only when this computer has Bluetooth.
     const hybrid = capabilities.hybridTransport === true;
-    const usable = platform || hybrid;
-    return { usable, platform, hybrid, reason: usable ? null : 'device' };
+    // Every browser that speaks WebAuthn can run a ceremony: a built-in authenticator, a phone over
+    // QR, or a plugged-in security key, which no capability flag reports in advance.
+    return { usable: true, platform, hybrid, reason: null };
 };
 
 let passkeyDeviceSupport = null;
 
 /**
- * Whether this device can create and use passkeys, decided once per page load. A device with no
- * built-in authenticator and no way to reach a phone would only show confusing browser prompts, so
- * passkey options are offered only when this reports `usable`.
+ * Whether this device can create and use passkeys, decided once per page load. `platform` and
+ * `hybrid` describe what the browser reports; `usable` is false only when it cannot do WebAuthn.
  * @returns {Promise<{ usable: boolean, platform: boolean, hybrid: boolean, reason: 'browser'|'device'|null }>}
  */
 export const getPasskeyDeviceSupport = () => {
@@ -65,6 +65,8 @@ export const passkeySetupHint = () => {
     if (/Android/.test(agent)) return { key: 'message.passkey-setup-android', text: 'Set a screen lock (PIN, pattern or fingerprint) in your phone settings, then try again.' };
     if (/Macintosh|Mac OS X/.test(agent)) return { key: 'message.passkey-setup-mac', text: 'Turn on Touch ID or iCloud Keychain in System Settings, then try again.' };
     if (/Windows/.test(agent)) return { key: 'message.passkey-setup-windows', text: 'Set up Windows Hello (Settings > Accounts > Sign-in options > PIN), then reopen this page.' };
+    // Desktop Linux has no built-in authenticator, so a security key or a phone is the way in.
+    if (/Linux|X11/.test(agent)) return { key: 'message.passkey-setup-linux', text: 'Plug in a security key, or choose to use your phone and scan the QR code.' };
     return { key: 'message.passkey-setup-other', text: 'Use a phone, tablet or computer with a fingerprint, face or screen-lock sign-in.' };
 };
 
