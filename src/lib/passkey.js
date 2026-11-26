@@ -43,7 +43,8 @@ const detectPasskeyDeviceSupport = async () => {
     const hybrid = capabilities.hybridTransport === true;
     // Every browser that speaks WebAuthn can run a ceremony: a built-in authenticator, a phone over
     // QR, or a plugged-in security key, which no capability flag reports in advance.
-    return { usable: true, platform, hybrid, reason: null };
+    // 'device' only asks the page to show a setup hint; it no longer hides passkey options.
+    return { usable: true, platform, hybrid, reason: platform || hybrid ? null : 'device' };
 };
 
 let passkeyDeviceSupport = null;
@@ -51,6 +52,8 @@ let passkeyDeviceSupport = null;
 /**
  * Whether this device can create and use passkeys, decided once per page load. `platform` and
  * `hybrid` describe what the browser reports; `usable` is false only when it cannot do WebAuthn.
+ * `reason` is 'browser' when it cannot, and 'device' when it can but reports no built-in authenticator
+ * or phone (a security key may still work), so the page can show `passkeySetupHint()`.
  * @returns {Promise<{ usable: boolean, platform: boolean, hybrid: boolean, reason: 'browser'|'device'|null }>}
  */
 export const getPasskeyDeviceSupport = () => {

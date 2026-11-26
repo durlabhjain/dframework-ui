@@ -92,7 +92,7 @@ it('offers passkeys on a device with no built-in authenticator, such as desktop 
         // The module caches the answer, so this case needs its own instance.
         vi.resetModules();
         const { getPasskeyDeviceSupport } = await import('../src/lib/passkey.js');
-        expect(await getPasskeyDeviceSupport()).toEqual({ usable: true, platform: false, hybrid: false, reason: null });
+        expect(await getPasskeyDeviceSupport()).toEqual({ usable: true, platform: false, hybrid: false, reason: 'device' });
     } finally {
         if (original) {
             Object.defineProperty(window, 'PublicKeyCredential', original);
