@@ -8945,19 +8945,19 @@ const detectPasskeyDeviceSupport = async () => {
 	const capabilities = typeof credentialApi.getClientCapabilities === "function" ? await credentialApi.getClientCapabilities().then((result) => result || {}, () => ({})) : {};
 	const platform = builtIn || capabilities.userVerifyingPlatformAuthenticator === true || capabilities.passkeyPlatformAuthenticator === true;
 	const hybrid = capabilities.hybridTransport === true;
-	const usable = platform || hybrid;
 	return {
-		usable,
+		usable: true,
 		platform,
 		hybrid,
-		reason: usable ? null : "device"
+		reason: platform || hybrid ? null : "device"
 	};
 };
 let passkeyDeviceSupport = null;
 /**
-* Whether this device can create and use passkeys, decided once per page load. A device with no
-* built-in authenticator and no way to reach a phone would only show confusing browser prompts, so
-* passkey options are offered only when this reports `usable`.
+* Whether this device can create and use passkeys, decided once per page load. `platform` and
+* `hybrid` describe what the browser reports; `usable` is false only when it cannot do WebAuthn.
+* `reason` is 'browser' when it cannot, and 'device' when it can but reports no built-in authenticator
+* or phone (a security key may still work), so the page can show `passkeySetupHint()`.
 * @returns {Promise<{ usable: boolean, platform: boolean, hybrid: boolean, reason: 'browser'|'device'|null }>}
 */
 const getPasskeyDeviceSupport = () => {
@@ -8982,6 +8982,10 @@ const passkeySetupHint = () => {
 	if (/Windows/.test(agent)) return {
 		key: "message.passkey-setup-windows",
 		text: "Set up Windows Hello (Settings > Accounts > Sign-in options > PIN), then reopen this page."
+	};
+	if (/Linux|X11/.test(agent)) return {
+		key: "message.passkey-setup-linux",
+		text: "Plug in a security key, or choose to use your phone and scan the QR code."
 	};
 	return {
 		key: "message.passkey-setup-other",
