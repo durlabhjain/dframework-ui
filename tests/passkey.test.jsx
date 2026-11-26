@@ -80,3 +80,24 @@ it('treats a dismissed prompt as a cancellation, not an error', () => {
     expect(isPasskeyCancelled({ name: 'AbortError' })).toBe(true);
     expect(isPasskeyCancelled(new Error('boom'))).toBe(false);
 });
+
+it('offers passkeys on a device with no built-in authenticator, such as desktop Linux', async () => {
+    mockCredentials({ create: vi.fn(), get: vi.fn() });
+    const original = Object.getOwnPropertyDescriptor(window, 'PublicKeyCredential');
+    const credentialApi = function PublicKeyCredential() { };
+    credentialApi.isUserVerifyingPlatformAuthenticatorAvailable = vi.fn().mockResolvedValue(false);
+    credentialApi.getClientCapabilities = vi.fn().mockResolvedValue({ hybridTransport: false });
+    Object.defineProperty(window, 'PublicKeyCredential', { configurable: true, value: credentialApi });
+    try {
+        // The module caches the answer, so this case needs its own instance.
+        vi.resetModules();
+        const { getPasskeyDeviceSupport } = await import('../src/lib/passkey.js');
+        expect(await getPasskeyDeviceSupport()).toEqual({ usable: true, platform: false, hybrid: false, reason: 'device' });
+    } finally {
+        if (original) {
+            Object.defineProperty(window, 'PublicKeyCredential', original);
+        } else {
+            delete window.PublicKeyCredential;
+        }
+    }
+});
